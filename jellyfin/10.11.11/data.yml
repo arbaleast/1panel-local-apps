@@ -1,6 +1,6 @@
 additionalProperties:
   formFields:
-  - default: jellyfin/jellyfin:12.0-rc3
+  - default: jellyfin/jellyfin:10.11.11
     edit: true
     envKey: IMAGE
     labelEn: Image
