@@ -1,0 +1,399 @@
+additionalProperties:
+  key: firecrawl
+  name: firecrawl
+  tags:
+  - Local
+  shortDescZh: Firecrawl 网页爬虫 + LLM 提取
+  shortDescEn: Firecrawl web scraper + LLM extraction
+  description:
+    zh: 将任意网站转为 LLM-ready markdown/结构化数据。
+    en: 将任意网站转为 LLM-ready markdown/结构化数据。
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://docs.firecrawl.dev/
+  github: https://github.com/mendableai/firecrawl
+  document: https://docs.firecrawl.dev/
+  formFields:
+  - default: '3002'
+    edit: true
+    envKey: PANEL_APP_PORT_API
+    labelEn: API Port
+    labelZh: API 端口
+    label:
+      en: API Port
+      zh: API 端口
+      zh-Hant: API 埠
+      ja: API ポート
+      ko: API 포트
+      ru: Порт API
+      ms: Port API
+      pt-br: Porta da API
+    required: true
+    rule: paramPort
+    type: number
+  - default: '3003'
+    edit: true
+    envKey: PANEL_APP_PORT_PLAYWRIGHT
+    labelEn: Playwright Port
+    labelZh: Playwright 端口
+    label:
+      en: Playwright Port
+      zh: Playwright 端口
+      zh-Hant: Playwright 埠
+      ja: Playwright ポート
+      ko: Playwright 포트
+      ru: Порт Playwright
+      ms: Port Playwright
+      pt-br: Porta do Playwright
+    required: true
+    rule: paramPort
+    type: number
+  - default: '5672'
+    edit: true
+    envKey: PANEL_APP_PORT_RABBITMQ
+    labelEn: RabbitMQ AMQP Port
+    labelZh: RabbitMQ AMQP 端口
+    label:
+      en: RabbitMQ AMQP Port
+      zh: RabbitMQ AMQP 端口
+      zh-Hant: RabbitMQ AMQP 埠
+      ja: RabbitMQ AMQP ポート
+      ko: RabbitMQ AMQP 포트
+      ru: Порт RabbitMQ AMQP
+      ms: Port RabbitMQ AMQP
+      pt-br: Porta RabbitMQ AMQP
+    required: true
+    rule: paramPort
+    type: number
+  - default: '15672'
+    edit: true
+    envKey: PANEL_APP_PORT_RABBITMQ_MGMT
+    labelEn: RabbitMQ Management Port
+    labelZh: RabbitMQ 管理端口
+    label:
+      en: RabbitMQ Management Port
+      zh: RabbitMQ 管理端口
+      zh-Hant: RabbitMQ 管理埠
+      ja: RabbitMQ 管理ポート
+      ko: RabbitMQ 관리 포트
+      ru: Порт управления RabbitMQ
+      ms: Port Pengurusan RabbitMQ
+      pt-br: Porta de gerenciamento RabbitMQ
+    required: true
+    rule: paramPort
+    type: number
+  - default: ./data
+    edit: true
+    envKey: DATA_PATH
+    labelEn: Data folder path
+    labelZh: 数据文件夹路径
+    label:
+      en: Data folder path
+      zh: 数据文件夹路径
+      zh-Hant: 資料夾路徑
+      ja: データフォルダパス
+      ko: 데이터 폴더 경로
+      ru: Путь к папке данных
+      ms: Laluan folder data
+      pt-br: Caminho da pasta de dados
+    required: true
+    type: text
+  - default: firecrawl
+    edit: true
+    envKey: POSTGRES_DB
+    labelEn: Postgres database name
+    labelZh: Postgres 数据库名
+    label:
+      en: Postgres database name
+      zh: Postgres 数据库名
+      zh-Hant: Postgres 資料庫名
+      ja: Postgres データベース名
+      ko: Postgres 데이터베이스 이름
+      ru: Имя базы данных Postgres
+      ms: Nama pangkalan data Postgres
+      pt-br: Nome do banco de dados Postgres
+    required: true
+    type: text
+  - default: user_wEJsSp
+    edit: true
+    envKey: POSTGRES_USER
+    labelEn: Postgres username
+    labelZh: Postgres 用户名
+    label:
+      en: Postgres username
+      zh: Postgres 用户名
+      zh-Hant: Postgres 使用者名稱
+      ja: Postgres ユーザー名
+      ko: Postgres 사용자 이름
+      ru: Имя пользователя Postgres
+      ms: Nama pengguna Postgres
+      pt-br: Nome de usuário Postgres
+    required: true
+    type: text
+  - default: password_tyrcEJ
+    edit: true
+    envKey: POSTGRES_PASSWORD
+    labelEn: Postgres password
+    labelZh: Postgres 密码
+    label:
+      en: Postgres password
+      zh: Postgres 密码
+      zh-Hant: Postgres 密碼
+      ja: Postgres パスワード
+      ko: Postgres 비밀번호
+      ru: Пароль Postgres
+      ms: Kata laluan Postgres
+      pt-br: Senha Postgres
+    required: true
+    type: password
+  - default: 1Panel-redis-wd53
+    edit: true
+    envKey: REDIS_HOST
+    labelEn: Redis host (use 1Panel-redis-wd53)
+    labelZh: Redis 主机（填 1Panel-redis-wd53 复用现有容器）
+    label:
+      en: Redis host (use 1Panel-redis-wd53)
+      zh: Redis 主机（填 1Panel-redis-wd53 复用现有容器）
+      zh-Hant: Redis 主機（填 1Panel-redis-wd53 復用現有容器）
+      ja: Redis ホスト（1Panel-redis-wd53 を入力して既存コンテナを再利用）
+      ko: Redis 호스트 (1Panel-redis-wd53 입력하여 기존 컨테이너 재사용)
+      ru: Хост Redis (введите 1Panel-redis-wd53 для повторного использования существующего контейнера)
+      ms: Hos Redis (masukkan 1Panel-redis-wd53 untuk guna semula bekas sedia ada)
+      pt-br: Host Redis (use 1Panel-redis-wd53 para reutilizar o contêiner existente)
+    required: true
+    type: text
+  - default: '6379'
+    edit: true
+    envKey: REDIS_PORT
+    labelEn: Redis port
+    labelZh: Redis 端口
+    label:
+      en: Redis port
+      zh: Redis 端口
+      zh-Hant: Redis 埠
+      ja: Redis ポート
+      ko: Redis 포트
+      ru: Порт Redis
+      ms: Port Redis
+      pt-br: Porta Redis
+    required: true
+    rule: paramPort
+    type: number
+  - default: 1panel123
+    edit: true
+    envKey: REDIS_PASSWORD
+    labelEn: Redis password (set to 1panel123 for shared 1Panel-redis-wd53)
+    labelZh: Redis 密码（复用 1Panel-redis-wd53 时填 1panel123）
+    label:
+      en: Redis password (set to 1panel123 for shared 1Panel-redis-wd53)
+      zh: Redis 密码（复用 1Panel-redis-wd53 时填 1panel123）
+      zh-Hant: Redis 密碼（復用 1Panel-redis-wd53 時填 1panel123）
+      ja: Redis パスワード（共有 1Panel-redis-wd53 を使う場合 1panel123）
+      ko: Redis 비밀번호 (공유 1Panel-redis-wd53 사용 시 1panel123)
+      ru: Пароль Redis (1panel123 для общего 1Panel-redis-wd53)
+      ms: Kata laluan Redis (1panel123 untuk 1Panel-redis-wd53 kongsi)
+      pt-br: Senha Redis (1panel123 para 1Panel-redis-wd53 compartilhado)
+    required: true
+    type: password
+  - default: 1Panel-localpgvector-kD9L
+  - default: 1Panel-localpgvector-kD9L
+    edit: true
+    envKey: POSTGRES_HOST
+    labelEn: Postgres host (use 1Panel-localpgvector-kD9L)
+    labelZh: Postgres 主机（填 1Panel-localpgvector-kD9L 复用现有容器）
+    label:
+      en: Postgres host (use 1Panel-localpgvector-kD9L)
+      zh: Postgres 主机（填 1Panel-localpgvector-kD9L 复用现有容器）
+      zh-Hant: Postgres 主機（填 1Panel-localpgvector-kD9L 復用現有容器）
+      ja: Postgres ホスト（1Panel-localpgvector-kD9L を入力して既存コンテナを再利用）
+      ko: Postgres 호스트 (1Panel-localpgvector-kD9L 입력하여 기존 컨테이너 재사용)
+      ru: Хост Postgres (введите 1Panel-localpgvector-kD9L для повторного использования)
+      ms: Hos Postgres (masukkan 1Panel-localpgvector-kD9L untuk guna semula)
+      pt-br: Host Postgres (use 1Panel-localpgvector-kD9L para reutilizar)
+    required: true
+    type: text
+  - default: '5432'
+    edit: true
+    envKey: POSTGRES_PORT
+    labelEn: Postgres port
+    labelZh: Postgres 端口
+    label:
+      en: Postgres port
+      zh: Postgres 端口
+      zh-Hant: Postgres 埠
+      ja: Postgres ポート
+      ko: Postgres 포트
+      ru: Порт Postgres
+      ms: Port Postgres
+      pt-br: Porta Postgres
+    required: true
+    rule: paramPort
+    type: number
+  - default: sk-firecrawl
+    edit: true
+    envKey: BULL_AUTH_KEY
+    labelEn: Bull auth key (internal queue secret)
+    labelZh: Bull 鉴权密钥（内部队列密钥）
+    label:
+      en: Bull auth key (internal queue secret)
+      zh: Bull 鉴权密钥（内部队列密钥）
+      zh-Hant: Bull 認證金鑰（內部佇列密鑰）
+      ja: Bull 認証キー（内部キューシークレット）
+      ko: Bull 인증 키 (내부 대기열 비밀)
+      ru: Ключ аутентификации Bull (внутренний секрет очереди)
+      ms: Kunci pengesahan Bull (rahsia baris gilir dalaman)
+      pt-br: Chave de autenticação Bull (segredo da fila interna)
+    required: true
+    type: password
+  - default: 'true'
+    edit: true
+    envKey: USE_DB_AUTHENTICATION
+    labelEn: Use DB authentication
+    labelZh: 使用数据库鉴权
+    label:
+      en: Use DB authentication
+      zh: 使用数据库鉴权
+      zh-Hant: 使用資料庫鑑權
+      ja: データベース認証を使用
+      ko: 데이터베이스 인증 사용
+      ru: Использовать аутентификацию БД
+      ms: Gunakan pengesahan pangkalan data
+      pt-br: Usar autenticação do banco de dados
+    required: true
+    rule: paramSelect
+    type: select
+    values:
+    - label: 启用
+      value: 'true'
+    - label: 禁用
+      value: 'false'
+  - default: '8'
+    edit: true
+    envKey: NUM_WORKERS_PER_QUEUE
+    labelEn: Workers per queue
+    labelZh: 每个队列 worker 数
+    label:
+      en: Workers per queue
+      zh: 每个队列 worker 数
+      zh-Hant: 每個佇列 worker 數
+      ja: キューあたりの worker 数
+      ko: 큐당 worker 수
+      ru: Количество worker-ов на очередь
+      ms: Bilangan worker setiap baris gilir
+      pt-br: Workers por fila
+    required: true
+    type: number
+  - default: '10'
+    edit: true
+    envKey: CRAWL_CONCURRENT_REQUESTS
+    labelEn: Concurrent crawl requests
+    labelZh: 并发爬取请求数
+    label:
+      en: Concurrent crawl requests
+      zh: 并发爬取请求数
+      zh-Hant: 並發爬取請求數
+      ja: 同時クロールリクエスト数
+      ko: 동시 크롤링 요청 수
+      ru: Количество одновременных запросов на сканирование
+      ms: Bilangan permintaan rangkak serentak
+      pt-br: Solicitações simultâneas de crawl
+    required: true
+    type: number
+  - default: '5'
+    edit: true
+    envKey: MAX_CONCURRENT_JOBS
+    labelEn: Max concurrent jobs
+    labelZh: 最大并发任务数
+    label:
+      en: Max concurrent jobs
+      zh: 最大并发任务数
+      zh-Hant: 最大同時任務數
+      ja: 最大同時ジョブ数
+      ko: 최대 동시 작업 수
+      ru: Максимум одновременных задач
+      ms: Bilangan tugas serentak maksimum
+      pt-br: Máximo de jobs simultâneos
+    required: true
+    type: number
+  - default: firecrawl
+    edit: true
+    envKey: RABBITMQ_USER
+    labelEn: RabbitMQ username
+    labelZh: RabbitMQ 用户名
+    label:
+      en: RabbitMQ username
+      zh: RabbitMQ 用户名
+      zh-Hant: RabbitMQ 使用者名稱
+      ja: RabbitMQ ユーザー名
+      ko: RabbitMQ 사용자 이름
+      ru: Имя пользователя RabbitMQ
+      ms: Nama pengguna RabbitMQ
+      pt-br: Nome de usuário RabbitMQ
+    required: true
+    type: text
+  - default: firecrawl-rabbit-change-me
+    edit: true
+    envKey: RABBITMQ_PASSWORD
+    labelEn: RabbitMQ password
+    labelZh: RabbitMQ 密码
+    label:
+      en: RabbitMQ password
+      zh: RabbitMQ 密码
+      zh-Hant: RabbitMQ 密碼
+      ja: RabbitMQ パスワード
+      ko: RabbitMQ 비밀번호
+      ru: Пароль RabbitMQ
+      ms: Kata laluan RabbitMQ
+      pt-br: Senha RabbitMQ
+    required: true
+    type: password
+  - default: '2'
+    edit: true
+    envKey: PANEL_APP_CPUS
+    labelEn: CPU limit (cores, 0=unlimited)
+    labelZh: CPU 上限 (核数, 0=不限)
+    label:
+      en: CPU limit (cores, 0=unlimited)
+      zh: CPU 上限 (核数, 0=不限)
+      zh-Hant: CPU 上限 (核心數, 0=不限)
+      ja: CPU 上限 (コア, 0=無制限)
+      ko: CPU 상한 (코어, 0=무제한)
+      ru: Лимит CPU (ядра, 0=без лимита)
+      ms: Had CPU (teras, 0=tidak terhad)
+      pt-br: Limite de CPU (núcleos, 0=ilimitado)
+    required: false
+    type: number
+  - default: '4096'
+    edit: true
+    envKey: PANEL_APP_MEM_LIMIT
+    labelEn: Memory limit (MB, 0=unlimited)
+    labelZh: 内存上限 (MB, 0=不限)
+    label:
+      en: Memory limit (MB, 0=unlimited)
+      zh: 内存上限 (MB, 0=不限)
+      zh-Hant: 記憶體上限 (MB, 0=不限)
+      ja: メモリ上限 (MB, 0=無制限)
+      ko: 메모리 상한 (MB, 0=무제한)
+      ru: Лимит памяти (МБ, 0=без лимита)
+      ms: Had memori (MB, 0=tidak terhad)
+      pt-br: Limite de memória (MB, 0=ilimitado)
+    required: false
+    type: number
+  - default: 0.0.0.0
+    edit: true
+    envKey: HOST_IP
+    labelEn: Bind IP (use 0.0.0.0 for Traefik)
+    labelZh: 绑定 IP (Traefik 用 0.0.0.0)
+    label:
+      en: Bind IP (use 0.0.0.0 for Traefik)
+      zh: 绑定 IP (Traefik 用 0.0.0.0)
+      zh-Hant: 綁定 IP (Traefik 用 0.0.0.0)
+      ja: バインド IP (Traefik は 0.0.0.0)
+      ko: 바인딩 IP (Traefik는 0.0.0.0)
+      ru: Bind IP (для Traefik используйте 0.0.0.0)
+      ms: Bind IP (untuk Traefik guna 0.0.0.0)
+      pt-br: IP de bind (use 0.0.0.0 para Traefik)
+    required: true
+    type: text

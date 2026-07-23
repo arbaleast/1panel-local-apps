@@ -1,0 +1,32 @@
+networks:
+    1panel-network:
+        external: true
+services:
+    handbrake-linuxserver:
+        container_name: ${CONTAINER_NAME}
+        deploy:
+            resources:
+                limits:
+                    cpus: ${CPUS}
+                    memory: ${MEMORY_LIMIT}
+        environment:
+            - PUID=99
+            - PGID=100
+            - TZ=${TIME_ZONE}
+            - CUSTOM_USER=${CUSTOM_USER}
+            - PASSWORD=${PASSWORD}
+            - TITLE=${TITLE:-HandBrake}
+            - SELKIES_UI_TITLE=${SELKIES_UI_TITLE:-Selkies}
+            - DASHBOARD=${DASHBOARD:-selkies-dashboard}
+            - LC_ALL=${LC_ALL}
+        image: linuxserver/handbrake:latest
+        labels:
+            createdBy: Apps
+        networks:
+            - 1panel-network
+        ports:
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3000
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTPS}:3001
+        restart: always
+        volumes:
+            - ${CONFIG_PATH}:/config

@@ -1,0 +1,34 @@
+networks:
+    1panel-network:
+        external: true
+services:
+    traefik:
+        command:
+            - --configFile=/etc/traefik/traefik.yml
+            - --entryPoints.traefik.address=:8080
+            - --api.dashboard=true
+            - --api.insecure=${PANEL_APP_TRAEFIK_API_INSECURE}
+        container_name: ${CONTAINER_NAME}
+        deploy:
+            resources:
+                limits:
+                    cpus: ${CPUS}
+                    memory: ${MEMORY_LIMIT}
+        environment:
+            - TZ=Asia/Shanghai
+        image: ${PANEL_APP_IMAGE_TAG}
+        labels:
+            createdBy: Apps
+        networks:
+            - 1panel-network
+        ports:
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:80
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTPS}:443
+            - ${HOST_IP}:${PANEL_APP_PORT_DASHBOARD}:8080
+        restart: always
+        volumes:
+            - /home/al/workspace/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+            - /home/al/workspace/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+            - /home/al/.acme.sh/arbaleast.top_ecc/fullchain.cer:/etc/traefik/certs/fullchain.cer:ro
+            - /home/al/.acme.sh/arbaleast.top_ecc/arbaleast.top.key:/etc/traefik/certs/arbaleast.top.key:ro
+            - /var/run/docker.sock:/var/run/docker.sock:ro

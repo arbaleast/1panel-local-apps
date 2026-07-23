@@ -1,0 +1,79 @@
+additionalProperties:
+  formFields:
+    - default: 2283
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Web Port
+      labelZh: Web 端口
+      required: true
+      rule: paramPort
+      type: number
+
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Time Zone
+      labelZh: 时区
+      required: false
+      rule: paramCommon
+      type: text
+
+    - default: ./data/upload
+      edit: true
+      envKey: UPLOAD_PATH
+      labelEn: Upload Storage (host path)
+      labelZh: 上传文件存储路径（宿主机）
+      required: true
+      rule: paramPath
+      type: text
+
+    - default: ./data/postgres
+      edit: true
+      envKey: DB_DATA_PATH
+      labelEn: Postgres Data (host path)
+      labelZh: Postgres 数据目录（宿主机）
+      required: true
+      rule: paramPath
+      type: text
+
+    - default: postgres
+      edit: true
+      envKey: PANEL_DB_USER
+      labelEn: Database User
+      labelZh: 数据库用户名
+      required: true
+      rule: paramCommon
+      type: text
+
+    - default: postgres
+      edit: true
+      envKey: PANEL_DB_USER_PASSWORD
+      labelEn: Database Password
+      labelZh: 数据库密码
+      required: true
+      rule: paramCommon
+      random: true
+      type: password
+
+    - default: immich
+      edit: true
+      envKey: PANEL_DB_NAME
+      labelEn: Database Name
+      labelZh: 数据库名称
+      required: true
+      rule: paramCommon
+      type: text
+
+    - default: "--data-checksums"
+      edit: true
+      envKey: PANEL_DB_INITDB_ARGS
+      labelEn: Postgres INITDB Args
+      labelZh: Postgres 初始化参数
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: 'SSD (--data-checksums, 推荐)'
+          value: "--data-checksums"
+        - label: 'HDD (--no-data-checksums, 仅机械盘)'
+          value: "--no-data-checksums"

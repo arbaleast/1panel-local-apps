@@ -1,0 +1,42 @@
+networks:
+    1panel-network:
+        external: true
+services:
+    pgvector:
+        command:
+            - postgres
+            - -c
+            - shared_preload_libraries=vector
+        container_name: ${CONTAINER_NAME}
+        deploy:
+            resources:
+                limits:
+                    cpus: ${CPUS}
+                    memory: ${MEMORY_LIMIT}
+        environment:
+            - TZ=${TZ}
+            - POSTGRES_USER=${PANEL_DB_USER}
+            - POSTGRES_PASSWORD=${PANEL_DB_USER_PASSWORD}
+            - POSTGRES_DB=${PANEL_DB_NAME}
+            - POSTGRES_INITDB_ARGS=--encoding=UTF8
+        healthcheck:
+            interval: 10s
+            retries: 10
+            start_period: 30s
+            test:
+                - CMD-SHELL
+                - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" || exit 1
+            timeout: 5s
+        image: pgvector/pgvector:pg18
+        labels:
+            createdBy: Apps
+        networks:
+            - 1panel-network
+        ports:
+            - ${HOST_IP}:${PANEL_APP_PORT_TCP}:5432
+        restart: always
+        volumes:
+            - pgvector_data:/var/lib/postgresql
+            - ./initdb.d:/docker-entrypoint-initdb.d:ro
+volumes:
+    pgvector_data: null

@@ -1,0 +1,41 @@
+networks:
+    1panel-network:
+        external: true
+services:
+    hindsight:
+        container_name: ${CONTAINER_NAME}
+        deploy:
+            resources:
+                limits:
+                    cpus: ${CPUS}
+                    memory: ${MEMORY_LIMIT}
+        environment:
+            - TZ=${TZ}
+            - HINDSIGHT_API_LLM_PROVIDER=${HINDSIGHT_API_LLM_PROVIDER}
+            - HINDSIGHT_API_LLM_API_KEY=${HINDSIGHT_API_LLM_API_KEY}
+            - HINDSIGHT_API_LLM_MODEL=${HINDSIGHT_API_LLM_MODEL}
+            - HINDSIGHT_API_LLM_BASE_URL=${HINDSIGHT_API_LLM_BASE_URL}
+            - HINDSIGHT_API_EMBEDDINGS_PROVIDER=${HINDSIGHT_API_EMBEDDINGS_PROVIDER}
+            - HINDSIGHT_API_EMBEDDINGS_OPENAI_API_KEY=${HINDSIGHT_API_EMBEDDINGS_OPENAI_API_KEY}
+            - HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL=${HINDSIGHT_API_EMBEDDINGS_OPENAI_BASE_URL}
+            - HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL=${HINDSIGHT_API_EMBEDDINGS_OPENAI_MODEL}
+            - HINDSIGHT_API_RERANKER_PROVIDER=${HINDSIGHT_API_RERANKER_PROVIDER}
+            - HINDSIGHT_API_DATABASE_URL=${HINDSIGHT_API_DATABASE_URL}
+            - HINDSIGHT_API_HOST=${HINDSIGHT_API_HOST}
+            - HINDSIGHT_API_PORT=${HINDSIGHT_API_PORT}
+            - HINDSIGHT_ENABLE_CP=${HINDSIGHT_ENABLE_CP}
+            - HINDSIGHT_CP_HOST=${HINDSIGHT_CP_HOST}
+            - HINDSIGHT_CP_PORT=${HINDSIGHT_CP_PORT}
+            - HINDSIGHT_CP_DATAPLANE_API_URL=${HINDSIGHT_CP_DATAPLANE_API_URL}
+            - HINDSIGHT_CP_ACCESS_KEY=${HINDSIGHT_CP_ACCESS_KEY}
+        image: ghcr.io/vectorize-io/hindsight:latest
+        labels:
+            createdBy: Apps
+        networks:
+            - 1panel-network
+        ports:
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8888
+            - ${HOST_IP}:${PANEL_APP_PORT_ADMIN}:9999
+        restart: always
+        volumes:
+            - ./data:/home/hindsight/.pg0
