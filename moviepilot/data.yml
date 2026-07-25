@@ -219,7 +219,7 @@ additionalProperties:
     required: true
     rule: paramPort
     type: number
-  - default: admin
+  - default: moviepilot
     edit: true
     envKey: SUPERUSER
     labelEn: Superuser Username
@@ -235,7 +235,7 @@ additionalProperties:
       pt-br: Nome de usuário do superusuário
     required: true
     type: text
-  - default: password
+  - default: moviepilot
     edit: true
     envKey: SUPERUSER_PASSWORD
     labelEn: Superuser Password
@@ -249,9 +249,7 @@ additionalProperties:
       ru: Пароль суперпользователя
       ms: Kata laluan superuser
       pt-br: Senha do superusuário
-    random: true
     required: true
-    rule: paramComplexity
     type: password
   - default: tmdb
     edit: true
@@ -736,7 +734,8 @@ additionalProperties:
       pt-br: Intervalo de sincronização do CookieCloud (minutos)
     required: false
     type: number
-  - default: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36
+  - default: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+      like Gecko) Chrome/98.0.4758.102 Safari/537.36
     edit: true
     envKey: USER_AGENT
     labelEn: User Agent
@@ -1107,7 +1106,7 @@ additionalProperties:
       value: qbittorrent
     - label: Transmission
       value: transmission
-  - default: ''
+  - default: 1Panel-qbittorrent-PaEe
     edit: true
     envKey: QB_HOST
     labelEn: QB Host
@@ -1123,7 +1122,7 @@ additionalProperties:
       pt-br: Host do QB
     required: false
     type: text
-  - default: ''
+  - default: qbittorrent
     edit: true
     envKey: QB_USER
     labelEn: QB User
@@ -1139,7 +1138,7 @@ additionalProperties:
       pt-br: Nome de usuário do QB
     required: false
     type: text
-  - default: ''
+  - default: qbittorrent
     edit: true
     envKey: QB_PASSWORD
     labelEn: QB Password
@@ -2030,7 +2029,9 @@ additionalProperties:
       value: 'false'
     - label: 'true'
       value: 'true'
-  - default: '{{title}}{% if year %} ({{year}}){% endif %}/{{title}}{% if year %} ({{year}}){% endif %}{% if part %}-{{part}}{% endif %}{% if videoFormat %} - {{videoFormat}}{% endif %}{{fileExt}}'
+  - default: '{{title}}{% if year %} ({{year}}){% endif %}/{{title}}{% if year %}
+      ({{year}}){% endif %}{% if part %}-{{part}}{% endif %}{% if videoFormat %} -
+      {{videoFormat}}{% endif %}{{fileExt}}'
     edit: true
     envKey: MOVIE_RENAME_FORMAT
     labelEn: Movie Rename Format
@@ -2046,7 +2047,9 @@ additionalProperties:
       pt-br: Formato de renomeação de filmes
     required: true
     type: text
-  - default: '{{title}}{% if year %} ({{year}}){% endif %}/Season {{season}}/{{title}} - {{season_episode}}{% if part %}-{{part}}{% endif %}{% if episode %} - 第 {{episode}} 集{% endif %}{{fileExt}}'
+  - default: '{{title}}{% if year %} ({{year}}){% endif %}/Season {{season}}/{{title}}
+      - {{season_episode}}{% if part %}-{{part}}{% endif %}{% if episode %} - 第 {{episode}}
+      集{% endif %}{{fileExt}}'
     edit: true
     envKey: TV_RENAME_FORMAT
     labelEn: TV Rename Format
@@ -2062,3 +2065,86 @@ additionalProperties:
       pt-br: Formato de renomeação de séries
     required: true
     type: text
+  - default: 1Panel-postgresql-ZU4y
+    edit: true
+    envKey: DB_POSTGRESQL_HOST
+    labelEn: PostgreSQL Host
+    labelZh: PostgreSQL 主机
+    label:
+      en: PostgreSQL Host
+      zh: PostgreSQL 主机
+      zh-Hant: PostgreSQL 主機
+      ja: PostgreSQL ホスト
+      ko: PostgreSQL 호스트
+      ru: Хост PostgreSQL
+      ms: Hos PostgreSQL
+      pt-br: Host do PostgreSQL
+    required: true
+    type: text
+  - default: '5432'
+    edit: true
+    envKey: DB_POSTGRESQL_PORT
+    labelEn: PostgreSQL Port
+    labelZh: PostgreSQL 端口
+    label:
+      en: PostgreSQL Port
+      zh: PostgreSQL 端口
+      zh-Hant: PostgreSQL 埠
+      ja: PostgreSQL ポート
+      ko: PostgreSQL 포트
+      ru: Порт PostgreSQL
+      ms: Port PostgreSQL
+      pt-br: Porta do PostgreSQL
+    required: true
+    rule: paramPort
+    type: number
+  - default: moviepilot
+    edit: true
+    envKey: DB_POSTGRESQL_DATABASE
+    labelEn: PostgreSQL Database
+    labelZh: PostgreSQL 数据库
+    label:
+      en: PostgreSQL Database
+      zh: PostgreSQL 数据库
+      zh-Hant: PostgreSQL 資料庫
+      ja: PostgreSQL データベース
+      ko: PostgreSQL 데이터베이스
+      ru: База данных PostgreSQL
+      ms: Pangkalan data PostgreSQL
+      pt-br: Banco de dados PostgreSQL
+    required: true
+    type: text
+  - default: user_wEJsSp
+    edit: true
+    envKey: DB_POSTGRESQL_USERNAME
+    labelEn: PostgreSQL Username
+    labelZh: PostgreSQL 用户名
+    label:
+      en: PostgreSQL Username
+      zh: PostgreSQL 用户名
+      zh-Hant: PostgreSQL 使用者名稱
+      ja: PostgreSQL ユーザー名
+      ko: PostgreSQL 사용자 이름
+      ru: Имя пользователя PostgreSQL
+      ms: Nama pengguna PostgreSQL
+      pt-br: Nome de usuário do PostgreSQL
+    required: true
+    type: text
+  - default: password_tyrcEJ
+    edit: true
+    envKey: DB_POSTGRESQL_PASSWORD
+    labelEn: PostgreSQL Password
+    labelZh: PostgreSQL 密码
+    label:
+      en: PostgreSQL Password
+      zh: PostgreSQL 密码
+      zh-Hant: PostgreSQL 密碼
+      ja: PostgreSQL パスワード
+      ko: PostgreSQL 비밀번호
+      ru: Пароль PostgreSQL
+      ms: Kata laluan PostgreSQL
+      pt-br: Senha do PostgreSQL
+    random: true
+    required: true
+    rule: paramComplexity
+    type: password

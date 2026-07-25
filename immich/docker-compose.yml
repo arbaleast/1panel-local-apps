@@ -2,24 +2,6 @@ networks:
     1panel-network:
         external: true
 services:
-    database:
-        container_name: ${CONTAINER_NAME}-postgres
-        environment:
-            - POSTGRES_PASSWORD=${PANEL_DB_USER_PASSWORD}
-            - POSTGRES_USER=${PANEL_DB_USER}
-            - POSTGRES_DB=${PANEL_DB_NAME}
-            - POSTGRES_INITDB_ARGS=${PANEL_DB_INITDB_ARGS}
-        healthcheck:
-            disable: false
-        image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
-        labels:
-            createdBy: Apps
-        networks:
-            - 1panel-network
-        restart: always
-        shm_size: 128mb
-        volumes:
-            - ${DB_DATA_PATH}:/var/lib/postgresql/data
     immich-machine-learning:
         container_name: ${CONTAINER_NAME}-ml
         depends_on:
@@ -27,21 +9,23 @@ services:
         environment:
             - TZ=${TZ}
             - MACHINE_LEARNING_URL=http://immich-machine-learning:3003
+            - MACHINE_LEARNING_WORKERS=${ML_WORKERS}
+            - MACHINE_LEARNING_MODEL_PRECISION=${ML_MODEL_PRECISION}
         healthcheck:
             disable: false
-        image: ghcr.io/immich-app/immich-machine-learning:v3.0.3
+        image: ghcr.io/immich-app/immich-machine-learning:v${APP_VERSION}
         labels:
             createdBy: Apps
         networks:
             - 1panel-network
         restart: always
+        shm_size: 2gb
         volumes:
-            - model-cache:/cache
+            - ${MODEL_CACHE_PATH}:/cache
     immich-server:
         container_name: ${CONTAINER_NAME}
         depends_on:
-            - redis
-            - database
+            - immich-machine-learning
         deploy:
             resources:
                 limits:
@@ -49,39 +33,27 @@ services:
                     memory: ${MEMORY_LIMIT}
         environment:
             - TZ=${TZ}
-            - DB_HOSTNAME=database
+            - DB_HOSTNAME=${DB_HOSTNAME}
             - DB_PORT=5432
-            - DB_DATABASE_NAME=${PANEL_DB_NAME}
-            - DB_USERNAME=${PANEL_DB_USER}
-            - DB_PASSWORD=${PANEL_DB_USER_PASSWORD}
-            - REDIS_HOSTNAME=redis
+            - DB_DATABASE_NAME=${DB_NAME}
+            - DB_USERNAME=${DB_USERNAME}
+            - DB_PASSWORD=${DB_PASSWORD}
+            - REDIS_HOSTNAME=${REDIS_HOSTNAME}
             - REDIS_PORT=6379
+            - TRANSFORMATIONS_MAX_CONCURRENCY=${TRANSFORMATIONS_MAX_CONCURRENCY}
+            - OCR_LANGUAGES=${OCR_LANGUAGES}
+            - MAX_CACHE_SIZE=${MAX_CACHE_SIZE}
+            - IMMICH_WORKER_THREADS=${IMMICH_WORKER_THREADS}
         healthcheck:
             disable: false
-        image: ghcr.io/immich-app/immich-server:v3.0.3
+        image: ghcr.io/immich-app/immich-server:v${APP_VERSION}
         labels:
             createdBy: Apps
         networks:
             - 1panel-network
         ports:
-            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:2283
+            - "${HOST_IP}:${PANEL_APP_PORT_HTTP}:2283"
         restart: always
         volumes:
             - ${UPLOAD_PATH}:/usr/src/app/upload
             - /etc/localtime:/etc/localtime:ro
-    redis:
-        container_name: ${CONTAINER_NAME}-redis
-        healthcheck:
-            test:
-                - CMD
-                - redis-cli
-                - ping
-        image: docker.io/valkey/valkey:9
-        labels:
-            createdBy: Apps
-        networks:
-            - 1panel-network
-        restart: always
-volumes:
-    model-cache: null
-

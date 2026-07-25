@@ -159,7 +159,8 @@ additionalProperties:
       zh-Hant: Redis 主機（填 1Panel-redis-wd53 復用現有容器）
       ja: Redis ホスト（1Panel-redis-wd53 を入力して既存コンテナを再利用）
       ko: Redis 호스트 (1Panel-redis-wd53 입력하여 기존 컨테이너 재사용)
-      ru: Хост Redis (введите 1Panel-redis-wd53 для повторного использования существующего контейнера)
+      ru: Хост Redis (введите 1Panel-redis-wd53 для повторного использования существующего
+        контейнера)
       ms: Hos Redis (masukkan 1Panel-redis-wd53 untuk guna semula bekas sedia ada)
       pt-br: Host Redis (use 1Panel-redis-wd53 para reutilizar o contêiner existente)
     required: true
@@ -197,7 +198,6 @@ additionalProperties:
       pt-br: Senha Redis (1panel123 para 1Panel-redis-wd53 compartilhado)
     required: true
     type: password
-  - default: 1Panel-localpgvector-kD9L
   - default: 1Panel-localpgvector-kD9L
     edit: true
     envKey: POSTGRES_HOST

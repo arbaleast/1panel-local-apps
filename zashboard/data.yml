@@ -1,4 +1,20 @@
 additionalProperties:
+  key: anirss
+  name: anirss
+  tags:
+  - Local
+  shortDescZh: Ani-RSS 自动追番 RSS 订阅器
+  shortDescEn: Ani-RSS auto anime RSS subscription
+  description:
+    zh: 基于 RSS 的自动追番工具，按番剧更新自动下载到 qBittorrent。
+    en: 基于 RSS 的自动追番工具，按番剧更新自动下载到 qBittorrent。
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://docs.wushuo.top/
+  github: https://github.com/wushuo894/ani-rss
+  document: https://github.com/wushuo894/ani-rss
   formFields:
   - default: ./data/config
     edit: true
@@ -234,23 +250,3 @@ additionalProperties:
       value: 'true'
     - label: 'false'
       value: 'false'
-  key: anirss
-  name: anirss
-  tags:
-  - anime
-  - rss
-  - automation
-  shortDescZh: AniRSS 自动追番订阅
-  shortDescEn: AniRSS 自动追番订阅
-  description:
-    zh: 基于 RSS 的自动追番工具，按番剧更新自动下载到 qBittorrent。
-    en: RSS-based anime auto-downloader, automatically downloads anime updates to qBittorrent.
-  type: tool
-  crossVersionUpdate: true
-  limit: 0
-  recommend: 0
-  website: https://github.com/wushuo894/ani-rss
-  github: https://github.com/wushuo894/ani-rss
-name: anirss
-title: AniRSS 自动追番订阅
-description: 基于 RSS 的自动追番工具，按番剧更新自动下载到 qBittorrent。

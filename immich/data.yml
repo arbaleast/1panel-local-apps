@@ -16,6 +16,19 @@ additionalProperties:
   github: https://github.com/immich-app/immich
   document: https://docs.immich.app/
   formFields:
+  - default: v3.0.3
+    edit: true
+    envKey: APP_VERSION
+    labelEn: App Version
+    labelZh: 版本
+    required: true
+    rule: paramSelect
+    type: select
+    values:
+    - label: v3.0.3
+      value: 3.0.3
+    - label: v3.0.1
+      value: 3.0.1
   - default: 2283
     edit: true
     envKey: PANEL_APP_PORT_HTTP
@@ -30,7 +43,6 @@ additionalProperties:
     labelEn: Time Zone
     labelZh: 时区
     required: false
-    rule: paramCommon
     type: text
   - default: ./data/upload
     edit: true
@@ -40,49 +52,114 @@ additionalProperties:
     required: true
     rule: paramPath
     type: text
-  - default: ./data/postgres
+  - default: ./data/model-cache
     edit: true
-    envKey: DB_DATA_PATH
-    labelEn: Postgres Data (host path)
-    labelZh: Postgres 数据目录（宿主机）
+    envKey: MODEL_CACHE_PATH
+    labelEn: Model Cache (host path)
+    labelZh: 模型缓存目录（宿主机）
     required: true
     rule: paramPath
     type: text
-  - default: postgres
+  - default: 1Panel-postgresql-ZU4y
     edit: true
-    envKey: PANEL_DB_USER
+    envKey: DB_HOSTNAME
+    labelEn: Postgres Host
+    labelZh: 数据库服务名
+    label:
+      en: Postgres Host (1Panel container name)
+      zh: 数据库服务名 (1Panel 容器名)
+    required: true
+    rule: paramCommon
+    type: text
+  - default: user_wEJsSp
+    edit: true
+    envKey: DB_USERNAME
     labelEn: Database User
     labelZh: 数据库用户名
     required: true
     rule: paramCommon
     type: text
-  - default: postgres
+  - default: password_tyrcEJ
     edit: true
-    envKey: PANEL_DB_USER_PASSWORD
+    envKey: DB_PASSWORD
     labelEn: Database Password
     labelZh: 数据库密码
     required: true
     rule: paramCommon
-    random: true
     type: password
   - default: immich
     edit: true
-    envKey: PANEL_DB_NAME
+    envKey: DB_NAME
     labelEn: Database Name
     labelZh: 数据库名称
     required: true
     rule: paramCommon
     type: text
-  - default: --data-checksums
+  - default: 1Panel-redis-wd53
     edit: true
-    envKey: PANEL_DB_INITDB_ARGS
-    labelEn: Postgres INITDB Args
-    labelZh: Postgres 初始化参数
+    envKey: REDIS_HOSTNAME
+    labelEn: Redis Host
+    labelZh: Redis 服务名
+    label:
+      en: Redis Host (1Panel container name)
+      zh: Redis 服务名 (1Panel 容器名)
     required: true
+    rule: paramCommon
+    type: text
+  - default: '2'
+    edit: true
+    envKey: TRANSFORMATIONS_MAX_CONCURRENCY
+    labelEn: Image Transform Thread Pool
+    labelZh: 图片转换线程池
+    required: false
+    rule: paramInt
+    type: number
+  - default: chi_sim+eng
+    edit: true
+    envKey: OCR_LANGUAGES
+    labelEn: OCR Languages
+    labelZh: OCR 语言
+    required: false
+    type: text
+  - default: '512'
+    edit: true
+    envKey: MAX_CACHE_SIZE
+    labelEn: Thumbnail Cache (MB)
+    labelZh: 缩略图缓存上限（MB）
+    required: false
+    rule: paramInt
+    type: number
+  - default: '2'
+    edit: true
+    envKey: IMMICH_WORKER_THREADS
+    labelEn: Worker Threads
+    labelZh: 并行任务线程数
+    required: false
+    rule: paramInt
+    type: number
+  - default: '1'
+    edit: true
+    envKey: ML_WORKERS
+    labelEn: ML Worker Processes
+    labelZh: ML Worker 进程数
+    required: false
+    rule: paramInt
+    type: number
+  - default: int8
+    edit: true
+    envKey: ML_MODEL_PRECISION
+    labelEn: ML Model Precision
+    labelZh: ML 模型精度
+    required: false
     rule: paramSelect
     type: select
     values:
-    - label: SSD (--data-checksums, 推荐)
-      value: --data-checksums
-    - label: HDD (--no-data-checksums, 仅机械盘)
-      value: --no-data-checksums
+    - label: int8（省 CPU，推荐）
+      value: int8
+    - label: fp16（平衡）
+      value: fp16
+    - label: fp32（高精度）
+      value: fp32
+name: immich
+title: Immich 照片视频管理
+description: Google Photos 自托管替代品，ML 人脸/物体识别。

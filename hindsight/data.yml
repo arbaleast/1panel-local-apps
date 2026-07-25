@@ -137,3 +137,6 @@ additionalProperties:
     labelZh: Embeddings 模型
     required: false
     type: text
+name: hindsight
+title: Hindsight 长期记忆系统
+description: Vectorize.io Agent 记忆系统：retain/recall/reflect，跨会话持久化事实。

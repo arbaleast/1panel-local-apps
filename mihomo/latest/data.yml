@@ -1,0 +1,361 @@
+name: Mihomo (glash)
+title: Mihomo (Clash Meta) 网络代理 — glash 镜像
+description:
+  zh: 基于 gangz1o/glash 镜像（Mihomo 内核 + MetacubexD Dashboard + 订阅管理）。支持 HTTP/SOCKS/混合代理、TUN 透明代理、定时自动更新订阅。
+  en: 'Wraps gangz1o/glash: Mihomo kernel + MetacubexD Dashboard + built-in subscription manager. HTTP/SOCKS/mixed proxy, optional TUN mode, scheduled subscription auto-update.'
+  ja: 'gangz1o/glash イメージベース: Mihomo カーネル + MetacubexD Dashboard + サブスク管理。HTTP/SOCKS 代理、TUN 透明代理、サブスク自動更新。'
+  ko: 'gangz1o/glash 이미지 기반: Mihomo 커널 + MetacubexD Dashboard + 구독 관리. HTTP/SOCKS 프록시, TUN 투명 프록시, 구독 자동 업데이트.'
+  ru: 'На базе gangz1o/glash: ядро Mihomo + MetacubexD Dashboard + менеджер подписок. HTTP/SOCKS прокси, опционально TUN, автообновление подписки.'
+  ms: 'Berdasarkan imej gangz1o/glash: kernel Mihomo + Dashboard MetacubexD + pengurus langganan.'
+  pt-br: 'Baseado na imagem gangz1o/glash: kernel Mihomo + Dashboard MetacubexD + gerenciador de assinaturas.'
+  es-es: 'Basado en la imagen gangz1o/glash: núcleo Mihomo + Dashboard MetacubexD + gestor de suscripciones.'
+  tr: 'gangz1o/glash imajı temelli: Mihomo çekirdeği + MetacubexD Dashboard + abonelik yöneticisi.'
+  zh-Hant: 基於 gangz1o/glash 映像：Mihomo 核心 + MetacubexD Dashboard + 訂閱管理。支援 HTTP/SOCKS 代理、TUN 透明代理、定時自動更新訂閱。
+additionalProperties:
+  key: mihomo
+  name: Mihomo
+  tags:
+  - Network
+  - Proxy
+  description:
+    zh: 基于 gangz1o/glash 镜像（Mihomo 内核 + MetacubexD Dashboard + 订阅管理）。支持 HTTP/SOCKS/混合代理、TUN 透明代理、定时自动更新订阅。
+    en: 'Wraps gangz1o/glash: Mihomo kernel + MetacubexD Dashboard + built-in subscription manager. HTTP/SOCKS/mixed proxy, optional TUN mode, scheduled subscription auto-update.'
+    ja: 'gangz1o/glash イメージベース: Mihomo カーネル + MetacubexD Dashboard + サブスク管理。HTTP/SOCKS 代理、TUN 透明代理、サブスク自動更新。'
+    ko: 'gangz1o/glash 이미지 기반: Mihomo 커널 + MetacubexD Dashboard + 구독 관리. HTTP/SOCKS 프록시, TUN 투명 프록시, 구독 자동 업데이트.'
+    ru: 'На базе gangz1o/glash: ядро Mihomo + MetacubexD Dashboard + менеджер подписок. HTTP/SOCKS прокси, опционально TUN, автообновление подписки.'
+    ms: 'Berdasarkan imej gangz1o/glash: kernel Mihomo + Dashboard MetacubexD + pengurus langganan.'
+    pt-br: 'Baseado na imagem gangz1o/glash: kernel Mihomo + Dashboard MetacubexD + gerenciador de assinaturas.'
+    es-es: 'Basado en la imagen gangz1o/glash: núcleo Mihomo + Dashboard MetacubexD + gestor de suscripciones.'
+    tr: 'gangz1o/glash imajı temelli: Mihomo çekirdeği + MetacubexD Dashboard + abonelik yöneticisi.'
+    zh-Hant: 基於 gangz1o/glash 映像：Mihomo 核心 + MetacubexD Dashboard + 訂閱管理。支援 HTTP/SOCKS 代理、TUN 透明代理、定時自動更新訂閱。
+  shortDescZh: Mihomo 代理 + Dashboard + 订阅管理
+  shortDescEn: Mihomo proxy + Dashboard + subscription manager
+  type: tool
+  architectures:
+  - amd64
+  - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/gangz1o/clash4docker
+  github: https://github.com/gangz1o/clash4docker
+  document: https://github.com/gangz1o/clash4docker#readme
+  formFields:
+  - default: gangz1o/glash:latest
+    edit: true
+    envKey: IMAGE
+    labelEn: Image
+    labelZh: 镜像
+    label:
+      en: Image
+      zh: 镜像
+      ja: イメージ
+      ko: 이미지
+      ru: Образ
+      ms: Imej
+      pt-br: Imagem
+      es-es: Imagen
+      tr: İmaj
+      zh-Hant: 映像
+    required: true
+    rule: paramImageTag
+    type: text
+  - default: 7890
+    edit: true
+    envKey: PANEL_APP_PORT_HTTP
+    labelEn: HTTP Proxy Port
+    labelZh: HTTP 代理端口
+    label:
+      en: HTTP Proxy Port
+      zh: HTTP 代理端口
+      ja: HTTP プロキシポート
+      ko: HTTP 프록시 포트
+      ru: Порт HTTP-прокси
+      ms: Port Proksi HTTP
+      pt-br: Porta Proxy HTTP
+      es-es: Puerto Proxy HTTP
+      tr: HTTP Proxy Portu
+      zh-Hant: HTTP 代理連接埠
+    required: true
+    rule: paramPort
+    type: number
+  - default: 7891
+    edit: true
+    envKey: PANEL_APP_PORT_SOCKS
+    labelEn: SOCKS5 Proxy Port
+    labelZh: SOCKS5 代理端口
+    label:
+      en: SOCKS5 Proxy Port
+      zh: SOCKS5 代理端口
+      ja: SOCKS5 プロキシポート
+      ko: SOCKS5 프록시 포트
+      ru: Порт SOCKS5-прокси
+      ms: Port Proksi SOCKS5
+      pt-br: Porta Proxy SOCKS5
+      es-es: Puerto Proxy SOCKS5
+      tr: SOCKS5 Proxy Portu
+      zh-Hant: SOCKS5 代理連接埠
+    required: true
+    rule: paramPort
+    type: number
+  - default: 7892
+    edit: true
+    envKey: PANEL_APP_PORT_MIXED
+    labelEn: Mixed Proxy Port
+    labelZh: 混合代理端口
+    label:
+      en: Mixed Proxy Port
+      zh: 混合代理端口
+      ja: 混合プロキシポート
+      ko: 혼합 프록시 포트
+      ru: Смешанный прокси-порт
+      ms: Port Proksi Campuran
+      pt-br: Porta Proxy Mista
+      es-es: Puerto Proxy Mixto
+      tr: Karma Proxy Portu
+      zh-Hant: 混合代理連接埠
+    required: true
+    rule: paramPort
+    type: number
+  - default: 9090
+    edit: true
+    envKey: PANEL_APP_PORT_CONTROLLER
+    labelEn: Controller Port
+    labelZh: Controller 端口
+    label:
+      en: Controller Port
+      zh: Controller 端口
+      ja: コントローラーポート
+      ko: 컨트롤러 포트
+      ru: Порт контроллера
+      ms: Port Pengawal
+      pt-br: Porta Controller
+      es-es: Puerto Controller
+      tr: Controller Portu
+      zh-Hant: Controller 連接埠
+    required: true
+    rule: paramPort
+    type: number
+  - default: ./data
+    edit: true
+    envKey: DATA_PATH
+    labelEn: Config folder path
+    labelZh: 配置文件夹路径
+    label:
+      en: Config folder path
+      zh: 配置文件夹路径
+      ja: 設定フォルダパス
+      ko: 설정 폴더 경로
+      ru: Путь к папке конфигурации
+      ms: Laluan folder konfigurasi
+      pt-br: Caminho da pasta de configuração
+      es-es: Ruta carpeta configuración
+      tr: Yapılandırma klasör yolu
+      zh-Hant: 設定資料夾路徑
+    required: true
+    rule: paramPath
+    type: text
+  - default: Asia/Shanghai
+    edit: true
+    envKey: TZ
+    labelEn: Timezone
+    labelZh: 时区
+    label:
+      en: Timezone
+      zh: 时区
+      ja: タイムゾーン
+      ko: 시간대
+      ru: Часовой пояс
+      ms: Zon waktu
+      pt-br: Fuso horário
+      es-es: Zona horaria
+      tr: Saat dilimi
+      zh-Hant: 時區
+    required: true
+    type: text
+  - default: ''
+    edit: true
+    envKey: SUB_URL
+    labelEn: Subscription URL
+    labelZh: 订阅链接
+    label:
+      en: Subscription URL
+      zh: 订阅链接
+      ja: サブスクリプション URL
+      ko: 구독 URL
+      ru: URL подписки
+      ms: URL Langganan
+      pt-br: URL da assinatura
+      es-es: URL de suscripción
+      tr: Abonelik URL'si
+      zh-Hant: 訂閱連結
+    required: false
+    rule: paramCommon
+    type: text
+  - default: 0 */6 * * *
+    edit: true
+    envKey: SUB_CRON
+    labelEn: Subscription Cron
+    labelZh: 订阅定时更新 (cron)
+    label:
+      en: Subscription Cron
+      zh: 订阅定时更新 (cron)
+      ja: サブスク更新 cron
+      ko: 구독 자동 업데이트 (cron)
+      ru: Cron обновления подписки
+      ms: Cron kemas kini langganan
+      pt-br: Cron de atualização
+      es-es: Cron de actualización
+      tr: Abonelik Cronu
+      zh-Hant: 訂閱排程更新 (cron)
+    required: false
+    rule: paramCommon
+    type: text
+  - default: ''
+    edit: true
+    envKey: SECRET
+    labelEn: Dashboard Secret
+    labelZh: Dashboard 密钥
+    label:
+      en: Dashboard Secret
+      zh: Dashboard 密钥
+      ja: ダッシュボード キー
+      ko: 대시보드 비밀키
+      ru: Ключ Dashboard
+      ms: Kunci Dashboard
+      pt-br: Chave do Dashboard
+      es-es: Clave del Dashboard
+      tr: Dashboard Anahtarı
+      zh-Hant: Dashboard 密鑰
+    required: false
+    rule: paramCommon
+    type: text
+  - default: 'true'
+    edit: true
+    envKey: ALLOW_LAN
+    labelEn: Allow LAN
+    labelZh: 允许局域网访问
+    label:
+      en: Allow LAN
+      zh: 允许局域网访问
+      ja: LAN アクセスを許可
+      ko: LAN 접근 허용
+      ru: Разрешить LAN
+      ms: Benarkan LAN
+      pt-br: Permitir LAN
+      es-es: Permitir LAN
+      tr: LAN'a İzin Ver
+      zh-Hant: 允許區域網路存取
+    required: true
+    rule: paramSelect
+    type: select
+    values:
+    - label: 启用
+      value: 'true'
+    - label: 禁用
+      value: 'false'
+  - default: 'false'
+    edit: true
+    envKey: TUN_ENABLED
+    labelEn: Enable TUN
+    labelZh: 启用 TUN 模式
+    label:
+      en: Enable TUN
+      zh: 启用 TUN 模式
+      ja: TUN モード有効化
+      ko: TUN 모드 활성화
+      ru: Включить TUN
+      ms: Dayakan TUN
+      pt-br: Ativar TUN
+      es-es: Habilitar TUN
+      tr: TUN'u Etkinleştir
+      zh-Hant: 啟用 TUN 模式
+    required: true
+    rule: paramSelect
+    type: select
+    values:
+    - label: 启用
+      value: 'true'
+    - label: 禁用
+      value: 'false'
+  - default: 'false'
+    edit: true
+    envKey: DNS_OVERRIDE
+    labelEn: Override DNS
+    labelZh: 覆写 DNS
+    label:
+      en: Override DNS
+      zh: 覆写 DNS
+      ja: DNS 上書き
+      ko: DNS 덮어쓰기
+      ru: Перезаписать DNS
+      ms: Timpa DNS
+      pt-br: Sobrescrever DNS
+      es-es: Sobrescribir DNS
+      tr: DNS'i Geçersiz Kıl
+      zh-Hant: 覆寫 DNS
+    required: true
+    rule: paramSelect
+    type: select
+    values:
+    - label: 启用
+      value: 'true'
+    - label: 禁用
+      value: 'false'
+  - default: ''
+    edit: true
+    envKey: AUTHENTICATION
+    labelEn: HTTP Auth
+    labelZh: HTTP 基本认证
+    label:
+      en: HTTP Auth
+      zh: HTTP 基本认证
+      ja: HTTP 基本認証
+      ko: HTTP 기본 인증
+      ru: HTTP базовая аутентификация
+      ms: Pengesahan HTTP asas
+      pt-br: Autenticação HTTP básica
+      es-es: Autenticación HTTP básica
+      tr: HTTP Temel Kimlik Doğrulama
+      zh-Hant: HTTP 基本認證
+    required: false
+    rule: paramCommon
+    type: text
+  - default: ''
+    edit: true
+    envKey: DOWNLOAD_PROXY
+    labelEn: Download Proxy
+    labelZh: 订阅下载代理
+    label:
+      en: Download Proxy
+      zh: 订阅下载代理
+      ja: ダウンロード プロキシ
+      ko: 다운로드 프록시
+      ru: Прокси для загрузки
+      ms: Proksi muat turun
+      pt-br: Proxy de download
+      es-es: Proxy de descarga
+      tr: İndirme Proxy'si
+      zh-Hant: 訂閱下載代理
+    required: false
+    rule: paramCommon
+    type: text
+  - default: clash.meta
+    edit: true
+    envKey: SUB_USER_AGENT
+    labelEn: Sub User-Agent
+    labelZh: 订阅 User-Agent
+    label:
+      en: Sub User-Agent
+      zh: 订阅 User-Agent
+      ja: サブスク User-Agent
+      ko: 구독 User-Agent
+      ru: User-Agent подписки
+      ms: User-Agent langganan
+      pt-br: User-Agent da assinatura
+      es-es: User-Agent de suscripción
+      tr: Abonelik User-Agent'ı
+      zh-Hant: 訂閱 User-Agent
+    required: false
+    rule: paramCommon
+    type: text
