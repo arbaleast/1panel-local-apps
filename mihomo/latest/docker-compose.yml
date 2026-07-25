@@ -1,7 +1,6 @@
 networks:
   1panel-network:
     external: true
-
 services:
   glash:
     container_name: ${CONTAINER_NAME}
@@ -9,27 +8,29 @@ services:
     labels:
       createdBy: Apps
     networks:
-      - 1panel-network
+      1panel-network:
+        aliases:
+        - ${CONTAINER_NAME}
     ports:
-      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:7890
-      - ${HOST_IP}:${PANEL_APP_PORT_SOCKS}:7891
-      - ${HOST_IP}:${PANEL_APP_PORT_MIXED}:7892
-      - ${HOST_IP}:${PANEL_APP_PORT_CONTROLLER}:9090
+    - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:7890
+    - ${HOST_IP}:${PANEL_APP_PORT_SOCKS}:7891
+    - ${HOST_IP}:${PANEL_APP_PORT_MIXED}:7892
+    - ${HOST_IP}:${PANEL_APP_PORT_CONTROLLER}:9090
     restart: always
     cap_add:
-      - NET_ADMIN
+    - NET_ADMIN
     devices:
-      - /dev/net/tun:/dev/net/tun
+    - /dev/net/tun:/dev/net/tun
     environment:
-      - TZ=${TZ}
-      - SUB_URL=${SUB_URL}
-      - SUB_CRON=${SUB_CRON}
-      - SECRET=${SECRET}
-      - ALLOW_LAN=${ALLOW_LAN}
-      - TUN_ENABLED=${TUN_ENABLED}
-      - DNS_OVERRIDE=${DNS_OVERRIDE}
-      - AUTHENTICATION=${AUTHENTICATION}
-      - DOWNLOAD_PROXY=${DOWNLOAD_PROXY}
-      - SUB_USER_AGENT=${SUB_USER_AGENT}
+    - TZ=${TZ}
+    - SUB_URL=${SUB_URL}
+    - SUB_CRON=${SUB_CRON}
+    - SECRET=${SECRET}
+    - ALLOW_LAN=${ALLOW_LAN}
+    - TUN_ENABLED=${TUN_ENABLED}
+    - DNS_OVERRIDE=${DNS_OVERRIDE}
+    - AUTHENTICATION=${AUTHENTICATION}
+    - DOWNLOAD_PROXY=${DOWNLOAD_PROXY}
+    - SUB_USER_AGENT=${SUB_USER_AGENT}
     volumes:
-      - ${DATA_PATH}:/root/.config/mihomo
+    - ${DATA_PATH}:/root/.config/mihomo

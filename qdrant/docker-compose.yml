@@ -15,7 +15,9 @@ services:
         labels:
             createdBy: Apps
         networks:
-            - 1panel-network
+            1panel-network:
+                aliases:
+                    - ${CONTAINER_NAME}
         ports:
             - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:6333
             - ${HOST_IP}:${PANEL_APP_PORT_GRPC}:6334
