@@ -27,7 +27,7 @@ services:
       - CMD-SHELL
       - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" || exit 1
       timeout: 5s
-    image: pgvector/pgvector:pg18
+    image: pgvector/pgvector:0.8.5-pg18-trixie
     labels:
       createdBy: Apps
     networks:

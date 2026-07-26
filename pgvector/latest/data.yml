@@ -1,47 +1,47 @@
 version: latest
 additionalProperties:
   formFields:
-  - default: '5432'
-    edit: true
-    envKey: PANEL_APP_PORT_TCP
-    labelEn: Service Port
-    labelZh: 服务端口
-    required: true
-    type: number
-  - default: pgvector
-    edit: true
-    envKey: PANEL_DB_USER
-    labelEn: Database User
-    labelZh: 数据库用户名
-    required: true
-    type: text
-  - default: pgvector
-    edit: true
-    envKey: PANEL_DB_USER_PASSWORD
-    labelEn: Database Password
-    labelZh: 数据库密码
-    required: true
-    type: password
-  - default: pgvector
-    edit: true
-    envKey: PANEL_DB_NAME
-    labelEn: Database Name
-    labelZh: 数据库名称
-    required: true
-    type: text
-  - default: Asia/Shanghai
-    edit: true
-    envKey: TZ
-    labelEn: Time Zone
-    labelZh: 时区
-    required: false
-    type: text
+    - default: "5432"
+      edit: true
+      envKey: PANEL_APP_PORT_TCP
+      labelEn: Service Port
+      labelZh: 服务端口
+      required: true
+      type: number
+    - default: pgvector
+      edit: true
+      envKey: PANEL_DB_USER
+      labelEn: Database User
+      labelZh: 数据库用户名
+      required: true
+      type: text
+    - default: pgvector
+      edit: true
+      envKey: PANEL_DB_USER_PASSWORD
+      labelEn: Database Password
+      labelZh: 数据库密码
+      required: true
+      type: password
+    - default: pgvector
+      edit: true
+      envKey: PANEL_DB_NAME
+      labelEn: Database Name
+      labelZh: 数据库名称
+      required: true
+      type: text
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Time Zone
+      labelZh: 时区
+      required: false
+      type: text
   key: pgvector
   name: pgvector
   tags:
-  - database
-  - vector
-  - ai
+    - database
+    - vector
+    - ai
   shortDescZh: PostgreSQL + pgvector 向量搜索
   shortDescEn: PostgreSQL + pgvector 向量搜索
   description:
