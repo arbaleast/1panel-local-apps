@@ -16,7 +16,7 @@ services:
     - API_KEY=${API_KEY}
     - API_URL=${API_URL}
     - SIMILARITY_THRESHOLD=${SIMILARITY_THRESHOLD}
-    image: itzcrazykns/perplexica:latest
+    image: itzcrazykns1337/vane:latest
     labels:
       createdBy: Apps
     networks:
