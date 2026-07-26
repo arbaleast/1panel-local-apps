@@ -1,0 +1,34 @@
+services:
+  anythingllm:
+    container_name: ${CONTAINER_NAME}
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    image: ${IMAGE}
+    restart: always
+    networks:
+      - 1panel-network
+    ports:
+      - "${HOST_IP}:${PANEL_APP_PORT_HTTP}:${SERVER_PORT}"
+    environment:
+      - STORAGE_DIR=${STORAGE_DIR}
+      - SERVER_PORT=${SERVER_PORT}
+      - DISABLE_TELEMETRY=${DISABLE_TELEMETRY}
+      - JWT_SECRET=${JWT_SECRET}
+      - ANYTHING_LLM_RAG_API_URL=${ANYTHING_LLM_RAG_API_URL}
+      - TZ=${TZ}
+    volumes:
+      - ./data/storage:/app/server/storage
+      - ./data/.env:/app/server/.env
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+    labels:
+      createdBy: Apps
+
+networks:
+  1panel-network:
+    external: true

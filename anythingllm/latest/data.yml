@@ -1,0 +1,169 @@
+name: AnythingLLM
+title: AnythingLLM — 本地 AI 文档问答与 RAG 平台
+description:
+  zh: 本地化 AI 文档问答与 RAG 一体化平台，支持多用户工作区、智能体与多种大模型对接。
+  en: All-in-one AI application for local document Q&A, RAG, agents and more.
+additionalProperties:
+  key: anythingllm
+  name: anythingllm
+  tags:
+  - AI
+  - RAG
+  - LLM
+  shortDescZh: 本地化 AI 文档问答与 RAG 一体化平台
+  shortDescEn: All-in-one AI document Q&A and RAG platform
+  description:
+    zh: 本地化 AI 文档问答与 RAG 一体化平台，支持多用户工作区、智能体与多种大模型对接。
+    en: All-in-one AI application for local document Q&A, RAG, agents and more.
+    zh-Hant: 本地化 AI 文件問答與 RAG 一體化平台，支援多用戶工作區與多種大模型對接。
+    ja: ローカル文書 Q&A と RAG を統合した AI プラットフォーム。
+    ko: 로컬 문서 Q&A 및 RAG 통합 AI 플랫폼.
+    ru: Локальная AI-платформа для Q&A по документам и RAG.
+    ms: Platform AI setempat untuk soal jawab dokumen dan RAG.
+    pt-br: Plataforma IA local para Q&A de documentos e RAG.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://anythingllm.com/
+  github: https://github.com/Mintplex-Labs/anything-llm
+  document: https://docs.anythingllm.com/
+  formFields:
+  - default: mintplexlabs/anythingllm:latest
+    edit: true
+    envKey: IMAGE
+    labelEn: Docker Image
+    labelZh: Docker 镜像
+    label:
+      en: Docker Image
+      zh: Docker 镜像
+      zh-Hant: Docker 鏡像
+      ja: Docker イメージ
+      ko: Docker 이미지
+      ru: Docker образ
+      ms: Imej Docker
+      pt-br: Imagem Docker
+    required: true
+    type: text
+    rule: paramImageTag
+  - default: '3001'
+    edit: true
+    envKey: PANEL_APP_PORT_HTTP
+    labelEn: Host Web Port
+    labelZh: 宿主机端口
+    label:
+      en: Host Web Port
+      zh: 宿主机端口
+      zh-Hant: 主機埠
+      ja: ホスト側ポート
+      ko: 호스트 포트
+      ru: Порт на хосте
+      ms: Port hos
+      pt-br: Porta no host
+    required: true
+    type: number
+    rule: paramPort
+  - default: /app/server/storage
+    edit: true
+    envKey: STORAGE_DIR
+    labelEn: Storage Directory
+    labelZh: 持久化存储目录
+    label:
+      en: Storage Directory
+      zh: 持久化存储目录
+      zh-Hant: 持久化儲存目錄
+      ja: ストレージディレクトリ
+      ko: 저장 디렉토리
+      ru: Каталог хранения
+      ms: Direktori storan
+      pt-br: Diretório de armazenamento
+    required: true
+    type: text
+    rule: paramPath
+  - default: ''
+    edit: true
+    envKey: JWT_SECRET
+    labelEn: JWT Secret
+    labelZh: JWT 认证密钥
+    label:
+      en: JWT Secret
+      zh: JWT 认证密钥
+      zh-Hant: JWT 認證密鑰
+      ja: JWT シークレット
+      ko: JWT 시크릿
+      ru: JWT секрет
+      ms: Rahsia JWT
+      pt-br: Segredo JWT
+    required: true
+    type: password
+  - default: 'true'
+    edit: true
+    envKey: DISABLE_TELEMETRY
+    labelEn: Disable Telemetry
+    labelZh: 禁用遥测
+    label:
+      en: Disable Telemetry
+      zh: 禁用遥测
+      zh-Hant: 停用遙測
+      ja: テレメトリを無効化
+      ko: 원격 측정 비활성화
+      ru: Отключить телеметрию
+      ms: Lumpuhkan telemetri
+      pt-br: Desativar telemetria
+    required: true
+    type: select
+    rule: paramSelect
+    values:
+    - label: 启用
+      value: 'false'
+    - label: 禁用
+      value: 'true'
+  - default: '3001'
+    edit: true
+    envKey: SERVER_PORT
+    labelEn: Server Port (Container)
+    labelZh: 容器内服务端口
+    label:
+      en: Server Port (Container)
+      zh: 容器内服务端口
+      zh-Hant: 容器內服務埠
+      ja: サーバーポート（コンテナ内）
+      ko: 서버 포트 (컨테이너 내)
+      ru: Порт сервера (контейнер)
+      ms: Port pelayan (bekas)
+      pt-br: Porta do servidor (contêiner)
+    required: false
+    type: text
+    hidden: true
+  - default: ''
+    edit: true
+    envKey: ANYTHING_LLM_RAG_API_URL
+    labelEn: RAG API URL (optional)
+    labelZh: RAG API 地址（可选）
+    label:
+      en: RAG API URL (optional)
+      zh: RAG API 地址（可选）
+      zh-Hant: RAG API 地址（可選）
+      ja: RAG API URL（オプション）
+      ko: RAG API URL (선택)
+      ru: URL RAG API (необязательно)
+      ms: URL API RAG (pilihan)
+      pt-br: URL da API RAG (opcional)
+    required: false
+    type: text
+  - default: Asia/Shanghai
+    edit: true
+    envKey: TZ
+    labelEn: Timezone
+    labelZh: 时区
+    label:
+      en: Timezone
+      zh: 时区
+      zh-Hant: 時區
+      ja: タイムゾーン
+      ko: 시간대
+      ru: Часовой пояс
+      ms: Zon waktu
+      pt-br: Fuso horário
+    required: true
+    type: text

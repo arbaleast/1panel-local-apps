@@ -7,6 +7,7 @@
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
 | anirss | 动漫 RSS | latest |
+| anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | latest |
 | firecrawl | 网页爬虫 | latest |
 | handbrake | 视频转码 | latest |
 | hindsight | AI 记忆系统 | latest |

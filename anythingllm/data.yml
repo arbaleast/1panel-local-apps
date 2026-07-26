@@ -1,0 +1,30 @@
+name: AnythingLLM
+title: AnythingLLM — 本地 AI 文档问答与 RAG 平台
+description:
+  zh: 本地化 AI 文档问答与 RAG 一体化平台，支持多用户工作区、智能体与多种大模型对接。
+  en: All-in-one AI application for local document Q&A, RAG, agents and more.
+additionalProperties:
+  key: anythingllm
+  name: anythingllm
+  tags:
+    - AI
+    - RAG
+    - LLM
+  shortDescZh: 本地化 AI 文档问答与 RAG 一体化平台
+  shortDescEn: All-in-one AI document Q&A and RAG platform
+  description:
+    zh: 本地化 AI 文档问答与 RAG 一体化平台，支持多用户工作区、智能体与多种大模型对接。
+    en: All-in-one AI application for local document Q&A, RAG, agents and more.
+    zh-Hant: 本地化 AI 文件問答與 RAG 一體化平台，支援多用戶工作區與多種大模型對接。
+    ja: ローカル文書 Q&A と RAG を統合した AI プラットフォーム。
+    ko: 로컬 문서 Q&A 및 RAG 통합 AI 플랫폼.
+    ru: Локальная AI-платформа для Q&A по документам и RAG.
+    ms: Platform AI setempat untuk soal jawab dokumen dan RAG.
+    pt-br: Plataforma IA local para Q&A de documentos e RAG.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://anythingllm.com/
+  github: https://github.com/Mintplex-Labs/anything-llm
+  document: https://docs.anythingllm.com/
