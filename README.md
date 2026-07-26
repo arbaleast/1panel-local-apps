@@ -6,22 +6,22 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS 订阅 | latest |
-| firecrawl | 网页爬虫引擎 | latest |
-| handbrake-linuxserver | 视频转码工具 | latest |
-| hindsight | AI 记忆系统 | 0.8.4 |
-| immich | 照片管理 | 3.0.3 |
+| anirss | 动漫 RSS | latest |
+| firecrawl | 网页爬虫 | latest |
+| handbrake | 视频转码 | latest |
+| hindsight | AI 记忆系统 | latest |
+| immich | 照片管理 | latest |
 | jellyfin | 媒体服务器 | 10.11.11 |
-| llamaindex | LLM 知识引擎 | latest |
-| mihomo | 代理规则工具 | latest |
+| llamaindex | LLM 数据框架 | latest |
+| mihomo | 代理工具 | latest |
 | moviepilot | 影视自动化 | latest |
+| perplexica | AI 问答引擎（原 Perplexica） | latest |
 | pgvector | 向量数据库 | latest |
 | qdrant | 向量搜索引擎 | latest |
 | searxng | 隐私搜索引擎 | latest |
 | syncthing | 文件同步 | latest |
 | traefik | 反向代理 | latest |
-| vane | AI 问答引擎 | latest |
-| zashboard | 面板管理工具 | latest |
+| zashboard | Mihomo 面板 | latest |
 
 ## 快速开始
 
