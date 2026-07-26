@@ -1,7 +1,0 @@
-services:
-  zashboard:
-    image: ghcr.io/zephyruso/zashboard:latest
-    container_name: zashboard
-    restart: unless-stopped
-    ports:
-      - "${SERVICE_HOST}:${SERVICE_PORT}:80"
