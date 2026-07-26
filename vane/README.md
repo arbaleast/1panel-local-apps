@@ -1,6 +1,8 @@
-# Perplexica AI 搜索引擎
+# Vane AI 问答引擎
 
-开源 AI 搜索引擎，类 Perplexity 的开源替代品。支持 OpenAI、Ollama、Groq、Anthropic、OpenRouter、Gemini、DeepSeek 等多种 AI 提供商。
+Vane 是一款 AI 驱动的问答引擎，支持 OpenAI、Ollama、Groq、Anthropic、OpenRouter、Gemini、DeepSeek 等多种 AI 提供商。
+
+> ⚠️ 本项目原名 Perplexica，已于 2026 年由作者改名为 Vane。Docker 镜像已迁移至 `itzcrazykns1337/vane`。
 
 ## 访问
 
@@ -65,3 +67,11 @@
 
 - 端口变更会影响反向代理配置
 - 使用 Ollama 时需通过 `host.docker.internal` 访问宿主机上的 Ollama 服务
+
+## 迁移说明
+
+从旧版 Perplexica 升级到 Vane 时，需要在 1Panel 中**重新部署**应用（不能原地升级）。数据目录 `./data/` 中的数据库可保留，但容器配置需要重新生成以匹配新的镜像地址。
+
+## 已知问题
+
+- ⚠️ 官方 Vane logo 暂未抓取（上游仓库中未找到对应资源），当前仍为旧品牌图标，待后续更新。

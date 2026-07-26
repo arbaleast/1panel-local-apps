@@ -42,4 +42,9 @@ aliases:
     desc: 反向代理
   zashboard:
     desc: Mihomo 面板
+  vane:
+    desc: AI 问答引擎
+  perplexica:  # 兼容旧名（已重命名为 Vane）
+    dir: vane
+    desc: AI 问答引擎（原 Perplexica）
   # qbittorrent: 故意省略，让 sync-readme 通过遍历根目录自动跳过（无该目录）

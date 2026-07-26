@@ -16,7 +16,8 @@ services:
     - API_KEY=${API_KEY}
     - API_URL=${API_URL}
     - SIMILARITY_THRESHOLD=${SIMILARITY_THRESHOLD}
-    image: itzcrazykns1337/vane:latest
+    - SEARXNG_API_URL=${SEARXNG_API_URL}
+    image: itzcrazykns1337/vane:slim-v1.12.2
     labels:
       createdBy: Apps
     networks:

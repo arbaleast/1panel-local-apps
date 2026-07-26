@@ -20,6 +20,7 @@
 | searxng | 隐私搜索引擎 | latest |
 | syncthing | 文件同步 | latest |
 | traefik | 反向代理 | latest |
+| vane | AI 问答引擎 | latest |
 | zashboard | 面板管理工具 | latest |
 
 ## 快速开始

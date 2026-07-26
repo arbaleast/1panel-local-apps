@@ -1,0 +1,17 @@
+additionalProperties:
+  key: vane  # 重命名：perplexica -> vane
+  name: vane  # 重命名：perplexica -> vane
+  tags:
+  - Local
+  shortDescZh: Vane AI 问答引擎
+  shortDescEn: Vane AI Answering Engine
+  description:
+    zh: Vane 是一款 AI 驱动的问答引擎（原名 Perplexica），支持多种 AI 提供商与自定义搜索源。
+    en: Vane is an AI-powered answering engine (formerly Perplexica), supporting multiple AI providers and custom sources.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/ItzCrazyKns/Vane
+  github: https://github.com/ItzCrazyKns/Vane
+  document: https://github.com/ItzCrazyKns/Vane/blob/main/README.md
