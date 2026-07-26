@@ -1,0 +1,8 @@
+{
+  "name": "1panel-local-apps",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

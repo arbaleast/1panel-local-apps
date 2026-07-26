@@ -12,3 +12,6 @@ Thumbs.db
 # Temporary
 *.tmp
 *.bak
+
+# Node
+node_modules/
