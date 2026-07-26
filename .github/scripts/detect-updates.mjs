@@ -259,6 +259,20 @@ async function processApp(appName) {
   }
   newData = serializeYaml(dataObj);
 
+  // 确定新版本目录名（取镜像 tag 作为版本标识）
+  const newVersionDir = maxTo;
+
+  // 1. 创建新版本目录（与 latest 不同时）
+  if (newVersionDir !== versionDir) {
+    const newDataObj = JSON.parse(JSON.stringify(dataObj)); // 深拷贝
+    newDataObj.version = newVersionDir;
+    const newVerData = serializeYaml(newDataObj);
+    changes.push({ path: `${appName}/${newVersionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
+    changes.push({ path: `${appName}/${newVersionDir}/data.yml`, content: newVerData, to: maxTo });
+    log(appName, `创建新版本目录 ${newVersionDir}/`);
+  }
+
+  // 2. 更新 latest 目录（始终同步）
   changes.push({ path: `${appName}/${versionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
   changes.push({ path: `${appName}/${versionDir}/data.yml`, content: newData, to: maxTo });
 
