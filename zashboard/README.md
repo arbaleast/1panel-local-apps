@@ -1,20 +1,19 @@
-# Ani-RSS 自动追番订阅
+# zashboard Clash / sing-box 面板
 
-基于 RSS 的自动追番工具，按番剧更新自动下载到 qBittorrent。
+Clash / sing-box 代理面板，连接 mihomo 或 sing-box 后端 API，提供节点管理、流量统计和速度测试。
 
 ## 访问
-- Web UI: http://192.168.98.246:27789
 
-## 功能
-- 按番剧 RSS 自动检测更新
-- 自动推送到 qBittorrent 下载
-- 自动整理到媒体库目录
-- Web UI 手动添加/管理订阅
+- Web UI: http://192.168.98.246:8080
 
-## 数据
-- 配置: ./data/config
-- 媒体: ./data/media
+## 首次配置
 
-## 关联
-- qBittorrent (anirss 添加任务 → qB 下载)
-- MoviePilot (媒体库整理)
+首次打开会引导填入后端地址：
+- 后端地址：`http://192.168.98.1:9090`（mihomo 监听地址）
+- 密钥：mihomo 配置中的 `secret` 字段
+
+## 用途
+
+- 可视化管理 Clash / sing-box 代理节点
+- 查看流量和连接状态
+- 速度测试和延迟测试

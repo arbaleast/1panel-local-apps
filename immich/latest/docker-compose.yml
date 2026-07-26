@@ -4,8 +4,6 @@ networks:
 services:
     immich-machine-learning:
         container_name: ${CONTAINER_NAME}-ml
-        depends_on:
-            - immich-server
         environment:
             - TZ=${TZ}
             - MACHINE_LEARNING_URL=http://immich-machine-learning:3003
@@ -13,7 +11,7 @@ services:
             - MACHINE_LEARNING_MODEL_PRECISION=${ML_MODEL_PRECISION}
         healthcheck:
             disable: false
-        image: ghcr.io/immich-app/immich-machine-learning:v${APP_VERSION}
+        image: ghcr.io/immich-app/immich-machine-learning:${APP_VERSION}
         labels:
             createdBy: Apps
         networks:
@@ -23,9 +21,6 @@ services:
         volumes:
             - ${MODEL_CACHE_PATH}:/cache
     immich-server:
-        container_name: ${CONTAINER_NAME}
-        depends_on:
-            - immich-machine-learning
         deploy:
             resources:
                 limits:
@@ -40,13 +35,14 @@ services:
             - DB_PASSWORD=${DB_PASSWORD}
             - REDIS_HOSTNAME=${REDIS_HOSTNAME}
             - REDIS_PORT=6379
+            - REDIS_PASSWORD=${REDIS_PASSWORD}
             - TRANSFORMATIONS_MAX_CONCURRENCY=${TRANSFORMATIONS_MAX_CONCURRENCY}
             - OCR_LANGUAGES=${OCR_LANGUAGES}
             - MAX_CACHE_SIZE=${MAX_CACHE_SIZE}
             - IMMICH_WORKER_THREADS=${IMMICH_WORKER_THREADS}
         healthcheck:
             disable: false
-        image: ghcr.io/immich-app/immich-server:v${APP_VERSION}
+        image: ghcr.io/immich-app/immich-server:${APP_VERSION}
         labels:
             createdBy: Apps
         networks:

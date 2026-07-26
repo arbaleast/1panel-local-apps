@@ -1,58 +1,37 @@
+name: zashboard
+title: zashboard — Clash / sing-box 面板
+description:
+  zh: Clash / sing-box 代理面板，连接 mihomo 或 sing-box 后端 API，提供节点管理、流量统计和速度测试。
+  en: Clash / sing-box dashboard panel, connects to mihomo or sing-box backend API
+    for node management, traffic stats and speedtest.
 additionalProperties:
   key: zashboard
   name: zashboard
   tags:
-    - Tool
-  shortDescZh: Zashboard 监控仪表盘
-  shortDescEn: Zashboard monitoring dashboard
+  - network
+  - proxy
+  shortDescZh: Clash / sing-box 代理面板
+  shortDescEn: Clash / sing-box dashboard
   description:
-    zh: Zashboard — 自托管监控仪表盘，支持多节点状态展示。
-    en: Zashboard — self-hosted monitoring dashboard with multi-node status display.
+    zh: Clash / sing-box 代理面板，连接 mihomo 或 sing-box 后端 API，提供节点管理、流量统计和速度测试。
+    en: Clash / sing-box dashboard panel, connects to mihomo or sing-box backend API
+      for node management, traffic stats and speedtest.
   type: tool
   crossVersionUpdate: true
   limit: 0
   recommend: 0
-  website: https://github.com/kashinoleg/zashboard
-  github: https://github.com/kashinoleg/zashboard
+  website: https://github.com/Zephyruso/zashboard
+  github: https://github.com/Zephyruso/zashboard
   formFields:
-    - default: ./data
-      edit: true
-      envKey: DATA_PATH
-      labelEn: Data Path
-      labelZh: 数据路径
-      label:
-        en: Data Path
-        zh: 数据路径
-        zh-Hant: 數據路徑
-        ja: データパス
-        ko: 데이터 경로
-        ru: Путь к данным
-        ms: Laluan data
-        pt-br: Caminho dos dados
-        es-es: Ruta de datos
-        tr: Veri yolu
-      required: true
-      rule: paramPath
-      type: text
-    - default: "8080"
-      edit: true
-      envKey: PANEL_APP_PORT_HTTP
-      labelEn: HTTP Port
-      labelZh: HTTP 端口
-      label:
-        en: HTTP Port
-        zh: HTTP 端口
-        zh-Hant: HTTP 連接埠
-        ja: HTTP ポート
-        ko: HTTP 포트
-        ru: HTTP-порт
-        ms: Port HTTP
-        pt-br: Porta HTTP
-        es-es: Puerto HTTP
-        tr: HTTP Bağlantı Noktası
-      required: true
-      rule: paramPort
-      type: number
-name: zashboard
-title: Zashboard 监控仪表盘
-description: 自托管监控仪表盘。
+  - envKey: SERVICE_HOST
+    labelZh: 服务监听地址
+    labelEn: Service Host
+    default: 0.0.0.0
+    required: true
+    type: text
+  - envKey: SERVICE_PORT
+    labelZh: 服务监听端口
+    labelEn: Service Port
+    default: '8083'
+    required: true
+    type: text

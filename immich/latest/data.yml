@@ -26,9 +26,9 @@ additionalProperties:
     type: select
     values:
     - label: v3.0.3
-      value: 3.0.3
+      value: v3.0.3
     - label: v3.0.1
-      value: 3.0.1
+      value: v3.0.1
   - default: 2283
     edit: true
     envKey: PANEL_APP_PORT_HTTP
@@ -44,7 +44,7 @@ additionalProperties:
     labelZh: 时区
     required: false
     type: text
-  - default: ./data/upload
+  - default: /mnt/nfs/media/photos/immich/upload
     edit: true
     envKey: UPLOAD_PATH
     labelEn: Upload Storage (host path)
@@ -103,6 +103,17 @@ additionalProperties:
     label:
       en: Redis Host (1Panel container name)
       zh: Redis 服务名 (1Panel 容器名)
+    required: true
+    rule: paramCommon
+    type: text
+  - default: "1panel123"
+    edit: true
+    envKey: REDIS_PASSWORD
+    labelEn: Redis Password
+    labelZh: Redis 密码
+    label:
+      en: Redis Password
+      zh: Redis 密码
     required: true
     rule: paramCommon
     type: text

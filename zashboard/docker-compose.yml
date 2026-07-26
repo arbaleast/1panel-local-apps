@@ -1,16 +1,7 @@
-networks:
-    1panel-network:
-        external: true
 services:
-    zashboard:
-        container_name: ${CONTAINER_NAME}
-        image: ghcr.io/kashinoleg/zashboard:latest
-        labels:
-            createdBy: Apps
-        networks:
-            - 1panel-network
-        ports:
-            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:80
-        restart: always
-        volumes:
-            - ${DATA_PATH}:/app/data
+  zashboard:
+    image: ghcr.io/zephyruso/zashboard:latest
+    container_name: zashboard
+    restart: unless-stopped
+    ports:
+      - "${SERVICE_HOST}:${SERVICE_PORT}:80"

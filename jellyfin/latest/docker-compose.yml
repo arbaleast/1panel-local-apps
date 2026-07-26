@@ -2,22 +2,28 @@ networks:
     1panel-network:
         external: true
 services:
-    searxng:
+    jellyfin:
         container_name: ${CONTAINER_NAME}
         deploy:
             resources:
                 limits:
                     cpus: ${CPUS}
                     memory: ${MEMORY_LIMIT}
+        devices:
+            - /dev/dri:/dev/dri
         environment:
-            - BASE_URL=${SEARXNG_EXTERNAL_URL}
-        image: searxng/searxng:latest
+            - NVIDIA_VISIBLE_DEVICES=all
+            - NVIDIA_DRIVER_CAPABILITIES=all
+        runtime: nvidia
+        image: ${IMAGE}
         labels:
             createdBy: Apps
         networks:
             - 1panel-network
         ports:
-            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8080
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8096
         restart: always
         volumes:
-            - ${DATA_PATH}:/etc/searxng
+            - ./data/config:/config
+            - ${CACHE_FOLDER_PATH}:/cache
+            - ${MEDIA_FOLDER_PATH}:/media
