@@ -115,17 +115,56 @@ function listApps() {
     .map((d) => d.name);
 }
 
-async function processApp(appName) {
-  const appDir = path.join(APPS_DIR, appName);
-  const composePath = path.join(appDir, 'docker-compose.yml');
-  const dataPath = path.join(appDir, 'data.yml');
-
-  if (!fs.existsSync(composePath)) {
-    log(appName, '无根 compose，跳过');
+/**
+ * 在应用目录中查找包含 docker-compose.yml 的版本子目录
+ * 优先返回 latest/，否则返回版本号最大的目录
+ * @param {string} appDir - 应用完整路径
+ * @returns {string|null} 版本目录名，未找到返回 null
+ */
+function findVersionDir(appDir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(appDir, { withFileTypes: true });
+  } catch {
     return null;
   }
+  // 收集包含 docker-compose.yml 的子目录
+  const candidates = entries
+    .filter((e) => e.isDirectory() && fs.existsSync(path.join(appDir, e.name, 'docker-compose.yml')))
+    .map((e) => e.name);
+  if (candidates.length === 0) return null;
+  // 优先 latest
+  if (candidates.includes('latest')) return 'latest';
+  // 按语义化版本号排序，取最大
+  candidates.sort((a, b) => {
+    const pa = a.replace(/^v/, '').replace(/-.*$/, '').split('.').map(Number);
+    const pb = b.replace(/^v/, '').replace(/-.*$/, '').split('.').map(Number);
+    const len = Math.max(pa.length, pb.length);
+    for (let i = 0; i < len; i++) {
+      const na = pa[i] || 0;
+      const nb = pb[i] || 0;
+      if (na !== nb) return na - nb;
+    }
+    return 0;
+  });
+  return candidates[candidates.length - 1];
+}
+
+async function processApp(appName) {
+  const appDir = path.join(APPS_DIR, appName);
+
+  // 查找版本子目录（compose 在 <app>/<version>/docker-compose.yml）
+  const versionDir = findVersionDir(appDir);
+  if (!versionDir) {
+    log(appName, '无版本目录或无 compose，跳过');
+    return null;
+  }
+
+  const composePath = path.join(appDir, versionDir, 'docker-compose.yml');
+  const dataPath = path.join(appDir, versionDir, 'data.yml');
+
   if (!fs.existsSync(dataPath)) {
-    log(appName, '无根 data.yml，跳过');
+    log(appName, `${versionDir}/data.yml 不存在，跳过`);
     return null;
   }
 
@@ -220,8 +259,8 @@ async function processApp(appName) {
   }
   newData = serializeYaml(dataObj);
 
-  changes.push({ path: `${appName}/docker-compose.yml`, content: newCompose, to: maxTo });
-  changes.push({ path: `${appName}/data.yml`, content: newData, to: maxTo });
+  changes.push({ path: `${appName}/${versionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
+  changes.push({ path: `${appName}/${versionDir}/data.yml`, content: newData, to: maxTo });
 
   return { app: appName, from: minFrom, to: maxTo, services: serviceChanges, changes };
 }
@@ -238,6 +277,16 @@ async function main() {
       if (r) updates.push(r);
     } catch (e) {
       log(app, '处理失败:', e.message);
+    }
+  }
+
+  // 将检测到的变更写入磁盘（供后续 git add 提交）
+  for (const update of updates) {
+    for (const change of update.changes) {
+      const filePath = path.join(REPO_ROOT, change.path);
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.writeFileSync(filePath, change.content, 'utf8');
+      log(update.app, `写入 ${change.path}`);
     }
   }
 
