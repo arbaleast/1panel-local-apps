@@ -37,6 +37,34 @@
 | `DISABLE_TELEMETRY` | 禁用遥测数据上报 | `true` |
 | `SERVER_PORT` | 服务监听端口 | `3001` |
 | `ANYTHING_LLM_RAG_API_URL` | 外部 RAG API 地址（可选） | — |
+| `DB_DIALECT` | 数据库类型（空=SQLite、`postgres`、`mysql`） | — |
+| `DB_HOST` | 数据库地址 | — |
+| `DB_PORT` | 数据库端口 | `5432` |
+| `DB_USERNAME` | 数据库用户名 | — |
+| `DB_PASSWORD` | 数据库密码 | — |
+| `DB_NAME` | 数据库名 | `anythingllm` |
+| `DB_SSL` | 启用 SSL | `false` |
+
+## 外部数据库（可选）
+
+AnythingLLM 默认使用 SQLite 存储所有数据（位于 `./data/storage`），无需额外配置即可运行。
+
+如需切换到外部数据库，请在部署时填写以下字段：
+
+### PostgreSQL
+
+1. 将 `DB_DIALECT` 设为 `postgres`
+2. 填入 `DB_HOST`、`DB_PORT`（默认 `5432`）、`DB_USERNAME`、`DB_PASSWORD`、`DB_NAME`
+
+推荐搭配 1Panel 的 [pgvector](../pgvector/) 应用作为外部数据库。
+
+### MySQL
+
+1. 将 `DB_DIALECT` 设为 `mysql`
+2. `DB_PORT` 改为 `3306`
+3. 填入其余数据库连接信息
+
+> **提示**：所有 `DB_*` 字段全部留空时，应用将继续使用 SQLite，完全向后兼容。
 
 ## 相关链接
 

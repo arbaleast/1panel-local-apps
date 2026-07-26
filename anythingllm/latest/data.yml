@@ -167,3 +167,130 @@ additionalProperties:
       pt-br: Fuso horário
     required: true
     type: text
+  # ---- 外部数据库（可选）：留空时回退 SQLite ----
+  - default: ''
+    edit: true
+    envKey: DB_DIALECT
+    labelEn: DB Dialect
+    labelZh: 数据库类型
+    label:
+      en: DB Dialect
+      zh: 数据库类型
+      zh-Hant: 資料庫類型
+      ja: データベース方言
+      ko: DB 방언
+      ru: Тип БД
+      ms: Dialek DB
+      pt-br: Dialeto do banco de dados
+    required: false
+    type: select
+    rule: paramSelect
+    values:
+    - label: 'SQLite (默认)'
+      value: ''
+    - label: PostgreSQL
+      value: postgres
+    - label: MySQL
+      value: mysql
+  - default: ''
+    edit: true
+    envKey: DB_HOST
+    labelEn: DB Host
+    labelZh: 数据库地址
+    label:
+      en: DB Host
+      zh: 数据库地址
+      zh-Hant: 資料庫位址
+      ja: データベースホスト
+      ko: DB 호스트
+      ru: Адрес БД
+      ms: Hos DB
+      pt-br: Host do banco de dados
+    required: false
+    type: text
+  - default: '5432'
+    edit: true
+    envKey: DB_PORT
+    labelEn: DB Port
+    labelZh: 数据库端口
+    label:
+      en: DB Port
+      zh: 数据库端口
+      zh-Hant: 資料庫埠
+      ja: データベースポート
+      ko: DB 포트
+      ru: Порт БД
+      ms: Port DB
+      pt-br: Porta do banco de dados
+    required: false
+    type: number
+  - default: ''
+    edit: true
+    envKey: DB_USERNAME
+    labelEn: DB Username
+    labelZh: 数据库用户名
+    label:
+      en: DB Username
+      zh: 数据库用户名
+      zh-Hant: 資料庫使用者名稱
+      ja: データベースユーザー名
+      ko: DB 사용자 이름
+      ru: Имя пользователя БД
+      ms: Nama pengguna DB
+      pt-br: Nome de usuário do banco de dados
+    required: false
+    type: text
+  - default: ''
+    edit: true
+    envKey: DB_PASSWORD
+    labelEn: DB Password
+    labelZh: 数据库密码
+    label:
+      en: DB Password
+      zh: 数据库密码
+      zh-Hant: 資料庫密碼
+      ja: データベースパスワード
+      ko: DB 비밀번호
+      ru: Пароль БД
+      ms: Kata laluan DB
+      pt-br: Senha do banco de dados
+    required: false
+    type: password
+  - default: anythingllm
+    edit: true
+    envKey: DB_NAME
+    labelEn: DB Name
+    labelZh: 数据库名
+    label:
+      en: DB Name
+      zh: 数据库名
+      zh-Hant: 資料庫名稱
+      ja: データベース名
+      ko: DB 이름
+      ru: Имя БД
+      ms: Nama DB
+      pt-br: Nome do banco de dados
+    required: false
+    type: text
+  - default: 'false'
+    edit: true
+    envKey: DB_SSL
+    labelEn: Enable SSL
+    labelZh: 启用 SSL
+    label:
+      en: Enable SSL
+      zh: 启用 SSL
+      zh-Hant: 啟用 SSL
+      ja: SSL を有効にする
+      ko: SSL 활성화
+      ru: Включить SSL
+      ms: Aktifkan SSL
+      pt-br: Ativar SSL
+    required: false
+    type: select
+    rule: paramSelect
+    values:
+    - label: '否'
+      value: 'false'
+    - label: '是'
+      value: 'true'
