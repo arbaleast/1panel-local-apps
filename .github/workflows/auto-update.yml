@@ -37,7 +37,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # 公共仓库 GITHUB_TOKEN 无权创建 PR，需配置 PAT_TOKEN
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 1
 
       - name: Setup Node.js
