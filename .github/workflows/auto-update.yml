@@ -86,6 +86,8 @@ jobs:
         if: steps.check.outputs.has-updates == 'true'
         uses: actions/github-script@v8
         with:
+          # 公共仓库 GITHUB_TOKEN 无权创建 PR，需配置 PAT_TOKEN
+          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             const { execSync } = require('child_process');
