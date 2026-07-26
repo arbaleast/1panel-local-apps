@@ -1,0 +1,125 @@
+additionalProperties:
+  formFields:
+  - default: 3000
+    edit: true
+    envKey: PANEL_APP_PORT_HTTP
+    label:
+      en: Port
+      zh: 端口
+      zh-Hant: 埠
+      ja: ポート
+      ko: 포트
+      ru: Порт
+      ms: Port
+      pt-br: Porta
+    required: true
+    rule: paramPort
+    type: number
+  - default: openai
+    edit: true
+    envKey: AI_PROVIDER
+    label:
+      en: AI Provider
+      zh: AI 提供商
+      zh-Hant: AI 供應商
+      ja: AI プロバイダー
+      ko: AI 프로바이더
+      ru: AI провайдер
+      ms: Pembekal AI
+      pt-br: Provedor de IA
+    required: true
+    type: select
+    values:
+    - label: openai
+      value: openai
+    - label: ollama
+      value: ollama
+    - label: groq
+      value: groq
+    - label: anthropic
+      value: anthropic
+    - label: openrouter
+      value: openrouter
+    - label: gemini
+      value: gemini
+    - label: deepseek
+      value: deepseek
+    - label: lmstudio
+      value: lmstudio
+    - label: custom
+      value: custom
+  - default: gpt-4o-mini
+    edit: true
+    envKey: AI_MODEL
+    label:
+      en: AI Model
+      zh: AI 模型
+      zh-Hant: AI 模型
+      ja: AI モデル
+      ko: AI 모델
+      ru: AI модель
+      ms: Model AI
+      pt-br: Modelo de IA
+    required: true
+    type: text
+  - default: ''
+    edit: true
+    envKey: API_KEY
+    label:
+      en: API Key
+      zh: API 密钥
+      zh-Hant: API 金鑰
+      ja: API キー
+      ko: API 키
+      ru: API ключ
+      ms: Kunci API
+      pt-br: Chave de API
+    required: false
+    type: password
+  - default: ''
+    edit: true
+    envKey: API_URL
+    label:
+      en: API URL (optional)
+      zh: API 端点（可选，用于 Ollama/LMStudio/Custom）
+      zh-Hant: API 端點（選用，用於 Ollama/LMStudio/Custom）
+      ja: API URL（オプション、Ollama/LMStudio/Custom 用）
+      ko: API URL (선택, Ollama/LMStudio/Custom용)
+      ru: API URL (необязательно, для Ollama/LMStudio/Custom)
+      ms: API URL (pilihan, untuk Ollama/LMStudio/Custom)
+      pt-br: URL da API (opcional, para Ollama/LMStudio/Custom)
+    required: false
+    type: text
+  - default: 0.5
+    edit: true
+    envKey: SIMILARITY_THRESHOLD
+    label:
+      en: Similarity Threshold (optional)
+      zh: 相似度阈值（可选）
+      zh-Hant: 相似度閾值（選用）
+      ja: 類似度しきい値（オプション）
+      ko: 유사도 임계값 (선택)
+      ru: Порог схожести (необязательно)
+      ms: Ambang Keserupaan (pilihan)
+      pt-br: Limiar de similaridade (opcional)
+    required: false
+    type: text
+  key: perplexica
+  name: perplexica
+  tags:
+  - search
+  - ai
+  shortDescZh: Perplexica AI 搜索引擎
+  shortDescEn: Perplexica AI Search Engine
+  description:
+    zh: 开源 AI 搜索引擎，支持多种 AI 提供商，类 Perplexity 的开源替代品。
+    en: Open-source AI search engine with multi-provider support. An open-source alternative to Perplexity.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://perplexica.ai/
+  github: https://github.com/ItzCrazyKns/Perplexica
+name: perplexica
+title: Perplexica AI 搜索引擎
+description: 开源 AI 搜索引擎，支持多种 AI 提供商，类 Perplexity 的开源替代品。

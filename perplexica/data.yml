@@ -1,0 +1,17 @@
+additionalProperties:
+  key: perplexica
+  name: perplexica
+  tags:
+  - Local
+  shortDescZh: Perplexica AI 搜索引擎
+  shortDescEn: Perplexica AI Search Engine
+  description:
+    zh: 开源 AI 搜索引擎，支持 OpenAI、Ollama、Groq、Anthropic 等多种 AI 提供商，类 Perplexity 的开源替代品。
+    en: Open-source AI search engine supporting OpenAI, Ollama, Groq, Anthropic and more. An open-source alternative to Perplexity.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://perplexica.ai/
+  github: https://github.com/ItzCrazyKns/Perplexica
+  document: https://github.com/ItzCrazyKns/Perplexica/blob/main/README.md
