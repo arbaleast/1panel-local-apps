@@ -149,7 +149,7 @@ jobs:
             for (const f of changedFiles) {
               if (f) body += `- \`${f}\`\n`;
             }
-            body += `\n---\n🤖 由 \`.github/workflows/auto-update.yml\` 自动生成，review 后 merge。\n`;
+            body += `\n---\n🤖 由 \`.github/workflows/auto-update.yml\` 自动生成并自动合并。\n`;
 
             // 7. 开 PR
             const { data: pr } = await github.rest.pulls.create({
@@ -161,3 +161,29 @@ jobs:
               body,
             });
             core.info(`✅ PR 已开: ${pr.html_url}`);
+
+            // 8. 自动合并 PR（私人仓库无需人工 review）
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                merge_method: 'merge',
+              });
+              core.info(`✅ PR #${pr.number} 已自动合并到 main`);
+            } catch (e) {
+              core.error(`合并 PR 失败: ${e.message}`);
+              return;
+            }
+
+            // 9. 清理远程分支
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${branch}`,
+              });
+              core.info(`🗑️ 远程分支 ${branch} 已删除`);
+            } catch (e) {
+              core.warning(`删除远程分支失败（非致命）: ${e.message}`);
+            }
