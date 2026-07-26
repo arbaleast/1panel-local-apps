@@ -31,7 +31,7 @@ async function getLatestTagFromDockerHub(repo) {
   const data = await res.json();
   const tags = (data.results || []).map((r) => r.name);
   // 过滤不稳定 tag
-  const stable = tags.filter((t) => !/latest|nightly|dev|edge|alpha|beta|rc/i.test(t));
+  const stable = tags.filter((t) => !/^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/i.test(t));
   return stable[0] || null;
 }
 
@@ -48,7 +48,7 @@ async function getLatestTagFromGHCR(repo) {
   const tags = (data || [])
     .map((v) => v.metadata?.container?.tags || [])
     .flat();
-  const stable = tags.filter((t) => !/latest|nightly|dev|edge|alpha|beta|rc/i.test(t));
+  const stable = tags.filter((t) => !/^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/i.test(t));
   return stable[0] || null;
 }
 
