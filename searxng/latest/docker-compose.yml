@@ -23,3 +23,7 @@ services:
     restart: always
     volumes:
     - ${DATA_PATH}:/etc/searxng
+# 注：Redis 缓存为可选增强。若需启用，请在 1Panel 部署时将 `SEARXNG_REDIS_URL`
+# 作为「额外环境变量」手动添加，值形如 `redis://:password@host:6379/0`。
+# 留空则使用 SearXNG 默认的 filecache，无需任何额外配置。
+# 1Panel 的 formFields 中已提供 `REDIS_URL` 字段供复制使用。
