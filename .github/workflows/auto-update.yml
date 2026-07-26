@@ -127,8 +127,8 @@ jobs:
               { stdio: 'inherit' }
             );
 
-            // 5. 推送分支到远程
-            execSync(`git push origin ${branch}`, { stdio: 'inherit' });
+            // 5. 推送分支到远程（force: 每日分支可安全覆盖）
+            execSync(`git push --force origin ${branch}`, { stdio: 'inherit' });
 
             // 6. 生成 PR body
             const updates = JSON.parse(fs.readFileSync('updates.json', 'utf8')).updates;
