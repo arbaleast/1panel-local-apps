@@ -1,0 +1,16 @@
+additionalProperties:
+  key: zashboard
+  name: zashboard
+  tags:
+  - Tool
+  shortDescZh: Zashboard Clash / sing-box 面板
+  shortDescEn: Zashboard Clash / sing-box dashboard
+  description:
+    zh: Clash / sing-box 代理面板，连接 mihomo 或 sing-box 后端 API，提供节点管理、流量统计和速度测试。
+    en: Clash / sing-box proxy dashboard connecting to mihomo or sing-box backend API for node management, traffic stats and speed tests.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/kashinoleg/zashboard
+  github: https://github.com/kashinoleg/zashboard

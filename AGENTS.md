@@ -8,7 +8,7 @@
 ## Structure
 
 ```
-apps/<app-key>/
+<app-key>/               # 应用目录直接在仓库根
 ├── data.yml              # 根元数据 (key, name, type, description, website, github)
 ├── logo.png              # 应用图标
 ├── README.md             # 中文说明
@@ -28,12 +28,12 @@ apps/<app-key>/
 - `1panel-network` 必须声明为 external
 - 公开端口: 使用 `PANEL_APP_PORT_*` 变量
 - 持久化挂载: 优先使用 `./data/...` 相对路径
-- 镜像引用: 使用 `${IMAGE}` 变量，不要硬编码
+- 镜像引用: 变量型应用使用 `${IMAGE}` / `${APP_VERSION}`；hardcode 类应用直接写 `image:tag`，由自动更新守护
 
 ### 变量声明
 
 - compose 中每个 `${...}` 变量必须在版本 `data.yml` 的 formFields 中声明
-- 1Panel 自动提供的变量可豁免: `${CONTAINER_NAME}`, `${HOST_IP}`, `${HOST_ADDRESS}`, `${PANEL_DB_PORT}`
+- 1Panel 自动提供的变量可豁免: `${CONTAINER_NAME}`, `${HOST_IP}`, `${HOST_ADDRESS}`, `${PANEL_DB_PORT}`, `${CPUS}`, `${MEMORY_LIMIT}`
 - 端口变量命名: `PANEL_APP_PORT_HTTP`, `PANEL_APP_PORT_HTTPS`, `PANEL_APP_PORT_API` 等
 
 ### 元数据
@@ -50,25 +50,32 @@ apps/<app-key>/
 ## Scripts
 
 ```bash
-# 同步应用到 1Panel
-./scripts/sync-to-1panel.sh [app-name...]
-
 # 检查镜像更新
 ./scripts/check-updates.sh [app-name...]
 ```
+
+## Automation
+
+- `.github/workflows/auto-update.yml` — 每周一 UTC 0 点（也可手动）检测 hardcode 类应用镜像更新
+- 命中即开 PR（分支 `auto-update/<date>`，单 PR 合并本批次全部变更），PR body 列出所有 service 变更
+- 修改 `<app>/<version>/docker-compose.yml` 与 `<app>/data.yml`
+- 变量型应用（compose 用 `${IMAGE}` / `${APP_VERSION}`）不在自动范围
+- PR title 含 `[skip ci]`，防合并时递归触发
+- 同步更新仓库根 `README.md` 的"应用列表"表格（应用名/描述/版本）
+  - 应用名映射与描述覆盖：[`.github/app-aliases.yml`](.github/app-aliases.yml)
+  - 同步脚本：[`.github/scripts/sync-readme.mjs`](.github/scripts/sync-readme.mjs)
 
 ## Deployment
 
 1. 修改 compose 或 data.yml
 2. `git commit` 并 `git push`
-3. 在服务器运行 `./scripts/sync-to-1panel.sh <app>`
+3. 由 1Panel 计划任务拉取最新仓库并触发本地应用同步
 4. 在 1Panel UI 重新部署应用
 
 ## Common Pitfalls
 
 - 版本目录名就是版本参数，改目录名即改版本选项
-- `1pctl restart` 不会重新扫描本地应用，需要 `POST /api/v1/apps/sync`
 - SQLite key 有 `local` 前缀: `jellyfin` → `localjellyfin`
-- 更新时只复制版本子目录，不要复制整个 `apps/<key>/*`
+- 更新时只复制版本子目录，不要复制整个 `<key>/*`
 - sed -i 在 bind-mount 上会失败，用 tempfile + mv
 - 端口变更会影响反向代理配置

@@ -1,0 +1,27 @@
+additionalProperties:
+  key: mihomo
+  name: Mihomo
+  tags:
+  - Network
+  - Proxy
+  shortDescZh: Mihomo 代理 + Dashboard + 订阅管理
+  shortDescEn: Mihomo proxy + Dashboard + subscription manager
+  description:
+    zh: 基于 gangz1o/glash 镜像（Mihomo 内核 + MetacubexD Dashboard + 订阅管理）。支持 HTTP/SOCKS/混合代理、TUN 透明代理、定时自动更新订阅。
+    en: 'Wraps gangz1o/glash: Mihomo kernel + MetacubexD Dashboard + built-in subscription manager. HTTP/SOCKS/mixed proxy, optional TUN mode, scheduled subscription auto-update.'
+    ja: 'gangz1o/glash イメージベース: Mihomo カーネル + MetacubexD Dashboard + サブスク管理。HTTP/SOCKS 代理、TUN 透明代理、サブスク自動更新。'
+    ko: 'gangz1o/glash 이미지 기반: Mihomo 커널 + MetacubexD Dashboard + 구독 관리. HTTP/SOCKS 프록시, TUN 투명 프록시, 구독 자동 업데이트.'
+    ru: 'На базе gangz1o/glash: ядро Mihomo + MetacubexD Dashboard + менеджер подписок. HTTP/SOCKS прокси, опционально TUN, автообновление подписки.'
+    ms: 'Berdasarkan imej gangz1o/glash: kernel Mihomo + Dashboard MetacubexD + pengurus langganan.'
+    pt-br: 'Baseado na imagem gangz1o/glash: kernel Mihomo + Dashboard MetacubexD + gerenciador de assinaturas.'
+    zh-Hant: 基於 gangz1o/glash 映像：Mihomo 核心 + MetacubexD Dashboard + 訂閱管理。支援 HTTP/SOCKS 代理、TUN 透明代理、定時自動更新訂閱。
+  type: tool
+  architectures:
+  - amd64
+  - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/gangz1o/clash4docker
+  github: https://github.com/gangz1o/clash4docker
+  document: https://github.com/gangz1o/clash4docker#readme

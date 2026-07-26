@@ -6,19 +6,21 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| jellyfin | 媒体服务器 | 12.0-rc3 |
-| immich | 照片管理 | 3.0.3 |
-| moviepilot | 影视自动化 | latest |
-| qbittorrent | 下载工具 | latest |
-| anirss | 动漫 RSS | latest |
-| handbrake | 视频转码 | latest |
+| anirss | 动漫 RSS 订阅 | latest |
+| firecrawl | 网页爬虫引擎 | latest |
+| handbrake-linuxserver | 视频转码工具 | latest |
 | hindsight | AI 记忆系统 | 0.8.4 |
+| immich | 照片管理 | 3.0.3 |
+| jellyfin | 媒体服务器 | 10.11.11 |
+| llamaindex | LLM 知识引擎 | latest |
+| mihomo | 代理规则工具 | latest |
+| moviepilot | 影视自动化 | latest |
 | pgvector | 向量数据库 | latest |
 | qdrant | 向量搜索引擎 | latest |
 | searxng | 隐私搜索引擎 | latest |
 | syncthing | 文件同步 | latest |
 | traefik | 反向代理 | latest |
-| firecrawl | 网页爬虫 | latest |
+| zashboard | 面板管理工具 | latest |
 
 ## 快速开始
 
@@ -29,17 +31,7 @@ git clone https://github.com/YOUR_USERNAME/1panel-local-apps.git
 cd 1panel-local-apps
 ```
 
-### 2. 同步到 1Panel
-
-```bash
-# 同步所有应用
-./scripts/sync-to-1panel.sh
-
-# 只同步指定应用
-./scripts/sync-to-1panel.sh jellyfin immich
-```
-
-### 3. 检查镜像更新
+### 2. 检查镜像更新
 
 ```bash
 ./scripts/check-updates.sh
@@ -48,31 +40,46 @@ cd 1panel-local-apps
 ## 目录结构
 
 ```
-├── apps/
-│   ├── jellyfin/
-│   │   ├── data.yml              # 根元数据
-│   │   ├── logo.png              # 应用图标
-│   │   ├── README.md
-│   │   └── 12.0-rc3/             # 版本目录
-│   │       ├── data.yml          # 版本配置 + 表单字段
-│   │       └── docker-compose.yml
-│   ├── immich/
-│   │   └── ...
+├── jellyfin/                     # 应用目录直接在仓库根
+│   ├── data.yml                  # 根元数据 (key, name, type, description, ...)
+│   ├── logo.png                  # 应用图标
+│   ├── README.md
+│   └── 10.11.11/                 # 版本目录 (名称 = 版本参数)
+│       ├── data.yml              # 版本配置 + formFields (环境变量定义)
+│       ├── docker-compose.yml
+│       └── data/                 # 持久化数据目录 (.gitkeep)
+├── immich/
 │   └── ...
+├── ...                           # 其余应用同结构
 ├── scripts/
-│   ├── sync-to-1panel.sh         # 同步脚本
 │   └── check-updates.sh          # 更新检查
-└── .github/workflows/
-    └── check-updates.yml         # GitHub Actions 自动检查
+├── .github/
+│   ├── workflows/
+│   │   └── auto-update.yml       # 自动检测 hardcode 类应用镜像更新
+│   └── scripts/
+│       └── detect-updates.mjs    # 检测与文件改写脚本
 ```
 
 ## 自动化更新
 
-### GitHub Actions (推荐)
+### GitHub Actions（自动 PR）
 
-仓库配置了每周一自动检查所有应用的 Docker 镜像更新。发现新版本时会自动创建 Issue。
+工作流文件：[`.github/workflows/auto-update.yml`](.github/workflows/auto-update.yml)
 
-启用方法：
+**触发条件：**
+- 每周一 UTC 0 点（cron）
+- 手动触发（Actions → auto-update → Run workflow，可选 `apps` 输入指定应用列表，逗号分隔）
+
+**行为：**
+- 扫描所有应用的根 `<app>/docker-compose.yml`
+- 仅处理 hardcode 类镜像（含 `:tag` 且不含变量）；变量型（`${IMAGE}` / `${APP_VERSION}`）与 `latest` 标签跳过
+- 调 Docker Hub API（ghcr.io 用 GitHub Container Registry API）查最新 tag
+- 检测到新版本 → 自动开 PR，分支命名 `auto-update/<app>-<yyyy-mm-dd>`
+- PR body 列出所有 service 的 `before`/`after` tag
+- 同 app 同日已有 open PR → 跳过（防重复）
+- PR title 含 `[skip ci]`，防合并后再次触发
+
+**启用方法：**
 1. 将仓库推送到 GitHub
 2. 在 Settings → Actions → General 中启用 Actions
 3. 确保 Workflow permissions 为 "Read and write permissions"
@@ -89,17 +96,17 @@ cd 1panel-local-apps
 
 ## 添加新应用
 
-1. 在 `apps/` 下创建应用目录
-2. 添加 `data.yml`、`logo.png`、`README.md`
+1. 在仓库根目录创建应用目录（如 `myapp/`）
+2. 添加 `data.yml`（根元数据）、`logo.png`、`README.md`
 3. 创建版本目录（如 `latest/` 或 `1.0.0/`）
-4. 在版本目录中添加 `data.yml` 和 `docker-compose.yml`
-5. 运行 `./scripts/sync-to-1panel.sh <app-name>` 同步
+4. 在版本目录中添加 `data.yml`（formFields 定义）和 `docker-compose.yml`
+5. 由 1Panel 计划任务同步本地应用
 
 ## 更新应用版本
 
-1. 修改 `apps/<app>/<version>/docker-compose.yml` 中的 `image` 标签
+1. 修改 `<app>/<version>/docker-compose.yml` 中的 `image` 标签
 2. 提交并推送
-3. 运行 `./scripts/sync-to-1panel.sh <app-name>` 同步
+3. 由 1Panel 计划任务同步本地应用
 4. 在 1Panel UI 中重新部署应用
 
 ## 注意事项

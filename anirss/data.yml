@@ -1,0 +1,17 @@
+additionalProperties:
+  key: anirss
+  name: Ani-RSS
+  tags:
+  - Tool
+  - Media
+  shortDescZh: Ani-RSS 自动追番订阅
+  shortDescEn: Ani-RSS auto anime subscription via RSS
+  description:
+    zh: 基于 RSS 的自动追番工具，按番剧更新自动下载到 qBittorrent。
+    en: RSS-based auto anime subscription tool, auto-downloading to qBittorrent on episode updates.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/RSS-ANI/Ani-RSS
+  github: https://github.com/RSS-ANI/Ani-RSS

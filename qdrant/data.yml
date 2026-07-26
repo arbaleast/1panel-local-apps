@@ -1,4 +1,4 @@
-additionalProperties:
+﻿additionalProperties:
   key: qdrant
   name: qdrant
   tags:
@@ -15,66 +15,3 @@ additionalProperties:
   website: https://qdrant.tech/
   github: https://github.com/qdrant/qdrant
   document: https://qdrant.tech/documentation/
-  formFields:
-  - default: 6333
-    edit: true
-    envKey: PANEL_APP_PORT_HTTP
-    labelEn: HTTP Port
-    labelZh: HTTP端口
-    required: true
-    rule: paramPort
-    type: number
-    label:
-      en: HTTP Port
-      zh: HTTP端口
-  - default: 6334
-    edit: true
-    envKey: PANEL_APP_PORT_GRPC
-    labelEn: gRPC Port
-    labelZh: gRPC端口
-    required: true
-    rule: paramPort
-    type: number
-    label:
-      en: gRPC Port
-      zh: gRPC端口
-  - default: ./data
-    edit: true
-    envKey: DATA_PATH
-    labelEn: Data folder path
-    labelZh: 数据文件夹路径
-    required: true
-    type: text
-    label:
-      en: Data folder path
-      zh: 数据文件夹路径
-  - default: Asia/Shanghai
-    edit: true
-    envKey: TZ
-    labelEn: Time Zone
-    labelZh: 时区
-    required: false
-    type: text
-    label:
-      en: Time Zone
-      zh: 时区
-  - default: 0
-    edit: true
-    envKey: CPUS
-    labelEn: CPU Limit
-    labelZh: CPU 限制
-    required: false
-    type: number
-    label:
-      en: CPU Limit
-      zh: CPU 限制
-  - default: 0
-    edit: true
-    envKey: MEMORY_LIMIT
-    labelEn: Memory Limit (MB)
-    labelZh: 内存限制 (MB)
-    required: false
-    type: number
-    label:
-      en: Memory Limit (MB)
-      zh: 内存限制 (MB)

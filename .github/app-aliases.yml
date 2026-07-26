@@ -1,0 +1,45 @@
+# 应用别名表 — 用于 sync-readme.mjs 同步 README 应用列表
+# key = README 表格中的短名
+# dir = 实际目录名（省略时同 key）
+# desc = 表格"说明"列（覆盖 data.yml shortDescZh）
+# preferred_version = 强制指定版本（跳过自动检测）
+# _missing = true 时 sync-readme 跳过此条目
+
+aliases:
+  handbrake:
+    dir: handbrake-linuxserver
+    desc: 视频转码
+  jellyfin:
+    dir: jellyfin
+    desc: 媒体服务器
+  immich:
+    dir: immich
+    desc: 照片管理
+  moviepilot:
+    dir: moviepilot
+    desc: 影视自动化
+  hindsight:
+    dir: hindsight
+    desc: AI 记忆系统
+  # 以下条目 dir 与短名相同，省略 dir
+  anirss:
+    desc: 动漫 RSS
+  firecrawl:
+    desc: 网页爬虫
+  llamaindex:
+    desc: LLM 数据框架
+  mihomo:
+    desc: 代理工具
+  pgvector:
+    desc: 向量数据库
+  qdrant:
+    desc: 向量搜索引擎
+  searxng:
+    desc: 隐私搜索引擎
+  syncthing:
+    desc: 文件同步
+  traefik:
+    desc: 反向代理
+  zashboard:
+    desc: Mihomo 面板
+  # qbittorrent: 故意省略，让 sync-readme 通过遍历根目录自动跳过（无该目录）

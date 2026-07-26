@@ -1,0 +1,16 @@
+additionalProperties:
+  key: jellyfin
+  name: Jellyfin
+  tags:
+  - Media
+  shortDescZh: Jellyfin 免费媒体服务器
+  shortDescEn: Jellyfin free media server
+  description:
+    zh: 免费开源媒体系统，流式播放个人媒体库，支持硬件转码。
+    en: Free software media system for streaming your personal media library with hardware transcoding.
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://jellyfin.org/
+  github: https://github.com/jellyfin/jellyfin

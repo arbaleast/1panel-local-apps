@@ -1,0 +1,17 @@
+additionalProperties:
+  key: firecrawl
+  name: Firecrawl
+  tags:
+  - AI
+  - Tool
+  shortDescZh: Firecrawl 网页爬虫（LLM-ready 数据）
+  shortDescEn: Firecrawl web crawler (LLM-ready data)
+  description:
+    zh: 将任意网站转为 LLM-ready markdown/结构化数据，支持全站爬取与 LLM 提取。
+    en: Turn any website into LLM-ready markdown or structured data, with full-site crawling and LLM extraction.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://www.firecrawl.dev/
+  github: https://github.com/mendableai/firecrawl
