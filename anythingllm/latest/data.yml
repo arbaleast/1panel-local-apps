@@ -84,17 +84,17 @@ additionalProperties:
   - default: ''
     edit: true
     envKey: JWT_SECRET
-    labelEn: JWT Secret
-    labelZh: JWT 认证密钥
+    labelEn: JWT Secret (required, min 12 random chars)
+    labelZh: JWT 认证密钥（必填，至少 12 位随机字符）
     label:
-      en: JWT Secret
-      zh: JWT 认证密钥
-      zh-Hant: JWT 認證密鑰
-      ja: JWT シークレット
-      ko: JWT 시크릿
-      ru: JWT секрет
-      ms: Rahsia JWT
-      pt-br: Segredo JWT
+      en: JWT Secret (required, min 12 random chars)
+      zh: JWT 认证密钥（必填，至少 12 位随机字符）
+      zh-Hant: JWT 認證密鑰（必填，至少 12 位隨機字符）
+      ja: JWT シークレット（必須、12文字以上のランダム文字列）
+      ko: JWT 시크릿 (필수, 12자 이상 무작위 문자열)
+      ru: JWT секрет (обязательно, минимум 12 случайных символов)
+      ms: Rahsia JWT (wajib, minimum 12 aksara rawak)
+      pt-br: Segredo JWT (obrigatório, mínimo 12 caracteres aleatórios)
     required: true
     type: password
   - default: 'true'
