@@ -1,0 +1,16 @@
+additionalProperties:
+  key: llamacpp
+  name: Llama.cpp
+  tags:
+    - AI
+  shortDescZh: 高性能本地大语言模型推理引擎
+  shortDescEn: High-performance local LLM inference engine
+  description:
+    zh: 基于 C/C++ 的高效 LLM 推理引擎，支持 GGUF 量化模型，兼容 NVIDIA/AMD/CPU 等多种硬件后端，提供 OpenAI 兼容 API。
+    en: High-performance LLM inference engine in C/C++, supporting GGUF quantized models with NVIDIA/AMD/CPU backends and OpenAI-compatible API.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://llama.cpp
+  github: https://github.com/ggml-org/llama.cpp

@@ -13,6 +13,7 @@
 | hindsight | AI 记忆系统 | latest |
 | immich | 照片管理 | latest |
 | jellyfin | 媒体服务器 | 10.11.11 |
+| llamacpp | 高性能本地 LLM 推理引擎 | latest |
 | llamaindex | LLM 数据框架 | latest |
 | mihomo | 代理工具 | latest |
 | moviepilot | 影视自动化 | latest |

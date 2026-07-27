@@ -25,6 +25,8 @@ aliases:
     desc: 动漫 RSS
   firecrawl:
     desc: 网页爬虫
+  llamacpp:
+    desc: 高性能本地 LLM 推理引擎
   llamaindex:
     desc: LLM 数据框架
   mihomo:

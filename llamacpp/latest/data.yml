@@ -1,0 +1,87 @@
+additionalProperties:
+  formFields:
+  - default: ghcr.io/ggml-org/llama.cpp:server-cuda
+    edit: true
+    envKey: IMAGE
+    label:
+      en: Image
+      zh: 镜像
+      zh-Hant: 映像
+      ja: イメージ
+      ko: 이미지
+      ru: Образ
+      ms: Imej
+      pt-br: Imagem
+    required: true
+    type: text
+  - default: 8080
+    edit: true
+    envKey: PANEL_APP_PORT_HTTP
+    label:
+      en: API Port
+      zh: API 端口
+      zh-Hant: API 埠
+      ja: API ポート
+      ko: API 포트
+      ru: Порт API
+      ms: Port API
+      pt-br: Porta da API
+    required: true
+    rule: paramPort
+    type: number
+  - default: model.gguf
+    edit: true
+    envKey: MODEL_FILE
+    label:
+      en: Model filename
+      zh: 模型文件名
+      zh-Hant: 模型檔名
+      ja: モデルファイル名
+      ko: 모델 파일명
+      ru: Имя файла модели
+      ms: Nama fail model
+      pt-br: Nome do arquivo do modelo
+    required: true
+    type: text
+  - default: -1
+    edit: true
+    envKey: GPU_LAYERS
+    label:
+      en: GPU layers
+      zh: GPU 层数
+      zh-Hant: GPU 層數
+      ja: GPU レイヤー数
+      ko: GPU 레이어 수
+      ru: Слои GPU
+      ms: Lapisan GPU
+      pt-br: Camadas da GPU
+    required: true
+    type: number
+  - default: 4096
+    edit: true
+    envKey: CTX_SIZE
+    label:
+      en: Context size
+      zh: 上下文长度
+      zh-Hant: 上下文長度
+      ja: コンテキストサイズ
+      ko: 컨텍스트 크기
+      ru: Размер контекста
+      ms: Saiz konteks
+      pt-br: Tamanho do contexto
+    required: true
+    type: number
+  - default: 4
+    edit: true
+    envKey: THREADS
+    label:
+      en: CPU threads
+      zh: CPU 线程数
+      zh-Hant: CPU 執行緒數
+      ja: CPU スレッド数
+      ko: CPU 스레드 수
+      ru: Потоки CPU
+      ms: Thread CPU
+      pt-br: Threads da CPU
+    required: true
+    type: number
