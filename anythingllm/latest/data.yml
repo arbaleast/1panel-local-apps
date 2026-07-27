@@ -207,6 +207,23 @@ additionalProperties:
       pt-br: Endpoint do Qdrant
     required: false
     type: text
+# ---- Chromium 启动参数（修复容器内 Chrome 沙箱问题）----
+- default: '--no-sandbox,--disable-setuid-sandbox'
+  edit: true
+  envKey: ANYTHINGLLM_CHROMIUM_ARGS
+  labelEn: Chromium Launch Args
+  labelZh: Chromium 启动参数
+  label:
+    en: Chromium Launch Args (for collector web scraping)
+    zh: Chromium 启动参数（用于 collector 网页抓取）
+    zh-Hant: Chromium 啟動參數（用於 collector 網頁抓取）
+    ja: Chromium 起動引数（collector ウェブスクレイピング用）
+    ko: Chromium 시작 인수 (collector 웹 스크래핑용)
+    ru: Аргументы запуска Chromium (для веб-скрапинга collector)
+    ms: Argumen pelancaran Chromium (untuk pengikis web collector)
+    pt-br: Argumentos de inicialização do Chromium (para scraping web do collector)
+  required: false
+  type: text
   # ---- 外部数据库（可选）：留空时回退内置 SQLite ----
   # 使用 PostgreSQL 时需切换镜像为 mintplexlabs/anythingllm:pg
   - default: ''

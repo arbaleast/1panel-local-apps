@@ -24,6 +24,7 @@ services:
       - QDRANT_ENDPOINT=${QDRANT_ENDPOINT}
       # 外部数据库（可选）：留空时回退内置 SQLite
       - DATABASE_URL=${DATABASE_URL}
+      - ANYTHINGLLM_CHROMIUM_ARGS=${ANYTHINGLLM_CHROMIUM_ARGS}
     volumes:
       - ./data/storage:/app/server/storage
     cap_add:
