@@ -26,7 +26,6 @@ services:
       - DATABASE_URL=${DATABASE_URL}
     volumes:
       - ./data/storage:/app/server/storage
-      - ./data/.env:/app/server/.env
     cap_add:
       - SYS_ADMIN
     security_opt:

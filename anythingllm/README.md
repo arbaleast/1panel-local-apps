@@ -26,7 +26,6 @@
 ### 持久化目录
 
 - `./data/storage` → `/app/server/storage`（文档、工作区等数据）
-- `./data/.env` → `/app/server/.env`（运行时环境变量配置）
 
 ## 环境变量
 
