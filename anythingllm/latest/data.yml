@@ -29,6 +29,7 @@ additionalProperties:
   github: https://github.com/Mintplex-Labs/anything-llm
   document: https://docs.anythingllm.com/
   formFields:
+  # 使用 :pg 标签镜像可启用 PostgreSQL（如 mintplexlabs/anythingllm:pg）
   - default: mintplexlabs/anythingllm:latest
     edit: true
     envKey: IMAGE
@@ -167,130 +168,60 @@ additionalProperties:
       pt-br: Fuso horário
     required: true
     type: text
-  # ---- 外部数据库（可选）：留空时回退 SQLite ----
-  - default: ''
+  # ---- 向量数据库（可选）：lancedb 为默认内置向量库 ----
+  - default: lancedb
     edit: true
-    envKey: DB_DIALECT
-    labelEn: DB Dialect
-    labelZh: 数据库类型
+    envKey: VECTOR_DB
+    labelEn: Vector Database
+    labelZh: 向量数据库
     label:
-      en: DB Dialect
-      zh: 数据库类型
-      zh-Hant: 資料庫類型
-      ja: データベース方言
-      ko: DB 방언
-      ru: Тип БД
-      ms: Dialek DB
-      pt-br: Dialeto do banco de dados
-    required: false
+      en: Vector Database
+      zh: 向量数据库
+      zh-Hant: 向量資料庫
+      ja: ベクトルデータベース
+      ko: 벡터 데이터베이스
+      ru: Векторная БД
+      ms: Pangkalan data vektor
+      pt-br: Banco de dados vetorial
+    required: true
     type: select
     rule: paramSelect
     values:
-    - label: 'SQLite (默认)'
-      value: ''
-    - label: PostgreSQL
-      value: postgres
-    - label: MySQL
-      value: mysql
+    - label: LanceDB (默认)
+      value: lancedb
+    - label: Qdrant
+      value: qdrant
+  - default: http://qdrant:6333
+    edit: true
+    envKey: QDRANT_ENDPOINT
+    labelEn: Qdrant Endpoint
+    labelZh: Qdrant 地址
+    label:
+      en: Qdrant Endpoint
+      zh: Qdrant 地址
+      zh-Hant: Qdrant 位址
+      ja: Qdrant エンドポイント
+      ko: Qdrant 엔드포인트
+      ru: Адрес Qdrant
+      ms: Titik Akhir Qdrant
+      pt-br: Endpoint do Qdrant
+    required: false
+    type: text
+  # ---- 外部数据库（可选）：留空时回退内置 SQLite ----
+  # 使用 PostgreSQL 时需切换镜像为 mintplexlabs/anythingllm:pg
   - default: ''
     edit: true
-    envKey: DB_HOST
-    labelEn: DB Host
+    envKey: DATABASE_URL
+    labelEn: Database URL
     labelZh: 数据库地址
     label:
-      en: DB Host
-      zh: 数据库地址
-      zh-Hant: 資料庫位址
-      ja: データベースホスト
-      ko: DB 호스트
-      ru: Адрес БД
-      ms: Hos DB
-      pt-br: Host do banco de dados
+      en: Database URL (需 :pg 标签镜像)
+      zh: 数据库地址（需 :pg 标签镜像）
+      zh-Hant: 資料庫位址（需 :pg 標籤鏡像）
+      ja: データベース URL（:pg タグが必要）
+      ko: 데이터베이스 URL (:pg 태그 필요)
+      ru: URL базы данных (требуется :pg образ)
+      ms: URL pangkalan data (perlu :pg image)
+      pt-br: URL do banco de dados (requer imagem :pg)
     required: false
     type: text
-  - default: '5432'
-    edit: true
-    envKey: DB_PORT
-    labelEn: DB Port
-    labelZh: 数据库端口
-    label:
-      en: DB Port
-      zh: 数据库端口
-      zh-Hant: 資料庫埠
-      ja: データベースポート
-      ko: DB 포트
-      ru: Порт БД
-      ms: Port DB
-      pt-br: Porta do banco de dados
-    required: false
-    type: number
-  - default: ''
-    edit: true
-    envKey: DB_USERNAME
-    labelEn: DB Username
-    labelZh: 数据库用户名
-    label:
-      en: DB Username
-      zh: 数据库用户名
-      zh-Hant: 資料庫使用者名稱
-      ja: データベースユーザー名
-      ko: DB 사용자 이름
-      ru: Имя пользователя БД
-      ms: Nama pengguna DB
-      pt-br: Nome de usuário do banco de dados
-    required: false
-    type: text
-  - default: ''
-    edit: true
-    envKey: DB_PASSWORD
-    labelEn: DB Password
-    labelZh: 数据库密码
-    label:
-      en: DB Password
-      zh: 数据库密码
-      zh-Hant: 資料庫密碼
-      ja: データベースパスワード
-      ko: DB 비밀번호
-      ru: Пароль БД
-      ms: Kata laluan DB
-      pt-br: Senha do banco de dados
-    required: false
-    type: password
-  - default: anythingllm
-    edit: true
-    envKey: DB_NAME
-    labelEn: DB Name
-    labelZh: 数据库名
-    label:
-      en: DB Name
-      zh: 数据库名
-      zh-Hant: 資料庫名稱
-      ja: データベース名
-      ko: DB 이름
-      ru: Имя БД
-      ms: Nama DB
-      pt-br: Nome do banco de dados
-    required: false
-    type: text
-  - default: 'false'
-    edit: true
-    envKey: DB_SSL
-    labelEn: Enable SSL
-    labelZh: 启用 SSL
-    label:
-      en: Enable SSL
-      zh: 启用 SSL
-      zh-Hant: 啟用 SSL
-      ja: SSL を有効にする
-      ko: SSL 활성화
-      ru: Включить SSL
-      ms: Aktifkan SSL
-      pt-br: Ativar SSL
-    required: false
-    type: select
-    rule: paramSelect
-    values:
-    - label: '否'
-      value: 'false'
-    - label: '是'
-      value: 'true'

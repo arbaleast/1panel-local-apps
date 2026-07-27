@@ -19,14 +19,11 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ANYTHING_LLM_RAG_API_URL=${ANYTHING_LLM_RAG_API_URL}
       - TZ=${TZ}
-      # 外部数据库（可选）：DB_DIALECT 留空时回退 SQLite
-      - DB_DIALECT=${DB_DIALECT}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - DB_SSL=${DB_SSL}
+      # 向量数据库：lancedb（默认）或 qdrant
+      - VECTOR_DB=${VECTOR_DB}
+      - QDRANT_ENDPOINT=${QDRANT_ENDPOINT}
+      # 外部数据库（可选）：留空时回退内置 SQLite
+      - DATABASE_URL=${DATABASE_URL}
     volumes:
       - ./data/storage:/app/server/storage
       - ./data/.env:/app/server/.env
