@@ -29,8 +29,8 @@ additionalProperties:
   github: https://github.com/Mintplex-Labs/anything-llm
   document: https://docs.anythingllm.com/
   formFields:
-  # 使用 :pg 标签镜像可启用 PostgreSQL（如 mintplexlabs/anythingllm:pg）
-  - default: mintplexlabs/anythingllm:latest
+  # 默认使用 :pg 标签镜像（含内置 PostgreSQL）；如需纯 SQLite 可切换为 mintplexlabs/anythingllm:latest
+  - default: mintplexlabs/anythingllm:pg
     edit: true
     envKey: IMAGE
     labelEn: Docker Image
