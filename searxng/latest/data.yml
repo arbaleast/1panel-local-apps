@@ -63,14 +63,14 @@ additionalProperties:
     default: ""
     required: false
     help:
-      en: External Redis connection string (e.g. redis://:password@host:6379/0). Leave empty to use the default file cache. When deploying in 1Panel, also add it as an extra environment variable named SEARXNG_REDIS_URL.
-      zh: 外部 Redis 服务连接字符串（例：redis://:password@host:6379/0）。留空则使用默认文件缓存。1Panel 部署时需同时在「额外环境变量」中添加同名变量 SEARXNG_REDIS_URL。
-      zh-Hant: 外部 Redis 服務連線字串（例如：redis://:password@host:6379/0）。留空則使用預設檔案快取。1Panel 部署時需同時於「額外環境變數」中新增同名變數 SEARXNG_REDIS_URL。
-      ja: 外部 Redis の接続文字列（例：redis://:password@host:6379/0）。空欄の場合、デフォルトのファイルキャッシュを使用します。1Panel にデプロイする際は、追加環境変数として SEARXNG_REDIS_URL を設定してください。
-      ko: 외부 Redis 연결 문자열 (예: redis://:password@host:6379/0). 비워두면 기본 파일 캐시가 사용됩니다. 1Panel에 배포할 때 추가 환경 변수로 SEARXNG_REDIS_URL 을 설정하세요.
-      ru: Строка подключения к внешнему Redis (например, redis://:password@host:6379/0). Оставьте пустым, чтобы использовать локальный файловый кэш. При развёртывании в 1Panel добавьте переменную SEARXNG_REDIS_URL в раздел «Дополнительные переменные среды».
-      ms: Rentetan sambungan Redis luaran (cth: redis://:password@host:6379/0). Biarkan kosong untuk menggunakan cache fail lalai. Semasa menyebarkan di 1Panel, tambah juga sebagai pembolehubah persekitaran tambahan bernama SEARXNG_REDIS_URL.
-      pt-br: String de conexão do Redis externo (ex.: redis://:password@host:6379/0). Deixe vazio para usar o cache de arquivo padrão. Ao implantar no 1Panel, adicione também como variável de ambiente extra com o nome SEARXNG_REDIS_URL.
+      en: "External Redis connection string (e.g. redis://:password@host:6379/0). Leave empty to use the default file cache. When deploying in 1Panel, also add it as an extra environment variable named SEARXNG_REDIS_URL."
+      zh: "外部 Redis 服务连接字符串（例：redis://:password@host:6379/0）。留空则使用默认文件缓存。1Panel 部署时需同时在「额外环境变量」中添加同名变量 SEARXNG_REDIS_URL。"
+      zh-Hant: "外部 Redis 服務連線字串（例如：redis://:password@host:6379/0）。留空則使用預設檔案快取。1Panel 部署時需同時於「額外環境變數」中新增同名變數 SEARXNG_REDIS_URL。"
+      ja: "外部 Redis の接続文字列（例：redis://:password@host:6379/0）。空欄の場合、デフォルトのファイルキャッシュを使用します。1Panel にデプロイする際は、追加環境変数として SEARXNG_REDIS_URL を設定してください。"
+      ko: "외부 Redis 연결 문자열 (예: redis://:password@host:6379/0). 비워두면 기본 파일 캐시가 사용됩니다. 1Panel에 배포할 때 추가 환경 변수로 SEARXNG_REDIS_URL 을 설정하세요."
+      ru: "Строка подключения к внешнему Redis (например, redis://:password@host:6379/0). Оставьте пустым, чтобы использовать локальный файловый кэш. При развёртывании в 1Panel добавьте переменную SEARXNG_REDIS_URL в раздел «Дополнительные переменные среды»."
+      ms: "Rentetan sambungan Redis luaran (cth: redis://:password@host:6379/0). Biarkan kosong untuk menggunakan cache fail lalai. Semasa menyebarkan di 1Panel, tambah juga sebagai pembolehubah persekitaran tambahan bernama SEARXNG_REDIS_URL."
+      pt-br: "String de conexão do Redis externo (ex.: redis://:password@host:6379/0). Deixe vazio para usar o cache de arquivo padrão. Ao implantar no 1Panel, adicione também como variável de ambiente extra com o nome SEARXNG_REDIS_URL."
   key: searxng
   name: searxng
   tags:
