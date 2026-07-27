@@ -10,4 +10,4 @@ linuxserver.io 包装的 HandBrake 容器。
 - CPU/GPU 编码支持
 
 ## 状态
-- 容器: 1Panel-localhandbrake-linuxserver-* (待修复 Uninstalling 状态)
+- 容器: 1Panel-localhandbrake-* (待修复 Uninstalling 状态)

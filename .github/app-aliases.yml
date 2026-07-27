@@ -7,7 +7,6 @@
 
 aliases:
   handbrake:
-    dir: handbrake-linuxserver
     desc: 视频转码
   jellyfin:
     dir: jellyfin

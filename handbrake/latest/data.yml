@@ -171,8 +171,8 @@ additionalProperties:
       pt-br: Localidade do idioma da area de trabalho
     required: false
     type: text
-  key: handbrake-linuxserver
-  name: handbrake-linuxserver
+  key: handbrake
+  name: handbrake
   tags:
   - video
   - transcode
@@ -187,6 +187,6 @@ additionalProperties:
   recommend: 0
   website: https://handbrake.fr
   github: https://github.com/linuxserver/docker-handbrake
-name: handbrake-linuxserver
+name: handbrake
 title: HandBrake 视频转码
 description: linuxserver.io 包装的 HandBrake 容器，浏览器内视频转码。

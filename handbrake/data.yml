@@ -1,6 +1,6 @@
 ﻿additionalProperties:
-  key: handbrake-linuxserver
-  name: handbrake-linuxserver
+  key: handbrake
+  name: handbrake
   tags:
   - Local
   shortDescZh: HandBrake 视频转码 (linuxserver 镜像)

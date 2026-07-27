@@ -2,7 +2,7 @@ networks:
     1panel-network:
         external: true
 services:
-    handbrake-linuxserver:
+    handbrake:
         container_name: ${CONTAINER_NAME}
         deploy:
             resources:
