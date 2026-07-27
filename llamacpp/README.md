@@ -14,7 +14,7 @@
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
-| 镜像 | `ghcr.io/ggml-org/llama.cpp:server-cuda` | CUDA 加速版本 |
+| 镜像 | `ghcr.io/anbeeld/beellama.cpp:server-cuda12-v0.4.1` | CUDA 12.4 加速版本（支持 Pascal sm_61） |
 | API 端口 | 8080 | HTTP API 端口 |
 | GPU 层数 | -1 | 卸载到 GPU 的层数（-1=全部） |
 | 上下文长度 | 4096 | 模型上下文窗口大小 |
@@ -30,8 +30,15 @@
 ## 硬件要求
 
 - **GPU**: 支持 CUDA 的 NVIDIA 显卡（推荐显存 ≥ 8GB）
-- **P104 适配**: 默认配置已针对 P104（8GB VRAM）优化，建议使用 Q4 量化模型
 - **CPU**: 4 核以上（作为 GPU 的辅助处理）
+
+### Pascal GPU 适配
+
+本镜像基于 CUDA 12.4，兼容 Pascal 架构 sm_61（P104、GTX 10xx 系列等）。
+
+- 宿主 NVIDIA 驱动版本需 ≥ 550.xx
+- 可通过 `nvidia-smi` 查看当前驱动版本
+- 如驱动版本 < 530，可改用 `ghcr.io/ggml-org/llama.cpp:server-cpu` 并设置 `GPU_LAYERS=0` 以纯 CPU 模式运行
 
 ## 参考
 

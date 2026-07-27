@@ -1,17 +1,17 @@
 additionalProperties:
   formFields:
-  - default: ghcr.io/ggml-org/llama.cpp:server-cuda
+  - default: ghcr.io/anbeeld/beellama.cpp:server-cuda12-v0.4.1
     edit: true
     envKey: IMAGE
     label:
-      en: Image
-      zh: 镜像
-      zh-Hant: 映像
-      ja: イメージ
-      ko: 이미지
-      ru: Образ
-      ms: Imej
-      pt-br: Imagem
+      en: "Image (CUDA 12.4 for Pascal sm_61)"
+      zh: "镜像（CUDA 12.4，支持 Pascal sm_61）"
+      zh-Hant: "映像（CUDA 12.4，支援 Pascal sm_61）"
+      ja: "イメージ（CUDA 12.4、Pascal sm_61 対応）"
+      ko: "이미지 (CUDA 12.4, Pascal sm_61 지원)"
+      ru: "Образ (CUDA 12.4, поддержка Pascal sm_61)"
+      ms: "Imej (CUDA 12.4 untuk Pascal sm_61)"
+      pt-br: "Imagem (CUDA 12.4 para Pascal sm_61)"
     required: true
     type: text
   - default: 8080
