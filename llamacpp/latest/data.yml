@@ -57,7 +57,7 @@ additionalProperties:
       pt-br: Camadas da GPU
     required: true
     type: number
-  - default: "true"
+  - default: 'true'
     edit: true
     envKey: ENABLE_EMBEDDINGS
     label:
@@ -70,7 +70,12 @@ additionalProperties:
       ms: Dayakan endpoint embeddings
       pt-br: Habilitar endpoint de embeddings
     required: true
-    type: boolean
+    type: select
+    values:
+      - label: 'true'
+        value: 'true'
+      - label: 'false'
+        value: 'false'
   - default: 4096
     edit: true
     envKey: CTX_SIZE
