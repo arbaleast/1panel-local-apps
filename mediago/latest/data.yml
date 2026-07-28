@@ -1,5 +1,21 @@
 additionalProperties:
-  formFields: []
+  formFields:
+  - default: /app/mediago/downloads
+    edit: true
+    envKey: LOCAL_DIR
+    labelEn: Download Directory
+    labelZh: 下载目录
+    label:
+      en: Download Directory
+      zh: 下载目录
+      zh-Hant: 下載目錄
+      ja: ダウンロードディレクトリ
+      ko: 다운로드 디렉토리
+      ru: Директория загрузок
+      ms: Direktori muat turun
+      pt-br: Diretório de download
+    required: false
+    type: text
   key: mediago
   name: mediago
   tags:
