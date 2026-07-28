@@ -57,6 +57,20 @@ additionalProperties:
       pt-br: Camadas da GPU
     required: true
     type: number
+  - default: "true"
+    edit: true
+    envKey: ENABLE_EMBEDDINGS
+    label:
+      en: Enable embeddings endpoint
+      zh: 启用 Embeddings 接口
+      zh-Hant: 啟用 Embeddings 介面
+      ja: Embeddings エンドポイントを有効化
+      ko: Embeddings 엔드포인트 활성화
+      ru: Включить endpoint embeddings
+      ms: Dayakan endpoint embeddings
+      pt-br: Habilitar endpoint de embeddings
+    required: true
+    type: boolean
   - default: 4096
     edit: true
     envKey: CTX_SIZE

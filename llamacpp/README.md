@@ -17,6 +17,7 @@
 | 镜像 | `ghcr.io/anbeeld/beellama.cpp:server-cuda12-v0.4.1` | CUDA 12.4 加速版本（支持 Pascal sm_61） |
 | API 端口 | 8080 | HTTP API 端口 |
 | GPU 层数 | -1 | 卸载到 GPU 的层数（-1=全部） |
+| Embeddings 接口 | true | 启用 `/v1/embeddings` 端点（需 llama-server 支持） |
 | 上下文长度 | 4096 | 模型上下文窗口大小 |
 | CPU 线程 | 4 | CPU 推理线程数 |
 
