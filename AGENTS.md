@@ -79,3 +79,4 @@
 - 更新时只复制版本子目录，不要复制整个 `<key>/*`
 - sed -i 在 bind-mount 上会失败，用 tempfile + mv
 - 端口变更会影响反向代理配置
+- **formField type 不支持 boolean**: 1Panel 前端 [`params/index.vue`](https://github.com/1Panel-dev/1Panel/blob/main/frontend/src/views/app-store/apps/params/index.vue) 使用 `v-if` 按 type 渲染表单控件，**仅支持 6 种 type**：`text` / `number` / `password` / `service` / `select` / `apps`。如果在 formFields 中使用 `type: boolean`，UI 中该字段会完全不显示且无任何报错。**解决方式**：布尔开关一律用 `type: select` + `values: [{label: 'true', value: 'true'}, {label: 'false', value: 'false'}]` 来模拟。参考应用：`anirss`、`firecrawl`、`mihomo`、`moviepilot`、`handbrake`、`traefik` 等均有同模式字段。**检测技巧**：新增 formField 后如果 UI 未出现，先核对 `type` 是否在上述白名单内。
