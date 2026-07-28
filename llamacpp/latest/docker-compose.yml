@@ -23,4 +23,5 @@ services:
         restart: always
         volumes:
             - ./data/models:/models
-        command: ["sh", "-c", "exec llama-server --host 0.0.0.0 --port 8080 -m /models/${MODEL_FILE} -ngl ${GPU_LAYERS} -c ${CTX_SIZE} -t ${THREADS} $(case ${ENABLE_EMBEDDINGS} in true) echo --embeddings;; esac)"]
+        entrypoint: ["/bin/sh", "-c"]
+        command: ["exec llama-server --host 0.0.0.0 --port 8080 -m /models/${MODEL_FILE} -ngl ${GPU_LAYERS} -c ${CTX_SIZE} -t ${THREADS} $(case ${ENABLE_EMBEDDINGS} in true) echo --embeddings;; esac)"]
