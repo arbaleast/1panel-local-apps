@@ -1,0 +1,23 @@
+additionalProperties:
+  key: mediago
+  name: MediaGo
+  tags:
+  - Tool
+  - Media
+  shortDescZh: MediaGo 在线视频下载与媒体管理工具
+  shortDescEn: MediaGo online video downloader & media management tool
+  description:
+    zh: 在线视频下载/嗅探/媒体管理 Web 工具，基于浏览器扩展与 m3u8 解析，支持多平台视频内容下载与管理。
+    en: Online video downloading, sniffing and media management web tool based on browser extensions and m3u8 parsing, supporting multi-platform video content download and management.
+    zh-Hant: 在線視頻下載/嗅探/媒體管理 Web 工具，基於瀏覽器擴展與 m3u8 解析，支持多平台視頻內容下載與管理。
+    ja: オンラインビデオダウンロード/スニッフィング/メディア管理Webツール。ブラウザ拡張機能とm3u8解析に基づき、マルチプラットフォームの動画コンテンツをダウンロード・管理します。
+    ko: 온라인 비디오 다운로드/스니핑/미디어 관리 웹 도구로, 브라우저 확장 기능과 m3u8 파싱을 기반으로 멀티 플랫폼 비디오 콘텐츠를 다운로드하고 관리합니다.
+    ru: Веб-инструмент для онлайн-загрузки видео, сниффинга и управления медиа, основанный на расширениях браузера и парсинге m3u8. Поддерживает загрузку и управление видеоконтентом с разных платформ.
+    ms: Alat web muat turun video dalam talian, sniffing dan pengurusan media berdasarkan sambungan penyemak imbas dan penghuraian m3u8, menyokong muat turun dan pengurusan kandungan video merentas pelbagai platform.
+    pt-br: Ferramenta web para download de vídeos online, sniffing e gerenciamento de mídia baseada em extensões de navegador e análise m3u8, suportando download e gerenciamento de conteúdo de vídeo em múltiplas plataformas.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/caorushizi/mediago
+  github: https://github.com/caorushizi/mediago

@@ -15,6 +15,7 @@
 | jellyfin | 媒体服务器 | 10.11.11 |
 | llamacpp | 高性能本地 LLM 推理引擎 | latest |
 | llamaindex | LLM 数据框架 | latest |
+| mediago | 媒体嗅探与下载 | 3.5.0 |
 | mihomo | 代理工具 | latest |
 | moviepilot | 影视自动化 | latest |
 | perplexica | AI 问答引擎（原 Perplexica） | latest |

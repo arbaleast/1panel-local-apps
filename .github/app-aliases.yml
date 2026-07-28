@@ -29,6 +29,8 @@ aliases:
     desc: 高性能本地 LLM 推理引擎
   llamaindex:
     desc: LLM 数据框架
+  mediago:
+    desc: 媒体嗅探与下载
   mihomo:
     desc: 代理工具
   pgvector:
