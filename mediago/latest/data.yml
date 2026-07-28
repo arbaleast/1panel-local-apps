@@ -1,5 +1,22 @@
 additionalProperties:
   formFields:
+  - default: '8899'
+    edit: true
+    envKey: PANEL_APP_PORT_HTTP
+    labelEn: HTTP Port
+    labelZh: HTTP 端口
+    label:
+      en: HTTP Port
+      zh: HTTP 端口
+      zh-Hant: HTTP 埠
+      ja: HTTP ポート
+      ko: HTTP 포트
+      ru: HTTP-порт
+      ms: Port HTTP
+      pt-br: Porta HTTP
+    required: true
+    rule: paramPort
+    type: number
   - default: /app/mediago/downloads
     edit: true
     envKey: LOCAL_DIR
@@ -14,7 +31,7 @@ additionalProperties:
       ru: Директория загрузок
       ms: Direktori muat turun
       pt-br: Diretório de download
-    required: false
+    required: true
     type: text
   key: mediago
   name: mediago
