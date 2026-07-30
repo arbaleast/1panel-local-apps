@@ -1,0 +1,17 @@
+networks:
+  1panel-network:
+    external: true
+services:
+  fastnet:
+    container_name: ${CONTAINER_NAME}
+    image: linkease/fastnet:latest
+    labels:
+      createdBy: Apps
+    networks:
+    - 1panel-network
+    ports:
+    - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3200
+    restart: always
+    environment:
+    - TZ=${TZ}
+    - FASTNET_TOKEN=${FASTNET_TOKEN}

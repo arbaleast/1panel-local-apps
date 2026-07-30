@@ -1,0 +1,27 @@
+additionalProperties:
+  key: fastnet
+  name: FastNet
+  tags:
+  - Network
+  - Speedtest
+  shortDescZh: FastNet 网络诊断与测速工具
+  shortDescEn: FastNet network diagnostics & speedtest tool
+  description:
+    zh: FastNet 是一款网络诊断与测速工具，提供 Web UI + API。支持快速体检、NAT 类型测试、IPv6 测试、多源下载测速、SpeedTest.net 测速、内网测速等功能。
+    en: FastNet is a network diagnostics and speed test tool with Web UI + API. Supports quick health check, NAT type test, IPv6 test, multi-source download speed test, SpeedTest.net, LAN speed test, and more.
+    ja: FastNet はネットワーク診断とスピードテストツールで、Web UI + API を提供します。クイックチェック、NAT タイプテスト、IPv6 テスト、マルチソースダウンロード速度テスト、SpeedTest.net、LAN 速度テストなどをサポートしています。
+    ko: FastNet은 네트워크 진단 및 속도 테스트 도구로, Web UI + API를 제공합니다. 빠른 검사, NAT 유형 테스트, IPv6 테스트, 다중 소스 다운로드 속도 테스트, SpeedTest.net, LAN 속도 테스트 등을 지원합니다.
+    ru: FastNet — это инструмент диагностики сети и проверки скорости с веб-интерфейсом и API. Поддерживает быструю проверку здоровья, тест NAT, тест IPv6, измерение скорости загрузки из нескольких источников, SpeedTest.net, LAN тест скорости и многое другое.
+    ms: FastNet ialah alat diagnostik rangkaian dan ujian kelajuan dengan Web UI + API. Menyokong pemeriksaan pantas, ujian jenis NAT, ujian IPv6, ujian kelajuan muat turun berbilang sumber, SpeedTest.net, ujian kelajuan LAN, dan banyak lagi.
+    pt-br: FastNet é uma ferramenta de diagnóstico de rede e teste de velocidade com Web UI + API. Suporta verificação rápida de saúde, teste de tipo NAT, teste IPv6, teste de velocidade de download multiorigem, SpeedTest.net, teste de velocidade LAN e muito mais.
+    zh-Hant: FastNet 是一款網路診斷與測速工具，提供 Web UI + API。支援快速體檢、NAT 類型測試、IPv6 測試、多源下載測速、SpeedTest.net 測速、內網測速等功能。
+  type: tool
+  architectures:
+  - amd64
+  - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/linkease/docker_fastnet
+  github: https://github.com/linkease/docker_fastnet
+  document: https://github.com/linkease/docker_fastnet#readme
