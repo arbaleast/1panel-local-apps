@@ -8,6 +8,7 @@
 |------|------|----------|
 | anirss | 动漫 RSS | latest |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | latest |
+| fastnet | FastNet 网络诊断与测速工具 | latest |
 | firecrawl | 网页爬虫 | latest |
 | handbrake | 视频转码 | latest |
 | hindsight | AI 记忆系统 | latest |
@@ -15,11 +16,11 @@
 | jellyfin | 媒体服务器 | 10.11.11 |
 | llamacpp | 高性能本地 LLM 推理引擎 | latest |
 | llamaindex | LLM 数据框架 | latest |
-| mediago | 媒体嗅探与下载 | 3.5.0 |
+| mediago | 媒体嗅探与下载 | latest |
 | mihomo | 代理工具 | latest |
 | moviepilot | 影视自动化 | latest |
 | perplexica | AI 问答引擎（原 Perplexica） | latest |
-| pgvector | 向量数据库 | latest |
+| pgvector | 向量数据库 | 0.8.6-pg18-trixie |
 | qdrant | 向量搜索引擎 | latest |
 | searxng | 隐私搜索引擎 | latest |
 | syncthing | 文件同步 | latest |

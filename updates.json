@@ -2,55 +2,40 @@
   "updates": [
     {
       "app": "pgvector",
-      "from": "pg18",
-      "to": "0.8.5-pg18-trixie",
+      "from": "0.8.5-pg18-trixie",
+      "to": "0.8.6-pg18-trixie",
       "services": [
         {
           "name": "pgvector",
           "repo": "pgvector/pgvector",
-          "from": "pg18",
-          "to": "0.8.5-pg18-trixie"
+          "from": "0.8.5-pg18-trixie",
+          "to": "0.8.6-pg18-trixie"
         }
       ],
       "changes": [
         {
+          "path": "pgvector/0.8.6-pg18-trixie/docker-compose.yml",
+          "content": "networks:\n  1panel-network:\n    external: true\nservices:\n  pgvector:\n    command:\n    - postgres\n    - -c\n    - shared_preload_libraries=vector\n    container_name: ${CONTAINER_NAME}\n    deploy:\n      resources:\n        limits:\n          cpus: ${CPUS}\n          memory: ${MEMORY_LIMIT}\n    environment:\n    - TZ=${TZ}\n    - POSTGRES_USER=${PANEL_DB_USER}\n    - POSTGRES_PASSWORD=${PANEL_DB_USER_PASSWORD}\n    - POSTGRES_DB=${PANEL_DB_NAME}\n    - POSTGRES_INITDB_ARGS=--encoding=UTF8\n    healthcheck:\n      interval: 10s\n      retries: 10\n      start_period: 30s\n      test:\n      - CMD-SHELL\n      - pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\" || exit 1\n      timeout: 5s\n    image: pgvector/pgvector:0.8.6-pg18-trixie\n    labels:\n      createdBy: Apps\n    networks:\n      1panel-network:\n        aliases:\n        - ${CONTAINER_NAME}\n    ports:\n    - ${HOST_IP}:${PANEL_APP_PORT_TCP}:5432\n    restart: always\n    volumes:\n    - pgvector_data:/var/lib/postgresql\n    - ./initdb.d:/docker-entrypoint-initdb.d:ro\nvolumes:\n  pgvector_data: null\n",
+          "to": "0.8.6-pg18-trixie"
+        },
+        {
+          "path": "pgvector/0.8.6-pg18-trixie/data.yml",
+          "content": "version: 0.8.6-pg18-trixie\nadditionalProperties:\n  formFields:\n    - default: \"5432\"\n      edit: true\n      envKey: PANEL_APP_PORT_TCP\n      labelEn: Service Port\n      labelZh: 服务端口\n      required: true\n      type: number\n    - default: pgvector\n      edit: true\n      envKey: PANEL_DB_USER\n      labelEn: Database User\n      labelZh: 数据库用户名\n      required: true\n      type: text\n    - default: pgvector\n      edit: true\n      envKey: PANEL_DB_USER_PASSWORD\n      labelEn: Database Password\n      labelZh: 数据库密码\n      required: true\n      type: password\n    - default: pgvector\n      edit: true\n      envKey: PANEL_DB_NAME\n      labelEn: Database Name\n      labelZh: 数据库名称\n      required: true\n      type: text\n    - default: Asia/Shanghai\n      edit: true\n      envKey: TZ\n      labelEn: Time Zone\n      labelZh: 时区\n      required: false\n      type: text\n  key: pgvector\n  name: pgvector\n  tags:\n    - database\n    - vector\n    - ai\n  shortDescZh: PostgreSQL + pgvector 向量搜索\n  shortDescEn: PostgreSQL + pgvector 向量搜索\n  description:\n    zh: PostgreSQL 向量相似度搜索扩展，存储 Hindsight/Immich 等 embeddings。\n    en: PostgreSQL vector similarity search extension for embeddings storage.\n  type: tool\n  crossVersionUpdate: true\n  limit: 0\n  recommend: 0\n  website: https://github.com/pgvector/pgvector\n  github: https://github.com/pgvector/pgvector\nname: pgvector\ntitle: PostgreSQL + pgvector 向量搜索\ndescription: PostgreSQL 向量相似度搜索扩展，存储 Hindsight/Immich 等 embeddings。\n",
+          "to": "0.8.6-pg18-trixie"
+        },
+        {
           "path": "pgvector/latest/docker-compose.yml",
-          "content": "networks:\n  1panel-network:\n    external: true\nservices:\n  pgvector:\n    command:\n    - postgres\n    - -c\n    - shared_preload_libraries=vector\n    container_name: ${CONTAINER_NAME}\n    deploy:\n      resources:\n        limits:\n          cpus: ${CPUS}\n          memory: ${MEMORY_LIMIT}\n    environment:\n    - TZ=${TZ}\n    - POSTGRES_USER=${PANEL_DB_USER}\n    - POSTGRES_PASSWORD=${PANEL_DB_USER_PASSWORD}\n    - POSTGRES_DB=${PANEL_DB_NAME}\n    - POSTGRES_INITDB_ARGS=--encoding=UTF8\n    healthcheck:\n      interval: 10s\n      retries: 10\n      start_period: 30s\n      test:\n      - CMD-SHELL\n      - pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\" || exit 1\n      timeout: 5s\n    image: pgvector/pgvector:0.8.5-pg18-trixie\n    labels:\n      createdBy: Apps\n    networks:\n      1panel-network:\n        aliases:\n        - ${CONTAINER_NAME}\n    ports:\n    - ${HOST_IP}:${PANEL_APP_PORT_TCP}:5432\n    restart: always\n    volumes:\n    - pgvector_data:/var/lib/postgresql\n    - ./initdb.d:/docker-entrypoint-initdb.d:ro\nvolumes:\n  pgvector_data: null\n",
-          "to": "0.8.5-pg18-trixie"
+          "content": "networks:\n  1panel-network:\n    external: true\nservices:\n  pgvector:\n    command:\n    - postgres\n    - -c\n    - shared_preload_libraries=vector\n    container_name: ${CONTAINER_NAME}\n    deploy:\n      resources:\n        limits:\n          cpus: ${CPUS}\n          memory: ${MEMORY_LIMIT}\n    environment:\n    - TZ=${TZ}\n    - POSTGRES_USER=${PANEL_DB_USER}\n    - POSTGRES_PASSWORD=${PANEL_DB_USER_PASSWORD}\n    - POSTGRES_DB=${PANEL_DB_NAME}\n    - POSTGRES_INITDB_ARGS=--encoding=UTF8\n    healthcheck:\n      interval: 10s\n      retries: 10\n      start_period: 30s\n      test:\n      - CMD-SHELL\n      - pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\" || exit 1\n      timeout: 5s\n    image: pgvector/pgvector:0.8.6-pg18-trixie\n    labels:\n      createdBy: Apps\n    networks:\n      1panel-network:\n        aliases:\n        - ${CONTAINER_NAME}\n    ports:\n    - ${HOST_IP}:${PANEL_APP_PORT_TCP}:5432\n    restart: always\n    volumes:\n    - pgvector_data:/var/lib/postgresql\n    - ./initdb.d:/docker-entrypoint-initdb.d:ro\nvolumes:\n  pgvector_data: null\n",
+          "to": "0.8.6-pg18-trixie"
         },
         {
           "path": "pgvector/latest/data.yml",
           "content": "version: latest\nadditionalProperties:\n  formFields:\n    - default: \"5432\"\n      edit: true\n      envKey: PANEL_APP_PORT_TCP\n      labelEn: Service Port\n      labelZh: 服务端口\n      required: true\n      type: number\n    - default: pgvector\n      edit: true\n      envKey: PANEL_DB_USER\n      labelEn: Database User\n      labelZh: 数据库用户名\n      required: true\n      type: text\n    - default: pgvector\n      edit: true\n      envKey: PANEL_DB_USER_PASSWORD\n      labelEn: Database Password\n      labelZh: 数据库密码\n      required: true\n      type: password\n    - default: pgvector\n      edit: true\n      envKey: PANEL_DB_NAME\n      labelEn: Database Name\n      labelZh: 数据库名称\n      required: true\n      type: text\n    - default: Asia/Shanghai\n      edit: true\n      envKey: TZ\n      labelEn: Time Zone\n      labelZh: 时区\n      required: false\n      type: text\n  key: pgvector\n  name: pgvector\n  tags:\n    - database\n    - vector\n    - ai\n  shortDescZh: PostgreSQL + pgvector 向量搜索\n  shortDescEn: PostgreSQL + pgvector 向量搜索\n  description:\n    zh: PostgreSQL 向量相似度搜索扩展，存储 Hindsight/Immich 等 embeddings。\n    en: PostgreSQL vector similarity search extension for embeddings storage.\n  type: tool\n  crossVersionUpdate: true\n  limit: 0\n  recommend: 0\n  website: https://github.com/pgvector/pgvector\n  github: https://github.com/pgvector/pgvector\nname: pgvector\ntitle: PostgreSQL + pgvector 向量搜索\ndescription: PostgreSQL 向量相似度搜索扩展，存储 Hindsight/Immich 等 embeddings。\n",
-          "to": "0.8.5-pg18-trixie"
-        }
-      ]
-    },
-    {
-      "app": "vane",
-      "from": "slim-v1.12.2",
-      "to": "full-latest",
-      "services": [
-        {
-          "name": "perplexica",
-          "repo": "itzcrazykns1337/vane",
-          "from": "slim-v1.12.2",
-          "to": "full-latest"
-        }
-      ],
-      "changes": [
-        {
-          "path": "vane/latest/docker-compose.yml",
-          "content": "networks:\n  1panel-network:\n    external: true\nservices:\n  perplexica:\n    container_name: ${CONTAINER_NAME}\n    deploy:\n      resources:\n        limits:\n          cpus: ${CPUS}\n          memory: ${MEMORY_LIMIT}\n    environment:\n    - PORT=3000\n    - AI_PROVIDER=${AI_PROVIDER}\n    - AI_MODEL=${AI_MODEL}\n    - API_KEY=${API_KEY}\n    - API_URL=${API_URL}\n    - SIMILARITY_THRESHOLD=${SIMILARITY_THRESHOLD}\n    - SEARXNG_API_URL=${SEARXNG_API_URL}\n    image: itzcrazykns1337/vane:full-latest\n    labels:\n      createdBy: Apps\n    networks:\n    - 1panel-network\n    ports:\n    - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3000\n    restart: always\n    volumes:\n    - ./data:/app/server/lib/db\n",
-          "to": "full-latest"
-        },
-        {
-          "path": "vane/latest/data.yml",
-          "content": "additionalProperties:\n  formFields:\n    - default: 3000\n      edit: true\n      envKey: PANEL_APP_PORT_HTTP\n      label:\n        en: Port\n        zh: 端口\n        zh-Hant: 埠\n        ja: ポート\n        ko: 포트\n        ru: Порт\n        ms: Port\n        pt-br: Porta\n      required: true\n      rule: paramPort\n      type: number\n    - default: openai\n      edit: true\n      envKey: AI_PROVIDER\n      label:\n        en: AI Provider\n        zh: AI 提供商\n        zh-Hant: AI 供應商\n        ja: AI プロバイダー\n        ko: AI 프로바이더\n        ru: AI провайдер\n        ms: Pembekal AI\n        pt-br: Provedor de IA\n      required: true\n      type: select\n      values:\n        - label: openai\n          value: openai\n        - label: ollama\n          value: ollama\n        - label: groq\n          value: groq\n        - label: anthropic\n          value: anthropic\n        - label: openrouter\n          value: openrouter\n        - label: gemini\n          value: gemini\n        - label: deepseek\n          value: deepseek\n        - label: lmstudio\n          value: lmstudio\n        - label: custom\n          value: custom\n    - default: gpt-4o-mini\n      edit: true\n      envKey: AI_MODEL\n      label:\n        en: AI Model\n        zh: AI 模型\n        zh-Hant: AI 模型\n        ja: AI モデル\n        ko: AI 모델\n        ru: AI модель\n        ms: Model AI\n        pt-br: Modelo de IA\n      required: true\n      type: text\n    - default: \"\"\n      edit: true\n      envKey: API_KEY\n      label:\n        en: API Key\n        zh: API 密钥\n        zh-Hant: API 金鑰\n        ja: API キー\n        ko: API 키\n        ru: API ключ\n        ms: Kunci API\n        pt-br: Chave de API\n      required: false\n      type: password\n    - default: \"\"\n      edit: true\n      envKey: API_URL\n      label:\n        en: API URL (optional)\n        zh: API 端点（可选，用于 Ollama/LMStudio/Custom）\n        zh-Hant: API 端點（選用，用於 Ollama/LMStudio/Custom）\n        ja: API URL（オプション、Ollama/LMStudio/Custom 用）\n        ko: API URL (선택, Ollama/LMStudio/Custom용)\n        ru: API URL (необязательно, для Ollama/LMStudio/Custom)\n        ms: API URL (pilihan, untuk Ollama/LMStudio/Custom)\n        pt-br: URL da API (opcional, para Ollama/LMStudio/Custom)\n      required: false\n      type: text\n    - default: 0.5\n      edit: true\n      envKey: SIMILARITY_THRESHOLD\n      label:\n        en: Similarity Threshold (optional)\n        zh: 相似度阈值（可选）\n        zh-Hant: 相似度閾值（選用）\n        ja: 類似度しきい値（オプション）\n        ko: 유사도 임계값 (선택)\n        ru: Порог схожести (необязательно)\n        ms: Ambang Keserupaan (pilihan)\n        pt-br: Limiar de similaridade (opcional)\n      required: false\n      type: text\n    - default: http://1panel-searxng:8080\n      edit: true\n      envKey: SEARXNG_API_URL\n      label:\n        en: SearXNG API URL\n        zh: SearXNG API 地址\n        zh-Hant: SearXNG API 位址\n        ja: SearXNG API URL\n        ko: SearXNG API URL\n        ru: URL API SearXNG\n        ms: URL API SearXNG\n        pt-br: URL da API SearXNG\n      required: false\n      type: text\n      help:\n        en: Point to the SearXNG service. Default assumes the 1panel-searxng container on the same 1panel-network.\n        zh: 指向 SearXNG 服务地址。默认假定 1panel-searxng 容器在 1panel-network 上。\n        zh-Hant: 指向 SearXNG 服務位址。預設假定 1panel-searxng 容器在 1panel-network 上。\n        ja: SearXNG サービスを指定します。デフォルトは 1panel-network 上の 1panel-searxng コンテナと仮定します。\n        ko: SearXNG 서비스를 가리킵니다. 기본값은 1panel-network의 1panel-searxng 컨테이너를 가정합니다.\n        ru: Указывает на сервис SearXNG. По умолчанию подразумевается контейнер 1panel-searxng в сети 1panel-network.\n        ms: Tunjuk kepada perkhidmatan SearXNG. Lalai mengandaikan bekas 1panel-searxng pada 1panel-network yang sama.\n        pt-br: Aponta para o serviço SearXNG. O padrão assume o contêiner 1panel-searxng na 1panel-network.\n  key: vane\n  name: vane\n  tags:\n    - search\n    - ai\n  shortDescZh: Vane AI 问答引擎\n  shortDescEn: Vane AI Answering Engine\n  description:\n    zh: Vane 是一款 AI 驱动的问答引擎（原名 Perplexica），支持多种 AI 提供商与自定义搜索源。\n    en: Vane is an AI-powered answering engine (formerly Perplexica), supporting multiple AI providers and custom sources.\n  type: tool\n  crossVersionUpdate: true\n  limit: 0\n  recommend: 0\n  website: https://github.com/ItzCrazyKns/Vane\n  github: https://github.com/ItzCrazyKns/Vane\nname: vane\ntitle: Vane AI 问答引擎\ndescription: Vane 是一款 AI 驱动的问答引擎（原名 Perplexica），支持多种 AI 提供商与自定义搜索源。\n",
-          "to": "full-latest"
+          "to": "0.8.6-pg18-trixie"
         }
       ]
     }
   ],
-  "scanned": 16,
-  "timestamp": "2026-07-26T09:55:20.939Z"
+  "scanned": 20,
+  "timestamp": "2026-07-31T09:43:36.251Z"
 }
