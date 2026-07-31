@@ -13,7 +13,7 @@
 | handbrake | 视频转码 | latest |
 | hindsight | AI 记忆系统 | latest |
 | immich | 照片管理 | latest |
-| jellyfin | 媒体服务器 | 10.11.11 |
+| jellyfin | 媒体服务器 | latest |
 | llamacpp | 高性能本地 LLM 推理引擎 | latest |
 | llamaindex | LLM 数据框架 | latest |
 | mediago | 媒体嗅探与下载 | latest |
