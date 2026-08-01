@@ -1,0 +1,78 @@
+additionalProperties:
+  formFields:
+  - default: 8887
+    edit: true
+    envKey: PANEL_APP_PORT_HTTP
+    labelEn: HTTP Port
+    labelZh: HTTP 端口
+    label:
+      en: HTTP Port
+      zh: HTTP 端口
+      zh-Hant: HTTP 連接埠
+      ja: HTTP ポート
+      ko: HTTP 포트
+      ru: HTTP-порт
+      ms: Port HTTP
+      pt-br: Porta HTTP
+    required: true
+    rule: paramPort
+    type: number
+  - default: ramuses/photopea
+    edit: true
+    envKey: IMAGE
+    labelEn: Image
+    labelZh: 镜像
+    label:
+      en: Image
+      zh: 镜像
+      zh-Hant: 映像
+      ja: イメージ
+      ko: 이미지
+      ru: Образ
+      ms: Imej
+      pt-br: Imagem
+    required: true
+    type: text
+  - default: latest
+    edit: true
+    envKey: APP_VERSION
+    labelEn: App Version
+    labelZh: 应用版本
+    label:
+      en: App Version
+      zh: 应用版本
+      zh-Hant: 應用版本
+      ja: アプリバージョン
+      ko: 앱 버전
+      ru: Версия приложения
+      ms: Versi Apl
+      pt-br: Versão do aplicativo
+    required: true
+    type: text
+  key: photopea
+  name: Photopea
+  tags:
+  - Image
+  - Editor
+  - Tool
+  shortDescZh: Photopea 在线图像编辑器
+  shortDescEn: Photopea online image editor
+  description:
+    en: Online image editor (Photoshop alternative) supporting PSD, XCF, Sketch, XD and Figma formats.
+    zh: 在线图像编辑器(Photoshop 替代),支持 PSD、XCF、Sketch、XD、Figma 等格式。
+    zh-Hant: 線上影像編輯器(Photoshop 替代),支援 PSD、XCF、Sketch、XD、Figma 等格式。
+    ja: オンライン画像エディタ(Photoshop 代替)。PSD、XCF、Sketch、XD、Figma 形式に対応。
+    ko: 온라인 이미지 편집기(Photoshop 대체). PSD, XCF, Sketch, XD, Figma 형식 지원.
+    ru: Онлайн-редактор изображений (альтернатива Photoshop) с поддержкой PSD, XCF, Sketch, XD и Figma.
+    ms: Penyunting imej dalam talian (alternatif Photoshop) menyokong format PSD, XCF, Sketch, XD dan Figma.
+    pt-br: Editor de imagens online (alternativa ao Photoshop) compatível com PSD, XCF, Sketch, XD e Figma.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://www.photopea.com/
+  github: https://github.com/ramuses/photopea
+version: latest
+name: Photopea
+title: Photopea 在线图像编辑器
+description: 在线图像编辑器(Photoshop 替代),支持 PSD、XCF、Sketch、XD、Figma 等格式。

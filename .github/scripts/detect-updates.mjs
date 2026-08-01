@@ -107,12 +107,44 @@ function findFormFieldForImage(dataObj, imageRepo) {
 
 // ---------- 主流程 ----------
 
-function listApps() {
+/**
+ * 加载别名表，构建 dir -> 配置 映射
+ * 别名表中 dir 可指向嵌套路径（如 ramuses/photopea），供嵌套应用识别
+ * @returns {Map<string, object>} aliasByDir
+ */
+function loadAliases() {
+  const aliasesPath = path.join(REPO_ROOT, '.github', 'app-aliases.yml');
+  if (!fs.existsSync(aliasesPath)) return new Map();
+  const aliasesData = yaml.load(fs.readFileSync(aliasesPath, 'utf8')) || {};
+  const aliases = aliasesData.aliases || {};
+  const aliasByDir = new Map();
+  for (const [name, conf] of Object.entries(aliases)) {
+    const dir = conf.dir || name;
+    aliasByDir.set(dir, { ...conf, _shortName: name });
+  }
+  return aliasByDir;
+}
+
+function listApps(aliasByDir) {
   if (!fs.existsSync(APPS_DIR)) return [];
   const dirs = fs.readdirSync(APPS_DIR, { withFileTypes: true });
-  return dirs
+  const apps = dirs
     .filter((d) => d.isDirectory() && !SKIP_DIRS.has(d.name))
     .map((d) => d.name);
+
+  // 补充别名表 dir 指向嵌套路径的应用（如 ramuses/photopea）
+  for (const [dir, conf] of aliasByDir.entries()) {
+    if (/[\\/]/.test(dir) && !apps.includes(dir)) {
+      const dirPath = path.join(APPS_DIR, dir);
+      if (
+        fs.existsSync(path.join(dirPath, 'docker-compose.yml')) ||
+        fs.existsSync(path.join(dirPath, 'latest', 'docker-compose.yml'))
+      ) {
+        apps.push(dir);
+      }
+    }
+  }
+  return apps;
 }
 
 /**
@@ -271,8 +303,21 @@ async function processApp(appName) {
 }
 
 async function main() {
-  const allApps = listApps();
-  const targetApps = APPS_FILTER.length > 0 ? allApps.filter((a) => APPS_FILTER.includes(a)) : allApps;
+  // 加载别名表（dir 可能指向嵌套路径，如 ramuses/photopea）
+  const aliasByDir = loadAliases();
+  // shortName -> dir 映射：APPS_FILTER 支持按短名（如 photopea）或实际目录（如 ramuses/photopea）过滤
+  const shortToDir = new Map();
+  for (const [dir, conf] of aliasByDir.entries()) {
+    shortToDir.set(conf._shortName, dir);
+  }
+
+  const allApps = listApps(aliasByDir);
+  let targetApps = allApps;
+  if (APPS_FILTER.length > 0) {
+    // 展开短名为实际目录，再按实际目录过滤
+    const expanded = APPS_FILTER.map((f) => shortToDir.get(f) || f);
+    targetApps = allApps.filter((a) => expanded.includes(a));
+  }
   log(`扫描 ${targetApps.length} 个应用`);
 
   const updates = [];

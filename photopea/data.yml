@@ -1,0 +1,27 @@
+additionalProperties:
+  key: photopea
+  name: Photopea
+  tags:
+  - Image
+  - Editor
+  - Tool
+  shortDescZh: Photopea 在线图像编辑器
+  shortDescEn: Photopea online image editor
+  description:
+    en: Online image editor (Photoshop alternative) supporting PSD, XCF, Sketch, XD and Figma formats.
+    zh: 在线图像编辑器(Photoshop 替代),支持 PSD、XCF、Sketch、XD、Figma 等格式。
+    zh-Hant: 線上影像編輯器(Photoshop 替代),支援 PSD、XCF、Sketch、XD、Figma 等格式。
+    ja: オンライン画像エディタ(Photoshop 代替)。PSD、XCF、Sketch、XD、Figma 形式に対応。
+    ko: 온라인 이미지 편집기(Photoshop 대체). PSD, XCF, Sketch, XD, Figma 형식 지원.
+    ru: Онлайн-редактор изображений (альтернатива Photoshop) с поддержкой PSD, XCF, Sketch, XD и Figma.
+    ms: Penyunting imej dalam talian (alternatif Photoshop) menyokong format PSD, XCF, Sketch, XD dan Figma.
+    pt-br: Editor de imagens online (alternativa ao Photoshop) compatível com PSD, XCF, Sketch, XD e Figma.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://www.photopea.com/
+  github: https://github.com/ramuses/photopea
+name: Photopea
+title: Photopea 在线图像编辑器
+description: 在线图像编辑器(Photoshop 替代),支持 PSD、XCF、Sketch、XD、Figma 等格式。

@@ -253,6 +253,22 @@ function main() {
     }
   }
 
+  // 2.1 补充别名表 dir 指向嵌套路径的应用（如 ramuses/photopea）
+  // 根一级目录扫描无法发现嵌套目录，需按别名表 dir 显式补充
+  for (const [name, conf] of Object.entries(aliases)) {
+    const dir = conf.dir || name;
+    if (/[\\/]/.test(dir) && !appDirs.includes(dir)) {
+      const dirPath = path.join(REPO_ROOT, dir);
+      if (
+        fs.existsSync(path.join(dirPath, 'data.yml')) ||
+        fs.existsSync(path.join(dirPath, 'latest', 'data.yml'))
+      ) {
+        appDirs.push(dir);
+        log(`发现嵌套应用: ${dir}`);
+      }
+    }
+  }
+
   // 按 shortName 字母序排列
   appDirs.sort((a, b) => {
     const nameA = aliasByDir.get(a)?._shortName || a;

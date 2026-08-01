@@ -1,6 +1,6 @@
-# 应用别名表 — 用于 sync-readme.mjs 同步 README 应用列表
+# 应用别名表 — 用于 sync-readme.mjs / detect-updates.mjs
 # key = README 表格中的短名
-# dir = 实际目录名（省略时同 key）
+# dir = 实际目录名（省略时同 key）；支持嵌套路径，如 dir: ramuses/photopea
 # desc = 表格"说明"列（覆盖 data.yml shortDescZh）
 # preferred_version = 强制指定版本（跳过自动检测）
 # _missing = true 时 sync-readme 跳过此条目
@@ -43,6 +43,9 @@ aliases:
     desc: 文件同步
   traefik:
     desc: 反向代理
+  photopea:
+    dir: ramuses/photopea
+    desc: 在线图像编辑器
   zashboard:
     desc: Mihomo 面板
   vane:

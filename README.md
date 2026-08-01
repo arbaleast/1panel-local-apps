@@ -21,6 +21,7 @@
 | moviepilot | 影视自动化 | latest |
 | perplexica | AI 问答引擎（原 Perplexica） | latest |
 | pgvector | 向量数据库 | latest |
+| photopea | 在线图像编辑器 | latest |
 | qdrant | 向量搜索引擎 | latest |
 | searxng | 隐私搜索引擎 | latest |
 | syncthing | 文件同步 | latest |
