@@ -9,6 +9,12 @@ services:
                 limits:
                     cpus: ${CPUS}
                     memory: ${MEMORY_LIMIT}
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: ${NVIDIA_VISIBLE_DEVICES}
+                          capabilities:
+                              - gpu
         environment:
             - PUID=99
             - PGID=100
