@@ -27,7 +27,7 @@ additionalProperties:
       zh: Https 端口
       zh-Hant: Https 連接埠
       ja: Https ポート
-      ko: Https 포트
+      ko: Https ポート
       ru: Порт Https
       ms: Port Https
       pt-br: Porta Https
@@ -75,7 +75,7 @@ additionalProperties:
       en: Basic Auth Username
       zh: 访问用户名（Basic Auth）
       zh-Hant: 存取使用者名稱（Basic Auth）
-      ja: ベーシック認証ユーザー名
+      ja: クラシック認証ユーザー名
       ko: 기본 인증 사용자명
       ru: Имя пользователя (Basic Auth)
       ms: Nama pengguna (Basic Auth)
@@ -91,7 +91,7 @@ additionalProperties:
       en: Basic Auth Password
       zh: 访问密码（Basic Auth）
       zh-Hant: 存取密碼（Basic Auth）
-      ja: ベーシック認証パスワード
+      ja: クラシック認証パスワード
       ko: 기본 인증 비밀번호
       ru: Пароль (Basic Auth)
       ms: Kata laluan Basic Auth
@@ -175,37 +175,37 @@ additionalProperties:
     edit: true
     envKey: NVIDIA_ENABLE
     labelEn: Enable NVIDIA GPU
-    labelZh: 启用 NVIDIA GPU（需宿主机已安装 NVIDIA Container Toolkit）
+    labelZh: "启用 NVIDIA GPU（需宿主机已安装 NVIDIA Container Toolkit）"
     label:
       en: Enable NVIDIA GPU
-      zh: 启用 NVIDIA GPU（需宿主机已安装 NVIDIA Container Toolkit）
-      zh-Hant: 啟用 NVIDIA GPU（需主機已安裝 NVIDIA Container Toolkit）
-      ja: NVIDIA GPU を有効化（NVIDIA Container Toolkit がホストにインストールされている必要があります）
-      ko: NVIDIA GPU 사용（호스트에 NVIDIA Container Toolkit이 설치되어 있어야 합니다）
-      ru: Включить NVIDIA GPU（требуется NVIDIA Container Toolkit на хосте）
-      ms: Dayakan NVIDIA GPU（hos perlu pasang NVIDIA Container Toolkit）
-      pt-br: Habilitar NVIDIA GPU（é necessário NVIDIA Container Toolkit no host）
+      zh: "启用 NVIDIA GPU（需宿主机已安装 NVIDIA Container Toolkit）"
+      zh-Hant: "啟用 NVIDIA GPU（需主機已安裝 NVIDIA Container Toolkit）"
+      ja: "NVIDIA GPU を有効化（NVIDIA Container Toolkit がホストにインストールされている必要があります）"
+      ko: "NVIDIA GPU 使用（호스트에 NVIDIA Container Toolkit이 설치되어 있어야 합니다）"
+      ru: "Включить NVIDIA GPU（требуется NVIDIA Container Toolkit на хосте）"
+      ms: "Dayakan NVIDIA GPU（hos perlu pasang NVIDIA Container Toolkit）"
+      pt-br: "Habilitar NVIDIA GPU（é necessário NVIDIA Container Toolkit no host）"
     required: true
     type: select
     values:
-      - label: 'true'
-        value: 'true'
-      - label: 'false'
-        value: 'false'
+    - label: 'true'
+      value: 'true'
+    - label: 'false'
+      value: 'false'
   - default: ''
     edit: true
     envKey: NVIDIA_VISIBLE_DEVICES
-    labelEn: GPU devices (this is the actual GPU switch: leave empty for CPU only)
-    labelZh: GPU 设备（真正的 GPU 开关：留空=仅 CPU；填 all=全部；填编号=指定 GPU；需宿主机已装 NVIDIA Container Toolkit）
+    labelEn: "GPU devices (this is the actual GPU switch: leave empty for CPU only)"
+    labelZh: "GPU 设备（真正的 GPU 开关：留空=仅 CPU；填 all=全部；填编号=指定 GPU；需宿主机已装 NVIDIA Container Toolkit）"
     label:
-      en: GPU devices (this is the actual GPU switch: leave empty for CPU only)
-      zh: GPU 设备（真正的 GPU 开关：留空=仅 CPU；填 all=全部；填编号=指定 GPU；需宿主机已装 NVIDIA Container Toolkit）
-      zh-Hant: GPU 裝置（真正的 GPU 開關：留空=僅 CPU；填 all=全部；填編號=指定 GPU；需主機已安裝 NVIDIA Container Toolkit）
-      ja: GPU デバイス（実際の GPU スイッチ：空欄=CPU のみ、all=すべて、番号=指定 GPU。ホストに NVIDIA Container Toolkit が必要）
-      ko: GPU 장치 (실제 GPU 스위치: 비워두면 CPU 전용, all=전체, 번호=지정 GPU. 호스트에 NVIDIA Container Toolkit 필요)
-      ru: Устройства GPU (это фактический переключатель GPU: пусто = только CPU, all = все, номер = конкретный GPU. Требуется NVIDIA Container Toolkit на хосте)
-      ms: Peranti GPU (suis GPU sebenar: kosong = CPU sahaja, all = semua, nombor = GPU tertentu. Hos perlu pasang NVIDIA Container Toolkit)
-      pt-br: Dispositivos GPU (este é o interruptor real da GPU: vazio = somente CPU, all = todas, número = GPU específica. Requer NVIDIA Container Toolkit no host)
+      en: "GPU devices (this is the actual GPU switch: leave empty for CPU only)"
+      zh: "GPU 设备（真正的 GPU 开关：留空=仅 CPU；填 all=全部；填编号=指定 GPU；需宿主机已装 NVIDIA Container Toolkit）"
+      zh-Hant: "GPU 裝置（真正的 GPU 開關：留空=僅 CPU；填 all=全部；填編號=指定 GPU；需主機已安裝 NVIDIA Container Toolkit）"
+      ja: "GPU デバイス（実際の GPU スイッチ：空欄=CPU のみ、all=すべて、番号=指定 GPU。ホストに NVIDIA Container Toolkit が必要）"
+      ko: "GPU 장치 (실제 GPU 스위치: 비워두면 CPU 전용, all=전체, 번호=지정 GPU. 호스트에 NVIDIA Container Toolkit 필요)"
+      ru: "Устройства GPU (это фактический переключатель GPU: пусто = только CPU, all = все, номер = конкретный GPU. Требуется NVIDIA Container Toolkit на хосте)"
+      ms: "Peranti GPU (suis GPU sebenar: kosong = CPU sahaja, all = semua, nombor = GPU tertentu. Hos perlu pasang NVIDIA Container Toolkit)"
+      pt-br: "Dispositivos GPU (este é o interruptor real da GPU: vazio = somente CPU, all = todas, número = GPU específica. Requer NVIDIA Container Toolkit no host)"
     required: true
     type: text
   key: handbrake
@@ -214,7 +214,7 @@ additionalProperties:
   - video
   - transcode
   shortDescZh: HandBrake 视频转码
-  shortDescEn: HandBrake 视频转码
+  shortDescEn: HandBrake video transcoder
   description:
     zh: linuxserver.io 包装的 HandBrake 容器，浏览器内视频转码。
     en: HandBrake container by linuxserver.io, browser-based video transcoding.
