@@ -1,0 +1,42 @@
+key: llmwiki
+name: LLM Wiki
+type: tool
+description:
+  en: "LLM Wiki (placeholder entry, image is not a headless service — see README)"
+  zh: "LLM Wiki（占位应用：所用第三方镜像 `041002/llm_wiki:latest` 非 headless 服务，1Panel 部署后 19828 端口不会自动监听，仅作为应用商店占位条目。详见 README 风险说明）"
+  zh-Hant: "LLM Wiki（佔位應用：第三方映像檔非 headless 服務，僅作為應用商店佔位條目，詳見 README）"
+  ja: "LLM Wiki（プレースホルダ：第三者イメージは headless ではない為、1Panel では API ポートは無効。詳細は README を参照）"
+  ko: "LLM Wiki(자리표시자: 서드파티 이미지는 헤드리스가 아니므로 1Panel에서 19828 포트가 비활성. README 참조)"
+  ru: "LLM Wiki (заглушка: сторонний образ не headless, порт 19828 в 1Panel не активен. См. README)"
+  ms: "LLM Wiki (pengganti: imej pihak ketiga bukan headless, port 19828 tidak aktif dalam 1Panel. Lihat README)"
+  pt-br: "LLM Wiki (placeholder: imagem de terceiros não é headless, porta 19828 inativa no 1Panel. Veja README)"
+website: https://github.com/nashsu/llm_wiki
+github: https://github.com/nashsu/llm_wiki
+tags:
+  - wiki
+  - llm
+  - knowledge-base
+additionalProperties:
+  key: llmwiki
+  name: llmwiki
+  tags:
+    - wiki
+    - llm
+    - knowledge-base
+  shortDescZh: LLM Wiki 知识库（占位应用，详见 README 风险说明）
+  shortDescEn: LLM Wiki knowledge base (placeholder entry, see README)
+  description:
+    en: "LLM Wiki (placeholder entry, image is not a headless service — see README)"
+    zh: "LLM Wiki（占位应用：所用第三方镜像 `041002/llm_wiki:latest` 非 headless 服务，1Panel 部署后 19828 端口不会自动监听，仅作为应用商店占位条目。详见 README 风险说明）"
+    zh-Hant: "LLM Wiki（佔位應用：第三方映像檔非 headless 服務，僅作為應用商店佔位條目，詳見 README）"
+    ja: "LLM Wiki（プレースホルダ：第三者イメージは headless ではない為、1Panel では API ポートは無効。詳細は README を参照）"
+    ko: "LLM Wiki(자리표시자: 서드파티 이미지는 헤드리스가 아니므로 1Panel에서 19828 포트가 비활성. README 참조)"
+    ru: "LLM Wiki (заглушка: сторонний образ не headless, порт 19828 в 1Panel не активен. См. README)"
+    ms: "LLM Wiki (pengganti: imej pihak ketiga bukan headless, port 19828 tidak aktif dalam 1Panel. Lihat README)"
+    pt-br: "LLM Wiki (placeholder: imagem de terceiros não é headless, porta 19828 inativa no 1Panel. Veja README)"
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/nashsu/llm_wiki
+  github: https://github.com/nashsu/llm_wiki

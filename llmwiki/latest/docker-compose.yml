@@ -1,0 +1,23 @@
+services:
+  llmwiki:
+    container_name: ${CONTAINER_NAME}
+    image: 041002/llm_wiki:latest
+    restart: always
+    networks:
+      - 1panel-network
+    ports:
+      - "${PANEL_APP_PORT_API}:19828"
+    environment:
+      - LLM_WIKI_BIND_HOST=${LLM_WIKI_BIND_HOST}
+      - LLM_WIKI_API_TOKEN=${LLM_WIKI_API_TOKEN}
+      - LLM_WIKI_ALLOW_LAN=${LLM_WIKI_ALLOW_LAN}
+    volumes:
+      - ./data:/data
+    labels:
+      createdBy: "Apps"
+    # 上游镜像 CMD=/bin/sh 容器秒退；用 tini + tail 保活，让 1Panel 状态显示稳定
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["echo 'LLM Wiki placeholder container. See llmwiki/README.md for risk notice.'; tail -f /dev/null"]
+networks:
+  1panel-network:
+    external: true

@@ -1,0 +1,84 @@
+key: llmwiki
+version: latest
+name: LLM Wiki (latest)
+description:
+  en: "LLM Wiki — third-party placeholder image (see app README). Not headless, port 19828 will not listen."
+  zh: "LLM Wiki（占位版）：使用第三方镜像 041002/llm_wiki:latest，非 headless 服务，部署后 19828 不会自动监听。详见应用 README。"
+  zh-Hant: "LLM Wiki（佔位版）：使用第三方映像，非 headless，部署後 19828 不會自動監聽。詳見應用 README。"
+  ja: "LLM Wiki (latest): 第三者プレースホルダイメージ。ヘッドレスではない為、19828 はリッスンしません。"
+  ko: "LLM Wiki(latest): 서드파티 자리표시자 이미지. 헤드리스가 아니므로 19828 비활성."
+  ru: "LLM Wiki (latest): сторонний placeholder-образ. Не headless, 19828 не слушается."
+  ms: "LLM Wiki (latest): imej pengganti pihak ketiga. Bukan headless, 19828 tidak mendengar."
+  pt-br: "LLM Wiki (latest): imagem placeholder de terceiros. Não é headless, 19828 não escuta."
+formFields:
+  - envKey: LLM_WIKI_BIND_HOST
+    label:
+      en: API Bind Host
+      zh: API 监听地址
+      zh-Hant: API 監聽地址
+      ja: API バインドホスト
+      ko: API 바인드 호스트
+      ru: Хост API
+      ms: Hos Bind API
+      pt-br: Host de Bind da API
+    default: "127.0.0.1"
+    required: false
+    type: text
+    helper:
+      en: "⚠ Placeholder: the upstream image is not a headless service, this env var will not make port 19828 listen."
+      zh: "⚠ 占位说明：上游镜像非 headless 服务，注入此变量不会让 19828 自动监听。"
+      zh-Hant: "⚠ 佔位說明：上游映像非 headless 服務，注入此變數不會讓 19828 自動監聽。"
+      ja: "⚠ プレースホルダ：上流イメージは headless ではないため、本変数を設定しても 19828 はリッスンしません。"
+      ko: "⚠ 자리표시자: 이미지가 헤드리스가 아니므로 이 변수는 19828을 활성시키지 않습니다."
+      ru: "⚠ Заглушка: образ не headless, переменная не заставит 19828 слушать."
+      ms: "⚠ Pengganti: imej bukan headless, pembolehubah ini tidak akan membuat 19828 mendengar."
+      pt-br: "⚠ Placeholder: a imagem não é headless; esta variável não fará a 19828 escutar."
+  - envKey: LLM_WIKI_API_TOKEN
+    label:
+      en: API Token
+      zh: API 鉴权 Token
+      zh-Hant: API 鑑權 Token
+      ja: API 認証トークン
+      ko: API 인증 토큰
+      ru: Токен API
+      ms: Token API
+      pt-br: Token da API
+    default: ""
+    required: false
+    type: password
+    helper:
+      en: "⚠ Placeholder only. See app README."
+      zh: "⚠ 仅占位，不会生效，详见应用 README。"
+      zh-Hant: "⚠ 僅佔位，不會生效。"
+      ja: "⚠ プレースホルダのみ。"
+      ko: "⚠ 자리표시자 전용."
+      ru: "⚠ Только заглушка."
+      ms: "⚠ Pengganti sahaja."
+      pt-br: "⚠ Apenas placeholder."
+  - envKey: LLM_WIKI_ALLOW_LAN
+    label:
+      en: Allow LAN Access
+      zh: 允许局域网访问
+      zh-Hant: 允許區域網路存取
+      ja: LAN アクセスを許可
+      ko: LAN 액세스 허용
+      ru: Разрешить доступ из LAN
+      ms: Benarkan Akses LAN
+      pt-br: Permitir Acesso LAN
+    default: "false"
+    required: false
+    type: select
+    values:
+      - label: "true"
+        value: "true"
+      - label: "false"
+        value: "false"
+    helper:
+      en: "⚠ Placeholder. Use 'select' to simulate boolean (AGENTS.md: type=boolean not supported)."
+      zh: "⚠ 占位。按 AGENTS.md 规则，formField 不支持 type=boolean，用 select 模拟。"
+      zh-Hant: "⚠ 佔位。按 AGENTS.md 規則，formField 不支援 type=boolean，用 select 模擬。"
+      ja: "⚠ プレースホルダ。AGENTS.md 規則により formField は type=boolean 非対応、select で模擬。"
+      ko: "⚠ 자리표시자. AGENTS.md 규칙상 formField는 type=boolean 미지원, select 로 모사."
+      ru: "⚠ Заглушка. По AGENTS.md formField не поддерживает type=boolean, используем select."
+      ms: "⚠ Pengganti. Mengikut AGENTS.md, formField tidak menyokong type=boolean, gunakan select."
+      pt-br: "⚠ Placeholder. Conforme AGENTS.md, formField não suporta type=boolean, usa-se select."
