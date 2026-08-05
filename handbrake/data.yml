@@ -6,8 +6,8 @@
   shortDescZh: HandBrake 视频转码 (linuxserver 镜像)
   shortDescEn: HandBrake video transcoder (linuxserver image)
   description:
-    zh: 开源视频转码器，CPU/GPU 编码，linuxserver.io Docker 包装。
-    en: 开源视频转码器，CPU/GPU 编码，linuxserver.io Docker 包装。
+    zh: 开源视频转码器，CPU/GPU 编码，linuxserver.io Docker 包装，支持 NVIDIA GPU 硬件加速。
+    en: Open source video transcoder, CPU/GPU encoding, linuxserver.io Docker packaging, with NVIDIA GPU hardware acceleration support.
   type: media
   crossVersionUpdate: true
   limit: 0
