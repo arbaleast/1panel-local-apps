@@ -1,0 +1,41 @@
+# Infinity — 本地 GPU Embeddings 推理服务 (OpenAI 兼容 /v1/embeddings)
+# GPU 调度: runtime: nvidia + deploy.resources (GPU 设备经 NVIDIA_VISIBLE_DEVICES 指定)
+# HF 模型缓存: ./data 挂载到 /app/.cache (HF_HOME), 重启复用避免重复下载模型
+services:
+  infinity:
+    container_name: ${CONTAINER_NAME}
+    image: ${IMAGE}
+    restart: always
+    networks:
+      - 1panel-network
+    ports:
+      - "${HOST_IP}:${PANEL_APP_PORT_HTTP}:${INFINITY_PORT}"
+    environment:
+      # 以下 INFINITY_* 为 Infinity CLI 原生环境变量, 运行时覆盖 Dockerfile CMD 默认值
+      - INFINITY_MODEL_ID=${EMBEDDING_MODEL}
+      - INFINITY_DTYPE=${DTYPE}
+      - INFINITY_BATCH_SIZE=${BATCH_SIZE}
+      - INFINITY_PORT=${INFINITY_PORT}
+      # NVIDIA 容器运行时 GPU 可见设备 (多卡用逗号分隔, 如 0,1)
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
+      # HuggingFace 模型缓存目录 (持久化)
+      - HF_HOME=/app/.cache/huggingface
+    volumes:
+      - ./data:/app/.cache
+    runtime: nvidia
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${NVIDIA_VISIBLE_DEVICES}"]
+              capabilities: [gpu]
+    labels:
+      createdBy: Apps
+
+networks:
+  1panel-network:
+    external: true

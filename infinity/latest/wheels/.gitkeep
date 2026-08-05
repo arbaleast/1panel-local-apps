@@ -1,0 +1,2 @@
+# latest/wheels/ 目录占位: 存放本地构建所需的 Python wheel 包 (构建上下文为 latest/, Git LFS 跟踪)
+# 旧位置 infinity/wheels/ 已迁移至此, 避免与 Dockerfile 中 COPY wheels/ 的上下文错位。

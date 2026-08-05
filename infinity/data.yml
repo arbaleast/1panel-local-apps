@@ -1,0 +1,38 @@
+name: Infinity
+title: Infinity — 本地 GPU Embeddings 推理服务
+description:
+  zh: 本地 GPU 文本嵌入（Embedding）推理服务，兼容 OpenAI Embeddings API，支持 bge / e5 / qwen 等主流嵌入模型，自动批处理与动态批大小。
+  en: Local GPU text embedding inference server compatible with the OpenAI Embeddings API. Supports bge / e5 / qwen and other mainstream embedding models with automatic batching and dynamic batch sizing.
+  zh-Hant: 本地 GPU 文本嵌入（Embedding）推論服務，相容 OpenAI Embeddings API，支援 bge / e5 / qwen 等主流嵌入模型，自動批次處理與動態批次大小。
+  ja: ローカル GPU テキスト埋め込み推論サーバー。OpenAI Embeddings API 互換で、bge / e5 / qwen など主要な埋め込みモデルに対応。自動バッチ処理と動的バッチサイズ。
+  ko: 로컬 GPU 텍스트 임베딩 추론 서버. OpenAI Embeddings API와 호환되며 bge / e5 / qwen 등 주요 임베딩 모델을 지원. 자동 배치 처리 및 동적 배치 크기.
+  ru: Локальный сервер инференса текстовых эмбеддингов на GPU, совместимый с OpenAI Embeddings API. Поддержка bge / e5 / qwen и других популярных моделей, автоматическая пакетная обработка и динамический размер батча.
+  ms: Pelayan inferens embedding teks pada GPU tempatan, serasi dengan OpenAI Embeddings API. Menyokong model bge / e5 / qwen dan model utama lain, dengan pemprosesan kelompok automatik dan saiz kelompok dinamik.
+  pt-br: Servidor local de inferência de embeddings de texto em GPU, compatível com a API OpenAI Embeddings. Suporta modelos bge / e5 / qwen e outros modelos populares, com processamento em lote automático e tamanho de lote dinâmico.
+additionalProperties:
+  key: infinity
+  name: infinity
+  tags:
+    - AI
+    - Embedding
+    - GPU
+  shortDescZh: 本地 GPU Embeddings 推理服务
+  shortDescEn: Local GPU Embeddings inference server
+  description:
+    zh: 本地 GPU 文本嵌入（Embedding）推理服务，兼容 OpenAI Embeddings API，支持 bge / e5 / qwen 等主流嵌入模型，自动批处理与动态批大小。
+    en: Local GPU text embedding inference server compatible with the OpenAI Embeddings API. Supports bge / e5 / qwen and other mainstream embedding models with automatic batching and dynamic batch sizing.
+    zh-Hant: 本地 GPU 文本嵌入（Embedding）推論服務，相容 OpenAI Embeddings API，支援 bge / e5 / qwen 等主流嵌入模型，自動批次處理與動態批次大小。
+    ja: ローカル GPU テキスト埋め込み推論サーバー。OpenAI Embeddings API 互換で、bge / e5 / qwen など主要な埋め込みモデルに対応。自動バッチ処理と動的バッチサイズ。
+    ko: 로컬 GPU 텍스트 임베딩 추론 서버. OpenAI Embeddings API와 호환되며 bge / e5 / qwen 등 주요 임베딩 모델을 지원. 자동 배치 처리 및 동적 배치 크기.
+    ru: Локальный сервер инференса текстовых эмбеддингов на GPU, совместимый с OpenAI Embeddings API. Поддержка bge / e5 / qwen и других популярных моделей, автоматическая пакетная обработка и динамический размер батча.
+    ms: Pelayan inferens embedding teks pada GPU tempatan, serasi dengan OpenAI Embeddings API. Menyokong model bge / e5 / qwen dan model utama lain, dengan pemprosesan kelompok automatik dan saiz kelompok dinamik.
+    pt-br: Servidor local de inferência de embeddings de texto em GPU, compatível com a API OpenAI Embeddings. Suporta modelos bge / e5 / qwen e outros modelos populares, com processamento em lote automático e tamanho de lote dinâmico.
+  type: tool
+  architectures:
+    - amd64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/michaelf34/infinity
+  github: https://github.com/michaelf34/infinity
+  document: https://michaelf34.github.io/infinity/

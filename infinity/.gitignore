@@ -1,0 +1,10 @@
+data/
+*.log
+.env
+.venv/
+__pycache__/
+*.pyc
+.cache/
+infinity/latest/data/cache/
+*.tar
+*.tar.gz
