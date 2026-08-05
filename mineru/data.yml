@@ -1,0 +1,24 @@
+additionalProperties:
+  key: mineru
+  name: MinerU
+  tags:
+    - Tool
+    - AI
+    - Document
+  shortDescZh: OpenDataLab 开源的 PDF/文档智能解析工具
+  shortDescEn: OpenDataLab open-source PDF/document intelligent parsing toolkit
+  description:
+    en: MinerU is an open-source document intelligent parsing tool by OpenDataLab, dedicated to extracting high-quality content from complex PDF/DOCX/PPT/Image documents. The mineru-router component provides a unified API entry for multi-service, multi-GPU orchestration with auto-scheduled local workers and aggregated upstream mineru-api services.
+    zh: MinerU 是 OpenDataLab 开源的文档智能解析工具，专注于从复杂的 PDF / DOCX / PPT / 图片等文档中提取高质量内容。mineru-router 组件对外提供统一 API 入口，可自动调度本地 worker 并聚合上游 mineru-api 服务，适用于多服务、多 GPU 与统一入口部署场景。
+    zh-Hant: MinerU 是 OpenDataLab 開源的文檔智慧解析工具，專注於從複雜的 PDF / DOCX / PPT / 圖片等文檔中擷取高品質內容。mineru-router 元件對外提供統一 API 入口，可自動調度本地 worker 並聚合上游 mineru-api 服務，適用於多服務、多 GPU 與統一入口部署場景。
+    ja: MinerU は OpenDataLab が開発したオープンソースのドキュメントインテリジェント解析ツールで、複雑な PDF / DOCX / PPT / 画像ドキュメントから高品質なコンテンツを抽出することに特化しています。mineru-router コンポーネントはマルチサービス・マルチ GPU オーケストレーション用の統一 API 入口を提供し、ローカル worker の自動スケジューリングとアップストリーム mineru-api サービスの集約をサポートします。
+    ko: MinerU는 OpenDataLab에서 개발한 오픈소스 문서 지능형 파싱 도구로, 복잡한 PDF / DOCX / PPT / 이미지 문서에서 고품질 콘텐츠를 추출하는 데 특화되어 있습니다. mineru-router 컴포넌트는 다중 서비스·다중 GPU 오케스트레이션을 위한 통합 API 엔트리를 제공하며, 로컬 워커 자동 스케줄링과 업스트림 mineru-api 서비스 집계를 지원합니다.
+    ru: MinerU — открытый инструмент интеллектуального анализа документов от OpenDataLab, предназначенный для извлечения высококачественного контента из сложных PDF/DOCX/PPT/изображений. Компонент mineru-router предоставляет единую точку входа API для оркестрации нескольких сервисов и GPU, с автоматическим планированием локальных воркеров и агрегацией upstream-сервисов mineru-api.
+    ms: MinerU ialah alat penghuraian pintar dokumen sumber terbuka daripada OpenDataLab, khusus untuk mengekstrak kandungan berkualiti tinggi daripada dokumen PDF / DOCX / PPT / imej yang kompleks. Komponen mineru-router menyediakan titik masuk API bersatu untuk orkestrasi pelbagai perkhidmatan dan GPU, dengan penjadualan automatik pekerja tempatan dan pengagregatan perkhidmatan mineru-api hulu.
+    pt-br: O MinerU é uma ferramenta open-source de análise inteligente de documentos da OpenDataLab, focada em extrair conteúdo de alta qualidade de documentos complexos em PDF/DOCX/PPT/imagens. O componente mineru-router fornece um ponto de entrada de API unificado para orquestração multi-serviço e multi-GPU, com escalonamento automático de workers locais e agregação de serviços mineru-api upstream.
+  type: tool
+  crossVersionUpdate: false
+  limit: 0
+  recommend: 0
+  website: https://opendatalab.github.io/MinerU/
+  github: https://github.com/opendatalab/MinerU

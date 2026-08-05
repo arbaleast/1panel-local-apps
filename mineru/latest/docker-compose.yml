@@ -1,0 +1,46 @@
+networks:
+    1panel-network:
+        external: true
+services:
+    mineru-router:
+        container_name: ${CONTAINER_NAME}
+        restart: always
+        networks:
+            - 1panel-network
+        labels:
+            createdBy: Apps
+        image: ${IMAGE}:${APP_VERSION}
+        ports:
+            - ${HOST_IP}:${PANEL_APP_PORT_API}:8002
+        environment:
+            - TZ=${TZ}
+            - MINERU_MODEL_SOURCE=${MINERU_MODEL_SOURCE}
+            - ENABLE_GPU=${ENABLE_GPU}
+            - GPU_RUNTIME=${GPU_RUNTIME}
+            - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+            - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+            - LOCAL_GPUS=${LOCAL_GPUS:-auto}
+        runtime: ${GPU_RUNTIME}
+        ipc: host
+        shm_size: 32g
+        ulimits:
+            memlock: -1
+            stack: 67108864
+        entrypoint: ["/bin/bash", "/app/scripts/entrypoint.sh"]
+        command:
+            - --host=0.0.0.0
+            - --port=8002
+            - --local-gpus=${LOCAL_GPUS:-auto}
+            - --enable-vlm-preload=${ENABLE_VLM_PRELOAD}
+            - --allow-public-http-client=${ALLOW_PUBLIC_HTTP_CLIENT}
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 60s
+        volumes:
+            - ./data/output:/app/output
+            - ./data/models:/root/.cache/mineru
+            - ./data/config:/root/.config/mineru
+            - ./scripts/entrypoint.sh:/app/scripts/entrypoint.sh:ro

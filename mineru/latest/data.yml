@@ -1,0 +1,193 @@
+additionalProperties:
+  formFields:
+    - default: alexsuntop/mineru
+      edit: true
+      envKey: IMAGE
+      label:
+        en: Image (community multi-arch build)
+        zh: 镜像（社区多架构构建版）
+        zh-Hant: 映像（社群多架構建置版）
+        ja: イメージ（コミュニティマルチアーキテクチャビルド）
+        ko: 이미지 (커뮤니티 멀티 아키텍처 빌드)
+        ru: Образ (мульти-архитектурная сборка сообщества)
+        ms: Imej (binaan multi-arsitektur komuniti)
+        pt-br: Imagem (build multi-arquitetura da comunidade)
+      required: true
+      type: text
+    - default: 3.4.2
+      edit: true
+      envKey: APP_VERSION
+      label:
+        en: Image tag
+        zh: 镜像标签
+        zh-Hant: 映像標籤
+        ja: イメージタグ
+        ko: 이미지 태그
+        ru: Тег образа
+        ms: Tag imej
+        pt-br: Tag da imagem
+      required: true
+      type: text
+    - default: 8002
+      edit: true
+      envKey: PANEL_APP_PORT_API
+      label:
+        en: API port (exposed for mineru-router)
+        zh: API 端口（mineru-router 对外暴露）
+        zh-Hant: API 埠（mineru-router 對外暴露）
+        ja: API ポート（mineru-router 公開用）
+        ko: API 포트 (mineru-router 외부 노출)
+        ru: Порт API (внешний для mineru-router)
+        ms: Port API (pendedahan untuk mineru-router)
+        pt-br: Porta da API (exposta pelo mineru-router)
+      required: true
+      rule: paramPort
+      type: number
+    - default: auto
+      edit: true
+      envKey: LOCAL_GPUS
+      label:
+        en: Local GPUs (auto / all / 0,1 / none)
+        zh: 本地 GPU（auto / all / 0,1 / none）
+        zh-Hant: 本地 GPU（auto / all / 0,1 / none）
+        ja: ローカル GPU (auto / all / 0,1 / none)
+        ko: 로컬 GPU (auto / all / 0,1 / none)
+        ru: Локальные GPU (auto / all / 0,1 / none)
+        ms: GPU tempatan (auto / all / 0,1 / none)
+        pt-br: GPUs locais (auto / all / 0,1 / none)
+      required: true
+      type: text
+    - default: local
+      edit: true
+      envKey: MINERU_MODEL_SOURCE
+      label:
+        en: Model source
+        zh: 模型源
+        zh-Hant: 模型來源
+        ja: モデルソース
+        ko: 모델 소스
+        ru: Источник моделей
+        ms: Sumber model
+        pt-br: Fonte do modelo
+      required: true
+      type: select
+      values:
+        - label: local (offline)
+          value: local
+        - label: huggingface
+          value: huggingface
+        - label: modelscope
+          value: modelscope
+    - default: 'false'
+      edit: true
+      envKey: ENABLE_VLM_PRELOAD
+      label:
+        en: Preload VLM models at startup (only affects local workers)
+        zh: 启动时预热 VLM 模型（仅作用于本地 worker）
+        zh-Hant: 啟動時預熱 VLM 模型（僅作用於本地 worker）
+        ja: 起動時に VLM モデルをプリロード（ローカル worker のみ対象）
+        ko: 시작 시 VLM 모델 프리로드 (로컬 worker 에만 적용)
+        ru: Прогревать модели VLM при старте (только для локальных воркеров)
+        ms: Pramuat model VLM semasa permulaan (hanya untuk pekerja tempatan)
+        pt-br: Pré-carregar modelos VLM na inicialização (apenas afeta workers locais)
+      required: true
+      type: select
+      values:
+        - label: 'true'
+          value: 'true'
+        - label: 'false'
+          value: 'false'
+    - default: 'false'
+      edit: true
+      envKey: ALLOW_PUBLIC_HTTP_CLIENT
+      label:
+        en: Allow public http-client backends (SSRF risk; only enable if accepted)
+        zh: 允许公网 http-client 后端（存在 SSRF 风险，谨慎启用）
+        zh-Hant: 允許公網 http-client 後端（存在 SSRF 風險，謹慎啟用）
+        ja: パブリック http-client バックエンドを許可（SSRF リスクあり、注意して有効化）
+        ko: 공용 http-client 백엔드 허용 (SSRF 위험, 신중히 활성화)
+        ru: Разрешить публичные http-client бэкенды (риск SSRF, включать осознанно)
+        ms: Benarkan bahagian belakang http-client awam (risiko SSRF, aktif dengan berhati-hati)
+        pt-br: Permitir backends http-client públicos (risco SSRF, ative com cautela)
+      required: true
+      type: select
+      values:
+        - label: 'true'
+          value: 'true'
+        - label: 'false'
+          value: 'false'
+    - default: 'true'
+      edit: true
+      envKey: ENABLE_GPU
+      label:
+        en: Enable GPU passthrough (requires nvidia-container-toolkit on host)
+        zh: 启用 GPU 直通（宿主机需安装 nvidia-container-toolkit）
+        zh-Hant: 啟用 GPU 直通（宿主機需安裝 nvidia-container-toolkit）
+        ja: GPU パススルーを有効化（ホストに nvidia-container-toolkit が必要）
+        ko: GPU 패스스루 활성화 (호스트에 nvidia-container-toolkit 필요)
+        ru: Включить проброс GPU (на хосте требуется nvidia-container-toolkit)
+        ms: Dayakan passthrough GPU (hos memerlukan nvidia-container-toolkit)
+        pt-br: Habilitar passthrough de GPU (requer nvidia-container-toolkit no host)
+      required: true
+      type: select
+      values:
+        - label: 'true'
+          value: 'true'
+        - label: 'false'
+          value: 'false'
+    - default: all
+      edit: true
+      envKey: NVIDIA_VISIBLE_DEVICES
+      label:
+        en: NVIDIA_VISIBLE_DEVICES (visible GPUs; only effective when GPU enabled)
+        zh: NVIDIA_VISIBLE_DEVICES（可见 GPU；仅在 GPU 启用时生效）
+        zh-Hant: NVIDIA_VISIBLE_DEVICES（可見 GPU；僅在 GPU 啟用時生效）
+        ja: NVIDIA_VISIBLE_DEVICES（可視GPU；GPU有効時のみ有効）
+        ko: NVIDIA_VISIBLE_DEVICES（ 표시 GPU; GPU 활성화 시에만 적용）
+        ru: NVIDIA_VISIBLE_DEVICES (видимые GPU; действует только при включенном GPU)
+        ms: NVIDIA_VISIBLE_DEVICES (GPU yang boleh dilihat; hanya berkesan apabila GPU didayakan)
+        pt-br: NVIDIA_VISIBLE_DEVICES (GPUs visíveis; só efetiva quando GPU está habilitada)
+      required: false
+      type: text
+    - default: nvidia
+      edit: true
+      envKey: GPU_RUNTIME
+      label:
+        en: GPU Runtime
+        zh: GPU 运行时
+        zh-Hant: GPU 執行時
+        ja: GPU ランタイム
+        ko: GPU 런타임
+        ru: Среда выполнения GPU
+        ms: Runtime GPU
+        pt-br: Runtime de GPU
+      required: false
+      type: select
+      values:
+        - label: nvidia
+          value: nvidia
+        - label: ""
+          value: ""
+      help:
+        en: "Auto-switched by ENABLE_GPU. 'nvidia' uses NVIDIA Container Toolkit; '' uses default Docker runtime (CPU only)."
+        zh: "由 ENABLE_GPU 自动切换。nvidia 使用 NVIDIA Container Toolkit；空字符串走 Docker 默认运行时（仅 CPU）。"
+        zh-Hant: "由 ENABLE_GPU 自動切換。nvidia 使用 NVIDIA Container Toolkit；空字串走 Docker 預設執行時（僅 CPU）。"
+        ja: "ENABLE_GPU によって自動切り替え。nvidia は NVIDIA Container Toolkit を使用；空文字は Docker デフォルトランタイム（CPU のみ）。"
+        ko: "ENABLE_GPU에 의해 자동 전환됩니다. nvidia는 NVIDIA Container Toolkit을 사용; 비어있음은 Docker 기본 런타임(CPU 전용)입니다."
+        ru: "Автопереключение по ENABLE_GPU. 'nvidia' использует NVIDIA Container Toolkit; '' использует стандартный Docker runtime (только CPU)."
+        ms: "Ditukar secara automatik oleh ENABLE_GPU. 'nvidia' menggunakan NVIDIA Container Toolkit; '' menggunakan runtime Docker lalai (CPU sahaja)."
+        pt-br: "Comutado automaticamente pelo ENABLE_GPU. 'nvidia' usa NVIDIA Container Toolkit; '' usa o runtime padrão do Docker (apenas CPU)."
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      label:
+        en: Time Zone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon Masa
+        pt-br: Fuso Horário
+      required: false
+      type: text
