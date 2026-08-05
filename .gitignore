@@ -15,3 +15,6 @@ Thumbs.db
 
 # Node
 node_modules/
+
+# Agent temporary cache
+.agent_cache/
