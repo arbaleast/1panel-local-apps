@@ -3,7 +3,7 @@
 # build.sh
 #
 # 用途: 在本地构建 Infinity 镜像 (tag: infinity-pascal:cu124)。
-#       构建上下文为 infinity/latest/ (包含 Dockerfile)。
+#       构建上下文为 infinity/cu124/ (包含 Dockerfile)。
 #
 # 使用方式:
 #   chmod +x scripts/infinity/build.sh
@@ -11,7 +11,7 @@
 #   bash scripts/infinity/build.sh --no-cache       # 禁用层缓存, 全量重建
 #
 # 前置条件:
-#   - infinity/latest/wheels/ 下已有 cu124 wheels (先跑 download_wheels.sh)
+#   - infinity/cu124/wheels/ 下已有 cu124 wheels (先跑 download_wheels.sh)
 #   - 本机已安装 Docker
 #
 # 注意:
@@ -20,13 +20,13 @@
 
 set -euo pipefail
 
-# 仓库根目录 = 脚本所在目录的上一级 (scripts/infinity -> scripts/)
+# 仓库根目录 = 脚本所在目录的上两级 (scripts/infinity -> scripts -> repo-root)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)""
 
 # 镜像 tag 与构建上下文
 IMAGE_TAG="infinity-pascal:cu124"
-BUILD_CONTEXT="${REPO_ROOT}/latest"
+BUILD_CONTEXT="${REPO_ROOT}/infinity/cu124"
 
 # 收集附加参数 (如 --no-cache), 原样透传给 docker build
 EXTRA_ARGS=("$@")

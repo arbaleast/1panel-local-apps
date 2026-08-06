@@ -3,8 +3,8 @@
 # download_wheels.sh
 #
 # 用途: 一键下载 torch==2.6.0+cu124 与 torchvision==0.21.0+cu124 的
-#       cp310 Linux x86_64 wheel 到本仓库 infinity/latest/wheels/ 目录,
-#       供本地构建 infinity-pascal:cu124 镜像时使用 (构建上下文 = latest/)。
+#       cp310 Linux x86_64 wheel 到本仓库 infinity/cu124/wheels/ 目录,
+#       供本地构建 infinity-pascal:cu124 镜像时使用 (构建上下文 = cu124/)。
 #
 # 适用环境: Linux x86_64 (Pascal sm_61 / Ampere / Hopper 均可)
 #           在 Windows / macOS 上运行会直接跳过并提示。
@@ -20,11 +20,11 @@
 
 set -euo pipefail
 
-# 仓库根目录 = 脚本所在目录的上一级 (scripts/infinity -> scripts/)
+# 仓库根目录 = 脚本所在目录的上两级 (scripts/infinity -> scripts -> repo-root)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-# 构建上下文为 infinity/latest/, wheels 目录放在 latest/wheels/ (对应 Dockerfile 的 COPY wheels/)
-WHEELS_DIR="${REPO_ROOT}/latest/wheels"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+# wheels 目录放在 infinity/cu124/wheels/ (对应 Dockerfile 的 COPY wheels/)
+WHEELS_DIR="${REPO_ROOT}/infinity/cu124/wheels"
 
 # 目标 wheel 包信息 (cp310, Linux x86_64, cu124)
 TORCH_VERSION="2.6.0%2Bcu124"     # URL 编码后的 + (PyTorch index 规则)

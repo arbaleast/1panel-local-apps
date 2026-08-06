@@ -46,7 +46,7 @@
 
 ## 环境变量 / Environment Variables
 
-以下字段与 `latest/data.yml` 的 formFields 严格一致：
+以下字段与 `cu124/data.yml` 的 formFields 严格一致：
 
 | 环境变量 | 默认值 | 说明 |
 |---------|-------|------|
@@ -98,7 +98,7 @@ AnythingLLM 与 Infinity 均部署在 1Panel 的 `1panel-network` 网络内：
 bash scripts/infinity/build.sh        # 构建 infinity-pascal:cu124
 ```
 
-> 构建上下文为 `infinity/latest/`，cu124 wheels 需预先放置到 `infinity/latest/wheels/`（由 `scripts/download_wheels.sh` 下载、Git LFS 跟踪；旧位置 `infinity/wheels/` 已迁移至此）。
+> 构建上下文为 `infinity/cu124/`，cu124 wheels 需预先放置到 `infinity/cu124/wheels/`（由 `scripts/infinity/download_wheels.sh` 下载、Git LFS 跟踪；旧位置 `infinity/wheels/` 已迁移至此）。
 
 构建策略（wheels 来源、Git LFS / Release 附件 / 外部下载源）详见 [docs/infinity/BUILD.md](../docs/infinity/BUILD.md)。
 
@@ -160,7 +160,7 @@ Any custom HuggingFace repo id is also supported via `EMBEDDING_MODEL`. See [doc
 
 ## Environment Variables
 
-Strictly matching the formFields in `latest/data.yml`:
+Strictly matching the formFields in `cu124/data.yml`:
 
 | Env var | Default | Description |
 |---------|---------|-------------|
@@ -210,7 +210,7 @@ The image is built locally (Pascal sm_61 constraint, cu124 wheels required):
 bash scripts/infinity/build.sh        # build infinity-pascal:cu124
 ```
 
-> Build context is `infinity/latest/`; place cu124 wheels under `infinity/latest/wheels/` (downloaded via `scripts/download_wheels.sh`, tracked with Git LFS; the old `infinity/wheels/` location has been migrated).
+> Build context is `infinity/cu124/`; place cu124 wheels under `infinity/cu124/wheels/` (downloaded via `scripts/infinity/download_wheels.sh`, tracked with Git LFS; the old `infinity/wheels/` location has been migrated).
 
 Build strategies (wheels source, Git LFS / Release asset / external download) are in [docs/infinity/BUILD.md](../docs/infinity/BUILD.md).
 
