@@ -22,7 +22,7 @@ set -euo pipefail
 
 # 仓库根目录 = 脚本所在目录的上两级 (scripts/infinity -> scripts -> repo-root)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)""
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # 镜像 tag 与构建上下文
 IMAGE_TAG="infinity-pascal:cu124"

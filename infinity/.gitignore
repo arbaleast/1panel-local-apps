@@ -5,6 +5,6 @@ data/
 __pycache__/
 *.pyc
 .cache/
-infinity/latest/data/cache/
+infinity/cu124/data/cache/
 *.tar
 *.tar.gz
