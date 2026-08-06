@@ -7,9 +7,9 @@
 #   2) POST /embeddings         -> 期望返回 data[0].embedding 且维度 > 0
 #
 # 使用方式:
-#   chmod +x infinity/scripts/verify.sh
-#   bash infinity/scripts/verify.sh                  # 默认 BASE_URL=http://localhost:7997
-#   BASE_URL=http://<host>:7997 bash infinity/scripts/verify.sh   # 覆盖地址
+#   chmod +x scripts/infinity/verify.sh
+#   bash scripts/infinity/verify.sh                  # 默认 BASE_URL=http://localhost:7997
+#   BASE_URL=http://<host>:7997 bash scripts/infinity/verify.sh   # 覆盖地址
 #
 # 注意:
 #   - 依赖 curl (通常已内置)。

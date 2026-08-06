@@ -1,0 +1,115 @@
+name: gecoos
+title: Gecoos 集客 AC 无线控制器
+description:
+  zh: 集客 AC 无线控制器，实现对 AP 的集中管理，支持发现、配置、固件升级等功能。
+  en: Gecoos AC wireless controller for centralized AP management, supporting discovery, configuration, and firmware upgrades.
+  ja: 集客 AC 無線コントローラー。AP の集中管理、発見、構成、ファームウェア更新等功能を提供。
+  ko: 集客 AC 무선 컨트롤러. AP의 집중 관리, 발견, 구성, 펌웨어 업데이트等功能 지원.
+  ru: Gecoos AC беспроводной контроллер для централизованного управления AP.
+  ms: Gecoos AC untuk pengurusan AP berpusat, penemuan, konfigurasi, dan pengurusan firmware.
+  pt-br: Gecoos AC para gerenciamento centralizado de APs, descobrimento, configuração e atualização de firmware.
+  zh-Hant: 集客 AC 無線控制器，實現對 AP 的集中管理，支援發現、配置、韌體升級等功能。
+additionalProperties:
+  key: gecoos
+  formFields:
+  - default: '8080'
+    edit: true
+    envKey: PANEL_APP_PORT_WEB
+    labelEn: Web Management Port
+    labelZh: Web 管理端口
+    label:
+      en: Web Management Port
+      zh: Web 管理端口
+      zh-Hant: Web 管理連接埠
+      ja: Web 管理ポート
+      ko: Web 관리 포트
+      ru: Порт веб-управления
+      ms: Port Pengurusan Web
+      pt-br: Porta de Gerenciamento Web
+    required: true
+    rule: paramPort
+    type: number
+  - default: zh
+    edit: true
+    envKey: LANG
+    labelEn: Interface Language
+    labelZh: 界面语言
+    label:
+      en: Interface Language
+      zh: 界面语言
+      zh-Hant: 介面語言
+      ja: インターフェース言語
+      ko: 인터페이스 언어
+      ru: Язык интерфейса
+      ms: Bahasa Antara Muka
+      pt-br: Idioma da Interface
+    required: true
+    type: select
+    values:
+    - label: 中文
+      value: zh
+    - label: English
+      value: en
+  - default: 'false'
+    edit: true
+    envKey: IS_ONLY_ONE_PROT
+    labelEn: Single Protocol Mode
+    labelZh: 单一协议模式
+    label:
+      en: Single Protocol Mode
+      zh: 单一协议模式
+      zh-Hant: 單一協定模式
+      ja: 单一プロトコルモード
+      ko: 단일 프로토콜 모드
+      ru: Режим одного протокола
+      ms: Mod Satu Protokol
+      pt-br: Modo de Protocolo Único
+    required: true
+    type: select
+    values:
+    - label: 'true'
+      value: 'true'
+    - label: 'false'
+      value: 'false'
+  - default: 'true'
+    edit: true
+    envKey: SHOW_TIP
+    labelEn: Show Tips
+    labelZh: 显示提示信息
+    label:
+      en: Show Tips
+      zh: 显示提示信息
+      zh-Hant: 顯示提示資訊
+      ja: ヒントを表示
+      ko: 팁 표시
+      ru: Показывать подсказки
+      ms: Tunjukkan Petua
+      pt-br: Mostrar Dicas
+    required: true
+    type: select
+    values:
+    - label: 'true'
+      value: 'true'
+    - label: 'false'
+      value: 'false'
+  - default: 'false'
+    edit: true
+    envKey: HTTPS_ENABLED
+    labelEn: Enable HTTPS
+    labelZh: 启用 HTTPS
+    label:
+      en: Enable HTTPS
+      zh: 启用 HTTPS
+      zh-Hant: 啟用 HTTPS
+      ja: HTTPS を有効化
+      ko: HTTPS 활성화
+      ru: Включить HTTPS
+      ms: Dayakan HTTPS
+      pt-br: Habilitar HTTPS
+    required: true
+    type: select
+    values:
+    - label: 'true'
+      value: 'true'
+    - label: 'false'
+      value: 'false'

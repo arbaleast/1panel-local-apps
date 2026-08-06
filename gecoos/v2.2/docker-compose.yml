@@ -1,0 +1,21 @@
+# Gecoos AC docker-compose
+# 注意：host 网络模式下不能加入 1panel-network（external 网络无法与 host 模式服务互联）
+# AC 控制器需要通过 UDP 60650 端口广播发现 AP，必须使用 host 网络模式
+services:
+  gecoos-ac:
+    image: adxing/gecoos-ac:v2.2
+    container_name: ${CONTAINER_NAME}
+    restart: always
+    network_mode: host
+    # AC 控制器需要 CAP_SYS_ADMIN 权限以创建虚拟网络接口（VLAN / TAP）并执行 L2/L3 转发
+    privileged: true
+    labels:
+      createdBy: "Apps"
+    environment:
+      - mp=${PANEL_APP_PORT_WEB}
+      - lang=${LANG}
+      - isonlyoneprot=${IS_ONLY_ONE_PROT}
+      - showtip=${SHOW_TIP}
+      - https=${HTTPS_ENABLED}
+    volumes:
+      - ./data:/data

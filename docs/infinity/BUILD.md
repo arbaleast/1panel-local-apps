@@ -19,16 +19,16 @@ Infinity 依赖 PyTorch，而默认 Docker 镜像的目标 GPU 架构是较新�
 ```bash
 # 在仓库根目录执行一次
 git lfs install
-git lfs track "latest/wheels/*.whl"
+git lfs track "cu124/wheels/*.whl"
 
 # 提交 .gitattributes 与 wheel 文件
-git add .gitattributes latest/wheels/
+git add .gitattributes cu124/wheels/
 git commit -m "chore: track cu124 wheels via git lfs"
 ```
 
-- wheel 文件放在构建上下文 `infinity/latest/wheels/` 目录（本仓库已预留该目录；旧位置 `infinity/wheels/` 已迁移至此，避免与 Dockerfile `COPY wheels/` 的上下文错位）。
-- 每次用 [scripts/download_wheels.sh](../scripts/download_wheels.sh) 下载或更新后，重新 commit 即可。
-- 构建侧：克隆仓库时自动拉取 LFS 对象；Dockerfile 中 `COPY wheels/ /tmp/wheels/`（相对于构建上下文 `latest/`）后 `pip install`。
+- wheel 文件放在构建上下文 `infinity/cu124/wheels/` 目录（本仓库已预留该目录；旧位置 `infinity/wheels/` 已迁移至此，避免与 Dockerfile `COPY wheels/` 的上下文错位）。
+- 每次用 [scripts/download_wheels.sh](../scripts/infinity/download_wheels.sh) 下载或更新后，重新 commit 即可。
+- 构建侧：克隆仓库时自动拉取 LFS 对象；Dockerfile 中 `COPY wheels/ /tmp/wheels/`（相对于构建上下文 `cu124/`）后 `pip install`。
 
 ## 策略 B: GitHub Release 附件
 
@@ -59,13 +59,13 @@ RUN wget -q -O /tmp/torch.whl \
 
 ```bash
 # 先赋予执行权限（如需）
-chmod +x infinity/scripts/download_wheels.sh
+chmod +x scripts/infinity/download_wheels.sh
 
-# 下载 torch 2.6.0+cu124 / torchvision 0.21.0+cu124 的 cp310 wheel 到 infinity/latest/wheels/
-bash infinity/scripts/download_wheels.sh
+# 下载 torch 2.6.0+cu124 / torchvision 0.21.0+cu124 的 cp310 wheel 到 infinity/cu124/wheels/
+bash scripts/infinity/download_wheels.sh
 ```
 
-脚本会将 wheel 下载到 `infinity/latest/wheels/`（文件名带时间戳后缀，避免覆盖旧文件），并打印下载结果。Windows / macOS 会被跳过并提示（需要 Linux 环境，或在 Docker 内跑）。
+脚本会将 wheel 下载到 `infinity/cu124/wheels/`（文件名带时间戳后缀，避免覆盖旧文件），并打印下载结果。Windows / macOS 会被跳过并提示（需要 Linux 环境，或在 Docker 内跑）。
 
 > wheel 来自 PyTorch 官方 index：`https://download.pytorch.org/whl/cu124`，适配 Linux x86_64（cp310）。
 
@@ -73,12 +73,12 @@ bash infinity/scripts/download_wheels.sh
 
 有两种方式构建：
 
-1. **1Panel 部署时自动构建**：安装表单的 Docker 镜像默认填 `infinity-pascal:cu124`，compose 中对应服务为 `build: .` 指向 `infinity/latest/`。1Panel 检测到本地不存在该 tag 时触发 `docker build`。
+1. **1Panel 部署时自动构建**：安装表单的 Docker 镜像默认填 `infinity-pascal:cu124`，compose 中对应服务为 `build: .` 指向 `infinity/cu124/`。1Panel 检测到本地不存在该 tag 时触发 `docker build`。
 2. **命令行手动构建**：
 
 ```bash
-bash infinity/scripts/build.sh          # 等价于 docker build -t infinity-pascal:cu124 infinity/latest/
-bash infinity/scripts/build.sh --no-cache   # 禁用层缓存，全量重建
+bash scripts/infinity/build.sh          # 等价于 docker build -t infinity-pascal:cu124 infinity/cu124/
+bash scripts/infinity/build.sh --no-cache   # 禁用层缓存，全量重建
 ```
 
 构建完成后，1Panel 安装表单中 `IMAGE` 填 `infinity-pascal:cu124` 即可直接使用本地镜像。

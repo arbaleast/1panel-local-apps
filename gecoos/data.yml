@@ -1,0 +1,23 @@
+additionalProperties:
+  key: gecoos
+  name: Gecoos 集客 AC
+  tags:
+  - Network
+  - Wireless
+  shortDescZh: 集客 AC 无线控制器，集中管理 AP
+  shortDescEn: Gecoos AC wireless controller for centralized AP management
+  description:
+    en: Gecoos AC (Access Controller) is a wireless network management solution for centralized AP discovery, configuration, and firmware management.
+    zh: 集客 AC 无线控制器，实现对 AP 的集中管理，支持发现、配置、固件升级等功能。
+    zh-Hant: 集客 AC 無線控制器，實現對 AP 的集中管理，支援發現、配置、韌體升級等功能。
+    ja: 集客 AC 無線コントローラー。AP の集中管理、発見、構成、ファームウェア更新等功能を提供。
+    ko: 集客 AC 무선 컨트롤러. AP의 집중 관리, 발견, 구성, 펌웨어 업데이트等功能 지원.
+    ru: Gecoos AC беспроводной контроллер для централизованного управления AP（обнаружение, настройка, обновление прошивки）.
+    ms: Gecoos AC ialah penyelesaian pengurusan rangkaian tanpa wayar untuk pengurusan AP berpusat, penemuan, konfigurasi, dan pengurusan firmware.
+    pt-br: Gecoos AC é uma solução de gerenciamento de rede sem fio para descoberta, configuração e gerenciamento de firmware centralizado de APs.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://www.cnrouter.com/
+  github: https://github.com/zfgeng/openwrt-gecoosac
