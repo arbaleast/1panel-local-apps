@@ -19,7 +19,7 @@ services:
     - JAVA_OPTS=${JAVA_OPTS}
     - SWAGGER_ENABLED=${SWAGGER_ENABLED}
     - MCP_ENABLED=${MCP_ENABLED}
-    image: wushuo894/ani-rss:test
+    image: wushuo894/ani-rss:v3.2.5
     labels:
       createdBy: Apps
     networks:
