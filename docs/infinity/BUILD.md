@@ -28,7 +28,7 @@ git commit -m "chore: track cu124 wheels via git lfs"
 
 - wheel 文件放在构建上下文 `infinity/cu124/wheels/` 目录（本仓库已预留该目录；旧位置 `infinity/wheels/` 已迁移至此，避免与 Dockerfile `COPY wheels/` 的上下文错位）。
 - 每次用 [scripts/download_wheels.sh](../scripts/infinity/download_wheels.sh) 下载或更新后，重新 commit 即可。
-- 构建侧：克隆仓库时自动拉取 LFS 对象；Dockerfile 中 `COPY wheels/ /tmp/wheels/`（相对于构建上下文 `latest/`）后 `pip install`。
+- 构建侧：克隆仓库时自动拉取 LFS 对象；Dockerfile 中 `COPY wheels/ /tmp/wheels/`（相对于构建上下文 `cu124/`）后 `pip install`。
 
 ## 策略 B: GitHub Release 附件
 
