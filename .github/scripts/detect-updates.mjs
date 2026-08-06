@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // detect-updates.mjs — 检测 hardcode 类应用的镜像更新，修改文件并输出 updates.json
 // 仅处理 compose 中 image 含硬编码 tag 的应用，变量型（${IMAGE} 等）整体跳过
-// 适配 AGENTS.md "禁止 latest 作目录名" 规则：每应用仅一个具体版本目录，更新覆盖该目录
+// 适配 AGENTS.md "禁止 latest 作目录名" 规则：每应用仅一个具体版本目录；检测到新 tag 后
+// 原地修改 compose + data.yml 并重命名目录，确保 1Panel UI 版本号与镜像 tag 一致。
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -263,7 +264,25 @@ async function processApp(appName) {
 
   if (!hasAnyUpdate) return null;
 
-  // 修改 compose
+  // === 目录重命名策略 ===
+  // 1Panel UI 版本下拉 = 仓库目录名，检测到新 tag 后必须重命名目录以保持 UI 与实际镜像一致。
+  // 例如：anirss/v3.2.5/ 检测到 v3.2.6 → 整个目录重命名为 anirss/v3.2.6/
+  const oldVersionDir = versionDir;
+  const newVersionDir = maxTo;
+
+  if (oldVersionDir !== newVersionDir) {
+    const oldDir = path.join(appDir, oldVersionDir);
+    const newDir = path.join(appDir, newVersionDir);
+    if (fs.existsSync(newDir)) {
+      // 新版本目录已存在（手动建过 / 上次升级残留），覆盖之
+      log(appName, `⚠ 目标目录 ${newVersionDir}/ 已存在，将覆盖`);
+      fs.rmSync(newDir, { recursive: true, force: true });
+    }
+    fs.renameSync(oldDir, newDir);
+    log(appName, `目录重命名: ${oldVersionDir}/ -> ${newVersionDir}/`);
+  }
+
+  // 内存中替换 compose / data.yml
   let newCompose = composeContent;
   for (const ch of serviceChanges) {
     const oldImg = `${ch.repo}:${ch.from}`;
@@ -279,8 +298,6 @@ async function processApp(appName) {
       const oldDefault = String(found.field.default);
       const newDefault = oldDefault.replace(`:${ch.from}`, `:${ch.to}`);
       if (oldDefault !== newDefault) {
-        // 用 yaml dump 整个对象，定位行后替换
-        // 简化方案：序列化整个 data.yml（可能引入格式微调）
         dataObj.additionalProperties.formFields[found.index].default = newDefault;
         log(appName, `data.yml formFields[${found.index}].default: ${oldDefault} -> ${newDefault}`);
       }
@@ -290,13 +307,12 @@ async function processApp(appName) {
   }
   newData = serializeYaml(dataObj);
 
-  // 当前实现：每应用只保留一个具体版本目录（如 <app>/v3.2.5/），镜像更新直接覆盖当前目录内的 compose + data.yml。
-  // 不再创建新版本目录、也不在多版本间切换；maxTo 仅作变更摘要（before/after）供 PR body 输出。
-  const newVersionDir = maxTo;
+  // 目录重命名策略已在 if 块（hasAnyUpdate=true）之前完成，newVersionDir 即新目录名。
+  // maxTo 仍为镜像 tag，用于 PR body 输出 before/after。
 
-  // 更新当前版本目录的 compose 与 data.yml
-  changes.push({ path: `${appName}/${versionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
-  changes.push({ path: `${appName}/${versionDir}/data.yml`, content: newData, to: maxTo });
+  // 写入新版本目录
+  changes.push({ path: `${appName}/${newVersionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
+  changes.push({ path: `${appName}/${newVersionDir}/data.yml`, content: newData, to: maxTo });
 
   return { app: appName, from: minFrom, to: maxTo, services: serviceChanges, changes };
 }
