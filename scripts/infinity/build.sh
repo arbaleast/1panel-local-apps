@@ -6,9 +6,9 @@
 #       构建上下文为 infinity/latest/ (包含 Dockerfile)。
 #
 # 使用方式:
-#   chmod +x infinity/scripts/build.sh
-#   bash infinity/scripts/build.sh                  # 默认构建
-#   bash infinity/scripts/build.sh --no-cache       # 禁用层缓存, 全量重建
+#   chmod +x scripts/infinity/build.sh
+#   bash scripts/infinity/build.sh                  # 默认构建
+#   bash scripts/infinity/build.sh --no-cache       # 禁用层缓存, 全量重建
 #
 # 前置条件:
 #   - infinity/latest/wheels/ 下已有 cu124 wheels (先跑 download_wheels.sh)
@@ -20,7 +20,7 @@
 
 set -euo pipefail
 
-# 仓库根目录 = 脚本所在目录的上一级 (infinity/scripts -> infinity/)
+# 仓库根目录 = 脚本所在目录的上一级 (scripts/infinity -> scripts/)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
@@ -46,7 +46,7 @@ echo "==> 检查 wheels 是否已就绪..."
 # 粗略检查: 上下文目录中应存在 cu124 的 wheel (Dockerfile 会 COPY wheels/)
 if ! ls "${BUILD_CONTEXT}"/wheels/*cu124*.whl >/dev/null 2>&1; then
   echo "!! 未在 ${BUILD_CONTEXT}/wheels/ 中找到 cu124 wheel。"
-  echo "   请先执行: bash infinity/scripts/download_wheels.sh"
+  echo "   请先执行: bash scripts/infinity/download_wheels.sh"
   echo "   并确认 wheel 已放置到构建上下文可访问的位置 (见 docs/BUILD.md)。"
   exit 1
 fi
@@ -60,5 +60,5 @@ echo ""
 echo "========================================================"
 echo "构建完成: ${IMAGE_TAG}"
 echo "下一步: 在 1Panel 安装表单中 IMAGE 填 ${IMAGE_TAG}, 部署后"
-echo "        执行 bash infinity/scripts/verify.sh 验证服务。"
+echo "        执行 bash scripts/infinity/verify.sh 验证服务。"
 echo "========================================================"

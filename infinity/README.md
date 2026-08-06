@@ -7,14 +7,14 @@
 1. 打开 1Panel → **应用商店** → **本地应用**
 2. 找到 **Infinity** → 点击 **安装**
 3. 填写安装表单：
-   - **Docker 镜像**：保持默认 `infinity-pascal:cu124`（本地构建镜像，详见 [docs/BUILD.md](docs/BUILD.md)）
+   - **Docker 镜像**：保持默认 `infinity-pascal:cu124`（本地构建镜像，详见 [docs/infinity/BUILD.md](../docs/infinity/BUILD.md)）
    - **嵌入模型**：默认 `BAAI/bge-large-zh-v1.5`，可切换为 `bge-m3` / `qwen3-emb-0.6b` 或填写任意 HuggingFace repo id
    - **模型精度**：Pascal（GTX 10 系）建议保持 `int8`
    - **推理批大小**：默认 `32`
    - **GPU 设备 ID**：默认 `0`，多卡填 `0,1`
    - **宿主机 API 端口**：默认 `7997`
 4. 点击 **部署**，等待容器启动
-5. 验证服务：浏览器访问 `http://<host>:7997/health`，或运行 [scripts/verify.sh](scripts/verify.sh)
+5. 验证服务：浏览器访问 `http://<host>:7997/health`，或运行 [scripts/infinity/verify.sh](../scripts/infinity/verify.sh)
 
 ## 功能特性 / Features
 
@@ -32,7 +32,7 @@
 | Ampere（RTX 30 系 / A 系列） | sm_80 / sm_86 | `float16` / `int8` | ≥ 6 GB |
 | Hopper（H100 / H800 等） | sm_90 | `bfloat16` / `float16` | ≥ 8 GB |
 
-> 说明：Pascal（sm_61）是默认构建的最低目标，`int8` 是其兼容性最佳选择；Ampere / Hopper 可用更高精度获取更好效果。不同模型的显存占用参考 [docs/SUPPORTED_MODELS.md](docs/SUPPORTED_MODELS.md)。
+> 说明：Pascal（sm_61）是默认构建的最低目标，`int8` 是其兼容性最佳选择；Ampere / Hopper 可用更高精度获取更好效果。不同模型的显存占用参考 [docs/infinity/SUPPORTED_MODELS.md](../docs/infinity/SUPPORTED_MODELS.md)。
 
 ## 支持模型 / Supported Models
 
@@ -42,7 +42,7 @@
 | bge-m3（多语言） | `BAAI/bge-m3` | 1024 |
 | qwen3-emb-0.6b（多语言） | `Qwen/Qwen3-Embedding-0.6B` | 1024 |
 
-> 也支持任意自定义 HuggingFace repo id（填入 `EMBEDDING_MODEL` 即可）。更详细的维度 / dtype / batch / 显存建议见 [docs/SUPPORTED_MODELS.md](docs/SUPPORTED_MODELS.md)。
+> 也支持任意自定义 HuggingFace repo id（填入 `EMBEDDING_MODEL` 即可）。更详细的维度 / dtype / batch / 显存建议见 [docs/infinity/SUPPORTED_MODELS.md](../docs/infinity/SUPPORTED_MODELS.md)。
 
 ## 环境变量 / Environment Variables
 
@@ -80,7 +80,7 @@ AnythingLLM 与 Infinity 均部署在 1Panel 的 `1panel-network` 网络内：
 2. Endpoint 填写 `http://infinity:7997/v1`（容器名 `infinity` 在同一网络内可直接解析）
 3. 选择模型为 `EMBEDDING_MODEL` 对应名称（如 `BAAI/bge-large-zh-v1.5`）
 
-> 注意：AnythingLLM 的 Embedding 维度需与所选模型维度一致（见 [docs/SUPPORTED_MODELS.md](docs/SUPPORTED_MODELS.md)）。
+> 注意：AnythingLLM 的 Embedding 维度需与所选模型维度一致（见 [docs/infinity/SUPPORTED_MODELS.md](../docs/infinity/SUPPORTED_MODELS.md)）。
 
 ## 已知问题 / Known Issues
 
@@ -88,19 +88,19 @@ AnythingLLM 与 Infinity 均部署在 1Panel 的 `1panel-network` 网络内：
 - bitsandbytes 与 Pascal 兼容性
 - 数据集加载 HuggingFace 失败（需代理）
 
-详见 [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)。
+详见 [docs/infinity/KNOWN_ISSUES.md](../docs/infinity/KNOWN_ISSUES.md)。
 
 ## 自行构建 / Build from Source
 
 镜像需要在本地源码构建（Pascal sm_61 限制，需预置 cu124 wheels）：
 
 ```bash
-bash infinity/scripts/build.sh        # 构建 infinity-pascal:cu124
+bash scripts/infinity/build.sh        # 构建 infinity-pascal:cu124
 ```
 
 > 构建上下文为 `infinity/latest/`，cu124 wheels 需预先放置到 `infinity/latest/wheels/`（由 `scripts/download_wheels.sh` 下载、Git LFS 跟踪；旧位置 `infinity/wheels/` 已迁移至此）。
 
-构建策略（wheels 来源、Git LFS / Release 附件 / 外部下载源）详见 [docs/BUILD.md](docs/BUILD.md)。
+构建策略（wheels 来源、Git LFS / Release 附件 / 外部下载源）详见 [docs/infinity/BUILD.md](../docs/infinity/BUILD.md)。
 
 ## 相关链接 / Related Links
 
@@ -121,14 +121,14 @@ A 1Panel local app for the [project](<!-- TODO: 由协调者填入 -->) Infinity
 1. Open 1Panel → **App Store** → **Local Apps**
 2. Find **Infinity** → click **Install**
 3. Fill in the install form:
-   - **Docker Image**: keep `infinity-pascal:cu124` (locally built image, see [docs/BUILD.md](docs/BUILD.md))
+   - **Docker Image**: keep `infinity-pascal:cu124` (locally built image, see [docs/infinity/BUILD.md](../docs/infinity/BUILD.md))
    - **Embedding Model**: default `BAAI/bge-large-zh-v1.5`; switch to `bge-m3` / `qwen3-emb-0.6b` or any HuggingFace repo id
    - **Model Precision**: keep `int8` on Pascal (GTX 10 series)
    - **Batch Size**: default `32`
    - **GPU Device IDs**: default `0`, use `0,1` for multi-GPU
    - **Host API Port**: default `7997`
 4. Click **Deploy** and wait for the container to start
-5. Verify: visit `http://<host>:7997/health`, or run [scripts/verify.sh](scripts/verify.sh)
+5. Verify: visit `http://<host>:7997/health`, or run [scripts/infinity/verify.sh](../scripts/infinity/verify.sh)
 
 ## Features
 
@@ -146,7 +146,7 @@ A 1Panel local app for the [project](<!-- TODO: 由协调者填入 -->) Infinity
 | Ampere (RTX 30 / A series) | sm_80 / sm_86 | `float16` / `int8` | ≥ 6 GB |
 | Hopper (H100 / H800 etc.) | sm_90 | `bfloat16` / `float16` | ≥ 8 GB |
 
-> Pascal (sm_61) is the baseline build target; `int8` is the best compatibility choice there. Ampere / Hopper can use higher precision. See [docs/SUPPORTED_MODELS.md](docs/SUPPORTED_MODELS.md) for per-model VRAM guidance.
+> Pascal (sm_61) is the baseline build target; `int8` is the best compatibility choice there. Ampere / Hopper can use higher precision. See [docs/infinity/SUPPORTED_MODELS.md](../docs/infinity/SUPPORTED_MODELS.md) for per-model VRAM guidance.
 
 ## Supported Models
 
@@ -156,7 +156,7 @@ A 1Panel local app for the [project](<!-- TODO: 由协调者填入 -->) Infinity
 | bge-m3 (multilingual) | `BAAI/bge-m3` | 1024 |
 | qwen3-emb-0.6b (multilingual) | `Qwen/Qwen3-Embedding-0.6B` | 1024 |
 
-Any custom HuggingFace repo id is also supported via `EMBEDDING_MODEL`. See [docs/SUPPORTED_MODELS.md](docs/SUPPORTED_MODELS.md) for dtype / batch / VRAM details.
+Any custom HuggingFace repo id is also supported via `EMBEDDING_MODEL`. See [docs/infinity/SUPPORTED_MODELS.md](../docs/infinity/SUPPORTED_MODELS.md) for dtype / batch / VRAM details.
 
 ## Environment Variables
 
@@ -192,7 +192,7 @@ Both AnythingLLM and Infinity run on the 1Panel `1panel-network`:
 2. Endpoint: `http://infinity:7997/v1` (container name `infinity` resolves on the same network)
 3. Set the model name to the one in `EMBEDDING_MODEL` (e.g. `BAAI/bge-large-zh-v1.5`)
 
-> The embedding dimension must match the model (see [docs/SUPPORTED_MODELS.md](docs/SUPPORTED_MODELS.md)).
+> The embedding dimension must match the model (see [docs/infinity/SUPPORTED_MODELS.md](../docs/infinity/SUPPORTED_MODELS.md)).
 
 ## Known Issues
 
@@ -200,19 +200,19 @@ Both AnythingLLM and Infinity run on the 1Panel `1panel-network`:
 - bitsandbytes vs Pascal compatibility
 - HuggingFace dataset download failures (proxy needed)
 
-See [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
+See [docs/infinity/KNOWN_ISSUES.md](../docs/infinity/KNOWN_ISSUES.md).
 
 ## Build from Source
 
 The image is built locally (Pascal sm_61 constraint, cu124 wheels required):
 
 ```bash
-bash infinity/scripts/build.sh        # build infinity-pascal:cu124
+bash scripts/infinity/build.sh        # build infinity-pascal:cu124
 ```
 
 > Build context is `infinity/latest/`; place cu124 wheels under `infinity/latest/wheels/` (downloaded via `scripts/download_wheels.sh`, tracked with Git LFS; the old `infinity/wheels/` location has been migrated).
 
-Build strategies (wheels source, Git LFS / Release asset / external download) are in [docs/BUILD.md](docs/BUILD.md).
+Build strategies (wheels source, Git LFS / Release asset / external download) are in [docs/infinity/BUILD.md](../docs/infinity/BUILD.md).
 
 ## Related Links
 

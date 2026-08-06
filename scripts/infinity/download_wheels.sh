@@ -10,8 +10,8 @@
 #           在 Windows / macOS 上运行会直接跳过并提示。
 #
 # 使用方式:
-#   chmod +x infinity/scripts/download_wheels.sh
-#   bash infinity/scripts/download_wheels.sh
+#   chmod +x scripts/infinity/download_wheels.sh
+#   bash scripts/infinity/download_wheels.sh
 #
 # 注意:
 #   - 本脚本不会硬编码任何凭据 / IP / 内网域名。
@@ -20,7 +20,7 @@
 
 set -euo pipefail
 
-# 仓库根目录 = 脚本所在目录的上一级 (infinity/scripts -> infinity/)
+# 仓库根目录 = 脚本所在目录的上一级 (scripts/infinity -> scripts/)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # 构建上下文为 infinity/latest/, wheels 目录放在 latest/wheels/ (对应 Dockerfile 的 COPY wheels/)
