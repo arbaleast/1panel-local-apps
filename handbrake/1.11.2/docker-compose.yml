@@ -29,7 +29,7 @@ services:
         # NVIDIA_ENABLE=true 时配合 NVIDIA Container Toolkit 方可真正使用 GPU
         device_cgroup_rules:
             - 'c 195:* rw'
-        image: linuxserver/handbrake:1.11.2-ls36
+        image: linuxserver/handbrake:1.11.2
         labels:
             createdBy: Apps
         networks:
