@@ -6,27 +6,28 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.5 |
+| anirss | 动漫 RSS | test |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | pg |
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
 | firecrawl | 网页爬虫 | 2.11.14 |
-| handbrake | 视频转码 | 1.11.2-ls36 |
+| handbrake | 视频转码 | 1.11.2 |
 | hindsight | AI 记忆系统 | 0.8.6 |
 | immich | 照片管理 | v3.0.3 |
+| infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 10.11.11 |
 | llamacpp | 高性能本地 LLM 推理引擎 | server-cuda12-v0.4.1 |
 | llamaindex | LLM 数据框架 | v0.9.2 |
+| llmwiki | LLM Wiki 知识库（占位应用，详见 README 风险说明） | latest |
 | mediago | 媒体嗅探与下载 | 3.5.0 |
 | mihomo | 代理工具 | v1.19.18 |
+| mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
 | moviepilot | 影视自动化 | 2.15.4 |
-| mineru | PDF 转 Markdown OCR | 3.4.2 |
-| vane | AI 问答引擎（原 Perplexica） | v1.12.2 |
+| perplexica | AI 问答引擎（原 Perplexica） | full-latest |
 | pgvector | 向量数据库 | 0.8.6-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
-| qdrant | 向量搜索引擎 | v1.19.0 |
-| infinity | 本地 AI 推理 API 服务 | cu124 |
+| qdrant | 向量搜索引擎 | gpu-amd-latest |
 | searxng | 隐私搜索引擎 | 2026.8.4-c63835bd2 |
-| syncthing | 文件同步 | 2.1.3-ls227 |
+| syncthing | 文件同步 | 2.1.3 |
 | traefik | 反向代理 | v3.6.6 |
 | zashboard | Mihomo 面板 | latest |
 

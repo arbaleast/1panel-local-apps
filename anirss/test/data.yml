@@ -1,0 +1,256 @@
+additionalProperties:
+  formFields:
+    - default: ./data/config
+      edit: true
+      envKey: CONFIG_PATH
+      labelEn: Config Path
+      labelZh: 配置路径
+      label:
+        en: Config Path
+        zh: 配置路径
+        zh-Hant: 設定路徑
+        ja: 設定パス
+        ko: 구성 경로
+        ru: Путь к конфигурации
+        ms: Laluan konfigurasi
+        pt-br: Caminho de configuração
+      required: true
+      type: text
+    - default: ./data/media
+      edit: true
+      envKey: MEDIA_PATH
+      labelEn: Media Path
+      labelZh: 媒体路径
+      label:
+        en: Media Path
+        zh: 媒体路径
+        zh-Hant: 媒體路徑
+        ja: メディアパス
+        ko: 미디어 경로
+        ru: Путь к медиа
+        ms: Laluan media
+        pt-br: Caminho de mídia
+      required: true
+      type: text
+    - default: anirss
+      edit: true
+      envKey: HOSTNAME
+      labelEn: Hostname
+      labelZh: 主机名
+      label:
+        en: Hostname
+        zh: 主机名
+        zh-Hant: 主機名稱
+        ja: ホスト名
+        ko: 호스트명
+        ru: Имя хоста
+        ms: Nama hos
+        pt-br: Nome do host
+      required: true
+      type: text
+    - default: anirss
+      edit: true
+      envKey: CONTAINER_NAME
+      labelEn: Container Name
+      labelZh: 容器名称
+      label:
+        en: Container Name
+        zh: 容器名称
+        zh-Hant: 容器名稱
+        ja: コンテナ名
+        ko: 컨테이너 이름
+        ru: Имя контейнера
+        ms: Nama bekas
+        pt-br: Nome do contêiner
+      required: true
+      type: text
+    - default: "0"
+      envKey: USER_ID
+      labelEn: User ID
+      labelZh: 用户 ID
+      label:
+        en: User ID
+        zh: 用户 ID
+        zh-Hant: 使用者 ID
+        ja: ユーザー ID
+        ko: 사용자 ID
+        ru: ID пользователя
+        ms: ID pengguna
+        pt-br: ID do usuário
+      required: true
+      type: number
+      edit: true
+    - default: "0"
+      envKey: GROUP_ID
+      labelEn: Group ID
+      labelZh: 用户组 ID
+      label:
+        en: Group ID
+        zh: 用户组 ID
+        zh-Hant: 使用者群組 ID
+        ja: ユーザーグループ ID
+        ko: 사용자 그룹 ID
+        ru: ID группы пользователей
+        ms: ID kumpulan pengguna
+        pt-br: ID do grupo de usuários
+      required: true
+      type: number
+      edit: true
+    - default: "022"
+      edit: true
+      envKey: UMASK
+      labelEn: File Umask
+      labelZh: 文件掩码
+      label:
+        en: File Umask
+        zh: 文件掩码
+        zh-Hant: 檔案掩碼
+        ja: ファイル umask
+        ko: 파일 umask
+        ru: Umask файла
+        ms: Umask fail
+        pt-br: Umask do arquivo
+      required: true
+      type: text
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    - default: /config
+      edit: true
+      envKey: CONFIG
+      labelEn: Config Mount (Container)
+      labelZh: 配置挂载点（容器内）
+      label:
+        en: Config Mount (Container)
+        zh: 配置挂载点（容器内）
+        zh-Hant: 設定掛載點（容器內）
+        ja: 設定マウント（コンテナ内）
+        ko: 설정 마운트 (컨테이너 내부)
+        ru: Точка монтирования конфига (внутри контейнера)
+        ms: Titik mount konfigurasi (dalam bekas)
+        pt-br: Ponto de montagem da config (dentro do contêiner)
+      required: true
+      type: text
+    - default: "7789"
+      edit: true
+      envKey: SERVER_PORT
+      labelEn: Internal Server Port
+      labelZh: 容器内服务端口
+      label:
+        en: Internal Server Port
+        zh: 容器内服务端口
+        zh-Hant: 容器內服務埠
+        ja: コンテナ内サービスポート
+        ko: 컨테이너 내부 서비스 포트
+        ru: Внутренний порт сервиса
+        ms: Port perkhidmatan dalaman
+        pt-br: Porta interna do serviço
+      required: true
+      type: number
+    - default: "27789"
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Host HTTP Port
+      labelZh: 宿主机端口
+      label:
+        en: Host HTTP Port
+        zh: 宿主机端口
+        zh-Hant: 主機埠
+        ja: ホスト側ポート
+        ko: 호스트 포트
+        ru: Порт на хосте
+        ms: Port hos
+        pt-br: Porta no host
+      required: true
+      type: number
+    - default: "-Xms64m -Xmx512m -Xss256k -XX:+UseG1GC"
+      edit: true
+      envKey: JAVA_OPTS
+      labelEn: JVM Options
+      labelZh: JVM 参数
+      label:
+        en: JVM Options
+        zh: JVM 参数
+        zh-Hant: JVM 參數
+        ja: JVM オプション
+        ko: JVM 옵션
+        ru: Параметры JVM
+        ms: Pilihan JVM
+        pt-br: Opções da JVM
+      required: true
+      type: text
+    - default: "false"
+      edit: true
+      envKey: SWAGGER_ENABLED
+      labelEn: Enable Swagger UI
+      labelZh: 启用 Swagger UI
+      label:
+        en: Enable Swagger UI
+        zh: 启用 Swagger UI
+        zh-Hant: 啟用 Swagger UI
+        ja: Swagger UI を有効化
+        ko: Swagger UI 활성화
+        ru: Включить Swagger UI
+        ms: Dayakan Swagger UI
+        pt-br: Habilitar Swagger UI
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: "false"
+      edit: true
+      envKey: MCP_ENABLED
+      labelEn: Enable MCP (Model Context Protocol)
+      labelZh: 启用 MCP（模型上下文协议）
+      label:
+        en: Enable MCP (Model Context Protocol)
+        zh: 启用 MCP（模型上下文协议）
+        zh-Hant: 啟用 MCP（模型上下文協議）
+        ja: MCP（モデルコンテキストプロトコル）を有効化
+        ko: MCP(모델 컨텍스트 프로토콜) 활성화
+        ru: Включить MCP (Model Context Protocol)
+        ms: Dayakan MCP (Protokol Konteks Model)
+        pt-br: Habilitar MCP (Protocolo de Contexto de Modelo)
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+  key: anirss
+  name: anirss
+  tags:
+    - anime
+    - rss
+    - automation
+  shortDescZh: AniRSS 自动追番订阅
+  shortDescEn: AniRSS 自动追番订阅
+  description:
+    zh: 基于 RSS 的自动追番工具，按番剧更新自动下载到 qBittorrent。
+    en: RSS-based anime auto-downloader, automatically downloads anime updates to qBittorrent.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/wushuo894/ani-rss
+  github: https://github.com/wushuo894/ani-rss
+name: anirss
+title: AniRSS 自动追番订阅
+description: 基于 RSS 的自动追番工具，按番剧更新自动下载到 qBittorrent。
