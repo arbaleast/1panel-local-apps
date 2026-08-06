@@ -32,7 +32,7 @@ services:
             - BROWSER_POOL_SIZE=5
             - NUQ_RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@${CONTAINER_NAME}-rabbitmq:5672
             - BULL_AUTH_KEY=${BULL_AUTH_KEY}
-        image: ghcr.io/firecrawl/firecrawl:latest
+        image: ghcr.io/firecrawl/firecrawl:2.11.14-production
         labels:
             createdBy: Apps
         networks:

@@ -32,10 +32,22 @@ additionalProperties:
       - amd64
       - arm64
     formFields:
-      - default: "traefik:v3.4"
-        envKey: PANEL_APP_IMAGE_TAG
-        labelEn: Image Tag
-        labelZh: 镜像 Tag
+      - default: traefik:v3.6.6
+        edit: true
+        envKey: IMAGE
+        labelEn: Image
+        labelZh: 镜像
+        label:
+          en: Image
+          zh: 镜像
+          ja: イメージ
+          ko: 이미지
+          ru: Образ
+          ms: Imej
+          pt-br: Imagem
+          es-es: Imagen
+          tr: İmaj
+          zh-Hant: 映像
         required: true
         rule: paramImageTag
         type: text

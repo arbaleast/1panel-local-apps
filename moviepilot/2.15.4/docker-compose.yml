@@ -128,7 +128,7 @@ services:
     - DB_POSTGRESQL_USERNAME=${DB_POSTGRESQL_USERNAME}
     - DB_POSTGRESQL_PASSWORD=${DB_POSTGRESQL_PASSWORD}
     hostname: ${HOSTNAME}
-    image: jxxghp/moviepilot-v2:latest
+    image: jxxghp/moviepilot-v2:2.15.4
     labels:
       createdBy: Apps
     networks:

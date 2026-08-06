@@ -16,7 +16,7 @@ services:
                     memory: ${MEMORY_LIMIT}
         environment:
             - TZ=Asia/Shanghai
-        image: ${PANEL_APP_IMAGE_TAG}
+        image: ${IMAGE}
         labels:
             createdBy: Apps
         networks:

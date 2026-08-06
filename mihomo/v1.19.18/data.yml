@@ -41,7 +41,7 @@ additionalProperties:
   github: https://github.com/gangz1o/clash4docker
   document: https://github.com/gangz1o/clash4docker#readme
   formFields:
-  - default: gangz1o/glash:latest
+  - default: ghcr.io/metacubex/mihomo:v1.19.18
     edit: true
     envKey: IMAGE
     labelEn: Image

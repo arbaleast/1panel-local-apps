@@ -22,7 +22,7 @@ additionalProperties:
   github: https://github.com/run-llama/llama_index
   document: https://docs.llamaindex.ai/
   formFields:
-  - default: run-llama/llama-agents-server:latest
+  - default: llamaindex/llama-deploy:v0.9.2
     edit: true
     envKey: IMAGE
     labelEn: Docker Image

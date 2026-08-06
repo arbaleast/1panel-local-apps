@@ -1,7 +1,7 @@
 services:
   photopea:
     container_name: ${CONTAINER_NAME}
-    image: ${IMAGE}:${APP_VERSION}
+    image: ${IMAGE}
     restart: always
     networks:
       - 1panel-network

@@ -11,7 +11,7 @@ services:
           memory: ${MEMORY_LIMIT}
     environment:
     - BASE_URL=${SEARXNG_EXTERNAL_URL}
-    image: searxng/searxng:latest
+    image: searxng/searxng:2026.8.4-c63835bd2
     labels:
       createdBy: Apps
     networks:

@@ -12,7 +12,7 @@
 ├── data.yml              # 根元数据 (key, name, type, description, website, github)
 ├── logo.png              # 应用图标
 ├── README.md             # 中文说明
-└── <version>/            # 版本目录 (名称=版本参数)
+└── <version>/            # 版本目录 (名称=版本参数，禁止使用 "latest")
     ├── data.yml          # 版本配置 + formFields (环境变量定义)
     ├── docker-compose.yml
     ├── data/             # 持久化数据目录 (.gitkeep)
@@ -74,6 +74,7 @@
 
 ## Common Pitfalls
 
+- **禁止使用 `latest` 作为版本目录名或镜像 tag**：`latest` 会导致版本漂移，1Panel UI 中该目录名即为版本参数。应使用具体 semver / date-based / functional tag（如 `v1.2.3`、`2024.08`、`pg` 等）。仅当上游镜像完全无版本化 tag 时方可例外保留 `latest`（需在 PR 描述中注明根因）。
 - 版本目录名就是版本参数，改目录名即改版本选项
 - SQLite key 有 `local` 前缀: `jellyfin` → `localjellyfin`
 - 更新时只复制版本子目录，不要复制整个 `<key>/*`

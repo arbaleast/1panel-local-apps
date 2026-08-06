@@ -17,7 +17,7 @@ additionalProperties:
     required: true
     rule: paramPort
     type: number
-  - default: ramuses/photopea
+  - default: ramuses/photopea:2.2
     edit: true
     envKey: IMAGE
     labelEn: Image
@@ -32,22 +32,7 @@ additionalProperties:
       ms: Imej
       pt-br: Imagem
     required: true
-    type: text
-  - default: latest
-    edit: true
-    envKey: APP_VERSION
-    labelEn: App Version
-    labelZh: 应用版本
-    label:
-      en: App Version
-      zh: 应用版本
-      zh-Hant: 應用版本
-      ja: アプリバージョン
-      ko: 앱 버전
-      ru: Версия приложения
-      ms: Versi Apl
-      pt-br: Versão do aplicativo
-    required: true
+    rule: paramImageTag
     type: text
   key: photopea
   name: Photopea

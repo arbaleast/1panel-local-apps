@@ -28,7 +28,7 @@ services:
             - HINDSIGHT_CP_PORT=${HINDSIGHT_CP_PORT}
             - HINDSIGHT_CP_DATAPLANE_API_URL=${HINDSIGHT_CP_DATAPLANE_API_URL}
             - HINDSIGHT_CP_ACCESS_KEY=${HINDSIGHT_CP_ACCESS_KEY}
-        image: vectorize-io/hindsight:latest
+        image: ghcr.io/vectorize-io/hindsight:0.8.6
         labels:
             createdBy: Apps
         networks:

@@ -4,7 +4,7 @@ networks:
 services:
   fastnet:
     container_name: ${CONTAINER_NAME}
-    image: linkease/fastnet:latest
+    image: linkease/fastnet:0.7.5
     labels:
       createdBy: Apps
     networks:

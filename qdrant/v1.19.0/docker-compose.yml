@@ -2,7 +2,7 @@ networks:
   1panel-network:
     external: true
 services:
-  anirss:
+  qdrant:
     container_name: ${CONTAINER_NAME}
     deploy:
       resources:
@@ -10,24 +10,17 @@ services:
           cpus: ${CPUS}
           memory: ${MEMORY_LIMIT}
     environment:
-    - PUID=99
-    - PGID=100
-    - UMASK=${UMASK}
     - TZ=${TZ}
-    - SERVER_PORT=${SERVER_PORT}
-    - CONFIG=${CONFIG}
-    - JAVA_OPTS=${JAVA_OPTS}
-    - SWAGGER_ENABLED=${SWAGGER_ENABLED}
-    - MCP_ENABLED=${MCP_ENABLED}
-    image: wushuo894/ani-rss:latest
+    image: qdrant/qdrant:v1.19.0
     labels:
       createdBy: Apps
     networks:
       1panel-network:
         aliases:
         - ${CONTAINER_NAME}
+    ports:
+    - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:6333
+    - ${HOST_IP}:${PANEL_APP_PORT_GRPC}:6334
     restart: always
-    tty: true
     volumes:
-    - ${CONFIG_PATH}:${CONFIG}
-    - ${MEDIA_PATH}:/media
+    - ${DATA_PATH}:/qdrant/storage
