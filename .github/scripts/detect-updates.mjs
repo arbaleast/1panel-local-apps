@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // detect-updates.mjs — 检测 hardcode 类应用的镜像更新，修改文件并输出 updates.json
 // 仅处理 compose 中 image 含硬编码 tag 的应用，变量型（${IMAGE} 等）整体跳过
-// 适配 AGENTS.md "禁止 latest 作目录名" 规则：每应用仅一个具体版本目录；检测到新 tag 后
-// 原地修改 compose + data.yml 并重命名目录，确保 1Panel UI 版本号与镜像 tag 一致。
+// 适配 AGENTS.md "禁止 latest 作目录名" 规则：每应用可有多个具体版本目录；检测到新 tag 后
+// 保留旧版本目录并 cpSync 新版本目录，1Panel UI 版本下拉展示所有历史版本，支持回滚。
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -264,22 +264,26 @@ async function processApp(appName) {
 
   if (!hasAnyUpdate) return null;
 
-  // === 目录重命名策略 ===
-  // 1Panel UI 版本下拉 = 仓库目录名，检测到新 tag 后必须重命名目录以保持 UI 与实际镜像一致。
-  // 例如：anirss/v3.2.5/ 检测到 v3.2.6 → 整个目录重命名为 anirss/v3.2.6/
+  // === 新建多版本目录（保留旧版用于回滚） ===
+  // 1Panel UI 版本下拉 = 仓库目录名；检测到新 tag 后保留旧目录并新建新版本目录。
+  // 例：anirss/v3.2.5/ 检测到 v3.2.6 → 保留 v3.2.5/，新建 v3.2.6/
+  // 用户可在 1Panel UI 中切换版本，旧版本目录永久保留在仓库 git history 中。
   const oldVersionDir = versionDir;
   const newVersionDir = maxTo;
 
-  if (oldVersionDir !== newVersionDir) {
-    const oldDir = path.join(appDir, oldVersionDir);
+  if (oldVersionDir === newVersionDir) {
+    // tag 未变（防御性，正常情况下 serviceChanges 为空时 hasAnyUpdate 已 return）
+    log(appName, `目标版本与当前一致 (${newVersionDir})，跳过目录操作`);
+  } else {
     const newDir = path.join(appDir, newVersionDir);
     if (fs.existsSync(newDir)) {
-      // 新版本目录已存在（手动建过 / 上次升级残留），覆盖之
+      // 已存在同名新版本目录（理论不应发生，可能是上次升级残留或手动建过）
       log(appName, `⚠ 目标目录 ${newVersionDir}/ 已存在，将覆盖`);
       fs.rmSync(newDir, { recursive: true, force: true });
     }
-    fs.renameSync(oldDir, newDir);
-    log(appName, `目录重命名: ${oldVersionDir}/ -> ${newVersionDir}/`);
+    // 复制当前版本目录的全部内容到新版本目录
+    fs.cpSync(path.join(appDir, oldVersionDir), newDir, { recursive: true });
+    log(appName, `新建版本目录: ${oldVersionDir}/ -> ${newVersionDir}/（旧版保留）`);
   }
 
   // 内存中替换 compose / data.yml
