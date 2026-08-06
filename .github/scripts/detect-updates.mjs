@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // detect-updates.mjs — 检测 hardcode 类应用的镜像更新，修改文件并输出 updates.json
-// 仅处理 compose 中 image 含硬编码 tag 的应用，变量型（${IMAGE} 等）跳过
+// 仅处理 compose 中 image 含硬编码 tag 的应用，变量型（${IMAGE} 等）整体跳过
+// 适配 AGENTS.md "禁止 latest 作目录名" 规则：每应用仅一个具体版本目录，更新覆盖该目录
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -149,7 +150,7 @@ function listApps(aliasByDir) {
 
 /**
  * 在应用目录中查找包含 docker-compose.yml 的版本子目录
- * 优先返回 latest/，否则返回版本号最大的目录
+ * 按语义化版本号排序，返回版本号最大的目录（latest 目录始终被排除）
  * @param {string} appDir - 应用完整路径
  * @returns {string|null} 版本目录名，未找到返回 null
  */
@@ -160,14 +161,12 @@ function findVersionDir(appDir) {
   } catch {
     return null;
   }
-  // 收集包含 docker-compose.yml 的子目录
+  // 收集包含 docker-compose.yml 的子目录，排除 latest（AGENTS.md 禁止）
   const candidates = entries
-    .filter((e) => e.isDirectory() && fs.existsSync(path.join(appDir, e.name, 'docker-compose.yml')))
+    .filter((e) => e.isDirectory() && e.name !== 'latest' && fs.existsSync(path.join(appDir, e.name, 'docker-compose.yml')))
     .map((e) => e.name);
   if (candidates.length === 0) return null;
-  // 优先 latest
-  if (candidates.includes('latest')) return 'latest';
-  // 按语义化版本号排序，取最大
+  // 按语义化版本号排序，取最大（不修改现有 semver 比较逻辑）
   candidates.sort((a, b) => {
     const pa = a.replace(/^v/, '').replace(/-.*$/, '').split('.').map(Number);
     const pb = b.replace(/^v/, '').replace(/-.*$/, '').split('.').map(Number);
@@ -218,7 +217,7 @@ async function processApp(appName) {
     } else if (svc.image.includes(':')) {
       const [repo, tag] = svc.image.split(':');
       if (tag === 'latest') {
-        log(appName, svc.name, 'tag=latest，跳过');
+        log(appName, svc.name, '⚠ tag=latest，违反 AGENTS.md 规则，跳过该 service');
         continue;
       }
       hardcoded.push({ ...svc, repo, tag });
@@ -291,11 +290,11 @@ async function processApp(appName) {
   }
   newData = serializeYaml(dataObj);
 
-  // 本仓库约定：每应用仅保留 latest/ 单版本目录，镜像更新只改 latest/，不新建版本目录。
-  // newVersionDir / maxTo 保留作版本标识，供 updates.json 输出（workflow 依赖 updates.length 判断 has-updates）
+  // 当前实现：每应用只保留一个具体版本目录（如 <app>/v3.2.5/），镜像更新直接覆盖当前目录内的 compose + data.yml。
+  // 不再创建新版本目录、也不在多版本间切换；maxTo 仅作变更摘要（before/after）供 PR body 输出。
   const newVersionDir = maxTo;
 
-  // 更新 latest（即 versionDir）目录的 compose 与 data.yml
+  // 更新当前版本目录的 compose 与 data.yml
   changes.push({ path: `${appName}/${versionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
   changes.push({ path: `${appName}/${versionDir}/data.yml`, content: newData, to: maxTo });
 
