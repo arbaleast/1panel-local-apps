@@ -10,8 +10,8 @@
 #           在 Windows / macOS 上运行会直接跳过并提示。
 #
 # 使用方式:
-#   chmod +x scripts/infinity/download_wheels.sh
-#   bash scripts/infinity/download_wheels.sh
+#   chmod +x infinity/.scripts/download_wheels.sh
+#   bash infinity/.scripts/download_wheels.sh
 #
 # 注意:
 #   - 本脚本不会硬编码任何凭据 / IP / 内网域名。
@@ -20,7 +20,7 @@
 
 set -euo pipefail
 
-# 仓库根目录 = 脚本所在目录的上两级 (scripts/infinity -> scripts -> repo-root)
+# 仓库根目录 = 脚本所在目录的上两级 (infinity/.scripts -> infinity -> repo-root)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # wheels 目录放在 infinity/cu124/wheels/ (对应 Dockerfile 的 COPY wheels/)
@@ -105,5 +105,5 @@ echo "========================================================"
 echo "全部下载完成, 输出目录: ${WHEELS_DIR}"
 ls -lh "${WHEELS_DIR}"/torch*cu124*.whl "${WHEELS_DIR}"/torchvision*cu124*.whl 2>/dev/null || true
 echo ""
-echo "下一步: 用 Git LFS 跟踪这些 wheel (见 docs/BUILD.md 策略 A), 再执行 build 脚本。"
+echo "下一步: 用 Git LFS 跟踪这些 wheel (见 infinity/.docs/BUILD.md 策略 A), 再执行 build 脚本。"
 echo "========================================================"

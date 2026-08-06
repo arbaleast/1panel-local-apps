@@ -27,7 +27,7 @@ git commit -m "chore: track cu124 wheels via git lfs"
 ```
 
 - wheel 文件放在构建上下文 `infinity/cu124/wheels/` 目录（本仓库已预留该目录；旧位置 `infinity/wheels/` 已迁移至此，避免与 Dockerfile `COPY wheels/` 的上下文错位）。
-- 每次用 [scripts/download_wheels.sh](../scripts/infinity/download_wheels.sh) 下载或更新后，重新 commit 即可。
+- 每次用 [infinity/.scripts/download_wheels.sh](../../infinity/.scripts/download_wheels.sh) 下载或更新后，重新 commit 即可。
 - 构建侧：克隆仓库时自动拉取 LFS 对象；Dockerfile 中 `COPY wheels/ /tmp/wheels/`（相对于构建上下文 `cu124/`）后 `pip install`。
 
 ## 策略 B: GitHub Release 附件
@@ -49,7 +49,7 @@ RUN wget -q -O /tmp/torch.whl \
 不在构建时固定 wheel，而是由 Dockerfile 在**容器启动时**（entrypoint）从外部源下载：
 
 - 优点：镜像小、wheel 更新不需要重建镜像。
-- 缺点：每次启动依赖外网，下载慢、失败率高；与“本地应用”离线部署的定位冲突。
+- 缺点：每次启动依赖外网，下载慢、失败率高；与"本地应用"离线部署的定位冲突。
 
 > **建议**：本仓库默认采用 **策略 A（Git LFS）**，策略 B / C 作为备选。
 
@@ -59,10 +59,10 @@ RUN wget -q -O /tmp/torch.whl \
 
 ```bash
 # 先赋予执行权限（如需）
-chmod +x scripts/infinity/download_wheels.sh
+chmod +x infinity/.scripts/download_wheels.sh
 
 # 下载 torch 2.6.0+cu124 / torchvision 0.21.0+cu124 的 cp310 wheel 到 infinity/cu124/wheels/
-bash scripts/infinity/download_wheels.sh
+bash infinity/.scripts/download_wheels.sh
 ```
 
 脚本会将 wheel 下载到 `infinity/cu124/wheels/`（文件名带时间戳后缀，避免覆盖旧文件），并打印下载结果。Windows / macOS 会被跳过并提示（需要 Linux 环境，或在 Docker 内跑）。
@@ -77,8 +77,8 @@ bash scripts/infinity/download_wheels.sh
 2. **命令行手动构建**：
 
 ```bash
-bash scripts/infinity/build.sh          # 等价于 docker build -t infinity-pascal:cu124 infinity/cu124/
-bash scripts/infinity/build.sh --no-cache   # 禁用层缓存，全量重建
+bash infinity/.scripts/build.sh          # 等价于 docker build -t infinity-pascal:cu124 infinity/cu124/
+bash infinity/.scripts/build.sh --no-cache   # 禁用层缓存，全量重建
 ```
 
 构建完成后，1Panel 安装表单中 `IMAGE` 填 `infinity-pascal:cu124` 即可直接使用本地镜像。
