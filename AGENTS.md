@@ -8,7 +8,7 @@
 ## Structure
 
 ```
-<app-key>/               # 应用目录直接在仓库根
+apps/<app-key>/          # 应用目录在 apps/ 子目录下
 ├── data.yml              # 根元数据 (key, name, type, description, website, github)
 ├── logo.png              # 应用图标
 ├── README.md             # 中文说明
@@ -58,7 +58,7 @@
 
 - `.github/workflows/auto-update.yml` — 每周一 UTC 0 点（也可手动）检测 hardcode 类应用镜像更新
 - 命中即开 PR（分支 `auto-update/<date>`，单 PR 合并本批次全部变更），PR body 列出所有 service 变更
-- 修改 `<app>/<version>/docker-compose.yml` 与 `<app>/data.yml`
+- 修改 `apps/<app>/<version>/docker-compose.yml` 与 `apps/<app>/data.yml`
 - 变量型应用（compose 用 `${IMAGE}` / `${APP_VERSION}`）不在自动范围
 - PR title 含 `[skip ci]`，防合并时递归触发
 - 同步更新仓库根 `README.md` 的"应用列表"表格（应用名/描述/版本）
@@ -77,7 +77,7 @@
 - **禁止使用 `latest` 作为版本目录名或镜像 tag**：`latest` 会导致版本漂移，1Panel UI 中该目录名即为版本参数。应使用具体 semver / date-based / functional tag（如 `v1.2.3`、`2024.08`、`pg` 等）。仅当上游镜像完全无版本化 tag 时方可例外保留 `latest`（需在 PR 描述中注明根因）。
 - 版本目录名就是版本参数，改目录名即改版本选项
 - SQLite key 有 `local` 前缀: `jellyfin` → `localjellyfin`
-- 更新时只复制版本子目录，不要复制整个 `<key>/*`
+- 更新时只复制版本子目录，不要复制整个 `apps/<key>/*`
 - sed -i 在 bind-mount 上会失败，用 tempfile + mv
 - 端口变更会影响反向代理配置
 - **formField type 不支持 boolean**: 1Panel 前端 [`params/index.vue`](https://github.com/1Panel-dev/1Panel/blob/main/frontend/src/views/app-store/apps/params/index.vue) 使用 `v-if` 按 type 渲染表单控件，**仅支持 6 种 type**：`text` / `number` / `password` / `service` / `select` / `apps`。如果在 formFields 中使用 `type: boolean`，UI 中该字段会完全不显示且无任何报错。**解决方式**：布尔开关一律用 `type: select` + `values: [{label: 'true', value: 'true'}, {label: 'false', value: 'false'}]` 来模拟。参考应用：`anirss`、`firecrawl`、`mihomo`、`moviepilot`、`handbrake`、`traefik` 等均有同模式字段。**检测技巧**：新增 formField 后如果 UI 未出现，先核对 `type` 是否在上述白名单内。

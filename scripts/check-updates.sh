@@ -17,7 +17,7 @@ check_app() {
     local compose_file=""
     
     # 找 docker-compose.yml（优先版本目录）
-    for f in "$REPO_DIR/$app_name"/*/docker-compose.yml "$REPO_DIR/$app_name"/docker-compose.yml; do
+    for f in "$REPO_DIR/apps/$app_name"/*/docker-compose.yml "$REPO_DIR/apps/$app_name"/docker-compose.yml; do
         if [[ -f "$f" ]]; then
             compose_file="$f"
             break
@@ -86,7 +86,7 @@ except:
 if [[ $# -gt 0 ]]; then
     APPS=("$@")
 else
-    APPS=($(ls -d "$REPO_DIR"/*/ 2>/dev/null | xargs -I{} basename {} | grep -v -E '^\.|scripts|docs'))
+    APPS=($(ls -d "$REPO_DIR"/apps/*/ 2>/dev/null | xargs -I{} basename {} | grep -v -E '^\.|scripts|docs'))
 fi
 
 log "检查 ${#APPS[@]} 个应用的镜像更新..."

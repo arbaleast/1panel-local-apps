@@ -149,7 +149,7 @@ function getDescription(dirName, alias) {
   // 1. 别名表 desc
   if (alias?.desc) return alias.desc;
 
-  const rootDataPath = path.join(REPO_ROOT, dirName, 'data.yml');
+  const rootDataPath = path.join(REPO_ROOT, 'apps', dirName, 'data.yml');
   const rootData = readYaml(rootDataPath);
 
   // 2. 根 data.yml shortDescZh
@@ -157,7 +157,7 @@ function getDescription(dirName, alias) {
   if (rootDesc) return rootDesc;
 
   // 3. 版本 data.yml shortDescZh（扫描所有版本目录取第一个有效的）
-  const appDir = path.join(REPO_ROOT, dirName);
+  const appDir = path.join(REPO_ROOT, 'apps', dirName);
   try {
     const entries = fs.readdirSync(appDir, { withFileTypes: true });
     for (const entry of entries) {
@@ -190,7 +190,7 @@ function getVersion(dirName, alias) {
   // 1. 别名表 preferred_version
   if (alias?.preferred_version) return alias.preferred_version;
 
-  const appDir = path.join(REPO_ROOT, dirName);
+  const appDir = path.join(REPO_ROOT, 'apps', dirName);
 
   // 2. 扫描版本目录，取非 latest 中版本号最大的
   try {
@@ -243,18 +243,19 @@ function main() {
 
   log(`加载别名表: ${Object.keys(aliases).length} 条`);
 
-  // 2. 扫描根目录，发现所有应用
+  // 2. 扫描 apps/ 目录，发现所有应用
   const appDirs = [];
-  const rootEntries = fs.readdirSync(REPO_ROOT, { withFileTypes: true });
+  const appsRoot = path.join(REPO_ROOT, 'apps');
+  const rootEntries = fs.readdirSync(appsRoot, { withFileTypes: true });
   for (const entry of rootEntries) {
     if (!entry.isDirectory()) continue;
-    if (isAppDir(path.join(REPO_ROOT, entry.name), entry.name, aliasByDir)) {
+    if (isAppDir(path.join(appsRoot, entry.name), entry.name, aliasByDir)) {
       appDirs.push(entry.name);
     }
   }
 
   // 2.1 补充别名表 dir 指向嵌套路径的应用（如 ramuses/photopea）
-  // 根一级目录扫描无法发现嵌套目录，需按别名表 dir 显式补充
+  // 嵌套应用 dir 含斜杠，路径在 REPO_ROOT 下而非 apps/ 下，需额外检查
   for (const [name, conf] of Object.entries(aliases)) {
     const dir = conf.dir || name;
     if (/[\\/]/.test(dir) && !appDirs.includes(dir)) {

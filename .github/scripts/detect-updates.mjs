@@ -11,8 +11,8 @@ import * as yaml from 'js-yaml';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
-// 应用目录直接在仓库根，不在 apps/ 子目录下
-const APPS_DIR = REPO_ROOT;
+// 应用目录在 apps/ 子目录下
+const APPS_DIR = path.join(REPO_ROOT, 'apps');
 // 需过滤的非应用目录
 const SKIP_DIRS = new Set(['.github', 'scripts', '.git', 'node_modules', '.agent_cache']);
 
@@ -315,8 +315,8 @@ async function processApp(appName) {
   // maxTo 仍为镜像 tag，用于 PR body 输出 before/after。
 
   // 写入新版本目录
-  changes.push({ path: `${appName}/${newVersionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
-  changes.push({ path: `${appName}/${newVersionDir}/data.yml`, content: newData, to: maxTo });
+  changes.push({ path: `apps/${appName}/${newVersionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
+  changes.push({ path: `apps/${appName}/${newVersionDir}/data.yml`, content: newData, to: maxTo });
 
   return { app: appName, from: minFrom, to: maxTo, services: serviceChanges, changes };
 }

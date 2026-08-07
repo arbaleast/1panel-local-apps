@@ -48,17 +48,18 @@ cd 1panel-local-apps
 ## 目录结构
 
 ```
-├── jellyfin/                     # 应用目录直接在仓库根
-│   ├── data.yml                  # 根元数据 (key, name, type, description, ...)
-│   ├── logo.png                  # 应用图标
-│   ├── README.md
-│   └── 10.11.11/                 # 版本目录 (名称 = 版本参数)
-│       ├── data.yml              # 版本配置 + formFields (环境变量定义)
-│       ├── docker-compose.yml
-│       └── data/                 # 持久化数据目录 (.gitkeep)
-├── immich/
-│   └── ...
-├── ...                           # 其余应用同结构
+├── apps/                         # 所有应用在 apps/ 子目录下
+│   ├── jellyfin/
+│   │   ├── data.yml              # 根元数据 (key, name, type, description, ...)
+│   │   ├── logo.png              # 应用图标
+│   │   ├── README.md
+│   │   └── 10.11.11/             # 版本目录 (名称 = 版本参数)
+│   │       ├── data.yml          # 版本配置 + formFields (环境变量定义)
+│   │       ├── docker-compose.yml
+│   │       └── data/             # 持久化数据目录 (.gitkeep)
+│   ├── immich/
+│   │   └── ...
+│   └── ...                       # 其余应用同结构
 ├── scripts/
 │   └── check-updates.sh          # 更新检查
 ├── .github/
@@ -104,7 +105,7 @@ cd 1panel-local-apps
 
 ## 添加新应用
 
-1. 在仓库根目录创建应用目录（如 `myapp/`）
+1. 在 `apps/` 目录下创建应用目录（如 `apps/myapp/`）
 2. 添加 `data.yml`（根元数据）、`logo.png`、`README.md`
 3. 创建版本目录（如 `latest/` 或 `1.0.0/`）
 4. 在版本目录中添加 `data.yml`（formFields 定义）和 `docker-compose.yml`
@@ -112,7 +113,7 @@ cd 1panel-local-apps
 
 ## 更新应用版本
 
-1. 修改 `<app>/<version>/docker-compose.yml` 中的 `image` 标签
+1. 修改 `apps/<app>/<version>/docker-compose.yml` 中的 `image` 标签
 2. 提交并推送
 3. 由 1Panel 计划任务同步本地应用
 4. 在 1Panel UI 中重新部署应用
