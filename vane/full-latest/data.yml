@@ -1,0 +1,148 @@
+additionalProperties:
+  formFields:
+    - default: 3000
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      label:
+        en: Port
+        zh: 端口
+        zh-Hant: 埠
+        ja: ポート
+        ko: 포트
+        ru: Порт
+        ms: Port
+        pt-br: Porta
+      required: true
+      rule: paramPort
+      type: number
+    - default: openai
+      edit: true
+      envKey: AI_PROVIDER
+      label:
+        en: AI Provider
+        zh: AI 提供商
+        zh-Hant: AI 供應商
+        ja: AI プロバイダー
+        ko: AI 프로바이더
+        ru: AI провайдер
+        ms: Pembekal AI
+        pt-br: Provedor de IA
+      required: true
+      type: select
+      values:
+        - label: openai
+          value: openai
+        - label: ollama
+          value: ollama
+        - label: groq
+          value: groq
+        - label: anthropic
+          value: anthropic
+        - label: openrouter
+          value: openrouter
+        - label: gemini
+          value: gemini
+        - label: deepseek
+          value: deepseek
+        - label: lmstudio
+          value: lmstudio
+        - label: custom
+          value: custom
+    - default: gpt-4o-mini
+      edit: true
+      envKey: AI_MODEL
+      label:
+        en: AI Model
+        zh: AI 模型
+        zh-Hant: AI 模型
+        ja: AI モデル
+        ko: AI 모델
+        ru: AI модель
+        ms: Model AI
+        pt-br: Modelo de IA
+      required: true
+      type: text
+    - default: ""
+      edit: true
+      envKey: API_KEY
+      label:
+        en: API Key
+        zh: API 密钥
+        zh-Hant: API 金鑰
+        ja: API キー
+        ko: API 키
+        ru: API ключ
+        ms: Kunci API
+        pt-br: Chave de API
+      required: false
+      type: password
+    - default: ""
+      edit: true
+      envKey: API_URL
+      label:
+        en: API URL (optional)
+        zh: API 端点（可选，用于 Ollama/LMStudio/Custom）
+        zh-Hant: API 端點（選用，用於 Ollama/LMStudio/Custom）
+        ja: API URL（オプション、Ollama/LMStudio/Custom 用）
+        ko: API URL (선택, Ollama/LMStudio/Custom용)
+        ru: API URL (необязательно, для Ollama/LMStudio/Custom)
+        ms: API URL (pilihan, untuk Ollama/LMStudio/Custom)
+        pt-br: URL da API (opcional, para Ollama/LMStudio/Custom)
+      required: false
+      type: text
+    - default: 0.5
+      edit: true
+      envKey: SIMILARITY_THRESHOLD
+      label:
+        en: Similarity Threshold (optional)
+        zh: 相似度阈值（可选）
+        zh-Hant: 相似度閾值（選用）
+        ja: 類似度しきい値（オプション）
+        ko: 유사도 임계값 (선택)
+        ru: Порог схожести (необязательно)
+        ms: Ambang Keserupaan (pilihan)
+        pt-br: Limiar de similaridade (opcional)
+      required: false
+      type: text
+    - default: http://1panel-searxng:8080
+      edit: true
+      envKey: SEARXNG_API_URL
+      label:
+        en: SearXNG API URL
+        zh: SearXNG API 地址
+        zh-Hant: SearXNG API 位址
+        ja: SearXNG API URL
+        ko: SearXNG API URL
+        ru: URL API SearXNG
+        ms: URL API SearXNG
+        pt-br: URL da API SearXNG
+      required: false
+      type: text
+      help:
+        en: Point to the SearXNG service. Default assumes the 1panel-searxng container on the same 1panel-network.
+        zh: 指向 SearXNG 服务地址。默认假定 1panel-searxng 容器在 1panel-network 上。
+        zh-Hant: 指向 SearXNG 服務位址。預設假定 1panel-searxng 容器在 1panel-network 上。
+        ja: SearXNG サービスを指定します。デフォルトは 1panel-network 上の 1panel-searxng コンテナと仮定します。
+        ko: SearXNG 서비스를 가리킵니다. 기본값은 1panel-network의 1panel-searxng 컨테이너를 가정합니다.
+        ru: Указывает на сервис SearXNG. По умолчанию подразумевается контейнер 1panel-searxng в сети 1panel-network.
+        ms: Tunjuk kepada perkhidmatan SearXNG. Lalai mengandaikan bekas 1panel-searxng pada 1panel-network yang sama.
+        pt-br: Aponta para o serviço SearXNG. O padrão assume o contêiner 1panel-searxng na 1panel-network.
+  key: vane
+  name: vane
+  tags:
+    - search
+    - ai
+  shortDescZh: Vane AI 问答引擎
+  shortDescEn: Vane AI Answering Engine
+  description:
+    zh: Vane 是一款 AI 驱动的问答引擎（原名 Perplexica），支持多种 AI 提供商与自定义搜索源。
+    en: Vane is an AI-powered answering engine (formerly Perplexica), supporting multiple AI providers and custom sources.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/ItzCrazyKns/Vane
+  github: https://github.com/ItzCrazyKns/Vane
+name: vane
+title: Vane AI 问答引擎
+description: Vane 是一款 AI 驱动的问答引擎（原名 Perplexica），支持多种 AI 提供商与自定义搜索源。
