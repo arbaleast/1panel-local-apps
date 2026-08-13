@@ -12,7 +12,7 @@
 | firecrawl | 网页爬虫 | 2.11.14 |
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
 | handbrake | 视频转码 | 1.11.2 |
-| hindsight | AI 记忆系统 | 0.8.6 |
+| hindsight | AI 记忆系统 | 0.9.0 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 10.11.11 |

@@ -38,20 +38,57 @@ async function getLatestTagFromDockerHub(repo) {
 }
 
 async function getLatestTagFromGHCR(repo) {
-  // repo 形如 immich-app/immich-server
-  const url = `https://api.github.com/orgs/${repo.split('/')[0]}/packages/container/${repo.split('/')[1]}/versions?per_page=20`;
-  const headers = {};
-  if (process.env.GITHUB_TOKEN) {
-    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  // repo 形如 vectorize-io/hindsight
+  // 根因修复：GitHub Packages API 对匿名请求返回 401（GITHUB_TOKEN 也无法读取
+  // 其他组织的 packages），导致 GHCR 镜像永远检测不到更新。
+  // 改为 GHCR 原生 OCI Registry API：先取匿名 pull token，再调 tags/list。
+  const UNSTABLE_RE = /^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/i;
+  const SEMVER_RE = /^v?(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z.-]+)?$/;
+
+  // 1. 获取匿名 token（无需登录，scope 只需 pull）
+  let token = '';
+  try {
+    const tokenRes = await fetch(
+      `https://ghcr.io/token?scope=repository:${repo}:pull`,
+      { signal: AbortSignal.timeout(15_000) }
+    );
+    if (tokenRes.ok) {
+      const tokenData = await tokenRes.json();
+      token = tokenData.token || '';
+    }
+  } catch {
+    // token 端点异常时继续匿名请求 tags/list
   }
-  const res = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) });
+
+  // 2. 列出全部 tags
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`https://ghcr.io/v2/${repo}/tags/list?n=1000`, {
+    headers,
+    signal: AbortSignal.timeout(15_000),
+  });
   if (!res.ok) return null;
   const data = await res.json();
-  const tags = (data || [])
-    .map((v) => v.metadata?.container?.tags || [])
-    .flat();
-  const stable = tags.filter((t) => !/^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/i.test(t));
-  return stable[0] || null;
+  const tags = (data.tags || []).filter((t) => !UNSTABLE_RE.test(t));
+
+  // 3. 选 tag：优先纯 semver（x.y.z，无 -slim/-alpine 等变体后缀），
+  //    其次带后缀 semver，最后字典序最大；均按 semver 版本号升序比较
+  const pureSemver = tags.filter((t) => /^v?\d+\.\d+\.\d+$/.test(t));
+  const candidates = pureSemver.length > 0 ? pureSemver : tags;
+  candidates.sort((a, b) => {
+    const ma = a.match(SEMVER_RE);
+    const mb = b.match(SEMVER_RE);
+    if (!ma && !mb) return a.localeCompare(b);
+    if (!ma) return -1;
+    if (!mb) return 1;
+    for (let i = 1; i <= 3; i++) {
+      const na = parseInt(ma[i], 10);
+      const nb = parseInt(mb[i], 10);
+      if (na !== nb) return na - nb;
+    }
+    return a.localeCompare(b);
+  });
+  return candidates[candidates.length - 1] || null;
 }
 
 async function getLatestTag(image) {
