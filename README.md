@@ -9,10 +9,10 @@
 | anirss | 动漫 RSS | v3.2.9-arm32v7 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | pg |
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
-| firecrawl | 网页爬虫 | 2.11.198 |
+| firecrawl | 网页爬虫 | 2.11.199 |
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
 | handbrake | 视频转码 | 1.11.2 |
-| hindsight | AI 记忆系统 | 0.9.0 |
+| hindsight | AI 记忆系统 | 0.9.1 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 10.11.11 |
@@ -27,7 +27,7 @@
 | pgvector | 向量数据库 | 0.8.6-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
 | qdrant | 向量搜索引擎 | v1.19.0 |
-| searxng | 隐私搜索引擎 | 2026.8.12-cdfdaa5a8 |
+| searxng | 隐私搜索引擎 | 2026.8.14-094c33d40 |
 | syncthing | 文件同步 | 2.1.3 |
 | traefik | 反向代理 | v3.6.6 |
 | zashboard | Mihomo 面板 | latest |
