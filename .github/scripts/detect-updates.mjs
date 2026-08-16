@@ -8,13 +8,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
+// 共享模块：semver 比较、镜像 registry 适配器、应用目录扫描
+import { parse, compare } from '../../lib/semver.mjs';
+import { createAdapter } from '../../lib/registry.mjs';
+import { getCurrentVersion, listApps } from '../../lib/apps.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 // 应用目录直接在仓库根，不在 apps/ 子目录下
 const APPS_DIR = REPO_ROOT;
-// 需过滤的非应用目录
-const SKIP_DIRS = new Set(['.github', 'scripts', '.git', 'node_modules', '.agent_cache']);
 
 const APPS_FILTER = (process.env.APPS_FILTER || '')
   .split(',')
@@ -24,86 +26,14 @@ const APPS_FILTER = (process.env.APPS_FILTER || '')
 // 简易日志
 const log = (...a) => console.log('[detect]', ...a);
 
-// ---------- 工具：Docker Hub / GitHub Container Registry 查询 ----------
-
-async function getLatestTagFromDockerHub(repo) {
-  const url = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=20&ordering=last_updated`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const tags = (data.results || []).map((r) => r.name);
-  // 过滤不稳定 tag
-  const stable = tags.filter((t) => !/^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/i.test(t));
-  return stable[0] || null;
-}
-
-async function getLatestTagFromGHCR(repo) {
-  // repo 形如 vectorize-io/hindsight
-  // 根因修复：GitHub Packages API 对匿名请求返回 401（GITHUB_TOKEN 也无法读取
-  // 其他组织的 packages），导致 GHCR 镜像永远检测不到更新。
-  // 改为 GHCR 原生 OCI Registry API：先取匿名 pull token，再调 tags/list。
-  const UNSTABLE_RE = /^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/i;
-  const SEMVER_RE = /^v?(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z.-]+)?$/;
-
-  // 1. 获取匿名 token（无需登录，scope 只需 pull）
-  let token = '';
-  try {
-    const tokenRes = await fetch(
-      `https://ghcr.io/token?scope=repository:${repo}:pull`,
-      { signal: AbortSignal.timeout(15_000) }
-    );
-    if (tokenRes.ok) {
-      const tokenData = await tokenRes.json();
-      token = tokenData.token || '';
-    }
-  } catch {
-    // token 端点异常时继续匿名请求 tags/list
-  }
-
-  // 2. 列出全部 tags
-  const headers = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(`https://ghcr.io/v2/${repo}/tags/list?n=1000`, {
-    headers,
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const tags = (data.tags || []).filter((t) => !UNSTABLE_RE.test(t));
-
-  // 3. 选 tag：优先纯 semver（x.y.z，无 -slim/-alpine 等变体后缀），
-  //    其次带后缀 semver，最后字典序最大；均按 semver 版本号升序比较
-  const pureSemver = tags.filter((t) => /^v?\d+\.\d+\.\d+$/.test(t));
-  const candidates = pureSemver.length > 0 ? pureSemver : tags;
-  candidates.sort((a, b) => {
-    const ma = a.match(SEMVER_RE);
-    const mb = b.match(SEMVER_RE);
-    if (!ma && !mb) return a.localeCompare(b);
-    if (!ma) return -1;
-    if (!mb) return 1;
-    for (let i = 1; i <= 3; i++) {
-      const na = parseInt(ma[i], 10);
-      const nb = parseInt(mb[i], 10);
-      if (na !== nb) return na - nb;
-    }
-    return a.localeCompare(b);
-  });
-  return candidates[candidates.length - 1] || null;
-}
-
-async function getLatestTag(image) {
-  if (image.startsWith('ghcr.io/')) {
-    const repo = image.replace(/^ghcr\.io\//, '').split(':')[0];
-    return await getLatestTagFromGHCR(repo);
-  }
-  const repo = image.split(':')[0];
-  return await getLatestTagFromDockerHub(repo);
-}
-
 // ---------- 工具：解析 compose 与 data.yml ----------
 
+/**
+ * 解析 compose 内容，提取 services 列表（含 image 字段）
+ * @param {string} content - compose 文件内容
+ * @returns {Array<{name: string, image: string}>}
+ */
 function parseCompose(content) {
-  // 简单 yaml 解析即可，提取 services.<name>.image
   const doc = yaml.load(content);
   const services = doc?.services || {};
   const out = [];
@@ -115,16 +45,31 @@ function parseCompose(content) {
   return out;
 }
 
+/**
+ * 解析 data.yml 内容
+ * @param {string} content
+ * @returns {object}
+ */
 function parseDataYml(content) {
   return yaml.load(content) || {};
 }
 
+/**
+ * 序列化对象为 YAML（保留块风格）
+ * @param {object} obj
+ * @returns {string}
+ */
 function serializeYaml(obj) {
-  // 保留块风格，避免行内格式污染
   return yaml.dump(obj, { lineWidth: -1, noRefs: true, quotingType: '"' });
 }
 
-// 找到 data.yml formFields 中匹配 image repo 的字段
+/**
+ * 找到 data.yml formFields 中匹配 image repo 的字段
+ * 业务逻辑：用于变量型应用注入新 tag（detect 端行为优先，不强制使用 getAppMeta）
+ * @param {object} dataObj - data.yml 解析结果
+ * @param {string} imageRepo - 镜像 repo（如 kragleer/anirss）
+ * @returns {{index: number, field: object}|null}
+ */
 function findFormFieldForImage(dataObj, imageRepo) {
   const fields = dataObj?.additionalProperties?.formFields || [];
   for (let i = 0; i < fields.length; i++) {
@@ -159,71 +104,26 @@ function loadAliases() {
   const aliasByDir = new Map();
   for (const [name, conf] of Object.entries(aliases)) {
     const dir = conf.dir || name;
-    aliasByDir.set(dir, { ...conf, _shortName: name });
+    // 确保 dir 属性始终存在（lib/apps.mjs listApps 依赖此字段）
+    aliasByDir.set(dir, { ...conf, dir, _shortName: name });
   }
   return aliasByDir;
 }
 
-function listApps(aliasByDir) {
-  if (!fs.existsSync(APPS_DIR)) return [];
-  const dirs = fs.readdirSync(APPS_DIR, { withFileTypes: true });
-  const apps = dirs
-    .filter((d) => d.isDirectory() && !SKIP_DIRS.has(d.name))
-    .map((d) => d.name);
-
-  // 补充别名表 dir 指向嵌套路径的应用（如 ramuses/photopea）
-  for (const [dir, conf] of aliasByDir.entries()) {
-    if (/[\\/]/.test(dir) && !apps.includes(dir)) {
-      const dirPath = path.join(APPS_DIR, dir);
-      if (
-        fs.existsSync(path.join(dirPath, 'docker-compose.yml')) ||
-        fs.existsSync(path.join(dirPath, 'latest', 'docker-compose.yml'))
-      ) {
-        apps.push(dir);
-      }
-    }
-  }
-  return apps;
-}
-
 /**
- * 在应用目录中查找包含 docker-compose.yml 的版本子目录
- * 按语义化版本号排序，返回版本号最大的目录（latest 目录始终被排除）
- * @param {string} appDir - 应用完整路径
- * @returns {string|null} 版本目录名，未找到返回 null
+ * 使用 adapter 获取镜像最新稳定 tag
+ * @param {string} image - 完整镜像字符串（含 registry 前缀）
+ * @returns {Promise<string|null>}
  */
-function findVersionDir(appDir) {
-  let entries;
-  try {
-    entries = fs.readdirSync(appDir, { withFileTypes: true });
-  } catch {
-    return null;
-  }
-  // 收集包含 docker-compose.yml 的子目录，排除 latest（AGENTS.md 禁止）
-  const candidates = entries
-    .filter((e) => e.isDirectory() && e.name !== 'latest' && fs.existsSync(path.join(appDir, e.name, 'docker-compose.yml')))
-    .map((e) => e.name);
-  if (candidates.length === 0) return null;
-  // 按语义化版本号排序，取最大（不修改现有 semver 比较逻辑）
-  candidates.sort((a, b) => {
-    const pa = a.replace(/^v/, '').replace(/-.*$/, '').split('.').map(Number);
-    const pb = b.replace(/^v/, '').replace(/-.*$/, '').split('.').map(Number);
-    const len = Math.max(pa.length, pb.length);
-    for (let i = 0; i < len; i++) {
-      const na = pa[i] || 0;
-      const nb = pb[i] || 0;
-      if (na !== nb) return na - nb;
-    }
-    return 0;
-  });
-  return candidates[candidates.length - 1];
+async function getLatestTag(image) {
+  return await createAdapter(image).getLatestTag(image);
 }
 
 async function processApp(appName) {
   const appDir = path.join(APPS_DIR, appName);
 
   // 查找版本子目录（compose 在 <app>/<version>/docker-compose.yml）
-  const versionDir = findVersionDir(appDir);
+  const versionDir = getCurrentVersion(REPO_ROOT, appName);
   if (!versionDir) {
     log(appName, '无版本目录或无 compose，跳过');
     return null;
@@ -289,8 +189,8 @@ async function processApp(appName) {
     }
     log(appName, svc.name, `⚠ ${svc.tag} -> ${latest}`);
     hasAnyUpdate = true;
-    if (!minFrom || svc.tag < minFrom) minFrom = svc.tag;
-    if (!maxTo || latest > maxTo) maxTo = latest;
+    if (!minFrom || compare(svc.tag, minFrom) < 0) minFrom = svc.tag;
+    if (!maxTo || compare(latest, maxTo) > 0) maxTo = latest;
     serviceChanges.push({
       name: svc.name,
       repo: svc.repo,
@@ -309,12 +209,10 @@ async function processApp(appName) {
   const newVersionDir = maxTo;
 
   if (oldVersionDir === newVersionDir) {
-    // tag 未变（防御性，正常情况下 serviceChanges 为空时 hasAnyUpdate 已 return）
     log(appName, `目标版本与当前一致 (${newVersionDir})，跳过目录操作`);
   } else {
     const newDir = path.join(appDir, newVersionDir);
     if (fs.existsSync(newDir)) {
-      // 已存在同名新版本目录（理论不应发生，可能是上次升级残留或手动建过）
       log(appName, `⚠ 目标目录 ${newVersionDir}/ 已存在，将覆盖`);
       fs.rmSync(newDir, { recursive: true, force: true });
     }
@@ -348,9 +246,6 @@ async function processApp(appName) {
   }
   newData = serializeYaml(dataObj);
 
-  // 目录重命名策略已在 if 块（hasAnyUpdate=true）之前完成，newVersionDir 即新目录名。
-  // maxTo 仍为镜像 tag，用于 PR body 输出 before/after。
-
   // 写入新版本目录
   changes.push({ path: `${appName}/${newVersionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
   changes.push({ path: `${appName}/${newVersionDir}/data.yml`, content: newData, to: maxTo });
@@ -367,10 +262,9 @@ async function main() {
     shortToDir.set(conf._shortName, dir);
   }
 
-  const allApps = listApps(aliasByDir);
+  const allApps = listApps(REPO_ROOT, aliasByDir).map(a => a.dir);
   let targetApps = allApps;
   if (APPS_FILTER.length > 0) {
-    // 展开短名为实际目录，再按实际目录过滤
     const expanded = APPS_FILTER.map((f) => shortToDir.get(f) || f);
     targetApps = allApps.filter((a) => expanded.includes(a));
   }

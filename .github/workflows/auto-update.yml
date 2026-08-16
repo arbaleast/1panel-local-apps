@@ -49,6 +49,10 @@ jobs:
       - name: Install js-yaml
         run: npm ci --omit=dev --silent
 
+      # 运行测试确保 lib/ 模块健康，防止带病脚本污染 PR
+      - name: npm test
+        run: npm ci --omit=dev && npm test
+
       - name: 检测更新
         id: detect
         env:

@@ -17,14 +17,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
+// 共享模块：应用目录扫描
+import { listApps, getCurrentVersion } from '../../lib/apps.mjs';
 
 // ---------- 常量 ----------
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
-
-// 根目录下需要跳过的非应用目录
-const SKIP_DIRS = new Set(['.github', 'scripts', '.git', 'node_modules', '.agent_cache']);
 
 // 简易日志
 const log = (...a) => console.log('[sync-readme]', ...a);
@@ -86,57 +85,6 @@ function getFirstSentence(readmePath) {
   }
 }
 
-/**
- * 解析语义化版本号字符串，返回数值数组用于比较
- * 例如 "10.11.11" -> [10, 11, 11]，"1.2.3-rc1" -> [1, 2, 3]
- * @param {string} ver - 版本字符串
- * @returns {number[]}
- */
-function parseSemver(ver) {
-  // 去除前缀 v 和后缀预发布标签（如 -rc3、-beta1）
-  const cleaned = ver.replace(/^v/, '').replace(/-.*$/, '');
-  return cleaned.split('.').map(Number);
-}
-
-/**
- * 比较两个语义化版本号
- * @param {string} a - 版本 A
- * @param {string} b - 版本 B
- * @returns {number} 负数表示 a < b，正数表示 a > b
- */
-function compareVersions(a, b) {
-  const pa = parseSemver(a);
-  const pb = parseSemver(b);
-  const len = Math.max(pa.length, pb.length);
-  for (let i = 0; i < len; i++) {
-    const na = pa[i] || 0;
-    const nb = pb[i] || 0;
-    if (na !== nb) return na - nb;
-  }
-  return 0;
-}
-
-// ---------- 应用目录判断 ----------
-
-/**
- * 判断一个目录是否是应用目录
- * 应用目录 = 有 data.yml（根或 latest/ 版本下）或在别名表中有映射
- * @param {string} dirPath - 目录完整路径
- * @param {string} dirName - 目录名
- * @param {Map} aliasByDir - 目录名 -> 别名配置 的映射
- * @returns {boolean}
- */
-function isAppDir(dirPath, dirName, aliasByDir) {
-  if (SKIP_DIRS.has(dirName)) return false;
-  // 别名表中有映射，直接认定为应用
-  if (aliasByDir.has(dirName)) return true;
-  // 有根 data.yml
-  if (fs.existsSync(path.join(dirPath, 'data.yml'))) return true;
-  // 有 latest/data.yml（无根 data.yml 但有 latest 版本）
-  if (fs.existsSync(path.join(dirPath, 'latest', 'data.yml'))) return true;
-  return false;
-}
-
 // ---------- 获取应用信息 ----------
 
 /**
@@ -180,42 +128,6 @@ function getDescription(dirName, alias) {
   return '';
 }
 
-/**
- * 获取应用的当前版本（按优先级链）
- * @param {string} dirName - 应用目录名
- * @param {object|null} alias - 别名配置
- * @returns {string} 版本字符串
- */
-function getVersion(dirName, alias) {
-  // 1. 别名表 preferred_version
-  if (alias?.preferred_version) return alias.preferred_version;
-
-  const appDir = path.join(REPO_ROOT, dirName);
-
-  // 2. 扫描版本目录，取非 latest 中版本号最大的
-  try {
-    const entries = fs.readdirSync(appDir, { withFileTypes: true });
-    const versionDirs = entries
-      .filter((e) => e.isDirectory())
-      .map((e) => e.name)
-      .filter((name) => name !== 'latest' && name !== 'data' && name !== 'scripts');
-    // 必须是包含 data.yml 的版本目录
-    const validVersions = versionDirs.filter((v) =>
-      fs.existsSync(path.join(appDir, v, 'data.yml'))
-    );
-    if (validVersions.length > 0) {
-      // 按 semver 降序排列，取最大者
-      const sorted = validVersions.sort((a, b) => compareVersions(b, a));
-      return sorted[0];
-    }
-  } catch {
-    // 目录读取失败
-  }
-
-  // 3. 回退到 latest
-  return 'latest';
-}
-
 // ---------- 主流程 ----------
 
 /**
@@ -238,44 +150,23 @@ function main() {
   const aliasByDir = new Map();
   for (const [name, conf] of Object.entries(aliases)) {
     const dir = conf.dir || name;
-    aliasByDir.set(dir, { ...conf, _shortName: name });
+    // 确保 dir 属性始终存在（lib/apps.mjs listApps 依赖此字段）
+    aliasByDir.set(dir, { ...conf, dir, _shortName: name });
   }
 
   log(`加载别名表: ${Object.keys(aliases).length} 条`);
 
-  // 2. 扫描根目录，发现所有应用
-  const appDirs = [];
-  const rootEntries = fs.readdirSync(REPO_ROOT, { withFileTypes: true });
-  for (const entry of rootEntries) {
-    if (!entry.isDirectory()) continue;
-    if (isAppDir(path.join(REPO_ROOT, entry.name), entry.name, aliasByDir)) {
-      appDirs.push(entry.name);
-    }
-  }
-
-  // 2.1 补充别名表 dir 指向嵌套路径的应用（如 ramuses/photopea）
-  // 根一级目录扫描无法发现嵌套目录，需按别名表 dir 显式补充
-  for (const [name, conf] of Object.entries(aliases)) {
-    const dir = conf.dir || name;
-    if (/[\\/]/.test(dir) && !appDirs.includes(dir)) {
-      const dirPath = path.join(REPO_ROOT, dir);
-      if (
-        fs.existsSync(path.join(dirPath, 'data.yml')) ||
-        fs.existsSync(path.join(dirPath, 'latest', 'data.yml'))
-      ) {
-        appDirs.push(dir);
-        log(`发现嵌套应用: ${dir}`);
-      }
-    }
-  }
+  // 2. 扫描根目录，发现所有应用（复用 lib/apps.mjs 的 listApps）
+  const appEntries = listApps(REPO_ROOT, aliasByDir);
 
   // 按 shortName 字母序排列
-  appDirs.sort((a, b) => {
-    const nameA = aliasByDir.get(a)?._shortName || a;
-    const nameB = aliasByDir.get(b)?._shortName || b;
+  appEntries.sort((a, b) => {
+    const nameA = aliasByDir.get(a.dir)?._shortName || a.shortName;
+    const nameB = aliasByDir.get(b.dir)?._shortName || b.shortName;
     return nameA.localeCompare(nameB);
   });
 
+  const appDirs = appEntries.map(e => e.dir);
   log(`发现 ${appDirs.length} 个应用: ${appDirs.join(', ')}`);
 
   // 3. 收集每个应用的信息
@@ -285,13 +176,15 @@ function main() {
     const shortName = alias?._shortName || alias?.dir ? (alias._shortName || dirName) : dirName;
 
     const desc = getDescription(dirName, alias);
-    const version = getVersion(dirName, alias);
+
+    // 4. 获取当前版本（复用 lib/apps.mjs 的 getCurrentVersion）
+    const version = alias?.preferred_version || getCurrentVersion(REPO_ROOT, dirName) || 'latest';
 
     rows.push({ name: shortName, desc, version });
     log(`  ${shortName}: desc="${desc}", version=${version}`);
   }
 
-  // 4. 读取 README.md
+  // 5. 读取 README.md
   const readmePath = path.join(REPO_ROOT, 'README.md');
   if (!fs.existsSync(readmePath)) {
     log('❌ 未找到 README.md');
@@ -300,7 +193,7 @@ function main() {
   const readme = fs.readFileSync(readmePath, 'utf8');
   const lines = readme.split('\n');
 
-  // 5. 定位 ## 应用列表 标题行
+  // 6. 定位 ## 应用列表 标题行
   let sectionStart = -1;
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].trim() === '## 应用列表') {
@@ -313,7 +206,7 @@ function main() {
     process.exit(1);
   }
 
-  // 6. 定位表格起止行
+  // 7. 定位表格起止行
   // 表格起始：从 sectionStart 之后的第一个 |--- 行（分隔行）
   let tableSepStart = -1;
   for (let i = sectionStart + 1; i < lines.length; i++) {
@@ -335,23 +228,22 @@ function main() {
   while (tableEnd < lines.length && lines[tableEnd].trim().startsWith('|')) {
     tableEnd++;
   }
-  // tableEnd 现在指向表格之后的第一个非表格行
 
-  // 7. 生成新表格内容
+  // 8. 生成新表格内容
   const tableLines = [
     '| 应用 | 说明 | 当前版本 |',
     '|------|------|----------|',
     ...rows.map((r) => `| ${r.name} | ${r.desc} | ${r.version} |`),
   ];
 
-  // 8. 替换表格：保留前后的空行
+  // 9. 替换表格：保留前后的空行
   const newLines = [
     ...lines.slice(0, tableHeaderStart),
     ...tableLines,
     ...lines.slice(tableEnd),
   ];
 
-  // 9. 写回 README.md
+  // 10. 写回 README.md
   const newContent = newLines.join('\n');
   fs.writeFileSync(readmePath, newContent, 'utf8');
   log(`✅ README.md 已更新: ${rows.length} 行`);

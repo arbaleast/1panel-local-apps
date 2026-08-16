@@ -6,12 +6,12 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.5 |
+| anirss | 动漫 RSS | v3.2.9-arm32v7 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | pg |
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
 | firecrawl | 网页爬虫 | 2.11.14 |
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
-| handbrake | 视频转码 | 1.11.2 |
+| handbrake | 视频转码 | 1.11.2-ls36 |
 | hindsight | AI 记忆系统 | 0.9.0 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
@@ -28,7 +28,7 @@
 | photopea | 在线图像编辑器 | 2.2 |
 | qdrant | 向量搜索引擎 | v1.19.0 |
 | searxng | 隐私搜索引擎 | 2026.8.4-c63835bd2 |
-| syncthing | 文件同步 | 2.1.3 |
+| syncthing | 文件同步 | 2.1.3-ls227 |
 | traefik | 反向代理 | v3.6.6 |
 | zashboard | Mihomo 面板 | latest |
 

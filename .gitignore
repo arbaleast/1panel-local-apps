@@ -18,3 +18,6 @@ node_modules/
 
 # Agent temporary cache
 .agent_cache/
+
+# Updates detection artifact
+updates.json

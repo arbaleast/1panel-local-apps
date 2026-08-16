@@ -54,6 +54,34 @@
 ./scripts/check-updates.sh [app-name...]
 ```
 
+## lib/ 模块
+
+仓库根 [`lib/`](lib/) 下三个 ESM 模块为脚本层提供共享能力：
+
+| 文件 | 职责 | 关键导出 |
+|---|---|---|
+| [`lib/semver.mjs`](lib/semver.mjs:1) | 段值比较、纯 semver 选末位、黑名单过滤 | `parse` / `compare` / `isStable` / `pickLatest` |
+| [`lib/registry.mjs`](lib/registry.mjs:1) | DockerHub / GHCR 适配器、镜像字符串解析 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` |
+| [`lib/apps.mjs`](lib/apps.mjs:1) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` |
+
+### 本地跑测试
+
+```bash
+npm test          # 等价 node --test lib/，27 case
+```
+
+需要 `node >= 18`（`engines` 字段已声明）。
+
+### 新增模块规约
+
+- 任何新增 `lib/*.mjs` **必须**配套 `*.test.mjs`（用 `node:test`）
+- `lib/` 下**禁止**引入 `js-yaml` 之外的第三方依赖；新增依赖须先讨论
+- 三个入口脚本（[`detect-updates.mjs`](.github/scripts/detect-updates.mjs:1) / [`sync-readme.mjs`](.github/scripts/sync-readme.mjs:1) / [`check-updates.sh`](scripts/check-updates.sh:1)）应**优先**复用 `lib/` 模块，不在入口内 inline 重复实现
+
+### DockerHub 镜像选取口径
+
+`DockerHubAdapter` 用 `page_size=20&ordering=last_updated` 取最近更新的 20 个 tag，再过滤不稳定关键字（`latest|nightly|dev|edge`）后选末位。GHCR 用 OCI Registry API + 匿名 token（`n=1000`），黑名单包含 `alpha|beta|rc|main|master`。
+
 ## Automation
 
 - `.github/workflows/auto-update.yml` — 每周一 UTC 0 点（也可手动）检测 hardcode 类应用镜像更新
