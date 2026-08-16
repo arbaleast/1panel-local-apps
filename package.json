@@ -7,7 +7,8 @@
   },
   "scripts": {
     "test": "node --test lib/",
-    "lint": "node bin/lint-apps.mjs"
+    "lint": "node bin/lint-apps.mjs",
+    "open-pr": "node bin/open-update-pr.mjs"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
