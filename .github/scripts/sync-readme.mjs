@@ -18,7 +18,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 // 共享模块：应用目录扫描
-import { listApps, getCurrentVersion } from '../../lib/apps.mjs';
+import { listApps, getCurrentVersion } from '../lib/apps.mjs';
 
 // ---------- 常量 ----------
 

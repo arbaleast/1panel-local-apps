@@ -9,9 +9,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 // 共享模块：semver 比较、镜像 registry 适配器、应用目录扫描
-import { parse, compare } from '../../lib/semver.mjs';
-import { createAdapter } from '../../lib/registry.mjs';
-import { getCurrentVersion, listApps } from '../../lib/apps.mjs';
+import { parse, compare } from '../lib/semver.mjs';
+import { createAdapter } from '../lib/registry.mjs';
+import { getCurrentVersion, listApps } from '../lib/apps.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
