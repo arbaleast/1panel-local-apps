@@ -164,7 +164,68 @@ async function processApp(appName) {
     }
   }
 
-  if (hardcoded.length === 0) {
+  // ── 变量型应用处理 ──────────────────────────────────────────────
+  // 变量型 compose 示例：image: ${IMAGE}
+  // 从 formField.default 中取完整镜像字符串（如 ghcr.io/metacubex/mihomo:v1.19.18）
+  // 检测 registry 是否有新 tag → 新建版本目录（以 tag 为目录名）→ 更新 compose 和 formField.default
+  const variableTagChanges = [];
+  for (const svc of variable) {
+    const varEnvKeys = [];
+    // 从 image 字符串中提取 ${VAR} 环境变量名
+    const matches = svc.image.matchAll(/\$\{([^}]+)\}/g);
+    for (const m of matches) varEnvKeys.push(m[1]);
+
+    for (const envKey of varEnvKeys) {
+      // 查找对应 formField
+      const fields = dataObj?.additionalProperties?.formFields || [];
+      const fieldIdx = fields.findIndex(f => f.envKey === envKey);
+      if (fieldIdx === -1) continue;
+      const field = fields[fieldIdx];
+      const defaultVal = String(field.default ?? '');
+      if (!defaultVal) continue;
+
+      // 提取镜像 repo 和当前 tag
+      const [imageRepo, currentTag] = defaultVal.split(':');
+      if (!imageRepo || !currentTag) continue;
+
+      // 检查 tag 是否为 latest（跳过）
+      if (currentTag === 'latest') {
+        log(appName, svc.name, `${envKey}=${defaultVal} ⚠ tag=latest，跳过`);
+        continue;
+      }
+
+      // 过滤不稳定关键字
+      const UNSTABLE = /^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/;
+      if (UNSTABLE.test(currentTag)) {
+        log(appName, svc.name, `${envKey}=${defaultVal} ⚠ 包含不稳定关键字 "${currentTag}"，跳过`);
+        continue;
+      }
+
+      // 向 registry 请求最新 tag
+      const latest = await getLatestTag(defaultVal);
+      if (!latest) {
+        log(appName, svc.name, `${envKey}=${defaultVal} 无法获取最新 tag`);
+        continue;
+      }
+      if (latest === currentTag) {
+        log(appName, svc.name, `${envKey}=${defaultVal} 已是最新`);
+        continue;
+      }
+
+      log(appName, svc.name, `${envKey}=${defaultVal} ⚠ ${currentTag} -> ${latest}`);
+      variableTagChanges.push({
+        svcName: svc.name,
+        envKey,
+        imageRepo,
+        fromTag: currentTag,
+        toTag: latest,
+        defaultVal,
+        newDefaultVal: `${imageRepo}:${latest}`,
+      });
+    }
+  }
+
+  if (hardcoded.length === 0 && variableTagChanges.length === 0) {
     log(appName, `全为变量型或 latest（${variable.length} 个变量），跳过`);
     return null;
   }
@@ -199,6 +260,24 @@ async function processApp(appName) {
     });
   }
 
+  // 变量型变更也纳入 serviceChanges（供 updates.json 输出）
+  for (const vch of variableTagChanges) {
+    serviceChanges.push({
+      name: vch.svcName,
+      repo: vch.imageRepo,
+      from: vch.fromTag,
+      to: vch.toTag,
+    });
+  }
+
+  if (!hasAnyUpdate && variableTagChanges.length > 0) {
+    // 变量型应用有更新：取最新 toTag 作为版本目录名
+    const maxVarTo = variableTagChanges.reduce((max, ch) =>
+      compare(ch.toTag, max) > 0 ? ch.toTag : max, variableTagChanges[0].toTag);
+    if (!maxTo || compare(maxVarTo, maxTo) > 0) maxTo = maxVarTo;
+    hasAnyUpdate = true;
+  }
+
   if (!hasAnyUpdate) return null;
 
   // === 新建多版本目录（保留旧版用于回滚） ===
@@ -229,8 +308,9 @@ async function processApp(appName) {
     newCompose = newCompose.replaceAll(oldImg, newImg);
   }
 
-  // 修改 data.yml formFields
+  // 修改 data.yml formFields（hardcode 类 + 变量型）
   let newData = dataContent;
+  // hardcode 类：从 formFields 中找到匹配镜像 repo 的字段并替换 tag
   for (const ch of serviceChanges) {
     const found = findFormFieldForImage(dataObj, ch.repo);
     if (found) {
@@ -242,6 +322,16 @@ async function processApp(appName) {
       }
     } else {
       log(appName, `data.yml 未找到 ${ch.repo} 对应 formField`);
+    }
+  }
+  // 变量型：直接修改对应 envKey 的 formField.default
+  for (const vch of variableTagChanges) {
+    const fields = dataObj?.additionalProperties?.formFields || [];
+    const fieldIdx = fields.findIndex(f => f.envKey === vch.envKey);
+    if (fieldIdx !== -1) {
+      const oldDefault = String(fields[fieldIdx].default);
+      dataObj.additionalProperties.formFields[fieldIdx].default = vch.newDefaultVal;
+      log(appName, `data.yml formFields[${fieldIdx}].default: ${oldDefault} -> ${vch.newDefaultVal}`);
     }
   }
   newData = serializeYaml(dataObj);
