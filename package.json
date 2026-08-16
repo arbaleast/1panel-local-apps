@@ -6,9 +6,11 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test lib/"
+    "test": "node --test lib/",
+    "lint": "node bin/lint-apps.mjs"
   },
   "dependencies": {
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "zod": "^3.23.0"
   }
 }
