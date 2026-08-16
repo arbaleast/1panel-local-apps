@@ -19,6 +19,11 @@ on:
       - '.github/scripts/detect-updates.mjs'
       - '.github/scripts/sync-readme.mjs'
       - '.github/app-aliases.yml'
+  pull_request:
+    paths:
+      - 'lib/**'
+      - 'bin/**'
+      - '**/data.yml'
 
 # 取消并发运行：避免同一天多 PR 冲突
 concurrency:
@@ -30,9 +35,39 @@ permissions:
   pull-requests: write
 
 jobs:
+  lint:
+    name: 代码质量与 data.yml 校验
+    runs-on: ubuntu-latest
+    # PR 上阻止合并；schedule / workflow_dispatch 时独立运行
+    if: >
+      github.event_name == 'pull_request'
+      || github.event_name == 'push'
+      || github.event_name == 'schedule'
+      || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # lib/ 单元测试
+      - name: npm test
+        run: npm test
+
+      # data.yml schema 校验
+      - name: npm run lint
+        run: npm run lint
+
   detect-and-pr:
     name: 检测镜像更新并开 PR
     runs-on: ubuntu-latest
+    needs: [lint]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -48,10 +83,6 @@ jobs:
 
       - name: Install js-yaml
         run: npm ci --omit=dev --silent
-
-      # 运行测试确保 lib/ 模块健康，防止带病脚本污染 PR
-      - name: npm test
-        run: npm ci --omit=dev && npm test
 
       - name: 检测更新
         id: detect

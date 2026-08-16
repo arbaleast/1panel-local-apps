@@ -63,11 +63,13 @@
 | [`lib/semver.mjs`](lib/semver.mjs:1) | 段值比较、纯 semver 选末位、黑名单过滤 | `parse` / `compare` / `isStable` / `pickLatest` |
 | [`lib/registry.mjs`](lib/registry.mjs:1) | DockerHub / GHCR 适配器、镜像字符串解析 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` |
 | [`lib/apps.mjs`](lib/apps.mjs:1) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` |
+| [`lib/schema.mjs`](lib/schema.mjs:1) | data.yml 结构定义与校验规则（纯 JS，无第三方依赖） | `validateFormField` / `validateKeyMatch` / `validateUrlField` / `normalizeFormField` / `FORMFIELD_TYPE_WHITELIST` |
 
 ### 本地跑测试
 
 ```bash
-npm test          # 等价 node --test lib/，27 case
+npm test          # 等价 node --test lib/，38 case（含 schema 校验）
+npm run lint      # 等价 node bin/lint-apps.mjs，扫描全部 data.yml
 ```
 
 需要 `node >= 18`（`engines` 字段已声明）。
@@ -77,6 +79,7 @@ npm test          # 等价 node --test lib/，27 case
 - 任何新增 `lib/*.mjs` **必须**配套 `*.test.mjs`（用 `node:test`）
 - `lib/` 下**禁止**引入 `js-yaml` 之外的第三方依赖；新增依赖须先讨论
 - 三个入口脚本（[`detect-updates.mjs`](.github/scripts/detect-updates.mjs:1) / [`sync-readme.mjs`](.github/scripts/sync-readme.mjs:1) / [`check-updates.sh`](scripts/check-updates.sh:1)）应**优先**复用 `lib/` 模块，不在入口内 inline 重复实现
+- `bin/` 层为可执行入口脚本（如 [`bin/lint-apps.mjs`](bin/lint-apps.mjs:1)），可引入 `zod` 等 `lib/` 层禁用的第三方依赖；任何新增 bin/ 脚本须配套 `package.json` 中的 `scripts` 条目
 
 ### DockerHub 镜像选取口径
 
