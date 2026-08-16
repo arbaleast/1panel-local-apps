@@ -19,11 +19,11 @@ on:
       - '.github/scripts/detect-updates.mjs'
       - '.github/scripts/sync-readme.mjs'
       - '.github/app-aliases.yml'
-      - 'bin/open-update-pr.mjs'
+      - '.github/bin/open-update-pr.mjs'
   pull_request:
     paths:
-      - 'lib/**'
-      - 'bin/**'
+      - '.github/lib/**'
+      - '.github/bin/**'
       - '**/data.yml'
 
 # 取消并发运行：避免同一天多 PR 冲突
@@ -63,7 +63,7 @@ jobs:
 
       # data.yml schema 校验
       - name: npm run lint
-        run: npm run lint
+        run: node .github/bin/lint-apps.mjs
 
   detect-and-pr:
     name: 检测镜像更新并开 PR
@@ -124,4 +124,4 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: node bin/open-update-pr.mjs
+        run: node .github/bin/open-update-pr.mjs

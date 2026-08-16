@@ -6,9 +6,9 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test lib/",
-    "lint": "node bin/lint-apps.mjs",
-    "open-pr": "node bin/open-update-pr.mjs"
+    "test": "node --test .github/lib/",
+    "lint": "node .github/bin/lint-apps.mjs",
+    "open-pr": "node .github/bin/open-update-pr.mjs"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
