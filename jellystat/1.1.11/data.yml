@@ -1,0 +1,191 @@
+version: "1.1.11"
+# 镜像固定版本，避免 latest 漂移导致版本不一致
+# 上游仅提供 latest / unstable / main 等非稳定 tag，stable 版本通过 hardcode 方式管理
+# 上游项目重构中，详见 https://github.com/CyferShepard/Jellystat#project-update
+image: cyfershepard/jellystat:1.1.11
+appId: localjellystat
+servicePort: 3000
+# 服务端内部 API 端口（非暴露端口，仅供内部使用）
+serviceBackendPort: 3001
+formFields:
+  - key: PANEL_APP_PORT_HTTP
+    label:
+      en: Web UI Port
+      zh: Web UI 端口
+      zh-Hant: Web UI 連接埠
+      ja: Web UI ポート
+      ko: 웹 UI 포트
+    type: service
+    required: true
+    default: "3000"
+  - key: TZ
+    label:
+      en: Timezone
+      zh: 时区
+      zh-Hant: 時區
+      ja: タイムゾーン
+      ko: 타임존
+    type: select
+    required: true
+    default: "Etc/UTC"
+    values:
+      - label: Asia/Shanghai (UTC+8)
+        value: Asia/Shanghai
+      - label: Asia/Tokyo (UTC+9)
+        value: Asia/Tokyo
+      - label: America/New_York (UTC-5)
+        value: America/New_York
+      - label: America/Los_Angeles (UTC-8)
+        value: America/Los_Angeles
+      - label: Europe/London (UTC+0)
+        value: Europe/London
+      - label: Europe/Paris (UTC+1)
+        value: Europe/Paris
+      - label: Etc/UTC (UTC+0)
+        value: Etc/UTC
+  - key: JWT_SECRET
+    label:
+      en: JWT Secret Key
+      zh: JWT 密钥
+      zh-Hant: JWT 密鑰
+      ja: JWT シークレットキー
+      ko: JWT 시크릿 키
+    type: password
+    required: true
+    default: ""
+    rule:
+      type: parameter
+      required: true
+      max: 128
+      min: 16
+  # ============ PostgreSQL 数据库配置（必需）============
+  - key: POSTGRES_IP
+    label:
+      en: PostgreSQL Host
+      zh: PostgreSQL 主机
+      zh-Hant: PostgreSQL 主機
+      ja: PostgreSQL ホスト
+      ko: PostgreSQL 호스트
+    type: text
+    required: true
+    default: "jellystat-db"
+    rule:
+      type: parameter
+      required: true
+  - key: POSTGRES_PORT
+    label:
+      en: PostgreSQL Port
+      zh: PostgreSQL 端口
+      zh-Hant: PostgreSQL 連接埠
+      ja: PostgreSQL ポート
+      ko: PostgreSQL 포트
+    type: number
+    required: true
+    default: "5432"
+    rule:
+      type: parameter
+      required: true
+      range:
+        min: 1
+        max: 65535
+  - key: POSTGRES_USER
+    label:
+      en: PostgreSQL Username
+      zh: PostgreSQL 用户名
+      zh-Hant: PostgreSQL 用戶名
+      ja: PostgreSQL ユーザー名
+      ko: PostgreSQL 사용자명
+    type: text
+    required: true
+    default: "postgres"
+    rule:
+      type: parameter
+      required: true
+  - key: POSTGRES_PASSWORD
+    label:
+      en: PostgreSQL Password
+      zh: PostgreSQL 密码
+      zh-Hant: PostgreSQL 密碼
+      ja: PostgreSQL パスワード
+      ko: PostgreSQL 비밀번호
+    type: password
+    required: true
+    default: ""
+    rule:
+      type: parameter
+      required: true
+  - key: POSTGRES_DB
+    label:
+      en: PostgreSQL Database Name
+      zh: PostgreSQL 数据库名
+      zh-Hant: PostgreSQL 資料庫名稱
+      ja: PostgreSQL データベース名
+      ko: PostgreSQL 데이터베이스명
+    type: text
+    required: false
+    default: "jfstat"
+    rule:
+      type: parameter
+      required: false
+  # ============ 可选高级配置 ============
+  - key: POSTGRES_SSL_ENABLED
+    label:
+      en: PostgreSQL SSL
+      zh: PostgreSQL SSL 连接
+      zh-Hant: PostgreSQL SSL 連線
+      ja: PostgreSQL SSL 接続
+      ko: PostgreSQL SSL 연결
+    type: select
+    required: false
+    default: "false"
+    values:
+      - label: "true"
+        value: "true"
+      - label: "false"
+        value: "false"
+  - key: IS_EMBY_API
+    label:
+      en: Use Emby API (instead of Jellyfin)
+      zh: 使用 Emby API（而非 Jellyfin）
+      zh-Hant: 使用 Emby API（而非 Jellyfin）
+      ja: Emby API を使用（Jellyfin の代わりに）
+      ko: Emby API 사용 (Jellyfin 대신)
+    type: select
+    required: false
+    default: "false"
+    values:
+      - label: "true"
+        value: "true"
+      - label: "false"
+        value: "false"
+  - key: REJECT_SELF_SIGNED_CERTIFICATES
+    label:
+      en: Reject Self-Signed Certificates
+      zh: 拒绝自签名证书
+      zh-Hant: 拒絕自簽名憑證
+      ja: 自己署名証明書を拒否
+      ko: 자체 서명 인증서 거부
+    type: select
+    required: false
+    default: "true"
+    values:
+      - label: "true"
+        value: "true"
+      - label: "false"
+        value: "false"
+  - key: MINIMUM_SECONDS_TO_INCLUDE_PLAYBACK
+    label:
+      en: Min Playback Duration (seconds)
+      zh: 最小播放时长（秒）
+      zh-Hant: 最小播放時長（秒）
+      ja: 最小再生時間（秒）
+      ko: 최소 재생 시간(초)
+    type: number
+    required: false
+    default: "1"
+    rule:
+      type: parameter
+      required: false
+      range:
+        min: 1
+        max: 300

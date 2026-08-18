@@ -1,0 +1,40 @@
+services:
+  jellystat:
+    container_name: ${CONTAINER_NAME}
+    image: cyfershepard/jellystat:1.1.11
+    restart: always
+    ports:
+      - "${PANEL_APP_PORT_HTTP}:3000"
+    environment:
+      # 必需环境变量
+      TZ: "${TZ}"
+      JWT_SECRET: "${JWT_SECRET}"
+      POSTGRES_IP: "${POSTGRES_IP}"
+      POSTGRES_PORT: "${POSTGRES_PORT}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      # 可选环境变量（有默认值）
+      POSTGRES_DB: "${POSTGRES_DB:-jfstat}"
+      POSTGRES_SSL_ENABLED: "${POSTGRES_SSL_ENABLED:-false}"
+      POSTGRES_SSL_REJECT_UNAUTHORIZED: "${POSTGRES_SSL_REJECT_UNAUTHORIZED:-false}"
+      IS_EMBY_API: "${IS_EMBY_API:-false}"
+      REJECT_SELF_SIGNED_CERTIFICATES: "${REJECT_SELF_SIGNED_CERTIFICATES:-true}"
+      JF_USE_WEBSOCKETS: "${JF_USE_WEBSOCKETS:-true}"
+      JS_USE_EXTERNAL_HOST: "${JS_USE_EXTERNAL_HOST:-false}"
+      JS_LISTEN_IP: "${JS_LISTEN_IP:-0.0.0.0}"
+      MINIMUM_SECONDS_TO_INCLUDE_PLAYBACK: "${MINIMUM_SECONDS_TO_INCLUDE_PLAYBACK:-1}"
+      NEW_WATCH_EVENT_THRESHOLD_HOURS: "${NEW_WATCH_EVENT_THRESHOLD_HOURS:-1}"
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  1panel-network:
+    external: true
