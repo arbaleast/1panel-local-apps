@@ -117,7 +117,9 @@ export function getCurrentVersion(root = ROOT, appDir) {
   const candidates = [];
   for (const sub of subDirs) {
     if (!sub.isDirectory()) continue;
+    // 过滤隐藏目录，避免被误识别为版本
     if (sub.name === 'data' || sub.name === 'scripts' || sub.name === 'latest') continue;
+    if (sub.name.startsWith('.')) continue;
 
     const subPath = path.join(fullPath, sub.name);
     const hasDataYml = fs.existsSync(path.join(subPath, 'data.yml'));
