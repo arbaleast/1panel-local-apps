@@ -1,0 +1,37 @@
+additionalProperties:
+  key: jellystat
+  name: Jellystat
+  tags:
+    - Jellyfin
+    - 统计
+    - Tautulli 替代
+  tagline:
+    en: Free and open source statistics app for Jellyfin
+    zh: 免费的 Jellyfin 开源统计应用（Tautulli 替代品）
+    zh-Hant: 免費的 Jellyfin 開源統計應用（Tautulli 替代品）
+    ja: 免费的 Jellyfin オープンソース統計アプリ（Tautulli 代替）
+    ko: 무료 Jellyfin 오픈 소스 통계 앱 (Tautulli 대체)
+  description:
+    en: |
+      Jellystat is a free and open source statistics app for Jellyfin. It provides session monitoring,
+      library and user statistics, watch history, user activity overview, and more. Perfect alternative
+      to Tautulli for Jellyfin users.
+    zh: |
+      Jellystat 是一款免费的 Jellyfin 开源统计应用，提供会话监控、媒体库和用户统计、播放历史、
+      用户活动概览等功能。是 Jellyfin 用户替代 Tautulli 的完美选择。
+    zh-Hant: |
+      Jellystat 是一款免費的 Jellyfin 開源統計應用，提供會話監控、媒體庫和用戶統計、播放歷史、
+      用戶活動概覽等功能。是 Jellyfin 用戶替代 Tautulli 的完美選擇。
+    ja: |
+      JellystatはJellyfin向けの免费的开源统计应用で、セッション監視、ライブラリ・ユーザー統計、
+      視聴履歴、アクティビティ概要等功能を提供します。
+    ko: |
+      Jellystat은 Jellyfin용 무료 오픈 소스 통계 앱으로, 세션 모니터링, 라이브러리 및 사용자 통계,
+      시청 기록, 사용자 활동 개요等功能を提供します.
+  website: https://github.com/CyferShepard/Jellystat
+  github: https://github.com/CyferShepard/Jellystat
+  documentation: https://github.com/CyferShepard/Jellystat#readme
+  source: https://hub.docker.com/r/cyfershepard/jellystat
+  # 作者声明项目正在重构重建，后续版本会有重大架构变更
+  # 当前 stable tag 与最新 unstable digest 相同，仅 latest 指向 1.1.11
+  # 详情见 https://github.com/CyferShepard/Jellystat#project-update

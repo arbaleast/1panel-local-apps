@@ -138,4 +138,17 @@ describe('apps', () => {
     const dirs = apps.map(a => a.dir);
     assert.ok(!dirs.includes('nonexistent/app'), `Should not include nonexistent path: ${JSON.stringify(dirs)}`);
   });
+
+  // 11. getCurrentVersion 跳过隐藏目录（.docs / .scripts 等），避免被误识别为版本
+  it('getCurrentVersion skips hidden directories starting with dot', () => {
+    fs.mkdirSync(path.join(tmpRoot, 'myapp', 'v1.0.0'), { recursive: true });
+    fs.mkdirSync(path.join(tmpRoot, 'myapp', '.docs'), { recursive: true });
+    fs.mkdirSync(path.join(tmpRoot, 'myapp', '.scripts'), { recursive: true });
+    fs.writeFileSync(path.join(tmpRoot, 'myapp', 'v1.0.0', 'data.yml'), 'additionalProperties:\n  key: v1.0.0');
+    fs.writeFileSync(path.join(tmpRoot, 'myapp', '.docs', 'README.md'), '# Docs');
+    fs.writeFileSync(path.join(tmpRoot, 'myapp', '.scripts', 'build.sh'), '#!/bin/bash');
+
+    const ver = getCurrentVersion(tmpRoot, 'myapp');
+    assert.equal(ver, 'v1.0.0', `Expected v1.0.0 but got ${ver}; hidden dirs should be skipped`);
+  });
 });

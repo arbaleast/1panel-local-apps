@@ -211,6 +211,7 @@ function lintAllVersionDirs(appDir, fullPath) {
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     if (entry.name === 'data' || entry.name === 'scripts') continue;
+    if (entry.name.startsWith('.')) continue; // 过滤隐藏目录，避免被误识别为版本
 
     const versionPath = join(fullPath, entry.name);
     const hasDataYml  = existsSync(join(versionPath, 'data.yml'));
