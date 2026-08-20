@@ -1,3 +1,0 @@
-# wheels/ 走 Git LFS，避免大文件阻塞仓库 (构建上下文内的 latest/wheels/)
-latest/wheels/*.whl filter=lfs diff=lfs merge=lfs -text
-latest/wheels/*.tar.gz filter=lfs diff=lfs merge=lfs -text
