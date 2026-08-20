@@ -16,7 +16,7 @@ additionalProperties:
       pt-br: Caminho de configuração
     required: true
     type: text
-  - default: ./data/media
+  - default: /mnt/nfs/media
     edit: true
     envKey: MEDIA_PATH
     labelEn: Media Path
