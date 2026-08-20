@@ -149,3 +149,4 @@ services:
     - ${CORE_PATH}:/moviepilot
     - ${DOCKER_SOCK_PATH}:/var/run/docker.sock:ro
     - ${MEDIA_PATH}:/media
+    - ${DOWNLOAD_HOST_PATH}:/downloads
