@@ -113,10 +113,11 @@ function loadAliases() {
 /**
  * 使用 adapter 获取镜像最新稳定 tag
  * @param {string} image - 完整镜像字符串（含 registry 前缀）
+ * @param {string} [currentTag] - 当前使用的 tag（用于变体匹配，如 pg -> pg-1.16.0）
  * @returns {Promise<string|null>}
  */
-async function getLatestTag(image) {
-  return await createAdapter(image).getLatestTag(image);
+async function getLatestTag(image, currentTag) {
+  return await createAdapter(image).getLatestTag(image, currentTag);
 }
 
 async function processApp(appName) {
@@ -201,8 +202,8 @@ async function processApp(appName) {
         continue;
       }
 
-      // 向 registry 请求最新 tag
-      const latest = await getLatestTag(defaultVal);
+      // 向 registry 请求最新 tag（传递当前 tag 用于变体匹配）
+      const latest = await getLatestTag(defaultVal, currentTag);
       if (!latest) {
         log(appName, svc.name, `${envKey}=${defaultVal} 无法获取最新 tag`);
         continue;
@@ -239,7 +240,7 @@ async function processApp(appName) {
   let maxTo = null;
 
   for (const svc of hardcoded) {
-    const latest = await getLatestTag(svc.image);
+    const latest = await getLatestTag(svc.image, svc.tag);
     if (!latest) {
       log(appName, svc.name, '无法获取最新 tag');
       continue;

@@ -132,4 +132,79 @@ describe('registry', () => {
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:latest');
     assert.equal(tag, 'v1.2.4');
   });
+
+  // 10. DockerHubAdapter 变体标签匹配：当前 tag 为 pg，应匹配 pg-1.16.0
+  it('DockerHubAdapter matches variant tags (pg -> pg-1.16.0)', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({
+            results: [
+              { name: 'latest' },
+              { name: 'pg' },
+              { name: 'pg-1.15.0' },
+              { name: 'pg-1.16.0' },
+              { name: '1.16.0' },
+              { name: 'railway-1.16.0' },
+            ],
+          }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('mintplexlabs/anythingllm:pg', 'pg');
+    assert.equal(tag, 'pg-1.16.0');
+  });
+
+  // 11. DockerHubAdapter 变体标签匹配：当前 tag 为 railway，应匹配 railway-1.16.0
+  it('DockerHubAdapter matches variant tags (railway -> railway-1.16.0)', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({
+            results: [
+              { name: 'latest' },
+              { name: 'railway' },
+              { name: 'railway-1.15.0' },
+              { name: 'railway-1.16.0' },
+              { name: '1.16.0' },
+            ],
+          }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('mintplexlabs/anythingllm:railway', 'railway');
+    assert.equal(tag, 'railway-1.16.0');
+  });
+
+  // 12. DockerHubAdapter 无变体前缀时回退普通选择
+  it('DockerHubAdapter falls back to normal pickLatest when no variant prefix', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({
+            results: [
+              { name: 'latest' },
+              { name: '1.15.0' },
+              { name: '1.16.0' },
+            ],
+          }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('nginx:1.15.0', '1.15.0');
+    assert.equal(tag, '1.16.0');
+  });
+
+  // 13. GhcrAdapter 变体标签匹配
+  it('GhcrAdapter matches variant tags (pg -> pg-1.16.0)', async () => {
+    const adapter = new GhcrAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({ tags: ['pg', 'pg-1.15.0', 'pg-1.16.0', 'v1.16.0'] }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('ghcr.io/org/repo:pg', 'pg');
+    assert.equal(tag, 'pg-1.16.0');
+  });
 });

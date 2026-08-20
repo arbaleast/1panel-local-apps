@@ -54,7 +54,13 @@ export class DockerHubAdapter {
     return !image.startsWith('ghcr.io/');
   }
 
-  async getLatestTag(image) {
+  /**
+   * 获取最新稳定 tag
+   * @param {string} image 完整镜像字符串
+   * @param {string} [currentTag] 当前使用的 tag（用于变体匹配，如 pg -> pg-1.16.0）
+   * @returns {Promise<string|null>}
+   */
+  async getLatestTag(image, currentTag) {
     const { repo } = parseImage(image);
     // DockerHub API v2
     const url = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=20&ordering=last_updated`;
@@ -74,10 +80,27 @@ export class DockerHubAdapter {
     }
 
     const results = data?.results ?? [];
-    // 过滤不稳定标签，取最新（按 last_updated 排序，首位即最新）
+    // 过滤不稳定标签
     const stable = results.filter(t => !this.UNSTABLE_RE.test(t.name));
     if (stable.length === 0) return null;
-    return stable[0].name;
+
+    // 如果有当前 tag 且包含非版本号前缀（如 pg、railway、render），尝试匹配同前缀的版本化 tag
+    if (currentTag) {
+      const variantMatch = currentTag.match(/^([a-zA-Z]+)-/);
+      if (variantMatch) {
+        const prefix = variantMatch[1]; // 如 'pg'
+        const variantTags = stable.filter(t => t.name.startsWith(`${prefix}-`));
+        if (variantTags.length > 0) {
+          // 从变体 tag 中选最新版本
+          const variantVersions = variantTags.map(t => t.name);
+          return pickLatest(variantVersions);
+        }
+      }
+    }
+
+    // 回退：从所有稳定 tag 中选最新
+    const allStable = stable.map(t => t.name);
+    return pickLatest(allStable);
   }
 }
 
@@ -96,7 +119,13 @@ export class GhcrAdapter {
     return image.startsWith('ghcr.io/');
   }
 
-  async getLatestTag(image) {
+  /**
+   * 获取最新稳定 tag
+   * @param {string} image 完整镜像字符串
+   * @param {string} [currentTag] 当前使用的 tag（用于变体匹配，如 pg -> pg-1.16.0）
+   * @returns {Promise<string|null>}
+   */
+  async getLatestTag(image, currentTag) {
     const { repo } = parseImage(image);
     let token = null;
 
@@ -141,7 +170,20 @@ export class GhcrAdapter {
     const stable = allTags.filter(t => !this.UNSTABLE_RE.test(t));
     if (stable.length === 0) return null;
 
-    // 使用 pickLatest 选出版本号
+    // 如果有当前 tag 且包含非版本号前缀（如 pg、railway、render），尝试匹配同前缀的版本化 tag
+    if (currentTag) {
+      const variantMatch = currentTag.match(/^([a-zA-Z]+)-/);
+      if (variantMatch) {
+        const prefix = variantMatch[1]; // 如 'pg'
+        const variantTags = stable.filter(t => t.startsWith(`${prefix}-`));
+        if (variantTags.length > 0) {
+          // 从变体 tag 中选最新版本
+          return pickLatest(variantTags);
+        }
+      }
+    }
+
+    // 回退：从所有稳定 tag 中选最新
     return pickLatest(stable);
   }
 }
