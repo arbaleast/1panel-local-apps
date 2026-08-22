@@ -1,0 +1,23 @@
+additionalProperties:
+  key: linkwarden
+  name: Linkwarden
+  tags:
+    - Tool
+    - Bookmark
+  shortDescZh: Linkwarden 自托管书签管理器
+  shortDescEn: Linkwarden self-hosted bookmark manager
+  description:
+    zh: Linkwarden 是一个开源的自托管书签管理器，支持标签、全文搜索、网页归档、浏览器扩展等功能，帮助你整理和管理收藏的链接。
+    en: Linkwarden is an open-source self-hosted bookmark manager with tags, full-text search, web archiving, browser extensions, and more to help you organize and manage your saved links.
+    zh-Hant: Linkwarden 是一個開源自託管書籤管理器，支援標籤、全文搜尋、網頁歸檔、瀏覽器擴充套件等功能，協助你整理與管理收藏的連結。
+    ja: Linkwardenは、タグ、フルテキスト検索、ウェブアーカイブ、ブラウザ拡張機能を備えたオープンソースのセルフホスト型ブックマークマネージャーで、保存したリンクの整理と管理に役立ちます。
+    ko: Linkwarden은 태그, 전문 검색, 웹 아카이빙, 브라우저 확장 기능을 갖춘 오픈소스 자체 호스팅 북마크 관리자로, 저장한 링크를 정리하고 관리하는 데 도움을 줍니다.
+    ru: Linkwarden — это самохостируемый менеджер закладок с открытым исходным кодом, поддерживающий теги, полнотекстовый поиск, веб-архивирование и расширения браузера для организации сохранённых ссылок.
+    ms: Linkwarden ialah pengurus penanda buku sumber terbuka yang dihoskan sendiri dengan tag, carian teks penuh, pengarkiban web dan sambungan pelayar untuk membantu anda menyusun dan mengurus pautan yang disimpan.
+    pt-br: Linkwarden é um gerenciador de marcadores auto-hospedado de código aberto com tags, busca de texto completo, arquivamento da web e extensões de navegador para ajudar a organizar e gerenciar seus links salvos.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://linkwarden.app
+  github: https://github.com/linkwarden/linkwarden
