@@ -189,3 +189,85 @@ formFields:
       range:
         min: 1
         max: 300
+  - key: POSTGRES_SSL_REJECT_UNAUTHORIZED
+    label:
+      en: PostgreSQL SSL Reject Unauthorized
+      zh: PostgreSQL SSL 拒绝未授权证书
+      zh-Hant: PostgreSQL SSL 拒絕未授權憑證
+      ja: PostgreSSL の未承認証明書を拒否
+      ko: PostgreSQL SSL 미인가 인증서 거부
+      ru: PostgreSQL SSL — отклонять неавторизованные сертификаты
+      ms: PostgreSQL SSL Tolak Sijil Tidak Dibenarkan
+      pt-br: PostgreSQL SSL — Rejeitar certificados não autorizados
+    type: select
+    required: false
+    default: "false"
+    rule:
+      type: parameter
+      required: false
+    values:
+      - label: "true"
+        value: "true"
+      - label: "false"
+        value: "false"
+  - key: JF_USE_WEBSOCKETS
+    label:
+      en: Use Jellyfin WebSockets
+      zh: 使用 Jellyfin WebSocket
+      zh-Hant: 使用 Jellyfin WebSocket
+      ja: Jellyfin WebSocket を使用
+      ko: Jellyfin WebSocket 사용
+      ru: Использовать WebSocket Jellyfin
+      ms: Gunakan WebSocket Jellyfin
+      pt-br: Usar WebSocket do Jellyfin
+    type: select
+    required: false
+    default: "true"
+    rule:
+      type: parameter
+      required: false
+    values:
+      - label: "true"
+        value: "true"
+      - label: "false"
+        value: "false"
+  - key: JS_USE_EXTERNAL_HOST
+    label:
+      en: Use External Host (Jellyfin on different host)
+      zh: 使用外部主机（Jellyfin 在不同主机时启用）
+      zh-Hant: 使用外部主機（Jellyfin 在不同主機時啟用）
+      ja: 外部ホストを使用（Jellyfin が別ホストにある場合）
+      ko: 외부 호스트 사용 (Jellyfin이 다른 호스트에 있는 경우)
+      ru: Использовать внешний хост (Jellyfin на другом хосте)
+      ms: Gunakan Hos Luaran (Jellyfin pada hos berbeza)
+      pt-br: Usar Host Externo (Jellyfin em outro host)
+    type: select
+    required: false
+    default: "false"
+    rule:
+      type: parameter
+      required: false
+    values:
+      - label: "true"
+        value: "true"
+      - label: "false"
+        value: "false"
+  - key: NEW_WATCH_EVENT_THRESHOLD_HOURS
+    label:
+      en: New Watch Event Threshold (hours)
+      zh: 新观看事件阈值（小时）
+      zh-Hant: 新觀看事件閾值（小時）
+      ja: 新規視聴イベントしきい値（時間）
+      ko: 신규 시청 이벤트 임계값(시간)
+      ru: Порог нового события просмотра (часы)
+      ms: Ambang Peristiwa Tontonan Baharu (jam)
+      pt-br: Limite de novo evento de visualização (horas)
+    type: number
+    required: false
+    default: "1"
+    rule:
+      type: parameter
+      required: false
+      range:
+        min: 1
+        max: 72

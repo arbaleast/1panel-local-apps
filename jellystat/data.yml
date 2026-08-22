@@ -28,6 +28,14 @@ additionalProperties:
     ko: |
       Jellystat은 Jellyfin용 무료 오픈 소스 통계 앱으로, 세션 모니터링, 라이브러리 및 사용자 통계,
       시청 기록, 사용자 활동 개요等功能を提供します.
+    ru: |
+      Jellystat — статистическая панель для Jellyfin и Emby, визуализирует историю просмотров и активность пользователей.
+    ms: |
+      Jellystat — panel statistik untuk Jellyfin dan Emby, menggambarkan sejarah tontonan dan aktiviti pengguna.
+    pt-br: |
+      Jellystat — painel de estatísticas para Jellyfin e Emby, visualizando o histórico de visualizações e a atividade do usuário.
+  type: tool
+  document: https://github.com/CyferShepard/Jellystat#readme
   website: https://github.com/CyferShepard/Jellystat
   github: https://github.com/CyferShepard/Jellystat
   documentation: https://github.com/CyferShepard/Jellystat#readme
