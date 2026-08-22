@@ -65,3 +65,19 @@ additionalProperties:
       pt-br: Caminho da pasta de cache
     required: true
     type: text
+  - default: ~/.local/share/fonts/
+    edit: true
+    envKey: FONTS_FOLDER_PATH
+    labelEn: Fonts folder path
+    labelZh: 字体目录路径
+    label:
+      en: Fonts folder path
+      zh: 字体目录路径
+      zh-Hant: 字型目錄路徑
+      ja: フォントフォルダのパス
+      ko: 글꼴 폴더 경로
+      ru: Путь к папке шрифтов
+      ms: Laluan folder fon
+      pt-br: Caminho da pasta de fontes
+    required: false
+    type: text
