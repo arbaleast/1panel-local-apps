@@ -23,8 +23,26 @@ const APPS_FILTER = (process.env.APPS_FILTER || '')
   .map((s) => s.trim())
   .filter(Boolean);
 
+// 应用级白名单：detect 跳过这些应用, 保留手维护状态。
+// 原因:
+//   - anythingllm: IMAGE 镜像 tag 使用变体前缀 (pg-1.16.0), 1Panel UI 版本参数已锁定到 1.16.0。
+//     DockerHubAdapter 变体匹配会返回 pg-X.Y.Z, 复制出的新目录会与现有 1.16.0 风格不一致。
+//     需手维护, 避免 detect 在 anythingllm/ 下新增 pg-1.17.0/ 等带变体前缀的目录。
+// 任何新加进白名单的应用都需在 AGENTS.md / README.md 中说明 '手维护, 不走 auto-update'。
+const SKIP_AUTO_UPDATE_APPS = new Set(['anythingllm']);
+
 // 简易日志
 const log = (...a) => console.log('[detect]', ...a);
+
+// ---------- 工具：白名单判断（导出供单测） ----------
+/**
+ * 判断应用是否在白名单中（detect 跳过）
+ * @param {string} appDir - 应用目录名（如 anythingllm, jupyter, ai00）
+ * @returns {boolean}
+ */
+export function shouldSkipAutoUpdate(appDir) {
+  return SKIP_AUTO_UPDATE_APPS.has(appDir);
+}
 
 // ---------- 工具：解析 compose 与 data.yml ----------
 
@@ -155,6 +173,12 @@ function getAllVersionDirs(root, appDir) {
 
 async function processApp(appName) {
   const appDir = path.join(APPS_DIR, appName);
+
+  // 白名单：手维护应用, 跳过整个 detect 流程, 保留现有版本目录与 compose 不变。
+  if (shouldSkipAutoUpdate(appName)) {
+    log(appName, '在白名单中, 跳过 detect (手维护应用)');
+    return null;
+  }
 
   // 获取所有版本子目录
   const versionDirs = getAllVersionDirs(REPO_ROOT, appName);
