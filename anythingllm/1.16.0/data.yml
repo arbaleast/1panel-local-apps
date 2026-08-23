@@ -29,8 +29,8 @@ additionalProperties:
   github: https://github.com/Mintplex-Labs/anything-llm
   document: https://docs.anythingllm.com/
   formFields:
-  # 默认使用 :pg 标签镜像（含内置 PostgreSQL）；如需纯 SQLite 可切换为 mintplexlabs/anythingllm:latest
-  - default: mintplexlabs/anythingllm:pg
+  # 默认使用 :pg-1.16.0 标签镜像（含内置 PostgreSQL，版本钉住 1.16.0）；如需纯 SQLite 可切换为 mintplexlabs/anythingllm:1.16.0
+  - default: mintplexlabs/anythingllm:pg-1.16.0
     edit: true
     envKey: IMAGE
     labelEn: Docker Image
@@ -225,20 +225,20 @@ additionalProperties:
     required: false
     type: text
   # ---- 外部数据库（可选）：留空时回退内置 SQLite ----
-  # 使用 PostgreSQL 时需切换镜像为 mintplexlabs/anythingllm:pg
+  # 使用 PostgreSQL 时需确保 IMAGE 标签为 pg-* 系列 (如 mintplexlabs/anythingllm:pg-1.16.0)
   - default: ''
     edit: true
     envKey: DATABASE_URL
     labelEn: Database URL
     labelZh: 数据库地址
     label:
-      en: Database URL (需 :pg 标签镜像)
-      zh: 数据库地址（需 :pg 标签镜像）
-      zh-Hant: 資料庫位址（需 :pg 標籤鏡像）
-      ja: データベース URL（:pg タグが必要）
-      ko: 데이터베이스 URL (:pg 태그 필요)
-      ru: URL базы данных (требуется :pg образ)
-      ms: URL pangkalan data (perlu :pg image)
-      pt-br: URL do banco de dados (requer imagem :pg)
+      en: Database URL (需 :pg-* 标签镜像)
+      zh: 数据库地址（需 :pg-* 标签镜像）
+      zh-Hant: 資料庫位址（需 :pg-* 標籤鏡像）
+      ja: データベース URL（:pg-* タグが必要）
+      ko: 데이터베이스 URL (:pg-* 태그 필요)
+      ru: URL базы данных (требуется :pg-* образ)
+      ms: URL pangkalan data (perlu :pg-* image)
+      pt-br: URL do banco de dados (requer imagem :pg-*)
     required: false
     type: text
