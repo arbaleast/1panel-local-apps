@@ -2,8 +2,8 @@ name: auto-update
 
 on:
   schedule:
-    # 每周六 UTC 0 点（北京时间 08:00）
-    - cron: '0 0 * * 6'
+    # 每周一 UTC 0 点（北京时间 08:00）
+    - cron: '0 0 * * 1'
   workflow_dispatch:
     inputs:
       apps:
