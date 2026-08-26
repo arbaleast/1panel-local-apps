@@ -1,85 +1,74 @@
 additionalProperties:
   formFields:
-    - default: ./data/config
-      edit: true
-      envKey: CONFIG_PATH
-      labelEn: Config Path
-      labelZh: 配置路径
+    - default: "0"
+      envKey: PUID
+      labelEn: User ID
+      labelZh: 用户 ID
       label:
-        en: Config Path
-        zh: 配置路径
-        zh-Hant: 設定路徑
-        ja: 設定パス
-        ko: 구성 경로
-        ru: Путь к конфигурации
-        ms: Laluan konfigurasi
-        pt-br: Caminho de configuração
+        en: User ID
+        zh: 用户 ID
+        zh-Hant: 使用者 ID
+        ja: ユーザー ID
+        ko: 사용자ID
+        ru: ID пользователя
+        ms: ID pengguna
+        pt-br: ID do usuário
+      required: true
+      type: number
+      edit: true
+    - default: "0"
+      envKey: PGID
+      labelEn: Group ID
+      labelZh: 用户组 ID
+      label:
+        en: Group ID
+        zh: 用户组 ID
+        zh-Hant: 使用者群組 ID
+        ja: ユーザーグループ ID
+        ko: 사용자그룹ID
+        ru: ID группы пользователей
+        ms: ID kumpulan pengguna
+        pt-br: ID do grupo de usuários
+      required: true
+      type: number
+      edit: true
+    - default: cloakbrowser
+      envKey: BROWSER_EMULATION
+      labelEn: Browser Emulation
+      labelZh: 浏览器仿真模式
+      label:
+        en: Browser Emulation
+        zh: 浏览器仿真模式
+        zh-Hant: 瀏覽器仿真模式
+        ja: ブラウザエミュレーション
+        ko: 브라우저에뮬레이션
+        ru: Эмуляция браузера
+        ms: Emulasi pelayar
+        pt-br: Emulação de navegador
       required: true
       type: text
-    - default: ./data/core
       edit: true
-      envKey: CORE_PATH
-      labelEn: Core Path
-      labelZh: 核心路径
+    - default: sqlite
+      envKey: DB_TYPE
+      labelEn: Database Type
+      labelZh: 数据库类型
       label:
-        en: Core Path
-        zh: 核心路径
-        zh-Hant: 核心路徑
-        ja: コアパス
-        ko: 코어 경로
-        ru: Путь к ядру
-        ms: Laluan teras
-        pt-br: Caminho do núcleo
+        en: Database Type
+        zh: 数据库类型
+        zh-Hant: 資料庫類型
+        ja: データベースタイプ
+        ko: 데이터베이스유형
+        ru: Тип базы данных
+        ms: Jenis pangkalan data
+        pt-br: Tipo de banco de dados
       required: true
-      type: text
-    - default: /var/run/docker.sock
+      type: select
+      values:
+        - label: sqlite
+          value: sqlite
+        - label: postgresql
+          value: postgresql
       edit: true
-      envKey: DOCKER_SOCK_PATH
-      labelEn: Docker Socket Path
-      labelZh: Docker套接字路径
-      label:
-        en: Docker Socket Path
-        zh: Docker 套接字路径
-        zh-Hant: Docker 套接字路徑
-        ja: Docker ソケットパス
-        ko: Docker 소켓 경로
-        ru: Путь к сокету Docker
-        ms: Laluan Soket Docker
-        pt-br: Caminho do Socket Docker
-      required: true
-      type: text
-    - default: ./data/media
-      edit: true
-      envKey: MEDIA_PATH
-      labelEn: Media Path
-      labelZh: 媒体路径
-      label:
-        en: Media Path
-        zh: 媒体路径
-        zh-Hant: 媒體路徑
-        ja: メディアパス
-        ko: 미디어 경로
-        ru: Путь к медиа
-        ms: Laluan media
-        pt-br: Caminho de mídia
-      required: true
-      type: text
-    - default: moviepilot
-      edit: true
-      envKey: HOSTNAME
-      labelEn: Hostname
-      labelZh: 主机名
-      label:
-        en: Hostname
-        zh: 主机名
-        zh-Hant: 主機名稱
-        ja: ホスト名
-        ko: 호스트명
-        ru: Имя хоста
-        ms: Nama hos
-        pt-br: Nome do host
-      required: true
-      type: text
     - default: "022"
       edit: true
       envKey: UMASK
@@ -96,38 +85,6 @@ additionalProperties:
         pt-br: Umask do arquivo
       required: true
       type: text
-    - default: "0"
-      envKey: USER_ID
-      labelEn: User ID
-      labelZh: 用户 ID
-      label:
-        en: User ID
-        zh: 用户 ID
-        zh-Hant: 使用者 ID
-        ja: ユーザー ID
-        ko: 사용자 ID
-        ru: ID пользователя
-        ms: ID pengguna
-        pt-br: ID do usuário
-      required: true
-      type: number
-      edit: true
-    - default: "0"
-      envKey: GROUP_ID
-      labelEn: Group ID
-      labelZh: 用户组 ID
-      label:
-        en: Group ID
-        zh: 用户组 ID
-        zh-Hant: 使用者群組 ID
-        ja: ユーザーグループ ID
-        ko: 사용자 그룹 ID
-        ru: ID группы пользователей
-        ms: ID kumpulan pengguna
-        pt-br: ID do grupo de usuários
-      required: true
-      type: number
-      edit: true
     - default: Asia/Shanghai
       edit: true
       envKey: TZ
@@ -2127,16 +2084,64 @@ additionalProperties:
       required: true
       rule: paramComplexity
       type: password
+    - default: ""
+      envKey: GITHUB_PROXY
+      labelEn: GitHub Proxy
+      labelZh: GitHub 代理
+      label:
+        en: GitHub Proxy
+        zh: GitHub 代理
+        zh-Hant: GitHub 代理
+        ja: GitHub プロキシ
+        ko: GitHub프록시
+        ru: Прокси GitHub
+        ms: Proksi GitHub
+        pt-br: Proxy do GitHub
+      required: false
+      type: text
+      edit: true
+    - default: ""
+      envKey: GITHUB_TOKEN
+      labelEn: GitHub Token
+      labelZh: GitHub Token
+      label:
+        en: GitHub Token
+        zh: GitHub Token
+        zh-Hant: GitHub Token
+        ja: GitHub トークン
+        ko: GitHub 토큰
+        ru: Токен GitHub
+        ms: Token GitHub
+        pt-br: Token do GitHub
+      required: false
+      type: text
+      edit: true
+    - default: ""
+      envKey: PIP_PROXY
+      labelEn: Pip Proxy
+      labelZh: Pip 代理
+      label:
+        en: Pip Proxy
+        zh: Pip 代理
+        zh-Hant: Pip 代理
+        ja: Pip プロキシ
+        ko: Pip프록시
+        ru: Прокси Pip
+        ms: Proksi Pip
+        pt-br: Proxy do Pip
+      required: false
+      type: text
+      edit: true
   key: moviepilot
   name: moviepilot
   tags:
     - media
     - automation
-  shortDescZh: MoviePilot 影视自动整理
-  shortDescEn: MoviePilot 影视自动整理
+  shortDescZh: MoviePilot 影视自动整理 v3
+  shortDescEn: MoviePilot media organizer v3
   description:
-    zh: 对接 qBittorrent/Emby/Jellyfin，PT 订阅、搜刮、整理、推送全自动。
-    en: Automated movie/show management connecting qBittorrent/Emby/Jellyfin.
+    zh: 基于 NAStool 重写的影视自动化：订阅、搜索、下载、整理、刮削、媒体库刷新、消息通知全流程。v3 单容器架构，前后端分离（FastAPI + Vue 3 + Nginx）。
+    en: "MoviePilot v3: a single-container media automation (FastAPI + Vue 3 + Nginx) for subscribe/search/download/organize/scrape/notify."
   type: tool
   crossVersionUpdate: true
   limit: 0
@@ -2144,5 +2149,5 @@ additionalProperties:
   website: https://github.com/jxxghp/MoviePilot
   github: https://github.com/jxxghp/MoviePilot
 name: moviepilot
-title: MoviePilot 影视自动整理
-description: 对接 qBittorrent/Emby/Jellyfin，PT 订阅、搜刮、整理、推送全自动。
+title: MoviePilot 影视自动整理 v3
+description: 对接 qBittorrent/Emby/Jellyfin，PT 订阅、搜刮、整理、推送全自动（v3）。
