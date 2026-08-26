@@ -134,12 +134,18 @@ export class GhcrAdapter {
       const tokenRes = await this.fetchImpl(
         `https://ghcr.io/token?scope=repository:${repo}:pull`
       );
+      // [DEBUG-hindsight] token 获取结果
+      console.log(`[DEBUG-hindsight] token fetch status: ${tokenRes.status} for ${repo}`);
       if (tokenRes.ok) {
         const tokenData = await tokenRes.json();
         token = tokenData?.token ?? null;
+        console.log(`[DEBUG-hindsight] token obtained: ${token ? 'yes (len=' + token.length + ')' : 'null'}`);
+      } else {
+        console.log(`[DEBUG-hindsight] token fetch failed, will try anonymous`);
       }
-    } catch (_) {
+    } catch (e) {
       // token 获取失败，降级为匿名调用
+      console.log(`[DEBUG-hindsight] token fetch threw: ${e.message}`);
     }
 
     // 构建请求头
@@ -154,21 +160,34 @@ export class GhcrAdapter {
         `https://ghcr.io/v2/${repo}/tags/list?n=1000`,
         { headers }
       );
-    } catch (_) {
+    } catch (e) {
+      // [DEBUG-hindsight] API 调用异常
+      console.log(`[DEBUG-hindsight] API fetch threw for ${repo}: ${e.message}`);
       return null;
     }
-    if (!res.ok) return null;
+    // [DEBUG-hindsight] API 响应状态
+    console.log(`[DEBUG-hindsight] API response status: ${res.status} for ${repo}`);
+    if (!res.ok) {
+      console.log(`[DEBUG-hindsight] API response not ok, returning null`);
+      return null;
+    }
 
     let data;
     try {
       data = await res.json();
-    } catch (_) {
+    } catch (e) {
+      console.log(`[DEBUG-hindsight] JSON parse failed: ${e.message}`);
       return null;
     }
 
     const allTags = data?.tags ?? [];
     const stable = allTags.filter(t => !this.UNSTABLE_RE.test(t));
-    if (stable.length === 0) return null;
+    // [DEBUG-hindsight] tag 过滤结果
+    console.log(`[DEBUG-hindsight] total tags: ${allTags.length}, stable: ${stable.length}, allStable: ${JSON.stringify(allTags.slice(0, 20))}`);
+    if (stable.length === 0) {
+      console.log(`[DEBUG-hindsight] no stable tags after filter, returning null`);
+      return null;
+    }
 
     // 如果有当前 tag 且包含非版本号前缀（如 pg、railway、render），尝试匹配同前缀的版本化 tag
     if (currentTag) {
@@ -178,13 +197,17 @@ export class GhcrAdapter {
         const variantTags = stable.filter(t => t.startsWith(`${prefix}-`));
         if (variantTags.length > 0) {
           // 从变体 tag 中选最新版本
-          return pickLatest(variantTags);
+          const result = pickLatest(variantTags);
+          console.log(`[DEBUG-hindsight] variant match prefix=${prefix}, result=${result}`);
+          return result;
         }
       }
     }
 
     // 回退：从所有稳定 tag 中选最新
-    return pickLatest(stable);
+    const result = pickLatest(stable);
+    console.log(`[DEBUG-hindsight] final pickLatest result: ${result}`);
+    return result;
   }
 }
 
