@@ -47,6 +47,28 @@ try {
 
 // ─── 检查是否有变更文件 ─────────────────────────────────────────────────
 
+// ─── 切到今日工作分支（先于 add/commit，避免污染默认分支） ───────────────
+
+try {
+  // -B 强制重建：若同日本地残留分支（罕见），从头再来
+  execSync(`git checkout -B ${branch}`, { stdio: 'inherit' });
+} catch (e) {
+  console.error(`[ERROR] 创建/切换分支 ${branch} 失败:`, e.message);
+  process.exit(1);
+}
+
+// 校验：必须在目标分支上，避免 main / master 上 commit
+try {
+  const current = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+  if (current !== branch) {
+    console.error(`[ERROR] checkout 后 HEAD 仍在 ${current}（期望 ${branch}），中止`);
+    process.exit(1);
+  }
+} catch (e) {
+  console.error(`[ERROR] 校验当前分支失败:`, e.message);
+  process.exit(1);
+}
+
 execSync('git add -A');
 const status = execSync('git status --porcelain').toString();
 if (!status.trim()) {
