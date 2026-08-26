@@ -1,0 +1,87 @@
+networks:
+  1panel-network:
+    external: true
+services:
+  # Linkwarden 主应用（hardcode GHCR 镜像，由自动更新守护）
+  linkwarden:
+    container_name: ${CONTAINER_NAME}
+    depends_on:
+      - postgres
+      - meilisearch
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    environment:
+      # 上游自动构建 DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      # Meilisearch 鉴权与连接
+      - MEILI_HOST=http://meilisearch:7700
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+      # NextAuth 会话配置
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      # 容器内服务端口（与 ports 映射目标端口一致）
+      - PORT=3000
+      - TZ=${TZ}
+    image: ghcr.io/linkwarden/linkwarden:v2.16.1
+    labels:
+      createdBy: Apps
+    networks:
+      - 1panel-network
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3000
+    restart: always
+    volumes:
+      - ./data/uploads:/data/data
+  # PostgreSQL 16（持久化主数据）
+  postgres:
+    container_name: ${CONTAINER_NAME}-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=postgres
+    healthcheck:
+      interval: 5s
+      retries: 10
+      start_period: 10s
+      test:
+        - CMD-SHELL
+        - pg_isready -U postgres
+      timeout: 5s
+    image: postgres:16-alpine
+    labels:
+      createdBy: Apps
+    networks:
+      - 1panel-network
+    restart: always
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+  # Meilisearch 全文搜索引擎
+  meilisearch:
+    container_name: ${CONTAINER_NAME}-meilisearch
+    environment:
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+      - MEILI_ENV=production
+      - TZ=${TZ}
+    healthcheck:
+      interval: 5s
+      retries: 10
+      start_period: 10s
+      test:
+        - CMD
+        - wget
+        - --no-verbose
+        - --tries=1
+        - --spider
+        - http://localhost:7700/health
+      timeout: 5s
+    image: getmeili/meilisearch:v1.53.1
+    labels:
+      createdBy: Apps
+    networks:
+      - 1panel-network
+    restart: always
+    volumes:
+      - ./data/meili:/meili_data

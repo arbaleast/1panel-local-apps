@@ -64,22 +64,6 @@ additionalProperties:
         pt-br: Caminho de mídia
       required: true
       type: text
-    - default: /mnt/nfs/downloads
-      edit: true
-      envKey: DOWNLOAD_HOST_PATH
-      labelEn: Download Host Path
-      labelZh: 下载宿主机路径
-      label:
-        en: Download Host Path
-        zh: 下载宿主机路径
-        zh-Hant: 下載宿主機路徑
-        ja: ダウンロードホストパス
-        ko: 다운로드 호스트 경로
-        ru: Путь загрузки на хосте
-        ms: Laluan muat turun hos
-        pt-br: Caminho de download do host
-      required: true
-      type: text
     - default: moviepilot
       edit: true
       envKey: HOSTNAME
