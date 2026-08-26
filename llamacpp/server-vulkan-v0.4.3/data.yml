@@ -1,0 +1,106 @@
+additionalProperties:
+  formFields:
+    - default: ghcr.io/anbeeld/beellama.cpp:server-vulkan-v0.4.3
+      edit: true
+      envKey: IMAGE
+      label:
+        en: Image (CUDA 12.4 for Pascal sm_61)
+        zh: 镜像（CUDA 12.4，支持 Pascal sm_61）
+        zh-Hant: 映像（CUDA 12.4，支援 Pascal sm_61）
+        ja: イメージ（CUDA 12.4、Pascal sm_61 対応）
+        ko: 이미지 (CUDA 12.4, Pascal sm_61 지원)
+        ru: Образ (CUDA 12.4, поддержка Pascal sm_61)
+        ms: Imej (CUDA 12.4 untuk Pascal sm_61)
+        pt-br: Imagem (CUDA 12.4 para Pascal sm_61)
+      required: true
+      type: text
+    - default: 8080
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      label:
+        en: API Port
+        zh: API 端口
+        zh-Hant: API 埠
+        ja: API ポート
+        ko: API 포트
+        ru: Порт API
+        ms: Port API
+        pt-br: Porta da API
+      required: true
+      rule: paramPort
+      type: number
+    - default: model.gguf
+      edit: true
+      envKey: MODEL_FILE
+      label:
+        en: Model filename
+        zh: 模型文件名
+        zh-Hant: 模型檔名
+        ja: モデルファイル名
+        ko: 모델 파일명
+        ru: Имя файла модели
+        ms: Nama fail model
+        pt-br: Nome do arquivo do modelo
+      required: true
+      type: text
+    - default: -1
+      edit: true
+      envKey: GPU_LAYERS
+      label:
+        en: GPU layers
+        zh: GPU 层数
+        zh-Hant: GPU 層數
+        ja: GPU レイヤー数
+        ko: GPU 레이어 수
+        ru: Слои GPU
+        ms: Lapisan GPU
+        pt-br: Camadas da GPU
+      required: true
+      type: number
+    - default: "true"
+      edit: true
+      envKey: ENABLE_EMBEDDINGS
+      label:
+        en: Enable embeddings endpoint
+        zh: 启用 Embeddings 接口
+        zh-Hant: 啟用 Embeddings 介面
+        ja: Embeddings エンドポイントを有効化
+        ko: Embeddings 엔드포인트 활성화
+        ru: Включить endpoint embeddings
+        ms: Dayakan endpoint embeddings
+        pt-br: Habilitar endpoint de embeddings
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: 4096
+      edit: true
+      envKey: CTX_SIZE
+      label:
+        en: Context size
+        zh: 上下文长度
+        zh-Hant: 上下文長度
+        ja: コンテキストサイズ
+        ko: 컨텍스트 크기
+        ru: Размер контекста
+        ms: Saiz konteks
+        pt-br: Tamanho do contexto
+      required: true
+      type: number
+    - default: 4
+      edit: true
+      envKey: THREADS
+      label:
+        en: CPU threads
+        zh: CPU 线程数
+        zh-Hant: CPU 執行緒數
+        ja: CPU スレッド数
+        ko: CPU 스레드 수
+        ru: Потоки CPU
+        ms: Thread CPU
+        pt-br: Threads da CPU
+      required: true
+      type: number
