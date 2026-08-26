@@ -84,9 +84,10 @@ export class DockerHubAdapter {
     const stable = results.filter(t => !this.UNSTABLE_RE.test(t.name));
     if (stable.length === 0) return null;
 
-    // 如果有当前 tag 且包含非版本号前缀（如 pg、railway、render），尝试匹配同前缀的版本化 tag
+    // 如果有当前 tag 且以字母开头（可能是变体标识，如 pg、railway），尝试匹配同前缀的版本化 tag
+    // 同时支持裸变体 'pg' 和带连字符的 'pg-1.16.0' 两种形态
     if (currentTag) {
-      const variantMatch = currentTag.match(/^([a-zA-Z]+)-/);
+      const variantMatch = currentTag.match(/^([a-zA-Z][a-zA-Z0-9]*)(?:-|$)/);
       if (variantMatch) {
         const prefix = variantMatch[1]; // 如 'pg'
         const variantTags = stable.filter(t => t.name.startsWith(`${prefix}-`));
@@ -170,9 +171,10 @@ export class GhcrAdapter {
     const stable = allTags.filter(t => !this.UNSTABLE_RE.test(t));
     if (stable.length === 0) return null;
 
-    // 如果有当前 tag 且包含非版本号前缀（如 pg、railway、render），尝试匹配同前缀的版本化 tag
+    // 如果有当前 tag 且以字母开头（可能是变体标识，如 pg、railway），尝试匹配同前缀的版本化 tag
+    // 同时支持裸变体 'pg' 和带连字符的 'pg-1.16.0' 两种形态
     if (currentTag) {
-      const variantMatch = currentTag.match(/^([a-zA-Z]+)-/);
+      const variantMatch = currentTag.match(/^([a-zA-Z][a-zA-Z0-9]*)(?:-|$)/);
       if (variantMatch) {
         const prefix = variantMatch[1]; // 如 'pg'
         const variantTags = stable.filter(t => t.startsWith(`${prefix}-`));

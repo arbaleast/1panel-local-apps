@@ -6,7 +6,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test .github/lib/",
+    "test": "node --test .github/lib/semver.test.mjs .github/lib/schema.test.mjs .github/lib/registry.test.mjs .github/lib/apps.test.mjs .github/lib/detect-updates.test.mjs",
     "lint": "node .github/bin/lint-apps.mjs",
     "open-pr": "node .github/bin/open-update-pr.mjs"
   },
