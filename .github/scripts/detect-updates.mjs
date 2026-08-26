@@ -449,6 +449,11 @@ async function main() {
   const out = { updates, scanned: targetApps.length, timestamp: new Date().toISOString() };
   fs.writeFileSync('updates.json', JSON.stringify(out, null, 2));
   log(`完成: ${updates.length} 个版本有更新`);
+
+  // [DEBUG-hindsight] 检测到更新时返回非零退出码，便于 CI 区分"有更新"和"无更新"
+  if (updates.length > 0) {
+    process.exit(1);
+  }
 }
 
 main().catch((e) => {
