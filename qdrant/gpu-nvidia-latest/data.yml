@@ -11,12 +11,6 @@ additionalProperties:
       label:
         en: HTTP Port
         zh: HTTP端口
-        zh-Hant: HTTP 連接埠
-        ja: HTTP ポート
-        ko: HTTP 포트
-        ru: HTTP-порт
-        ms: Port HTTP
-        pt-br: Porta HTTP
     - default: 6334
       edit: true
       envKey: PANEL_APP_PORT_GRPC
@@ -28,12 +22,6 @@ additionalProperties:
       label:
         en: gRPC Port
         zh: gRPC端口
-        zh-Hant: gRPC 連接埠
-        ja: gRPC ポート
-        ko: gRPC 포트
-        ru: gRPC-порт
-        ms: Port gRPC
-        pt-br: Porta gRPC
     - default: ./data
       edit: true
       envKey: DATA_PATH
@@ -44,12 +32,6 @@ additionalProperties:
       label:
         en: Data folder path
         zh: 数据文件夹路径
-        zh-Hant: 資料夾路徑
-        ja: データフォルダパス
-        ko: 데이터 폴더 경로
-        ru: Путь к папке данных
-        ms: Laluan folder data
-        pt-br: Caminho da pasta de dados
     - default: Asia/Shanghai
       edit: true
       envKey: TZ
@@ -60,12 +42,6 @@ additionalProperties:
       label:
         en: Time Zone
         zh: 时区
-        zh-Hant: 時區
-        ja: タイムゾーン
-        ko: 시간대
-        ru: Часовой пояс
-        ms: Zon masa
-        pt-br: Fuso horário
     - default: 0
       edit: true
       envKey: CPUS
@@ -76,12 +52,6 @@ additionalProperties:
       label:
         en: CPU Limit
         zh: CPU 限制
-        zh-Hant: CPU 限制
-        ja: CPU 制限
-        ko: CPU 제한
-        ru: Лимит CPU
-        ms: Had CPU
-        pt-br: Limite de CPU
     - default: 0
       edit: true
       envKey: MEMORY_LIMIT
@@ -92,12 +62,6 @@ additionalProperties:
       label:
         en: Memory Limit (MB)
         zh: 内存限制 (MB)
-        zh-Hant: 記憶體限制 (MB)
-        ja: メモリ制限 (MB)
-        ko: 메모리 제한 (MB)
-        ru: Лимит памяти (МБ)
-        ms: Had memori (MB)
-        pt-br: Limite de memória (MB)
   key: qdrant
   name: qdrant
   tags:

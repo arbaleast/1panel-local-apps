@@ -1,0 +1,20 @@
+additionalProperties:
+  key: scrob
+  name: Scrob
+  shortDescZh: 自托管媒体追踪（Jellyfin / Plex / Emby 同步）
+  shortDescEn: Self-hosted media tracker (Jellyfin / Plex / Emby sync)
+  description:
+    en: Self-hosted media tracking app that syncs libraries from Jellyfin, Plex, and Emby, tracks watch history, ratings, and personal lists
+    zh: 自托管媒体追踪应用，同步 Jellyfin、Plex 和 Emby 媒体库，追踪观看历史、评分和个人片单
+    zh-Hant: 自託管媒體追蹤應用程式
+    ja: セルフホスト型メディア追跡アプリ。Jellyfin / Plex / Emby のライブラリを同期し、視聴履歴・評価・個人リストを管理
+    ko: 자체 호스팅 미디어 추적 앱. Jellyfin, Plex, Emby 라이브러리를 동기화하고 시청 기록·평가·개인 목록을 관리
+    ru: Самохостинговое приложение для отслеживания медиа. Синхронизирует библиотеки Jellyfin, Plex, Emby и хранит историю просмотров, оценки, личные списки
+    ms: Aplikasi penjejakan media hos sendiri yang menyegerakkan perpustakaan Jellyfin, Plex, dan Emby
+    pt-br: Aplicativo de rastreamento de mídia auto-hospedado que sincroniza bibliotecas do Jellyfin, Plex, Emby
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://scrob.app
+  github: https://github.com/ellite/scrob

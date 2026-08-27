@@ -1,0 +1,54 @@
+networks:
+  1panel-network:
+    external: true
+services:
+  # Scrob 主应用（hardcode DockerHub 镜像，由自动更新守护）
+  scrob:
+    container_name: ${CONTAINER_NAME}
+    image: bellamy/scrob:2.5.0
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    depends_on:
+      scrob-db:
+        condition: service_healthy
+    ports:
+      - ${PANEL_APP_PORT_HTTP}:7330
+    environment:
+      # 上游自动构建 DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@scrob-db:5432/${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: scrob-db
+      POSTGRES_PORT: 5432
+      # 应用密钥
+      SECRET_KEY: ${SECRET_KEY}
+      # 时区
+      TZ: ${TZ}
+      # 用户注册策略
+      ENABLE_REGISTRATIONS: ${ENABLE_REGISTRATIONS}
+      REGISTRATION_MAX_ALLOWED_USERS: ${REGISTRATION_MAX_ALLOWED_USERS}
+    volumes:
+      - ./data/scrob_app:/app/backend/data
+
+  # PostgreSQL 16（持久化主数据，postgres:16-alpine 多架构清单原生支持 arm64）
+  scrob-db:
+    image: postgres:16-alpine
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./data/scrob_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
