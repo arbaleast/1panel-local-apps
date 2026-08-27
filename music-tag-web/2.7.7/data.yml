@@ -1,0 +1,214 @@
+additionalProperties:
+  key: music-tag-web
+  name: Music Tag Web
+  tags:
+  - Music
+  - Tag
+  - Metadata
+  - NAS
+  - Self-hosted
+  - Tool
+  - Media
+  shortDescZh: 音乐标签刮削与媒体库管理 Web 应用
+  shortDescEn: Music tag scraping and media library management web app
+  description:
+    en: Music Tag Web is a self-hosted web app for managing local music libraries, automatically scraping and editing song tags, cover art, lyrics, and metadata. Suitable for personal learning and non-commercial use.
+    zh: Music Tag Web 是一款自托管的本地音乐库管理 Web 应用,自动刮削并编辑歌曲标签、封面、歌词与元数据。仅供本地学习与个人使用,不得用于商业用途。
+    zh-Hant: Music Tag Web 是一款自架的本地音樂庫管理 Web 應用,自動刮削並編輯歌曲標籤、封面、歌詞與元資料。僅供本地學習與個人使用,不得用於商業用途。
+    ja: Music Tag Web は、ローカル音楽ライブラリを管理するためのセルフホスト型 Web アプリです。タグ、表紙、歌詞、メタデータを自動スクレイプして編集できます。ローカル学習および個人利用に限定し、商用利用は禁止です。
+    ko: Music Tag Web은 로컬 음악 라이브러리를 관리하는 셀프 호스팅 웹 앱으로, 곡 태그, 커버, 가사, 메타데이터를 자동으로 스크래핑하고 편집합니다. 로컬 학습 및 개인 사용에만 이용할 수 있으며 상업적 사용은 금지됩니다.
+    ru: Music Tag Web — это самохостинговое веб-приложение для управления локальной музыкальной библиотекой, автоматического парсинга и редактирования тегов, обложек, текстов и метаданных. Только для локального обучения и личного использования; коммерческое использование запрещено.
+    ms: Music Tag Web ialah aplikasi web hos sendiri untuk mengurus perpustakaan muzik tempatan, mengikis dan mengedit tag lagu, kulit, lirik dan metadata secara automatik. Untuk pembelajaran tempatan dan kegunaan peribadi sahaja; penggunaan komersial adalah dilarang.
+    pt-br: Music Tag Web é um aplicativo web auto-hospedado para gerenciar bibliotecas de música locais, raspando e editando tags, capas, letras e metadados automaticamente. Destina-se a aprendizado local e uso pessoal; uso comercial é proibido.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/xhongc/music-tag-web
+  github: https://github.com/xhongc/music-tag-web
+  logo: https://raw.githubusercontent.com/xhongc/music-tag-web/dev_1.0/logo.png
+  formFields:
+    # ---- 镜像名称(变量型,变更不影响 auto-update 范围)----
+    - default: xhongc/music_tag_web
+      edit: true
+      envKey: IMAGE
+      labelEn: Image
+      labelZh: 镜像
+      label:
+        en: Image
+        zh: 镜像
+        zh-Hant: 映像
+        ja: イメージ
+        ko: 이미지
+        ru: Образ
+        ms: Imej
+        pt-br: Imagem
+      required: true
+      rule: paramImageTag
+      type: text
+    # ---- 镜像版本(语义化版本)----
+    - default: "2.7.7"
+      edit: true
+      envKey: APP_VERSION
+      labelEn: App Version
+      labelZh: 应用版本
+      label:
+        en: App Version
+        zh: 应用版本
+        zh-Hant: 應用版本
+        ja: アプリバージョン
+        ko: 앱 버전
+        ru: Версия приложения
+        ms: Versi Aplikasi
+        pt-br: Versão do aplicativo
+      required: true
+      rule: paramImageTag
+      type: text
+    # ---- HTTP 端口(容器内 8002)----
+    - default: 8002
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 是否启用外部 MySQL(用 select 模拟 boolean)----
+    - default: "false"
+      edit: true
+      envKey: ENABLE_MYSQL
+      labelEn: Enable External MySQL
+      labelZh: 启用外部 MySQL
+      label:
+        en: Enable External MySQL
+        zh: 启用外部 MySQL
+        zh-Hant: 啟用外部 MySQL
+        ja: 外部 MySQL を有効化
+        ko: 외부 MySQL 사용
+        ru: Включить внешнюю MySQL
+        ms: Dayakan MySQL Luaran
+        pt-br: Habilitar MySQL externo
+      required: false
+      type: select
+      values:
+        - label: "关闭(使用内置 SQLite)"
+          value: "false"
+        - label: "启用"
+          value: "true"
+    # ---- MySQL 主机(留空则回退 SQLite)----
+    - default: ""
+      edit: true
+      envKey: MYSQL_HOST
+      labelEn: MySQL Host
+      labelZh: MySQL 主机
+      label:
+        en: MySQL Host
+        zh: MySQL 主机
+        zh-Hant: MySQL 主機
+        ja: MySQL ホスト
+        ko: MySQL 호스트
+        ru: Хост MySQL
+        ms: Hos MySQL
+        pt-br: Host MySQL
+      required: false
+      type: text
+    # ---- MySQL 端口 ----
+    - default: 3306
+      edit: true
+      envKey: MYSQL_PORT
+      labelEn: MySQL Port
+      labelZh: MySQL 端口
+      label:
+        en: MySQL Port
+        zh: MySQL 端口
+        zh-Hant: MySQL 連接埠
+        ja: MySQL ポート
+        ko: MySQL 포트
+        ru: Порт MySQL
+        ms: Port MySQL
+        pt-br: Porta MySQL
+      required: false
+      rule: paramPort
+      type: number
+    # ---- MySQL 用户名 ----
+    - default: root
+      edit: true
+      envKey: MYSQL_USER
+      labelEn: MySQL User
+      labelZh: MySQL 用户名
+      label:
+        en: MySQL User
+        zh: MySQL 用户名
+        zh-Hant: MySQL 使用者名稱
+        ja: MySQL ユーザー
+        ko: MySQL 사용자
+        ru: Пользователь MySQL
+        ms: Pengguna MySQL
+        pt-br: Usuário MySQL
+      required: false
+      type: text
+    # ---- MySQL 密码 ----
+    - default: ""
+      edit: true
+      envKey: MYSQL_PASSWORD
+      labelEn: MySQL Password
+      labelZh: MySQL 密码
+      label:
+        en: MySQL Password
+        zh: MySQL 密码
+        zh-Hant: MySQL 密碼
+        ja: MySQL パスワード
+        ko: MySQL 비밀번호
+        ru: Пароль MySQL
+        ms: Kata Laluan MySQL
+        pt-br: Senha MySQL
+      required: false
+      type: password
+    # ---- MySQL 数据库名(需提前 CREATE DATABASE)----
+    - default: music_tag
+      edit: true
+      envKey: MYSQL_DB_NAME
+      labelEn: MySQL Database Name
+      labelZh: MySQL 数据库名
+      label:
+        en: MySQL Database Name
+        zh: MySQL 数据库名
+        zh-Hant: MySQL 資料庫名稱
+        ja: MySQL データベース名
+        ko: MySQL 데이터베이스명
+        ru: Имя базы MySQL
+        ms: Nama Pangkalan Data MySQL
+        pt-br: Nome do banco MySQL
+      required: false
+      type: text
+    # ---- 后台并发 worker 数 ----
+    - default: 8
+      edit: true
+      envKey: WORKER_NUM
+      labelEn: Worker Concurrency
+      labelZh: 后台并发数
+      label:
+        en: Worker Concurrency
+        zh: 后台并发数
+        zh-Hant: 背景並行數
+        ja: ワーカー並行数
+        ko: 워커 동시성
+        ru: Параллелизм воркеров
+        ms: Konkurensi Pekerja
+        pt-br: Concorrência de workers
+      required: false
+      rule: paramPort
+      type: number
+version: "2.7.7"
+name: Music Tag Web
+title: Music Tag Web 音乐标签管理
+description: Music Tag Web 是一款自托管的本地音乐库管理 Web 应用,自动刮削并编辑歌曲标签、封面、歌词与元数据。仅供本地学习与个人使用,不得用于商业用途。

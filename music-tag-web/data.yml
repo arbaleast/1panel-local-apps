@@ -1,0 +1,32 @@
+additionalProperties:
+  key: music-tag-web
+  name: Music Tag Web
+  tags:
+  - Music
+  - Tag
+  - Metadata
+  - NAS
+  - Self-hosted
+  - Tool
+  - Media
+  shortDescZh: 音乐标签刮削与媒体库管理 Web 应用
+  shortDescEn: Music tag scraping and media library management web app
+  description:
+    en: Music Tag Web is a self-hosted web app for managing local music libraries, automatically scraping and editing song tags, cover art, lyrics, and metadata. Suitable for personal learning and non-commercial use.
+    zh: Music Tag Web 是一款自托管的本地音乐库管理 Web 应用,自动刮削并编辑歌曲标签、封面、歌词与元数据。仅供本地学习与个人使用,不得用于商业用途。
+    zh-Hant: Music Tag Web 是一款自架的本地音樂庫管理 Web 應用,自動刮削並編輯歌曲標籤、封面、歌詞與元資料。僅供本地學習與個人使用,不得用於商業用途。
+    ja: Music Tag Web は、ローカル音楽ライブラリを管理するためのセルフホスト型 Web アプリです。タグ、表紙、歌詞、メタデータを自動スクレイプして編集できます。ローカル学習および個人利用に限定し、商用利用は禁止です。
+    ko: Music Tag Web은 로컬 음악 라이브러리를 관리하는 셀프 호스팅 웹 앱으로, 곡 태그, 커버, 가사, 메타데이터를 자동으로 스크래핑하고 편집합니다. 로컬 학습 및 개인 사용에만 이용할 수 있으며 상업적 사용은 금지됩니다.
+    ru: Music Tag Web — это самохостинговое веб-приложение для управления локальной музыкальной библиотекой, автоматического парсинга и редактирования тегов, обложек, текстов и метаданных. Только для локального обучения и личного использования; коммерческое использование запрещено.
+    ms: Music Tag Web ialah aplikasi web hos sendiri untuk mengurus perpustakaan muzik tempatan, mengikis dan mengedit tag lagu, kulit, lirik dan metadata secara automatik. Untuk pembelajaran tempatan dan kegunaan peribadi sahaja; penggunaan komersial adalah dilarang.
+    pt-br: Music Tag Web é um aplicativo web auto-hospedado para gerenciar bibliotecas de música locais, raspando e editando tags, capas, letras e metadados automaticamente. Destina-se a aprendizado local e uso pessoal; uso comercial é proibido.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/xhongc/music-tag-web
+  github: https://github.com/xhongc/music-tag-web
+  logo: https://raw.githubusercontent.com/xhongc/music-tag-web/dev_1.0/logo.png
+name: Music Tag Web
+title: Music Tag Web 音乐标签管理
+description: Music Tag Web 是一款自托管的本地音乐库管理 Web 应用,自动刮削并编辑歌曲标签、封面、歌词与元数据。仅供本地学习与个人使用,不得用于商业用途。
