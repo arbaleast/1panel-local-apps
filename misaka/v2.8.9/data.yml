@@ -1,0 +1,237 @@
+additionalProperties:
+  formFields:
+    - envKey: PUID
+      labelEn: User ID
+      labelZh: 用户 ID
+      label:
+        en: User ID
+        zh: 用户 ID
+        zh-Hant: 使用者 ID
+        ja: ユーザー ID
+        ko: 사용자 ID
+        ru: ID пользователя
+        ms: ID pengguna
+        pt-br: ID do usuário
+      default: "1000"
+      type: number
+      required: true
+      edit: true
+    - envKey: PGID
+      labelEn: Group ID
+      labelZh: 用户组 ID
+      label:
+        en: Group ID
+        zh: 用户组 ID
+        zh-Hant: 使用者群組 ID
+        ja: ユーザーグループ ID
+        ko: 사용자 그룹 ID
+        ru: ID группы
+        ms: ID kumpulan
+        pt-br: ID do grupo
+      default: "1000"
+      type: number
+      required: true
+      edit: true
+    - envKey: UMASK
+      labelEn: File Umask
+      labelZh: 文件掩码
+      label:
+        en: File Umask
+        zh: 文件掩码
+        zh-Hant: 檔案掩碼
+        ja: ファイル umask
+        ko: 파일 umask
+        ru: Umask файла
+        ms: Umask fail
+        pt-br: Umask do arquivo
+      default: "0022"
+      type: text
+      required: true
+      edit: true
+    - envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      default: Asia/Shanghai
+      type: text
+      required: true
+      edit: true
+    - envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      default: "7768"
+      type: number
+      rule: paramPort
+      required: true
+      edit: true
+    - envKey: DANMUAPI_DATABASE__TYPE
+      labelEn: Database Type
+      labelZh: 数据库类型
+      label:
+        en: Database Type
+        zh: 数据库类型
+        zh-Hant: 資料庫類型
+        ja: データベースタイプ
+        ko: 데이터베이스 유형
+        ru: Тип базы данных
+        ms: Jenis pangkalan data
+        pt-br: Tipo de banco de dados
+      default: mysql
+      type: select
+      values:
+        - label: MySQL
+          value: mysql
+        - label: PostgreSQL
+          value: postgresql
+      required: true
+      edit: true
+    - envKey: DANMUAPI_DATABASE__HOST
+      labelEn: Database Host
+      labelZh: 数据库地址
+      label:
+        en: Database Host
+        zh: 数据库地址
+        zh-Hant: 資料庫位址
+        ja: データベースホスト
+        ko: 데이터베이스 호스트
+        ru: Хост базы данных
+        ms: Hos pangkalan data
+        pt-br: Host do banco de dados
+      default: 127.0.0.1
+      type: text
+      required: true
+      edit: true
+    - envKey: DANMUAPI_DATABASE__PORT
+      labelEn: Database Port
+      labelZh: 数据库端口
+      label:
+        en: Database Port
+        zh: 数据库端口
+        zh-Hant: 資料庫埠
+        ja: データベースポート
+        ko: 데이터베이스 포트
+        ru: Порт базы данных
+        ms: Port pangkalan data
+        pt-br: Porta do banco de dados
+      default: "3306"
+      type: number
+      rule: paramPort
+      required: true
+      edit: true
+    - envKey: DANMUAPI_DATABASE__NAME
+      labelEn: Database Name
+      labelZh: 数据库名称
+      label:
+        en: Database Name
+        zh: 数据库名称
+        zh-Hant: 資料庫名稱
+        ja: データベース名
+        ko: 데이터베이스 이름
+        ru: Имя базы данных
+        ms: Nama pangkalan data
+        pt-br: Nome do banco de dados
+      default: danmuapi
+      type: text
+      required: true
+      edit: true
+    - envKey: DANMUAPI_DATABASE__USER
+      labelEn: Database User
+      labelZh: 数据库用户
+      label:
+        en: Database User
+        zh: 数据库用户
+        zh-Hant: 資料庫使用者
+        ja: データベースユーザー
+        ko: 데이터베이스 사용자
+        ru: Пользователь БД
+        ms: Pengguna pangkalan data
+        pt-br: Usuário do banco
+      default: danmuapi
+      type: text
+      required: true
+      edit: true
+    - envKey: DANMUAPI_DATABASE__PASSWORD
+      labelEn: Database Password
+      labelZh: 数据库密码
+      label:
+        en: Database Password
+        zh: 数据库密码
+        zh-Hant: 資料庫密碼
+        ja: データベースパスワード
+        ko: 데이터베이스 비밀번호
+        ru: Пароль БД
+        ms: Kata laluan pangkalan data
+        pt-br: Senha do banco
+      default: ""
+      type: password
+      required: true
+      edit: true
+    - envKey: DANMUAPI_JWT__SECRET_KEY
+      labelEn: JWT Secret Key
+      labelZh: JWT 密钥
+      label:
+        en: JWT Secret Key
+        zh: JWT 密钥
+        zh-Hant: JWT 金鑰
+        ja: JWT キー
+        ko: JWT 키
+        ru: Секрет JWT
+        ms: Kunci rahsia JWT
+        pt-br: Chave secreta JWT
+      default: ""
+      type: text
+      required: false
+      edit: true
+    - envKey: DANMUAPI_ADMIN__INITIAL_USER
+      labelEn: Admin Username
+      labelZh: 管理员账号
+      label:
+        en: Admin Username
+        zh: 管理员账号
+        zh-Hant: 管理員帳號
+        ja: 管理者ユーザー名
+        ko: 관리자 계정
+        ru: Имя администратора
+        ms: Nama pentadbir
+        pt-br: Nome de usuário admin
+      default: admin
+      type: text
+      required: false
+      edit: true
+    - envKey: DANMUAPI_SERVER__PORT
+      labelEn: Container Listen Port
+      labelZh: 容器内部监听端口
+      label:
+        en: Container Listen Port
+        zh: 容器内部监听端口
+        zh-Hant: 容器內部監聽埠
+        ja: コンテナリスニングポート
+        ko: 컨테이너 리스닝 포트
+        ru: Порт прослушивания контейнера
+        ms: Port pendengaran kontena
+        pt-br: Porta de escuta do contêiner
+      default: "7768"
+      type: number
+      rule: paramPort
+      required: true
+      edit: true
+  key: misaka
+  name: 御坂网络弹幕服务
+  type: tool

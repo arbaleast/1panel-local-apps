@@ -1,0 +1,37 @@
+networks:
+  1panel-network:
+    external: true
+
+services:
+  misaka:
+    container_name: ${CONTAINER_NAME}
+    image: l429609201/misaka_danmu_server:v2.8.9
+    restart: always
+    networks:
+      - 1panel-network
+    ports:
+      - ${PANEL_APP_PORT_HTTP}:${DANMUAPI_SERVER__PORT}
+    environment:
+      # 进程身份
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+      # 数据库配置（Pydantic 使用 __ 分隔嵌套键）
+      DANMUAPI_DATABASE__TYPE: ${DANMUAPI_DATABASE__TYPE}
+      DANMUAPI_DATABASE__HOST: ${DANMUAPI_DATABASE__HOST}
+      DANMUAPI_DATABASE__PORT: ${DANMUAPI_DATABASE__PORT}
+      DANMUAPI_DATABASE__NAME: ${DANMUAPI_DATABASE__NAME}
+      DANMUAPI_DATABASE__USER: ${DANMUAPI_DATABASE__USER}
+      DANMUAPI_DATABASE__PASSWORD: ${DANMUAPI_DATABASE__PASSWORD}
+      # 服务端口
+      DANMUAPI_SERVER__HOST: 0.0.0.0
+      DANMUAPI_SERVER__PORT: ${DANMUAPI_SERVER__PORT}
+      # JWT 密钥
+      DANMUAPI_JWT__SECRET_KEY: ${DANMUAPI_JWT__SECRET_KEY}
+      # 初始管理员
+      DANMUAPI_ADMIN__INITIAL_USER: ${DANMUAPI_ADMIN__INITIAL_USER}
+    volumes:
+      - ./data/config:/app/config
+    labels:
+      createdBy: "Apps"

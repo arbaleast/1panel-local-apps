@@ -1,0 +1,21 @@
+additionalProperties:
+  key: misaka
+  name: 御坂网络弹幕服务
+  type: tool
+  website: https://docs.misaka10876.top/
+  github: https://github.com/l429609201/misaka_danmu_server
+  shortDescZh: 御坂网络弹幕服务
+  shortDescEn: Misaka danmaku aggregation service
+description:
+  en: Self-hosted danmaku aggregation and management service, compatible with dandanplay API
+  zh: 自托管弹幕聚合与管理服务，兼容弹弹play API 规范
+  zh-Hant: 自架託彈幕聚合與管理服務，相容彈彈play API 規範
+  ja: セルフホスト型弹幕集約・管理サービス、弾弾play API 互換
+  ko: 셀프 호스팅 탄막 집계 및 관리 서비스, 탄탄플레이 API 호환
+  ru: Самохостируемый сервис агрегации и управления донмаку, совместимый с dandanplay API
+  ms: Perkhidmatan pengumpulan dan pengurusan danmaku sendiri, serasi dengan API dandanplay
+  pt-br: Serviço de agregação e gerenciamento de danmaku auto-hospedado, compatível com a API dandanplay
+tags:
+  - 弹幕
+  - 媒体
+  - 弹弹play
