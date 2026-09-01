@@ -1,0 +1,40 @@
+# silo — pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支）
+# 镜像用 ${APP_VERSION} 变量型应用：auto-update 工作流不会改它
+# 持久化用相对路径 bind mount：规避 1Panel 顶层 volumes 块变量插值校验失败
+networks:
+  1panel-network:
+    external: true
+
+services:
+  silo:
+    container_name: ${CONTAINER_NAME}
+    image: pgsty/silo:${APP_VERSION}
+    # 启动 Server 模式：S3 API 监听 9000，Console 监听 9001
+    # 与 MinIO 官方镜像命令行完全兼容
+    command: server /data --console-address ":9001"
+    environment:
+      - TZ=${TZ}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    networks:
+      - 1panel-network
+    # 持久化：所有数据写入 ./data/（容器内 /data）
+    # 不要改回 named volume：1Panel schema 拒绝顶层 volumes 用 ${CONTAINER_NAME}-xxx 插值命名
+    volumes:
+      - ./data:/data
+    ports:
+      # S3 API 对外（mc / aws-cli / SDK 走这里）
+      - ${HOST_IP}:${PANEL_APP_PORT_API}:9000
+      # Console 仅本机 loopback 监听，避免公网直接暴露 Web UI
+      - 127.0.0.1:${PANEL_APP_PORT_CONSOLE}:9001
+    restart: always
+    labels:
+      createdBy: "Apps"
+    # 健康检查：依赖镜像内置的 curl，命中 /minio/health/ready
+    # 1Panel UI 显示状态时也会参考该探针
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/minio/health/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

@@ -1,0 +1,107 @@
+additionalProperties:
+  key: silo
+  name: Silo
+  formFields:
+    # 镜像 tag：变量型应用，auto-update 不会改它，由用户自行决定要锁定的版本
+    # 默认指向 2026-08 月份已发布的具体 tag，可在 1Panel UI 中覆盖
+    - envKey: APP_VERSION
+      labelEn: App version (image tag)
+      labelZh: 应用版本（镜像 tag）
+      label:
+        en: App version (image tag, e.g. RELEASE.2026-08-04T00-00-00Z)
+        zh: 应用版本（镜像 tag，例如 RELEASE.2026-08-04T00-00-00Z）
+        zh-Hant: 應用版本（映像檔 tag，例如 RELEASE.2026-08-04T00-00-00Z）
+        ja: "アプリバージョン（イメージタグ、例: RELEASE.2026-08-04T00-00-00Z）"
+        ko: "앱 버전 (이미지 태그, 예: RELEASE.2026-08-04T00-00-00Z)"
+        ru: Версия приложения (тег образа, напр. RELEASE.2026-08-04T00-00-00Z)
+        ms: Versi aplikasi (tag imej, cth. RELEASE.2026-08-04T00-00-00Z)
+        pt-br: Versão do app (tag da imagem, ex. RELEASE.2026-08-04T00-00-00Z)
+      default: RELEASE.2026-08-04T00-00-00Z
+      type: text
+      required: true
+      edit: true
+    # S3 访问凭据（管理员账户）
+    - envKey: MINIO_ROOT_USER
+      labelEn: Root User
+      labelZh: 根用户名
+      label:
+        en: Root user (S3 access key, ≥3 chars)
+        zh: 根用户名（S3 Access Key，至少 3 个字符）
+        zh-Hant: 根使用者名稱（S3 Access Key，至少 3 個字元）
+        ja: ルートユーザー (S3 Access Key、3 文字以上)
+        ko: 루트 사용자 (S3 Access Key, 3자 이상)
+        ru: Корневой пользователь (S3 Access Key, ≥3 символов)
+        ms: Pengguna root (S3 Access Key, ≥3 aksara)
+        pt-br: Usuário root (S3 Access Key, ≥3 caracteres)
+      default: minioadmin
+      type: text
+      required: true
+      edit: true
+    - envKey: MINIO_ROOT_PASSWORD
+      labelEn: Root Password
+      labelZh: 根密码
+      label:
+        en: Root password (S3 secret key, ≥8 chars)
+        zh: 根密码（S3 Secret Key，至少 8 个字符）
+        zh-Hant: 根密碼（S3 Secret Key，至少 8 個字元）
+        ja: ルートパスワード (S3 Secret Key、8 文字以上)
+        ko: 루트 비밀번호 (S3 Secret Key, 8자 이상)
+        ru: Корневой пароль (S3 Secret Key, ≥8 символов)
+        ms: Kata laluan root (S3 Secret Key, ≥8 aksara)
+        pt-br: Senha root (S3 Secret Key, ≥8 caracteres)
+      default: minioadmin
+      type: password
+      required: true
+      edit: true
+    # API 端口（S3 协议 / mc / aws-cli）
+    - envKey: PANEL_APP_PORT_API
+      labelEn: S3 API Port
+      labelZh: S3 API 端口
+      label:
+        en: S3 API port (host side)
+        zh: S3 API 端口（宿主机侧）
+        zh-Hant: S3 API 連接埠（主機端）
+        ja: S3 API ポート（ホスト側）
+        ko: S3 API 포트 (호스트 측)
+        ru: Порт S3 API (на хосте)
+        ms: Port API S3 (hos)
+        pt-br: Porta S3 API (lado do host)
+      default: '9000'
+      type: number
+      rule: paramPort
+      required: true
+      edit: true
+    # Console 端口（Web UI）
+    - envKey: PANEL_APP_PORT_CONSOLE
+      labelEn: Console Port
+      labelZh: Console 端口
+      label:
+        en: Web Console port (host side, 127.0.0.1 only)
+        zh: Console 端口（宿主机侧，仅 127.0.0.1 监听）
+        zh-Hant: Console 連接埠（主機端，僅 127.0.0.1 監聽）
+        ja: Console ポート（ホスト側、127.0.0.1 のみ）
+        ko: Console 포트 (호스트 측, 127.0.0.1 전용)
+        ru: Порт Console (на хосте, только 127.0.0.1)
+        ms: Port Console (hos, 127.0.0.1 sahaja)
+        pt-br: Porta Console (lado do host, somente 127.0.0.1)
+      default: '9001'
+      type: number
+      rule: paramPort
+      required: true
+      edit: true
+    - envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      default: Asia/Shanghai
+      type: text
+      required: true
+      edit: true

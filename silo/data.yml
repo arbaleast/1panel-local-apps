@@ -1,0 +1,53 @@
+additionalProperties:
+  key: silo
+  name: Silo
+  type: tool
+  website: https://silo.pgsty.com
+  github: https://github.com/pgsty/silo
+  shortDescZh: pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo）
+  shortDescEn: "S3-compatible object storage actively maintained by pgsty (MinIO fork: Silo)"
+description:
+  en: |
+    Silo is a high-performance, S3-compatible object storage system.
+    It is a community-maintained fork of MinIO led by the pgsty team,
+    with frequent bug fixes and security patches, and full S3 API
+    compatibility. Suitable for local backup, AI/ML data lake, and
+    self-hosted S3 scenarios. License: AGPL-3.0.
+  zh: |
+    Silo 是一款高性能、S3 兼容的对象存储系统。
+    它是 MinIO 的社区维护分支，由 pgsty 团队主导维护，
+    修复频繁、安全更新活跃，并完整兼容 S3 API。
+    适用于本地备份、AI/ML 数据湖、自建 S3 等场景。
+    许可证：AGPL-3.0。
+  zh-Hant: |
+    Silo 是一款高效能、S3 相容的物件儲存系統，
+    是 MinIO 的社群維護分支，由 pgsty 團隊主導，
+    修復頻繁、安全更新活躍，並完整相容 S3 API。
+    適用於本地備份、AI/ML 資料湖、自建 S3 等場景。
+    授權條款：AGPL-3.0。
+  ja: |
+    Silo は高性能で S3 互換のオブジェクトストレージシステムです。
+    MinIO のコミュニティ保守フォークであり、pgsty チームが主導。
+    バグ修正とセキュリティ更新が頻繁で、S3 API に完全互換です。
+    ライセンス：AGPL-3.0。
+  ko: |
+    Silo는 고성능 S3 호환 객체 스토리지 시스템으로,
+    pgsty 팀이 주도하는 MinIO의 커뮤니티 유지 포크입니다.
+    라이선스: AGPL-3.0.
+  ru: |
+    Silo — высокопроизводительная S3-совместимая система хранения объектов.
+    Это поддерживаемый сообществом форк MinIO, лидируемый командой pgsty.
+    Лицензия: AGPL-3.0.
+  ms: |
+    Silo ialah sistem storan objek yang serasi S3 berprestasi tinggi,
+    cabang komuniti MinIO yang diselenggara oleh pasukan pgsty.
+    Lesen: AGPL-3.0.
+  pt-br: |
+    Silo é um sistema de armazenamento de objetos de alto desempenho e compatível com S3.
+    É um fork do MinIO mantido pela comunidade, liderado pela equipe pgsty.
+    Licença: AGPL-3.0.
+tags:
+  - 对象存储
+  - S3
+  - MinIO
+  - 存储

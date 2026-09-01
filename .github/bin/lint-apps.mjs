@@ -229,7 +229,7 @@ function lintAllVersionDirs(appDir, fullPath) {
 
 // ─── 主逻辑 ─────────────────────────────────────────────────────────────────
 
-const ROOT = join(import.meta.dirname, '..');
+const ROOT = join(import.meta.dirname, '..', '..');
 const apps = listApps(ROOT);
 
 let totalErrors = 0;
