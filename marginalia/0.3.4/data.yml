@@ -8,8 +8,8 @@ additionalProperties:
   shortDescZh: 本地优先的私人知识库 + LLM 研究代理
   shortDescEn: Local-first personal knowledge base with LLM research agent
   description:
-    zh: "Marginalia 是一个本地优先的私人知识库系统，集成了 LLM 研究代理能力。基于 FastAPI + PostgreSQL + MinIO 构建，支持 PDF、笔记、表格等多种异构资料摄入。许可证：AGPL-3.0。"
-    en: "Marginalia is a local-first personal knowledge management system with LLM research agent capabilities. Built on FastAPI, PostgreSQL, and MinIO, it ingests heterogeneous sources (PDFs, notes, spreadsheets). License — AGPL-3.0."
+    zh: "Marginalia 是一个本地优先的私人知识库系统，集成了 LLM 研究代理能力。基于 FastAPI + PostgreSQL + 外部 S3 兼容存储构建，支持 PDF、笔记、表格等多种异构资料摄入。许可证：AGPL-3.0。"
+    en: "Marginalia is a local-first personal knowledge management system with LLM research agent capabilities. Built on FastAPI, PostgreSQL, and an external S3-compatible store, it ingests heterogeneous sources (PDFs, notes, spreadsheets). License — AGPL-3.0."
     zh-Hant: "Marginalia 是一個本地優先的私人知識庫系統，整合了 LLM 研究代理能力。授權條款：AGPL-3.0。"
     ja: "Marginaliaは、ローカルファーストの個人用ナレッジベースシステムです。ライセンス：AGPL-3.0。"
     ko: "Marginalia는 로컬 우선의 개인 지식 베이스 시스템입니다. 라이선스: AGPL-3.0."
@@ -231,56 +231,55 @@ additionalProperties:
         pt-br: 'Nome do banco. Pré-criar no DB principal do 1Panel: CREATE DATABASE marginalia;'
       required: true
       type: text
-    # MinIO 凭据
-    - default: marginalia
+    # 外部 S3 兼容存储凭据（已移除 bundled minio）
+    - default: http://minio:9000
       edit: true
-      envKey: MINIO_ROOT_USER
-      labelEn: MinIO Root User
-      labelZh: MinIO 根用户
+      envKey: S3_ENDPOINT_URL
+      labelEn: S3 Endpoint URL
+      labelZh: S3 Endpoint URL
       label:
-        en: MinIO Root User
-        zh: MinIO 根用户
-        zh-Hant: MinIO 根使用者
-        ja: MinIO ルートユーザー
-        ko: MinIO 루트 사용자
-        ru: Корневой пользователь MinIO
-        ms: Pengguna Root MinIO
-        pt-br: Usuário root do MinIO
+        en: S3 endpoint URL when STORAGE_BACKEND=s3 (e.g. http://minio:9000, https://s3.amazonaws.com)
+        zh: S3 endpoint 地址（当 STORAGE_BACKEND=s3 时；例如 http://minio:9000）
+        zh-Hant: S3 endpoint 位址（當 STORAGE_BACKEND=s3 時；例如 http://minio:9000）
+        ja: S3 エンドポイント URL（STORAGE_BACKEND=s3 の時。例 http://minio:9000）
+        ko: S3 엔드포인트 URL (STORAGE_BACKEND=s3 일 때. 예 http://minio:9000)
+        ru: URL endpoint S3 (при STORAGE_BACKEND=s3; напр. http://minio:9000)
+        ms: URL endpoint S3 (apabila STORAGE_BACKEND=s3; cth http://minio:9000)
+        pt-br: URL do endpoint S3 (quando STORAGE_BACKEND=s3; ex http://minio:9000)
       required: true
       type: text
     - default: marginalia
       edit: true
-      envKey: MINIO_ROOT_PASSWORD
-      labelEn: MinIO Root Password
-      labelZh: MinIO 根密码
+      envKey: S3_ACCESS_KEY
+      labelEn: S3 Access Key
+      labelZh: S3 Access Key
       label:
-        en: MinIO Root Password
-        zh: MinIO 根密码
-        zh-Hant: MinIO 根密碼
-        ja: MinIO ルートパスワード
-        ko: MinIO 루트 비밀번호
-        ru: Пароль root MinIO
-        ms: Kata laluan Root MinIO
-        pt-br: Senha root do MinIO
+        en: S3 access key (when STORAGE_BACKEND=s3)
+        zh: S3 Access Key（当 STORAGE_BACKEND=s3 时）
+        zh-Hant: S3 Access Key（當 STORAGE_BACKEND=s3 時）
+        ja: S3 アクセスキー（STORAGE_BACKEND=s3 の時）
+        ko: S3 액세스 키 (STORAGE_BACKEND=s3 일 때)
+        ru: Ключ доступа S3 (при STORAGE_BACKEND=s3)
+        ms: Kunci akses S3 (apabila STORAGE_BACKEND=s3)
+        pt-br: Chave de acesso S3 (quando STORAGE_BACKEND=s3)
+      required: true
+      type: text
+    - default: marginalia
+      edit: true
+      envKey: S3_SECRET_KEY
+      labelEn: S3 Secret Key
+      labelZh: S3 Secret Key
+      label:
+        en: S3 secret key (when STORAGE_BACKEND=s3)
+        zh: S3 Secret Key（当 STORAGE_BACKEND=s3 时）
+        zh-Hant: S3 Secret Key（當 STORAGE_BACKEND=s3 時）
+        ja: S3 シークレットキー（STORAGE_BACKEND=s3 の時）
+        ko: S3 시크릿 키 (STORAGE_BACKEND=s3 일 때)
+        ru: Секретный ключ S3 (при STORAGE_BACKEND=s3)
+        ms: Kunci rahsia S3 (apabila STORAGE_BACKEND=s3)
+        pt-br: Chave secreta S3 (quando STORAGE_BACKEND=s3)
       required: true
       type: password
-    - default: '9001'
-      edit: true
-      envKey: PANEL_APP_PORT_MINIO_CONSOLE
-      labelEn: MinIO Console Port
-      labelZh: MinIO 控制台端口
-      label:
-        en: MinIO Console Port (local debug; bind to 127.0.0.1 only)
-        zh: MinIO 控制台端口（本地调试；仅绑定 127.0.0.1）
-        zh-Hant: MinIO 控制台埠（本地除錯；僅綁定 127.0.0.1）
-        ja: MinIO コンソールポート（ローカルデバッグ、127.0.0.1 のみバインド）
-        ko: MinIO 콘솔 포트 (로컬 디버그, 127.0.0.1만 바인딩)
-        ru: Порт консоли MinIO (локальная отладка, привязка только к 127.0.0.1)
-        ms: Port Konsol MinIO (penyahpepijatan tempatan, ikat pada 127.0.0.1 sahaja)
-        pt-br: Porta do Console MinIO (depuração local, vincular apenas a 127.0.0.1)
-      required: true
-      rule: paramPort
-      type: number
     - default: Asia/Shanghai
       edit: true
       envKey: TZ
@@ -304,19 +303,19 @@ additionalProperties:
       labelEn: Storage Backend
       labelZh: 存储后端
       label:
-        en: Storage Backend (s3=MinIO bundled; local=UUID flat; mirror=folder tree)
-        zh: 存储后端（s3=内置 MinIO；local=UUID 扁平目录；mirror=目录镜像）
-        zh-Hant: 儲存後端（s3=內建 MinIO；local=UUID 扁平目錄；mirror=目錄鏡像）
-        ja: ストレージバックエンド（s3=同梱 MinIO；local=UUID フラット；mirror=フォルダツリー）
-        ko: 스토리지 백엔드 (s3=번들 MinIO; local=UUID 플랫; mirror=폴더 트리)
-        ru: Бэкенд хранилища (s3=встроенный MinIO; local=UUID плоский; mirror=дерево папок)
-        ms: Backend Storan (s3=MinIO terbundel; local=UUID rata; mirror=pokok folder)
-        pt-br: Backend de armazenamento (s3=MinIO empacotado; local=UUID plano; mirror=árvore de pastas)
+        en: Storage Backend (s3=external S3/MinIO; local=UUID flat; mirror=folder tree)
+        zh: 存储后端（s3=外部 S3/MinIO；local=UUID 扁平目录；mirror=目录镜像）
+        zh-Hant: 儲存後端（s3=外部 S3/MinIO；local=UUID 扁平目錄；mirror=目錄鏡像）
+        ja: ストレージバックエンド（s3=外部 S3/MinIO；local=UUID フラット；mirror=フォルダツリー）
+        ko: 스토리지 백엔드 (s3=외부 S3/MinIO; local=UUID 플랫; mirror=폴더 트리)
+        ru: Бэкенд хранилища (s3=внешний S3/MinIO; local=UUID плоский; mirror=дерево папок)
+        ms: Backend Storan (s3=S3/MinIO luaran; local=UUID rata; mirror=pokok folder)
+        pt-br: Backend de armazenamento (s3=S3/MinIO externo; local=UUID plano; mirror=árvore de pastas)
       required: true
       rule: paramSelect
       type: select
       values:
-        - label: S3 (MinIO, default)
+        - label: S3 (External S3/MinIO, default)
           value: s3
         - label: Local (UUID flat)
           value: local

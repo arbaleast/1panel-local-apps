@@ -5,7 +5,7 @@
 
 ## 简介
 
-Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研究代理能力。基于 FastAPI + PostgreSQL + MinIO 构建，支持 PDF、笔记、表格、日志、压缩包等多种异构资料摄入，可对本地资料库进行语义检索并产出**带引用的回答**。
+Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研究代理能力。基于 FastAPI + PostgreSQL + 外部 S3 兼容存储构建，支持 PDF、笔记、表格、日志、压缩包等多种异构资料摄入，可对本地资料库进行语义检索并产出**带引用的回答**。
 
 ## 许可证
 
@@ -22,8 +22,12 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 - **1Panel 主 PG 18 凭据**（复用 1Panel-postgresql，**非捆绑独立容器**）：
   - `PostgreSQL Host`：1Panel 应用商店的 `1Panel-postgresql-XXXX` 容器名（`XXXX` 为随机后缀，从 1Panel 容器列表复制）
   - `PostgreSQL User / Password`：取自 1Panel-postgresql 应用详情页（`user_xxxxxx` + 强随机密码）
-  - `PostgreSQL Database`：**部署前必须先在 1Panel 主 PG 中预创建** `marginalia` 库（参见下文"快速开始"第 1 步）
-- **MinIO 凭据**（内置容器）：默认用户名密码均为 `marginalia`，建议首次部署后通过 1Panel 终端修改。
+  - `PostgreSQL Database`：**部署前必须先在 1Panel 主 PG 中预创建** `marginalia` 库（参见下文“快速开始”第 1 步）
+- **外部 S3 凭据**（`STORAGE_BACKEND=s3` 时必填）：本应用**已移除 bundled minio**，需自备 S3 兼容存储（MinIO、SeaweedFS、AWS S3、阿里 OSS 兼容端点等）。在参数页填写 `S3 Endpoint URL` / `S3 Access Key` / `S3 Secret Key` 即可。
+  - 如自部署 MinIO：建议运行独立的 minio 容器，赋 `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` 后将 `S3_ENDPOINT_URL` 填为 `http://<minio-container-name>:9000`。
+  - 默认值 `marginalia` / `marginalia` 仅作占位；**部署后必须修改为强随机值**，并在所选存储中预创建桶（默认名 `marginalia`）。
+  - 如只需本地磁盘存储， `STORAGE_BACKEND` 选 `local`（UUID 扁平）或 `mirror`（目录镜像）即可跳过本段。
+  - ⚠️ 本变动未经上游 marginalia 项目以本架构完整跑通验证，部署后需验证 `api` / `worker` 启动日志中无 S3 连接报错。
 
 ## 快速开始
 
@@ -33,7 +37,7 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
    - **PostgreSQL 段**：`PostgreSQL Host` 填 1Panel-postgresql 容器名（如 `1Panel-postgresql-ZU4y`）、`PostgreSQL User / Password` 取自主 PG 详情页、`PostgreSQL Database` 填 `marginalia`
    - **LLM 段**：`LLM API Key`（必填）、`LLM Provider`（openai / openai-compatible / anthropic）、`LLM Model`（默认 `gpt-4o-mini`，可改为 `gpt-4o` / `claude-3-5-sonnet-...` 等）
    - 自建/第三方网关：填 `LLM Base URL`
-4. 等待 1-2 分钟（包含 MinIO 桶创建、上游应用启动时自动跑 Alembic 迁移与 `_inbox` seed）。
+4. 等待 1-2 分钟（上游应用启动时自动跑 Alembic 迁移与 `_inbox` seed。如 `STORAGE_BACKEND=s3` 且选择自部署 MinIO，需另行创建 `marginalia` 桶）。
 5. 访问 `http://<宿主机IP>:<端口>` 进入 API（默认 8000）。
 
 > 上游 [`src/marginalia/db/bootstrap.py`](https://github.com/shenmintao/marginalia/blob/main/src/marginalia/db/bootstrap.py) 在 `uvicorn` 启动时会自动调用 `bootstrap_schema()`，在 1Panel 主 PG 18 上**首次启动即建表 + 跑 16 个增量 shim + stamp `alembic_version` 到 head**，无需额外迁移容器。
@@ -43,8 +47,8 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 | 端口 | 用途 | 暴露策略 |
 |------|------|----------|
 | 8000 | Marginalia API | 对外（`PANEL_APP_PORT_HTTP`） |
-| 9001 | MinIO 控制台 | 仅 127.0.0.1（本地调试） |
-| 9000 | MinIO S3 API | 内部网络（外部 PG 在 1Panel 主机的 `1Panel-postgresql` 容器内，不暴露给本应用） |
+
+> 本应用**不再暴露 MinIO 端口**：MinIO 不再 bundled，对象存储移至外部 S3 兼容服务。部署者需自行决定外露策略（推荐反向代理 / 私有网络）。PostgreSQL 复用 1Panel 主机的 `1Panel-postgresql` 容器，同样不暴露给本应用。
 
 如需在 LAN 上访问 API，请同时设置 `MARGINALIA_API_TOKEN`（API Bearer Token），并在 HTTP 客户端请求头中携带 `Authorization: Bearer <token>`。
 
@@ -53,22 +57,19 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 | 容器路径 | 主机路径 | 用途 |
 |----------|----------|------|
 | `/data/library` | `./data/library` | 资料库元数据与目录树 |
-| `/data/objects` | `./data/objects` | 资料对象存储（指向 MinIO S3 桶） |
+| `/data/objects` | `./data/objects` | 资料对象存储（当 `STORAGE_BACKEND=local`/`mirror` 时的本地落盘；`s3` 模式下由外部存储负责） |
 | `/data/runtime` | `./data/runtime` | 运行时缓存与日志 |
-| `/data`（MinIO） | `./data/minio` | MinIO 对象存储 |
 
-> **PostgreSQL 不在本地落盘**：本应用复用 1Panel 主机的 `1Panel-postgresql-XXXX` 容器，库与表都建在 1Panel 主 PG（默认 PG 18）中，`./data/minio` 仅负责 MinIO 对象存储。
+> **PostgreSQL 不在本地落盘**：本应用复用 1Panel 主机的 `1Panel-postgresql-XXXX` 容器，库与表都建在 1Panel 主 PG（默认 PG 18）中。对象存储也已移出本应用，需部署者提供外部 S3 兼容服务（`STORAGE_BACKEND=s3`）或选用 `local`/`mirror` 模式。
 
 ## 服务架构
 
-应用包含 4 个容器：
+应用包含 2 个容器（原 `minio` / `minio-init` 已移除，改为复用外部 S3 兼容存储）：
 
 | 服务 | 角色 | 重启策略 |
 |------|------|----------|
 | `api` | FastAPI + uvicorn 主服务（启动时自动跑 `bootstrap_schema()` 创建表/迁移） | `always` |
 | `worker` | 异步 ingest 流水线 + 周期任务（同样启动时 bootstrap） | `always` |
-| `minio` | S3 兼容对象存储 | `always` |
-| `minio-init` | 一次性创建 `marginalia` 桶 | `no` |
 
 > PostgreSQL **不在本应用**中声明：复用 1Panel 主机已部署的 `1Panel-postgresql-XXXX` 容器（通常为 PG 18），库 `marginalia` 需要预创建（参见"快速开始"第 1 步）。
 
@@ -88,10 +89,11 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 | `POSTGRES_USER` | 是 | — | 1Panel 主 PG 用户（随机 `user_xxxxxx`） |
 | `POSTGRES_PASSWORD` | **是** | — | 1Panel 主 PG 密码（1Panel-postgresql 应用详情页） |
 | `POSTGRES_DB` | 是 | `marginalia` | 数据库名，**部署前需在 1Panel 主 PG 中预创建** |
-| `MINIO_ROOT_USER` / `PASSWORD` | 是 | `marginalia` | MinIO 凭据 |
+| `S3_ENDPOINT_URL` | `s3` 是 | `http://minio:9000` | 外部 S3 endpoint（`STORAGE_BACKEND=s3` 时必填，如自部署 MinIO 填 `http://<minio-container>:9000`） |
+| `S3_ACCESS_KEY` | `s3` 是 | `marginalia` | S3 Access Key（默认占位，**部署后必须修改**） |
+| `S3_SECRET_KEY` | `s3` 是 | `marginalia` | S3 Secret Key（默认占位，**部署后必须修改**） |
 | `TZ` | 是 | `Asia/Shanghai` | 时区 |
 | `PANEL_APP_PORT_HTTP` | 是 | `8000` | 宿主机 HTTP 端口 |
-| `PANEL_APP_PORT_MINIO_CONSOLE` | 是 | `9001` | MinIO 控制台端口（仅 127.0.0.1） |
 
 ### 运行调优（可选）
 
@@ -101,8 +103,8 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 | `MARGINALIA_API_HOST` | `0.0.0.0` | 容器内 API 绑定地址（`127.0.0.1` = 仅本机） |
 | `MARGINALIA_UPLOAD_TOKEN` | — | 上传端点独立 Bearer Token（留空=沿用 API Token） |
 | `MARGINALIA_UPLOAD_MAX_BYTES` | `0` | 单次上传字节上限（`0` = 不限；推荐 `209715200` ≈ 200 MB） |
-| `STORAGE_BACKEND` | `s3` | 存储后端：`s3`（MinIO）/ `local`（UUID 扁平）/ `mirror`（目录镜像） |
-| `S3_BUCKET` | `marginalia` | S3 桶名（仅当 `STORAGE_BACKEND=s3`） |
+| `STORAGE_BACKEND` | `s3` | 存储后端：`s3`（外部 S3 兼容存储）/ `local`（UUID 扁平）/ `mirror`（目录镜像） |
+| `S3_BUCKET` | `marginalia` | S3 桶名（仅当 `STORAGE_BACKEND=s3`，需在所选存储中预创建） |
 | `S3_REGION` | `us-east-1` | S3 区域标识 |
 | `SEMANTIC_RECALL_ENABLED` | `true` | 语义检索开关（关闭则仅关键词） |
 | `AUTO_LIFECYCLE_ENABLED` | `false` | 自动资料库生命周期（保留/清理） |
@@ -125,8 +127,7 @@ marginalia 将 embedding 与 LLM 主模型**完全解耦**，可独立配置凭�
 | 镜像 | 用途 |
 |------|------|
 | `muhfalihr/marginalia:v0.3.4` | Marginalia API / Worker（第三方构建，启动时跑 `bootstrap_schema()`） |
-| `minio/minio:latest` | MinIO 对象存储（与上游官方保持一致） |
-| `minio/mc:latest` | MinIO 客户端（minio-init） |
+（`minio/minio:latest` 与 `minio/mc:latest` 已不再随本应用拉取；请在外部独立部署 MinIO 或选用其他 S3 兼容服务）
 
 > PostgreSQL **不在本应用内提供**：使用 1Panel 主机上已部署的 `1Panel-postgresql` 容器（默认 PG 18）。
 
@@ -142,12 +143,26 @@ marginalia 将 embedding 与 LLM 主模型**完全解耦**，可独立配置凭�
 
 A：LLM API Key 是必填项。返回 1Panel 部署参数页，在 **LLM API Key** 输入框填入有效的 Key 后重新部署。
 
-### Q2：MinIO 控制台无法访问？
+### Q2：如何接入外部 S3 存储？
 
-A：MinIO 控制台默认仅绑定 `127.0.0.1:9001`，只能在宿主机本地访问。如需远程访问，请通过 1Panel 终端进入 `minio` 容器操作：
-```bash
-docker exec -it <CONTAINER_NAME>-minio mc admin info local
-```
+A：本应用已移除 bundled MinIO，部署 `STORAGE_BACKEND=s3` 时需自备 S3 兼容服务。推荐两种方式：
+
+1. **自部署独立 MinIO 容器**：在 1Panel 中独立安装 minio（用 1Panel 计划任务面板中预部署的 minio 应用，或自行 `docker run`）。启动后：
+   - 在所选 MinIO 中创建 `marginalia` 桶（默认名）：
+     ```bash
+     docker exec -it <minio-container> mc alias set local http://localhost:9000 <root-user> <root-password>
+     docker exec -it <minio-container> mc mb local/marginalia --ignore-existing
+     ```
+   - 在 marginalia 部署参数页：
+     - `S3 Endpoint URL`：`http://<minio-container-name>:9000`（同 `1panel-network` 可直接容器名访问）
+     - `S3 Access Key` / `S3 Secret Key`：填 MinIO 的 `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`（**已修改为强随机值**）
+2. **接入现有 S3 兼容服务**（AWS S3、阿里 OSS 兼容端点等）：
+   - `S3 Endpoint URL`：填服务商提供的 endpoint（如 `https://s3.amazonaws.com`）
+   - `S3 Access Key` / `S3 Secret Key`：填该服务的 Access Key
+   - `S3 Region`：填服务商 region
+   - `S3 Bucket`：填已创建的桶名
+
+⚠️ 本变动**未经上游 marginalia 项目以本架构完整跑通验证**。部署后请检 `api` / `worker` 启动日志中无 S3 连接报错，并在 1Panel UI 上传一个小文件验证 `STORAGE_BACKEND=s3` 路径是否真正走外部存储。
 
 ### Q3：API 报 401 Unauthorized？
 
@@ -172,7 +187,7 @@ docker push muhfalihr/marginalia:v0.3.6
 A：可以直接用。**v0.3.4 已切换为"复用 1Panel 主 PG 18"模式**，本应用不再捆绑独立 PG 容器。整体架构：
 
 - **数据库**：使用 1Panel 主机上已部署的 `1Panel-postgresql-XXXX` 容器（默认 PG 18），元数据落在 `marginalia` 库中；
-- **对象存储**：本应用仍自带 MinIO（bind mount `./data/minio` → 容器内 `/data`）；
+- **对象存储**：本应用已**移除 bundled MinIO**，需自备外部 S3 兼容存储（`STORAGE_BACKEND=s3`）或选用 `local` / `mirror` 模式；
 - **迁移**：由上游 [`src/marginalia/db/bootstrap.py`](https://github.com/shenmintao/marginalia/blob/main/src/marginalia/db/bootstrap.py) 在 `uvicorn` 启动时自动调用 `bootstrap_schema()` 完成建表 + 16 个增量 shim + stamp `alembic_version`，**无需独立迁移容器**。
 
 **完整部署步骤**（首次安装）：

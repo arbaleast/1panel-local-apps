@@ -31,11 +31,12 @@ services:
       # 后端：PostgreSQL
       - DB_BACKEND=postgres
       - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-      # 对象存储：MinIO（S3 兼容）
+      # 对象存储：外部 S3 兼容存储（已移除 bundled minio，需自备）
+      # ⚠️ 需确认上游 marginalia 在 STORAGE_BACKEND=s3 时能正常访问外部 endpoint
       - STORAGE_BACKEND=${STORAGE_BACKEND}
-      - S3_ENDPOINT_URL=http://${CONTAINER_NAME}-minio:9000
-      - S3_ACCESS_KEY=${MINIO_ROOT_USER}
-      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
       - S3_BUCKET=${S3_BUCKET}
       - S3_REGION=${S3_REGION}
       # LLM 凭据（必填，compose 强校验）
@@ -69,9 +70,6 @@ services:
       - ./data/library:/data/library
       - ./data/objects:/data/objects
       - ./data/runtime:/data/runtime
-    depends_on:
-      minio:
-        condition: service_healthy
     restart: always
     labels:
       createdBy: "Apps"
@@ -93,9 +91,9 @@ services:
       - DB_BACKEND=postgres
       - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       - STORAGE_BACKEND=${STORAGE_BACKEND}
-      - S3_ENDPOINT_URL=http://${CONTAINER_NAME}-minio:9000
-      - S3_ACCESS_KEY=${MINIO_ROOT_USER}
-      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
       - S3_BUCKET=${S3_BUCKET}
       - S3_REGION=${S3_REGION}
       - LLM_DEFAULT_PROVIDER=${LLM_DEFAULT_PROVIDER}
@@ -120,54 +118,12 @@ services:
       - ./data/library:/data/library
       - ./data/objects:/data/objects
       - ./data/runtime:/data/runtime
-    depends_on:
-      minio:
-        condition: service_healthy
     restart: always
     labels:
       createdBy: "Apps"
 
-  # MinIO：S3 兼容对象存储
-  minio:
-    container_name: ${CONTAINER_NAME}-minio
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      - TZ=${TZ}
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-    networks:
-      - 1panel-network
-    volumes:
-      - ./data/minio:/data
-    ports:
-      # MinIO 控制台仅绑定 loopback（本地调试）
-      - 127.0.0.1:${PANEL_APP_PORT_MINIO_CONSOLE}:9001
-    restart: always
-    labels:
-      createdBy: "Apps"
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  # MinIO 初始化：创建 marginalia 桶
-  minio-init:
-    container_name: ${CONTAINER_NAME}-minio-init
-    image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - >
-        mc alias set local http://${CONTAINER_NAME}-minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
-        mc mb local/marginalia --ignore-existing &&
-        exit 0;
-    networks:
-      - 1panel-network
-    restart: "no"
-    labels:
-      createdBy: "Apps"
+  # 提示：原 bundled minio + minio-init 服务已移除。
+  # 现需外部 S3 兼容存储（MinIO、SeaweedFS、AWS S3、阿里 OSS 兼容端点等），
+  # 通过 1Panel 计划任务面板中自行部署并通过 S3_ENDPOINT_URL 注入。
+  # 部署前请确认上游 marginalia 在 STORAGE_BACKEND=s3 时能正常访问外部 endpoint。
+  # （参考 commit / PR 描述中的“上游验证”提示。）
