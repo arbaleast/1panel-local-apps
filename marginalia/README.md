@@ -70,6 +70,8 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 
 ## 环境变量
 
+### 核心凭据与服务
+
 | 变量 | 必填 | 默认 | 用途 |
 |------|------|------|------|
 | `LLM_DEFAULT_PROVIDER` | 是 | `openai` | `openai` / `openai-compatible` / `anthropic` |
@@ -82,6 +84,33 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 | `TZ` | 是 | `Asia/Shanghai` | 时区 |
 | `PANEL_APP_PORT_HTTP` | 是 | `8000` | 宿主机 HTTP 端口 |
 | `PANEL_APP_PORT_MINIO_CONSOLE` | 是 | `9001` | MinIO 控制台端口（仅 127.0.0.1） |
+
+### 运行调优（可选）
+
+| 变量 | 默认 | 用途 |
+|------|------|------|
+| `LOG_LEVEL` | `INFO` | 应用日志级别（`DEBUG` / `INFO` / `WARNING` / `ERROR`） |
+| `MARGINALIA_API_HOST` | `0.0.0.0` | 容器内 API 绑定地址（`127.0.0.1` = 仅本机） |
+| `MARGINALIA_UPLOAD_TOKEN` | — | 上传端点独立 Bearer Token（留空=沿用 API Token） |
+| `MARGINALIA_UPLOAD_MAX_BYTES` | `0` | 单次上传字节上限（`0` = 不限；推荐 `209715200` ≈ 200 MB） |
+| `STORAGE_BACKEND` | `s3` | 存储后端：`s3`（MinIO）/ `local`（UUID 扁平）/ `mirror`（目录镜像） |
+| `S3_BUCKET` | `marginalia` | S3 桶名（仅当 `STORAGE_BACKEND=s3`） |
+| `S3_REGION` | `us-east-1` | S3 区域标识 |
+| `SEMANTIC_RECALL_ENABLED` | `true` | 语义检索开关（关闭则仅关键词） |
+| `AUTO_LIFECYCLE_ENABLED` | `false` | 自动资料库生命周期（保留/清理） |
+| `LIBRARY_DOCUMENT_LIMIT` | `0` | 资料库最大文档数（`0` = 不限） |
+| `MAINTENANCE_DAILY_TOKEN_BUDGET` | `0` | 后台维护每日 token 预算（`0` = 不限） |
+
+### Embedding / Rerank 子 profile
+
+marginalia 将 embedding 与 LLM 主模型**完全解耦**，可独立配置凭据与模型：
+
+| 变量 | 默认 | 用途 |
+|------|------|------|
+| `EMBEDDING_API_KEY` | — | Embedding API 密钥（留空=沿用 `LLM_DEFAULT_API_KEY`） |
+| `EMBEDDING_BASE_URL` | — | Embedding API 端点（留空=沿用 `LLM_DEFAULT_BASE_URL`） |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding 模型名 |
+| `RERANK_ENABLED` | `false` | 启用 Rerank 阶段（默认 `qwen3-rerank`） |
 
 ## 镜像说明
 
@@ -128,6 +157,19 @@ docker build -t muhfalihr/marginalia:v0.3.6 .
 docker push muhfalihr/marginalia:v0.3.6
 ```
 然后在 1Panel 中新建 `0.3.6` 版本目录，将 `docker-compose.yml` 中的镜像 tag 改为 `v0.3.6`。
+
+### Q5：1Panel 主机上装的是 PostgreSQL 18，marginalia 能用吗？
+
+A：可以用。marginalia 在 compose 中捆绑了独立容器 [`postgres:16-alpine`](marginalia/0.3.4/docker-compose.yml:114)，数据落在命名卷 [`${CONTAINER_NAME}-pgdata`](marginalia/0.3.4/docker-compose.yml:227)，**与 1Panel 主机的 PG 18 完全隔离**——1Panel 主机的 PG 仅用于 1Panel 自身的管理库，不会被 marginalia 复用。
+
+因此：
+- **不需要任何操作**：当前配置在 1Panel 装 PG 16/17/18 的主机上都能运行。
+- **容器内 PG 版本升级**：若希望与主机对齐，可手动把 `image: postgres:16-alpine` 改成 `postgres:18-alpine`（仅 [`marginalia/0.3.4/docker-compose.yml:138`](marginalia/0.3.4/docker-compose.yml:138) 一行），重启后 `db-prepare` 会自动跑 Alembic 迁移。marginalia 上游依赖 SQLAlchemy 2.x + asyncpg，未使用 16 专属特性，理论上兼容。但**上游未声明在 18 上做过回归测试**，请先备份 `pgdata` 卷。
+- **回退命令**：`docker compose down && sed -i 's/postgres:18-alpine/postgres:16-alpine/' docker-compose.yml && docker compose up -d`。
+
+### Q6：为什么没看到 Embedding / Rerank 的配置项？
+
+A：v0.3.4 应用商店版本已暴露 4 个独立 formField（`EMBEDDING_API_KEY` / `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL` / `RERANK_ENABLED`），默认沿用 LLM 主模型的凭据。单独填写即可覆盖。
 
 ## 相关链接
 
