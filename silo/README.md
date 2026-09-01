@@ -25,7 +25,7 @@ Silo 与 MinIO 命令行、API、S3 SDK 完全兼容，可以作为 MinIO 的"dr
 |------|------|------|
 | `MINIO_ROOT_USER` | ✅ | S3 Access Key，至少 3 个字符。**生产环境务必替换默认值** |
 | `MINIO_ROOT_PASSWORD` | ✅ | S3 Secret Key，至少 8 个字符。**生产环境务必替换默认值** |
-| `APP_VERSION` | ✅ | 镜像 tag。默认 `RELEASE.2026-08-04T00-00-00Z`，可手动覆盖为其他 tag |
+| `APP_VERSION` | ✅ | 镜像 tag。默认 `RELEASE.2026-08-06T00-00-00Z`，可手动覆盖为其他 tag |
 
 Silo 启动时会在日志里输出一条警告：
 

@@ -8,15 +8,15 @@ additionalProperties:
       labelEn: App version (image tag)
       labelZh: 应用版本（镜像 tag）
       label:
-        en: App version (image tag, e.g. RELEASE.2026-08-04T00-00-00Z)
-        zh: 应用版本（镜像 tag，例如 RELEASE.2026-08-04T00-00-00Z）
-        zh-Hant: 應用版本（映像檔 tag，例如 RELEASE.2026-08-04T00-00-00Z）
-        ja: "アプリバージョン（イメージタグ、例: RELEASE.2026-08-04T00-00-00Z）"
-        ko: "앱 버전 (이미지 태그, 예: RELEASE.2026-08-04T00-00-00Z)"
-        ru: Версия приложения (тег образа, напр. RELEASE.2026-08-04T00-00-00Z)
-        ms: Versi aplikasi (tag imej, cth. RELEASE.2026-08-04T00-00-00Z)
-        pt-br: Versão do app (tag da imagem, ex. RELEASE.2026-08-04T00-00-00Z)
-      default: RELEASE.2026-08-04T00-00-00Z
+        en: App version (image tag, e.g. RELEASE.2026-08-06T00-00-00Z)
+        zh: 应用版本（镜像 tag，例如 RELEASE.2026-08-06T00-00-00Z）
+        zh-Hant: 應用版本（映像檔 tag，例如 RELEASE.2026-08-06T00-00-00Z）
+        ja: "アプリバージョン（イメージタグ、例: RELEASE.2026-08-06T00-00-00Z）"
+        ko: "앱 버전 (이미지 태그, 예: RELEASE.2026-08-06T00-00-00Z)"
+        ru: Версия приложения (тег образа, напр. RELEASE.2026-08-06T00-00-00Z)
+        ms: Versi aplikasi (tag imej, cth. RELEASE.2026-08-06T00-00-00Z)
+        pt-br: Versão do app (tag da imagem, ex. RELEASE.2026-08-06T00-00-00Z)
+      default: RELEASE.2026-08-06T00-00-00Z
       type: text
       required: true
       edit: true
