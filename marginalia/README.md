@@ -19,18 +19,24 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
   - OpenAI：填写 `https://api.openai.com/v1` 的 Key
   - 自建 / 网关：在 `LLM Base URL` 填网关地址（如 `https://your-gateway/v1`）
   - Anthropic：`LLM Provider` 选 `anthropic`，`LLM Model` 填 `claude-3-5-sonnet-...`
-- **PostgreSQL / MinIO 凭据**：默认用户名密码均为 `marginalia`，建议首次部署后通过 1Panel 终端修改。
+- **1Panel 主 PG 18 凭据**（复用 1Panel-postgresql，**非捆绑独立容器**）：
+  - `PostgreSQL Host`：1Panel 应用商店的 `1Panel-postgresql-XXXX` 容器名（`XXXX` 为随机后缀，从 1Panel 容器列表复制）
+  - `PostgreSQL User / Password`：取自 1Panel-postgresql 应用详情页（`user_xxxxxx` + 强随机密码）
+  - `PostgreSQL Database`：**部署前必须先在 1Panel 主 PG 中预创建** `marginalia` 库（参见下文"快速开始"第 1 步）
+- **MinIO 凭据**（内置容器）：默认用户名密码均为 `marginalia`，建议首次部署后通过 1Panel 终端修改。
 
 ## 快速开始
 
-1. 在 1Panel 应用商店搜索 **Marginalia** 并安装。
-2. 部署参数页填写：
-   - `LLM API Key`（必填）
-   - `LLM Provider`（openai / openai-compatible / anthropic）
-   - `LLM Model`（默认 `gpt-4o-mini`，可改为 `gpt-4o` / `claude-3-5-sonnet-...` 等）
-   - 若使用自建/第三方网关：填 `LLM Base URL`
-3. 等待 1-2 分钟（包含 PostgreSQL 初始化、MinIO 桶创建、Alembic 迁移）。
-4. 访问 `http://<宿主机IP>:<端口>` 进入 API（默认 8000）。
+1. **预创建数据库**（必做，仅首次）：登录 1Panel 主 PG，执行 `CREATE DATABASE marginalia;`（在 1Panel 数据库管理页或终端内 `psql` 均可）。
+2. 在 1Panel 应用商店搜索 **Marginalia** 并安装。
+3. 部署参数页填写：
+   - **PostgreSQL 段**：`PostgreSQL Host` 填 1Panel-postgresql 容器名（如 `1Panel-postgresql-ZU4y`）、`PostgreSQL User / Password` 取自主 PG 详情页、`PostgreSQL Database` 填 `marginalia`
+   - **LLM 段**：`LLM API Key`（必填）、`LLM Provider`（openai / openai-compatible / anthropic）、`LLM Model`（默认 `gpt-4o-mini`，可改为 `gpt-4o` / `claude-3-5-sonnet-...` 等）
+   - 自建/第三方网关：填 `LLM Base URL`
+4. 等待 1-2 分钟（包含 MinIO 桶创建、上游应用启动时自动跑 Alembic 迁移与 `_inbox` seed）。
+5. 访问 `http://<宿主机IP>:<端口>` 进入 API（默认 8000）。
+
+> 上游 [`src/marginalia/db/bootstrap.py`](https://github.com/shenmintao/marginalia/blob/main/src/marginalia/db/bootstrap.py) 在 `uvicorn` 启动时会自动调用 `bootstrap_schema()`，在 1Panel 主 PG 18 上**首次启动即建表 + 跑 16 个增量 shim + stamp `alembic_version` 到 head**，无需额外迁移容器。
 
 ## 服务端口
 
@@ -38,8 +44,7 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 |------|------|----------|
 | 8000 | Marginalia API | 对外（`PANEL_APP_PORT_HTTP`） |
 | 9001 | MinIO 控制台 | 仅 127.0.0.1（本地调试） |
-| 5432 | PostgreSQL | 内部网络 |
-| 9000 | MinIO S3 API | 内部网络 |
+| 9000 | MinIO S3 API | 内部网络（外部 PG 在 1Panel 主机的 `1Panel-postgresql` 容器内，不暴露给本应用） |
 
 如需在 LAN 上访问 API，请同时设置 `MARGINALIA_API_TOKEN`（API Bearer Token），并在 HTTP 客户端请求头中携带 `Authorization: Bearer <token>`。
 
@@ -50,23 +55,22 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 | `/data/library` | `./data/library` | 资料库元数据与目录树 |
 | `/data/objects` | `./data/objects` | 资料对象存储（指向 MinIO S3 桶） |
 | `/data/runtime` | `./data/runtime` | 运行时缓存与日志 |
-| `/var/lib/postgresql/data` | 命名卷 `${CONTAINER_NAME}-pgdata` | PostgreSQL 数据 |
 | `/data`（MinIO） | 命名卷 `${CONTAINER_NAME}-miniodata` | MinIO 对象存储 |
 
-> PostgreSQL 与 MinIO 使用独立命名卷（`${CONTAINER_NAME}-pgdata` / `${CONTAINER_NAME}-miniodata`），与应用目录隔离，避免污染。
+> **PostgreSQL 不在本地落盘**：本应用复用 1Panel 主机的 `1Panel-postgresql-XXXX` 容器，库与表都建在 1Panel 主 PG（默认 PG 18）中，元数据卷 `${CONTAINER_NAME}-miniodata` 仅负责 MinIO 对象存储。
 
 ## 服务架构
 
-应用包含 6 个容器：
+应用包含 4 个容器：
 
 | 服务 | 角色 | 重启策略 |
 |------|------|----------|
-| `api` | FastAPI + uvicorn 主服务 | `always` |
-| `worker` | 异步 ingest 流水线 + 周期任务 | `always` |
-| `postgres` | 元数据库（PostgreSQL 16） | `always` |
+| `api` | FastAPI + uvicorn 主服务（启动时自动跑 `bootstrap_schema()` 创建表/迁移） | `always` |
+| `worker` | 异步 ingest 流水线 + 周期任务（同样启动时 bootstrap） | `always` |
 | `minio` | S3 兼容对象存储 | `always` |
 | `minio-init` | 一次性创建 `marginalia` 桶 | `no` |
-| `db-prepare` | 一次性运行 Alembic 迁移 | `no` |
+
+> PostgreSQL **不在本应用**中声明：复用 1Panel 主机已部署的 `1Panel-postgresql-XXXX` 容器（通常为 PG 18），库 `marginalia` 需要预创建（参见"快速开始"第 1 步）。
 
 ## 环境变量
 
@@ -79,7 +83,11 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 | `LLM_DEFAULT_MODEL` | 是 | `gpt-4o-mini` | 模型名 |
 | `LLM_DEFAULT_BASE_URL` | 否 | — | 自建/网关的 API 端点 |
 | `MARGINALIA_API_TOKEN` | 否 | — | API Bearer Token（LAN 暴露时必填） |
-| `POSTGRES_USER` / `PASSWORD` / `DB` | 是 | `marginalia` | PostgreSQL 凭据 |
+| `POSTGRES_HOST` | 是 | — | 1Panel 主 PG 容器名（如 `1Panel-postgresql-ZU4y`，随机后缀） |
+| `POSTGRES_PORT` | 是 | `5432` | 1Panel 主 PG 端口（默认 `5432`） |
+| `POSTGRES_USER` | 是 | — | 1Panel 主 PG 用户（随机 `user_xxxxxx`） |
+| `POSTGRES_PASSWORD` | **是** | — | 1Panel 主 PG 密码（1Panel-postgresql 应用详情页） |
+| `POSTGRES_DB` | 是 | `marginalia` | 数据库名，**部署前需在 1Panel 主 PG 中预创建** |
 | `MINIO_ROOT_USER` / `PASSWORD` | 是 | `marginalia` | MinIO 凭据 |
 | `TZ` | 是 | `Asia/Shanghai` | 时区 |
 | `PANEL_APP_PORT_HTTP` | 是 | `8000` | 宿主机 HTTP 端口 |
@@ -116,10 +124,11 @@ marginalia 将 embedding 与 LLM 主模型**完全解耦**，可独立配置凭�
 
 | 镜像 | 用途 |
 |------|------|
-| `muhfalihr/marginalia:v0.3.4` | Marginalia API / Worker / db-prepare（第三方构建） |
-| `postgres:16-alpine` | PostgreSQL 16 |
-| `minio/minio:latest` | MinIO 对象存储 |
+| `muhfalihr/marginalia:v0.3.4` | Marginalia API / Worker（第三方构建，启动时跑 `bootstrap_schema()`） |
+| `minio/minio:latest` | MinIO 对象存储（与上游官方保持一致） |
 | `minio/mc:latest` | MinIO 客户端（minio-init） |
+
+> PostgreSQL **不在本应用内提供**：使用 1Panel 主机上已部署的 `1Panel-postgresql` 容器（默认 PG 18）。
 
 > ⚠️ 官方未发布预构建镜像，本应用使用 DockerHub 上 `muhfalihr/marginalia:v0.3.4`（社区构建，仅 amd64 架构）。如需自行构建，请使用：
 > ```bash
@@ -160,12 +169,38 @@ docker push muhfalihr/marginalia:v0.3.6
 
 ### Q5：1Panel 主机上装的是 PostgreSQL 18，marginalia 能用吗？
 
-A：可以用。marginalia 在 compose 中捆绑了独立容器 [`postgres:16-alpine`](marginalia/0.3.4/docker-compose.yml:114)，数据落在命名卷 [`${CONTAINER_NAME}-pgdata`](marginalia/0.3.4/docker-compose.yml:227)，**与 1Panel 主机的 PG 18 完全隔离**——1Panel 主机的 PG 仅用于 1Panel 自身的管理库，不会被 marginalia 复用。
+A：可以直接用。**v0.3.4 已切换为"复用 1Panel 主 PG 18"模式**，本应用不再捆绑独立 PG 容器。整体架构：
 
-因此：
-- **不需要任何操作**：当前配置在 1Panel 装 PG 16/17/18 的主机上都能运行。
-- **容器内 PG 版本升级**：若希望与主机对齐，可手动把 `image: postgres:16-alpine` 改成 `postgres:18-alpine`（仅 [`marginalia/0.3.4/docker-compose.yml:138`](marginalia/0.3.4/docker-compose.yml:138) 一行），重启后 `db-prepare` 会自动跑 Alembic 迁移。marginalia 上游依赖 SQLAlchemy 2.x + asyncpg，未使用 16 专属特性，理论上兼容。但**上游未声明在 18 上做过回归测试**，请先备份 `pgdata` 卷。
-- **回退命令**：`docker compose down && sed -i 's/postgres:18-alpine/postgres:16-alpine/' docker-compose.yml && docker compose up -d`。
+- **数据库**：使用 1Panel 主机上已部署的 `1Panel-postgresql-XXXX` 容器（默认 PG 18），元数据落在 `marginalia` 库中；
+- **对象存储**：本应用仍自带 MinIO（命名卷 `${CONTAINER_NAME}-miniodata`）；
+- **迁移**：由上游 [`src/marginalia/db/bootstrap.py`](https://github.com/shenmintao/marginalia/blob/main/src/marginalia/db/bootstrap.py) 在 `uvicorn` 启动时自动调用 `bootstrap_schema()` 完成建表 + 16 个增量 shim + stamp `alembic_version`，**无需独立迁移容器**。
+
+**完整部署步骤**（首次安装）：
+
+1. **预创建数据库**：登录 1Panel → 数据库 → `1Panel-postgresql` → 进入 `psql` 终端（或用 pgAdmin 等 GUI），执行：
+   ```sql
+   CREATE DATABASE marginalia;
+   ```
+2. **记录 1Panel 主 PG 连接信息**（1Panel-postgresql 应用详情页或容器环境变量）：
+   - 容器名（`1Panel-postgresql-XXXX`）
+   - 端口（默认 `5432`）
+   - 用户名（`user_xxxxxx`）
+   - 密码（强随机字符串）
+3. **部署 marginalia**：在 1Panel 应用商店安装 marginalia，参数页填写：
+   - `PostgreSQL Host`：第 2 步拿到的容器名
+   - `PostgreSQL Port`：`5432`
+   - `PostgreSQL User / Password`：第 2 步拿到的用户名 / 密码
+   - `PostgreSQL Database`：`marginalia`
+   - `LLM API Key`：必填
+4. **首次启动自动迁移**：`api` / `worker` 容器启动时会上游 bootstrap 跑表结构 + 16 个 shim + stamp `alembic_version`，日志中可见 `bootstrap_schema complete`，无需手动干预。
+
+**为什么选复用而不是捆绑独立容器**：
+
+- 1Panel 主机已装 PG 18，再起一个 PG 16 容器会**重复占用内存 / 重复维护两套升级**；
+- 复用主 PG 可以**沿用 1Panel 的备份 / 监控**链路；
+- marginalia 上游 SQLAlchemy 2.x + asyncpg 不依赖 16 专属特性，**理论上 PG 13+ 都可运行**（上游未在 ≥17 上做完整回归，但 `bootstrap.py` 用的是通用 DDL）。
+
+**回退到旧版（内置独立 PG 16）**：如确实需要回到 v0.3.4 之前的"自带 PG"版本，请降级到 [`marginalia/0.3.3`](../0.3.3/README.md)（如有）或回退 git 提交。
 
 ### Q6：为什么没看到 Embedding / Rerank 的配置项？
 

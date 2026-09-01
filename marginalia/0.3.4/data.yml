@@ -148,37 +148,71 @@ additionalProperties:
         pt-br: Token Bearer da API (obrigatório para acesso LAN, opcional para loopback)
       required: false
       type: password
-    # PostgreSQL 凭据
-    - default: marginalia
+    # PostgreSQL 凭据（复用 1Panel 主机 PG 18，不捆绑独立容器）
+    # 容器名 1Panel-postgresql-XXXX 含随机后缀，必须由用户填写；留空会让部署页报缺值
+    - default: ''
+      edit: true
+      envKey: POSTGRES_HOST
+      labelEn: PostgreSQL Host (1Panel container name)
+      labelZh: PostgreSQL 主机（1Panel 容器名）
+      label:
+        en: PostgreSQL host (1Panel-postgresql container name, e.g. 1Panel-postgresql-ZU4y)
+        zh: PostgreSQL 主机（1Panel-postgresql 容器名，如 1Panel-postgresql-ZU4y）
+        zh-Hant: PostgreSQL 主機（1Panel-postgresql 容器名，如 1Panel-postgresql-ZU4y）
+        ja: 'PostgreSQL ホスト（1Panel-postgresql コンテナ名、例: 1Panel-postgresql-ZU4y）'
+        ko: 'PostgreSQL 호스트 (1Panel-postgresql 컨테이너 이름, 예: 1Panel-postgresql-ZU4y)'
+        ru: Хост PostgreSQL (имя контейнера 1Panel-postgresql, напр. 1Panel-postgresql-ZU4y)
+        ms: Hos PostgreSQL (nama bekas 1Panel-postgresql, cth. 1Panel-postgresql-ZU4y)
+        pt-br: Host PostgreSQL (nome do contêiner 1Panel-postgresql, ex. 1Panel-postgresql-ZU4y)
+      required: true
+      type: text
+    - default: '5432'
+      edit: true
+      envKey: POSTGRES_PORT
+      labelEn: PostgreSQL Port
+      labelZh: PostgreSQL 端口
+      label:
+        en: PostgreSQL port (default 5432)
+        zh: PostgreSQL 端口（默认 5432）
+        zh-Hant: PostgreSQL 埠（預設 5432）
+        ja: PostgreSQL ポート（デフォルト 5432）
+        ko: PostgreSQL 포트 (기본 5432)
+        ru: Порт PostgreSQL (по умолчанию 5432)
+        ms: Port PostgreSQL (lalai 5432)
+        pt-br: Porta PostgreSQL (padrão 5432)
+      required: true
+      rule: paramPort
+      type: number
+    - default: ''
       edit: true
       envKey: POSTGRES_USER
       labelEn: PostgreSQL User
       labelZh: PostgreSQL 用户名
       label:
-        en: PostgreSQL User
-        zh: PostgreSQL 用户名
-        zh-Hant: PostgreSQL 使用者名稱
-        ja: PostgreSQL ユーザー名
-        ko: PostgreSQL 사용자 이름
-        ru: Пользователь PostgreSQL
-        ms: Nama pengguna PostgreSQL
-        pt-br: Usuário PostgreSQL
+        en: PostgreSQL user (1Panel random user, e.g. user_wEJsSp)
+        zh: PostgreSQL 用户名（1Panel 随机用户，如 user_wEJsSp）
+        zh-Hant: PostgreSQL 使用者名稱（1Panel 隨機使用者，如 user_wEJsSp）
+        ja: 'PostgreSQL ユーザー名（1Panel ランダムユーザー、例: user_wEJsSp）'
+        ko: 'PostgreSQL 사용자 이름 (1Panel 임의 사용자, 예: user_wEJsSp)'
+        ru: Пользователь PostgreSQL (случайный пользователь 1Panel, напр. user_wEJsSp)
+        ms: Nama pengguna PostgreSQL (pengguna rawak 1Panel, cth. user_wEJsSp)
+        pt-br: Usuário PostgreSQL (usuário aleatório do 1Panel, ex. user_wEJsSp)
       required: true
       type: text
-    - default: marginalia
+    - default: ''
       edit: true
       envKey: POSTGRES_PASSWORD
-      labelEn: PostgreSQL Password
-      labelZh: PostgreSQL 密码
+      labelEn: PostgreSQL Password (1Panel PG)
+      labelZh: PostgreSQL 密码（1Panel 主库）
       label:
-        en: PostgreSQL Password
-        zh: PostgreSQL 密码
-        zh-Hant: PostgreSQL 密碼
-        ja: PostgreSQL パスワード
-        ko: PostgreSQL 비밀번호
-        ru: Пароль PostgreSQL
-        ms: Kata laluan PostgreSQL
-        pt-br: Senha PostgreSQL
+        en: PostgreSQL password (from 1Panel application store, 1Panel-postgresql page)
+        zh: PostgreSQL 密码（取自 1Panel 应用商店 1Panel-postgresql 详情页）
+        zh-Hant: PostgreSQL 密碼（取自 1Panel 應用商店 1Panel-postgresql 詳情頁）
+        ja: PostgreSQL パスワード（1Panel アプリストアの 1Panel-postgresql ページから）
+        ko: PostgreSQL 비밀번호 (1Panel 앱 스토어의 1Panel-postgresql 페이지에서)
+        ru: Пароль PostgreSQL (со страницы 1Panel-postgresql в магазине приложений 1Panel)
+        ms: Kata laluan PostgreSQL (daripada halaman 1Panel-postgresql di kedai aplikasi 1Panel)
+        pt-br: Senha PostgreSQL (da página 1Panel-postgresql na loja de apps 1Panel)
       required: true
       type: password
     - default: marginalia
@@ -187,14 +221,14 @@ additionalProperties:
       labelEn: PostgreSQL Database
       labelZh: PostgreSQL 数据库名
       label:
-        en: PostgreSQL Database
-        zh: PostgreSQL 数据库名
-        zh-Hant: PostgreSQL 資料庫名稱
-        ja: PostgreSQL データベース名
-        ko: PostgreSQL 데이터베이스 이름
-        ru: Имя базы данных PostgreSQL
-        ms: Nama pangkalan data PostgreSQL
-        pt-br: Nome do banco de dados PostgreSQL
+        en: 'Database name. Must pre-create in 1Panel PG: CREATE DATABASE marginalia;'
+        zh: '数据库名。需在 1Panel 主库预先创建：CREATE DATABASE marginalia;'
+        zh-Hant: '資料庫名。需在 1Panel 主庫預先建立：CREATE DATABASE marginalia;'
+        ja: 'データベース名。1Panel 主 DB に事前作成が必要: CREATE DATABASE marginalia;'
+        ko: '데이터베이스 이름. 1Panel 주 DB에 사전 생성 필요: CREATE DATABASE marginalia;'
+        ru: 'Имя базы данных. Требуется предварительно создать в 1Panel: CREATE DATABASE marginalia;'
+        ms: 'Nama pangkalan data. Wujudkan terdahulu dalam DB utama 1Panel: CREATE DATABASE marginalia;'
+        pt-br: 'Nome do banco. Pré-criar no DB principal do 1Panel: CREATE DATABASE marginalia;'
       required: true
       type: text
     # MinIO 凭据

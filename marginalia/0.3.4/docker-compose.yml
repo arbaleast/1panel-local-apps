@@ -30,7 +30,7 @@ services:
       - MARGINALIA_UPLOAD_MAX_BYTES=${MARGINALIA_UPLOAD_MAX_BYTES}
       # 后端：PostgreSQL
       - DB_BACKEND=postgres
-      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${CONTAINER_NAME}-postgres:5432/${POSTGRES_DB}
+      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       # 对象存储：MinIO（S3 兼容）
       - STORAGE_BACKEND=${STORAGE_BACKEND}
       - S3_ENDPOINT_URL=http://${CONTAINER_NAME}-minio:9000
@@ -70,8 +70,6 @@ services:
       - ./data/objects:/data/objects
       - ./data/runtime:/data/runtime
     depends_on:
-      postgres:
-        condition: service_healthy
       minio:
         condition: service_healthy
     restart: always
@@ -93,7 +91,7 @@ services:
       - APP_ENV=prod
       - LOG_LEVEL=${LOG_LEVEL}
       - DB_BACKEND=postgres
-      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${CONTAINER_NAME}-postgres:5432/${POSTGRES_DB}
+      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       - STORAGE_BACKEND=${STORAGE_BACKEND}
       - S3_ENDPOINT_URL=http://${CONTAINER_NAME}-minio:9000
       - S3_ACCESS_KEY=${MINIO_ROOT_USER}
@@ -123,36 +121,11 @@ services:
       - ./data/objects:/data/objects
       - ./data/runtime:/data/runtime
     depends_on:
-      postgres:
-        condition: service_healthy
       minio:
         condition: service_healthy
     restart: always
     labels:
       createdBy: "Apps"
-
-  # PostgreSQL：元数据库
-  postgres:
-    container_name: ${CONTAINER_NAME}-postgres
-    image: postgres:16-alpine
-    environment:
-      - TZ=${TZ}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    networks:
-      - 1panel-network
-    volumes:
-      - ${CONTAINER_NAME}-pgdata:/var/lib/postgresql/data
-    restart: always
-    labels:
-      createdBy: "Apps"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
 
   # MinIO：S3 兼容对象存储
   minio:
@@ -199,30 +172,5 @@ services:
     labels:
       createdBy: "Apps"
 
-  # DB 准备：运行 Alembic 数据库迁移
-  db-prepare:
-    container_name: ${CONTAINER_NAME}-db-prepare
-    image: muhfalihr/marginalia:v0.3.4
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - TZ=${TZ}
-      - DB_BACKEND=postgres
-      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${CONTAINER_NAME}-postgres:5432/${POSTGRES_DB}
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - >
-        echo "Waiting for database..." &&
-        sleep 5 &&
-        marginalia-db-prepare &&
-        exit 0;
-    networks:
-      - 1panel-network
-    restart: "no"
-    labels:
-      createdBy: "Apps"
-
 volumes:
-  ${CONTAINER_NAME}-pgdata:
   ${CONTAINER_NAME}-miniodata:
