@@ -105,7 +105,7 @@ additionalProperties:
       pt-br: URL base do Ollama
     required: true
     type: text
-    rule: paramHttp
+    rule: paramCommon
   - default: llama3.2
     edit: true
     envKey: OLLAMA_MODEL

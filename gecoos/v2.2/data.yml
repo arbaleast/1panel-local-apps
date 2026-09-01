@@ -11,6 +11,8 @@ description:
   zh-Hant: 集客 AC 無線控制器，實現對 AP 的集中管理，支援發現、配置、韌體升級等功能。
 additionalProperties:
   key: gecoos
+  name: gecoos v2.2
+  type: tool
   formFields:
   - default: '8080'
     edit: true

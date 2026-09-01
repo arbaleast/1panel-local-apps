@@ -8,7 +8,7 @@ additionalProperties:
   description:
     zh: Google Photos 替代品，ML 人脸识别，移动端原生体验。
     en: Google Photos 替代品，ML 人脸识别，移动端原生体验。
-  type: photo
+  type: media
   crossVersionUpdate: true
   limit: 0
   recommend: 0
@@ -123,7 +123,7 @@ additionalProperties:
     labelEn: Image Transform Thread Pool
     labelZh: 图片转换线程池
     required: false
-    rule: paramInt
+    rule: paramCommon
     type: number
   - default: chi_sim+eng
     edit: true
@@ -138,7 +138,7 @@ additionalProperties:
     labelEn: Thumbnail Cache (MB)
     labelZh: 缩略图缓存上限（MB）
     required: false
-    rule: paramInt
+    rule: paramCommon
     type: number
   - default: "2"
     edit: true
@@ -146,7 +146,7 @@ additionalProperties:
     labelEn: Worker Threads
     labelZh: 并行任务线程数
     required: false
-    rule: paramInt
+    rule: paramCommon
     type: number
   - default: "1"
     edit: true
@@ -154,7 +154,7 @@ additionalProperties:
     labelEn: ML Worker Processes
     labelZh: ML Worker 进程数
     required: false
-    rule: paramInt
+    rule: paramCommon
     type: number
   - default: int8
     edit: true

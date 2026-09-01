@@ -1,4 +1,7 @@
 additionalProperties:
+  key: hindsight
+  name: hindsight 0.9.0
+  type: tool
   formFields:
   - default: '8888'
     edit: true

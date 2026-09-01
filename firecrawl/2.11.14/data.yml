@@ -180,7 +180,6 @@ additionalProperties:
     required: true
     type: password
   - default: 1Panel-localpgvector-kD9L
-  - default: 1Panel-localpgvector-kD9L
     edit: true
     envKey: POSTGRES_HOST
     labelEn: Postgres host (use 1Panel-localpgvector-kD9L)

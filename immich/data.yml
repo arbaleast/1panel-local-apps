@@ -1,4 +1,4 @@
-﻿additionalProperties:
+additionalProperties:
   key: immich
   name: immich
   tags:
@@ -8,7 +8,7 @@
   description:
     zh: Google Photos 替代品，ML 人脸识别，移动端原生体验。
     en: Google Photos 替代品，ML 人脸识别，移动端原生体验。
-  type: photo
+  type: media
   crossVersionUpdate: true
   limit: 0
   recommend: 0

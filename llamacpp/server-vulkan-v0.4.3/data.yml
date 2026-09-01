@@ -1,4 +1,7 @@
 additionalProperties:
+  key: llamacpp
+  name: llamacpp server-vulkan-v0.4.3
+  type: tool
   formFields:
     - default: ghcr.io/anbeeld/beellama.cpp:server-vulkan-v0.4.3
       edit: true

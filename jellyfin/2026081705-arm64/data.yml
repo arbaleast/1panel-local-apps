@@ -1,4 +1,7 @@
 additionalProperties:
+  key: jellyfin
+  name: jellyfin 2026081705-arm64
+  type: tool
   formFields:
     - default: jellyfin/jellyfin:2026081705-arm64
       edit: true

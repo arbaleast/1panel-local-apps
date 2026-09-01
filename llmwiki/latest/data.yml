@@ -1,16 +1,8 @@
-key: llmwiki
-version: latest
-name: LLM Wiki (latest)
-description:
-  en: "LLM Wiki — third-party placeholder image (see app README). Not headless, port 19828 will not listen."
-  zh: "LLM Wiki（占位版）：使用第三方镜像 041002/llm_wiki:latest，非 headless 服务，部署后 19828 不会自动监听。详见应用 README。"
-  zh-Hant: "LLM Wiki（佔位版）：使用第三方映像，非 headless，部署後 19828 不會自動監聽。詳見應用 README。"
-  ja: "LLM Wiki (latest): 第三者プレースホルダイメージ。ヘッドレスではない為、19828 はリッスンしません。"
-  ko: "LLM Wiki(latest): 서드파티 자리표시자 이미지. 헤드리스가 아니므로 19828 비활성."
-  ru: "LLM Wiki (latest): сторонний placeholder-образ. Не headless, 19828 не слушается."
-  ms: "LLM Wiki (latest): imej pengganti pihak ketiga. Bukan headless, 19828 tidak mendengar."
-  pt-br: "LLM Wiki (latest): imagem placeholder de terceiros. Não é headless, 19828 não escuta."
-formFields:
+additionalProperties:
+  key: llmwiki
+  name: LLM Wiki (latest)
+  type: tool
+  formFields:
   - envKey: LLM_WIKI_BIND_HOST
     label:
       en: API Bind Host

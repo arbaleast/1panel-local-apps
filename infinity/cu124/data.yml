@@ -1,4 +1,7 @@
 additionalProperties:
+  key: infinity
+  name: infinity cu124
+  type: tool
   formFields:
   # 本地构建镜像 tag：infinity-pascal:cu124（源码委派将提供完整 Dockerfile）
   - default: infinity-pascal:cu124

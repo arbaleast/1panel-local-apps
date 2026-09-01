@@ -1,4 +1,4 @@
-﻿additionalProperties:
+additionalProperties:
   key: pgvector
   name: pgvector
   tags:
@@ -8,7 +8,7 @@
   description:
     zh: Postgres 向量搜索扩展，配合 Hindsight/Immich 存 embeddings。
     en: Postgres 向量搜索扩展，配合 Hindsight/Immich 存 embeddings。
-  type: database
+  type: tool
   crossVersionUpdate: true
   limit: 0
   recommend: 0

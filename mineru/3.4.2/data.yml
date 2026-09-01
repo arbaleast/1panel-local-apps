@@ -1,4 +1,7 @@
 additionalProperties:
+  key: mineru
+  name: mineru 3.4.2
+  type: tool
   formFields:
     - default: alexsuntop/mineru
       edit: true

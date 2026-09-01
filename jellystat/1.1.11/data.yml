@@ -1,14 +1,9 @@
-version: "1.1.11"
-# 镜像固定版本，避免 latest 漂移导致版本不一致
-# 上游仅提供 latest / unstable / main 等非稳定 tag，stable 版本通过 hardcode 方式管理
-# 上游项目重构中，详见 https://github.com/CyferShepard/Jellystat#project-update
-image: cyfershepard/jellystat:1.1.11
-appId: localjellystat
-servicePort: 3000
-# 服务端内部 API 端口（非暴露端口，仅供内部使用）
-serviceBackendPort: 3001
-formFields:
-  - key: PANEL_APP_PORT_HTTP
+additionalProperties:
+  key: jellystat
+  name: jellystat 1.1.11
+  type: tool
+  formFields:
+  - envKey: PANEL_APP_PORT_HTTP
     label:
       en: Web UI Port
       zh: Web UI 端口
@@ -18,7 +13,7 @@ formFields:
     type: service
     required: true
     default: "3000"
-  - key: TZ
+  - envKey: TZ
     label:
       en: Timezone
       zh: 时区
@@ -43,7 +38,7 @@ formFields:
         value: Europe/Paris
       - label: Etc/UTC (UTC+0)
         value: Etc/UTC
-  - key: JWT_SECRET
+  - envKey: JWT_SECRET
     label:
       en: JWT Secret Key
       zh: JWT 密钥
@@ -53,13 +48,8 @@ formFields:
     type: password
     required: true
     default: ""
-    rule:
-      type: parameter
-      required: true
-      max: 128
-      min: 16
   # ============ PostgreSQL 数据库配置（必需）============
-  - key: POSTGRES_IP
+  - envKey: POSTGRES_IP
     label:
       en: PostgreSQL Host
       zh: PostgreSQL 主机
@@ -69,10 +59,7 @@ formFields:
     type: text
     required: true
     default: "jellystat-db"
-    rule:
-      type: parameter
-      required: true
-  - key: POSTGRES_PORT
+  - envKey: POSTGRES_PORT
     label:
       en: PostgreSQL Port
       zh: PostgreSQL 端口
@@ -82,13 +69,7 @@ formFields:
     type: number
     required: true
     default: "5432"
-    rule:
-      type: parameter
-      required: true
-      range:
-        min: 1
-        max: 65535
-  - key: POSTGRES_USER
+  - envKey: POSTGRES_USER
     label:
       en: PostgreSQL Username
       zh: PostgreSQL 用户名
@@ -98,10 +79,7 @@ formFields:
     type: text
     required: true
     default: "postgres"
-    rule:
-      type: parameter
-      required: true
-  - key: POSTGRES_PASSWORD
+  - envKey: POSTGRES_PASSWORD
     label:
       en: PostgreSQL Password
       zh: PostgreSQL 密码
@@ -111,10 +89,7 @@ formFields:
     type: password
     required: true
     default: ""
-    rule:
-      type: parameter
-      required: true
-  - key: POSTGRES_DB
+  - envKey: POSTGRES_DB
     label:
       en: PostgreSQL Database Name
       zh: PostgreSQL 数据库名
@@ -124,11 +99,8 @@ formFields:
     type: text
     required: false
     default: "jfstat"
-    rule:
-      type: parameter
-      required: false
   # ============ 可选高级配置 ============
-  - key: POSTGRES_SSL_ENABLED
+  - envKey: POSTGRES_SSL_ENABLED
     label:
       en: PostgreSQL SSL
       zh: PostgreSQL SSL 连接
@@ -143,7 +115,7 @@ formFields:
         value: "true"
       - label: "false"
         value: "false"
-  - key: IS_EMBY_API
+  - envKey: IS_EMBY_API
     label:
       en: Use Emby API (instead of Jellyfin)
       zh: 使用 Emby API（而非 Jellyfin）
@@ -158,7 +130,7 @@ formFields:
         value: "true"
       - label: "false"
         value: "false"
-  - key: REJECT_SELF_SIGNED_CERTIFICATES
+  - envKey: REJECT_SELF_SIGNED_CERTIFICATES
     label:
       en: Reject Self-Signed Certificates
       zh: 拒绝自签名证书
@@ -173,7 +145,7 @@ formFields:
         value: "true"
       - label: "false"
         value: "false"
-  - key: MINIMUM_SECONDS_TO_INCLUDE_PLAYBACK
+  - envKey: MINIMUM_SECONDS_TO_INCLUDE_PLAYBACK
     label:
       en: Min Playback Duration (seconds)
       zh: 最小播放时长（秒）
@@ -183,13 +155,7 @@ formFields:
     type: number
     required: false
     default: "1"
-    rule:
-      type: parameter
-      required: false
-      range:
-        min: 1
-        max: 300
-  - key: POSTGRES_SSL_REJECT_UNAUTHORIZED
+  - envKey: POSTGRES_SSL_REJECT_UNAUTHORIZED
     label:
       en: PostgreSQL SSL Reject Unauthorized
       zh: PostgreSQL SSL 拒绝未授权证书
@@ -202,15 +168,12 @@ formFields:
     type: select
     required: false
     default: "false"
-    rule:
-      type: parameter
-      required: false
     values:
       - label: "true"
         value: "true"
       - label: "false"
         value: "false"
-  - key: JF_USE_WEBSOCKETS
+  - envKey: JF_USE_WEBSOCKETS
     label:
       en: Use Jellyfin WebSockets
       zh: 使用 Jellyfin WebSocket
@@ -223,15 +186,12 @@ formFields:
     type: select
     required: false
     default: "true"
-    rule:
-      type: parameter
-      required: false
     values:
       - label: "true"
         value: "true"
       - label: "false"
         value: "false"
-  - key: JS_USE_EXTERNAL_HOST
+  - envKey: JS_USE_EXTERNAL_HOST
     label:
       en: Use External Host (Jellyfin on different host)
       zh: 使用外部主机（Jellyfin 在不同主机时启用）
@@ -244,15 +204,12 @@ formFields:
     type: select
     required: false
     default: "false"
-    rule:
-      type: parameter
-      required: false
     values:
       - label: "true"
         value: "true"
       - label: "false"
         value: "false"
-  - key: NEW_WATCH_EVENT_THRESHOLD_HOURS
+  - envKey: NEW_WATCH_EVENT_THRESHOLD_HOURS
     label:
       en: New Watch Event Threshold (hours)
       zh: 新观看事件阈值（小时）
@@ -265,9 +222,3 @@ formFields:
     type: number
     required: false
     default: "1"
-    rule:
-      type: parameter
-      required: false
-      range:
-        min: 1
-        max: 72
