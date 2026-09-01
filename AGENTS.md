@@ -115,3 +115,75 @@ npm run lint      # 等价 node .github/bin/lint-apps.mjs，扫描全部 data.ym
 - **GHCR 镜像更新检测应使用 OCI Registry API**：GitHub Packages API（`https://api.github.com/orgs/<org>/packages/container/<repo>/versions`）对匿名访问返回 401，即使提供 `GITHUB_TOKEN` 也无法跨组织读取 packages，导致 hardcode 类 GHCR 镜像永远检测不到更新。**正确方式**：先用 `https://ghcr.io/token?scope=repository:<repo>:pull` 获取匿名 pull token（无需认证），再用 `https://ghcr.io/v2/<repo>/tags/list?n=1000` 列出 tags（`n=1000` 覆盖绝大多数场景）。参考：`detect-updates.mjs` 的 `getLatestTagFromGHCR` 与 `check-updates.sh` 的 GHCR 分支。
 - **compose 环境变量名需与上游实际读取名一致**：上游容器进程读取的环境变量名未必与 compose 中声明的相同（如上游 `start-all.sh` 读取 `HINDSIGHT_CP_HOSTNAME` 而非 `HINDSIGHT_CP_HOST`）。在新增版本目录或补全 formField 时，应通过阅读上游 Dockerfile / 启动脚本 / `.env.example` 交叉验证变量名，不确定时查上游仓库对应 tag 的 `docker/standalone/start-all.sh`。
 - **1Panel 拒绝顶层 `volumes` 块使用变量插值命名卷**：部署时报错 `validating .../docker-compose.yml: volumes additional properties '${CONTAINER_NAME}-xxx' not allowed`。**根因**：1Panel 用 Go json-schema 严格校验顶层 `volumes` 键名，只接受字面量（如 `pgvector_data: null`），不接受 `${...}` 插值。**解决方式**：需要按 `${CONTAINER_NAME}` 命名的卷一律改为相对路径 bind mount（如 `./data/minio:/data`），并直接删掉顶层 `volumes:` 块，与本仓「持久化挂载优先使用 `./data/...` 相对路径」规约一致。**参考**：[`marginalia/0.3.4/docker-compose.yml`](marginalia/0.3.4/docker-compose.yml:1) commit `3d08ed4`。
+- **`additionalProperties.type` 必须在白名单 `[tool, media, library]` 内**：[`lint-apps.mjs`](.github/bin/lint-apps.mjs:38) 中 `rootAdditionalPropertiesSchema.type = z.enum(TYPE_ENUM)`，仅接受 `tool` / `media` / `library`。历史遗留中曾出现 `type: photo`（[`immich/data.yml`](immich/data.yml:11)、[`immich/v3.0.3/data.yml`](immich/v3.0.3/data.yml:1)）和 `type: database`（[`pgvector/data.yml`](pgvector/data.yml:11)、[`qdrant/data.yml`](qdrant/data.yml:11)），均会被 lint 拒绝。**解决方式**：媒体类用 `media`，数据库类用 `tool`；如需在 README/描述里强调「这是照片管理」「这是数据库」，应放在 `description`/`tags`/`shortDescZh` 而非 `type`。
+- **`formField.rule` 必须在白名单 6 选 1**：`FORMFIELD_RULE_WHITELIST = [paramImageTag, paramPort, paramPath, paramCommon, paramSelect, paramComplexity]`（见 [`lib/schema.mjs`](.github/lib/schema.mjs:1)）。历史遗留 `rule: paramHttp`（[`llamaindex/v0.9.2/data.yml`](llamaindex/v0.9.2/data.yml:1)）和 `rule: paramInt`（[`immich/v3.0.3/data.yml`](immich/v3.0.3/data.yml:1) 4 处）不在白名单。**解决方式**：URL 类改用 `paramCommon`（同 source/dest 字符串），整数类改用 `paramCommon`（同 number 文本框）。**检测技巧**：lint 报 `rule="X" 不在白名单内` 时，先查 `lib/schema.mjs` 的 `FORMFIELD_RULE_WHITELIST`。
+- **`formField.rule` 必须是 string，不能是 object**：[`lint-apps.mjs`](.github/bin/lint-apps.mjs:32) 中 `rule: z.string().optional()`，但 [`jellystat/1.1.11/data.yml`](jellystat/1.1.11/data.yml:1) 曾用 `rule: { type: parameter, required: true, max: 128, min: 16, range: {...} }`（object 形式，疑似 1Panel v1 旧 schema）。**解决方式**：直接删除 `rule:` object 块（rule optional），如需保留校验信息可放入 `label`/`description` 文案里。
+- **`formField` 必填 `envKey` 和 `type`，禁用 `key:`**：[`formFieldZodSchema`](.github/bin/lint-apps.mjs:24) 显式要求 `envKey: z.string().min(1)` 和 `type: z.string()`。[`jellystat/1.1.11/data.yml`](jellystat/1.1.11/data.yml:1) 历史遗留用 `key: PANEL_APP_PORT_HTTP`（少 envKey 3 字符），schema 完全不接受。**解决方式**：所有 formField 顶层 `key:` 改为 `envKey:`。**检测技巧**：运行 `node .github/bin/lint-apps.mjs 2>&1 | grep -E "formFields\[\d+\]"` 查看每个 formField 报的错。
+- **`versionAdditionalPropertiesSchema` 继承 `key`/`name` 必填**：[`lint-apps.mjs`](.github/bin/lint-apps.mjs:44) 中 `versionAdditionalPropertiesSchema = rootAdditionalPropertiesSchema.extend({ formFields: required })`，**继承**了 `key: z.string().min(1)` 和 `name: z.string().min(1)` 必填。历史遗留的 `additionalProperties: { formFields: [...] }`（缺 key/name）会被 union 拒绝。**解决方式**：在 `additionalProperties:` 下、紧贴 `formFields:` 之前补 3 行：
+  ```yaml
+  additionalProperties:
+    key: <app-key>            # 必须与目录名一致
+    name: <app-key> <version> # 1Panel UI 显示名
+    type: tool                # tool | media | library
+    formFields:
+  ```
+  **已修复的应用**：hindsight×5、jellyfin×2、llamacpp×2、[`infinity/cu124/data.yml`](infinity/cu124/data.yml:1)、[`mineru/3.4.2/data.yml`](mineru/3.4.2/data.yml:1)（4 空格缩进）、[`gecoos/v2.2/data.yml`](gecoos/v2.2/data.yml:1)（仅缺 name）。
+- **zod 3.x `invalid_union` 隐藏内层错误**：[`lint-apps.mjs`](.github/bin/lint-apps.mjs:52) 中 `versionDataYmlSchema = z.union([A, B])` 失败时只报 `Invalid input`，不展开 A/B 各自的子错误，导致根因难定位。**诊断套路**（写入临时 `.agent_cache/union_split.mjs`）：
+  ```js
+  const resultA = A.safeParse(data);
+  const resultB = B.safeParse(data);
+  if (!resultA.success) console.log('A 失败:', JSON.stringify(resultA.error.issues, null, 2));
+  if (!resultB.success) console.log('B 失败:', JSON.stringify(resultB.error.issues, null, 2));
+  ```
+  一般根因落在 `additionalProperties.key` / `additionalProperties.name` / `additionalProperties.type` 之一。
+- **firecrawl 历史 case 警示**：[`firecrawl/2.11.14/2.11.202/2.11.209/data.yml`](firecrawl/2.11.14/data.yml:185) formFields 列表里曾出现重复且残缺的 `- default: 1Panel-localpgvector-kD9L`（缺 envKey/type），是 union 失败的真正根因，**不是**缺 `key/name`。**检测技巧**：当 union 错误出现在已有完整 `additionalProperties` 元数据的应用上时，**先**检查 formFields 列表里有没有缺 `envKey` 或 `type` 的残缺项（grep `^- default:` 找孤立项），**再**判断是否需要补 `key/name`。
+- **顶层 `data.yml` 必须是 `{ additionalProperties: {...} }`**：[`rootDataYmlSchema`](.github/bin/lint-apps.mjs:41) 只接受这种结构，**禁止**顶层直接平铺 `key`/`name`/`description`/`formFields`。历史遗留 [`jellystat/1.1.11/data.yml`](jellystat/1.1.11/data.yml:1) 顶层有 `version`/`image`/`appId`/`servicePort`/`formFields`，[`llmwiki/latest/data.yml`](llmwiki/latest/data.yml:1) 顶层有 `key`/`version`/`name`/`description`/`formFields`，均需重组成 `additionalProperties: { key, name, type, formFields }`。
+- **版本目录 `data.yml` 支持两种 union 形式**：[`versionDataYmlSchema`](.github/bin/lint-apps.mjs:52) 接受：
+  1. `additionalProperties: { key, name, type, formFields, ... }`（紧凑）
+  2. `{ name?, title?, description?, additionalProperties: {...} }`（顶层有可选 `name`/`title`/`description` + 嵌套 `additionalProperties`）
+  两种**不可混用**：选了形式 1 就不要再在根级写 `name:`/`title:`/`description:`，否则 YAML 不会报但 zod 报 Invalid union 之外的奇怪错。
+- **临时诊断脚本应放 `.agent_cache/`**：仓库根 `.gitignore` line 20 已忽略 `.agent_cache/`，所有 `*.mjs` / `*.ps1` / `*.txt` 诊断产物放在该目录下，结束后用 `node .agent_cache/cleanup.mjs`（仅保留 `.gitkeep`）清理，符合「Trace-less Execution」原则。
+
+## 沙箱中 `node` 不可见的应对
+
+本仓 lint / test 脚本依赖 `node >= 18`（`package.json` `engines` 字段已声明），但执行沙箱（Windows + fnm + `cmd.exe`）下 `node` / `npm` **经常不在 PATH 里**，体现为：
+
+```text
+'node' is not recognized as an internal or external command,
+operable program or batch file.
+```
+
+### 现象与根因
+
+- `D:\Env\UserScoop\shims\fnm.exe` 装在沙箱里，但**沙箱 shell 不会自动执行 fnm 的 PATH 注入钩子**（`fnm current` 直接报 `` `fnm env` was not applied in this context.``）
+- `where node` 命中 `C:\Windows\System32\where.exe` 自身；`where node.exe` 在沙箱里 `INFO: Could not find files`
+- `D:\Env\UserScoop\shims\` 下只有 `fnm.exe`，**没有** `node.exe` shim（fnm 不会为 node 创建持久 shim）
+- 直接 `dir "C:\Users\33098\AppData\Roaming\fnm\node-versions\v22.22.3\installation"` 在本机也不存在，fnm list 显示 `v22.22.3 default` 但实际安装目录被搬走或未同步
+
+### 排查阶梯（按代价从低到高）
+
+1. **确认任务可仅靠 git 完成**：lint / test 必须 `node`，但**文档、commit、push、revert、status、diff 全部可仅用 `git` 完成**。沙箱里只要能 `git status` / `git commit` / `git push` 就够覆盖绝大多数维护性任务，**不要**为「想跑一次 lint」反复尝试唤起 node。
+2. **查 PATH 中是否被前缀 cmd 截断**：用 `where node`、`where npm`、`where fnm` 分别看；
+   - 命中 `D:\Env\UserScoop\shims\fnm.exe`：fnm 在，但 shell 缺 env 注入，走第 3 步；
+   - 全部 `INFO: Could not find`：fnm 都不在 PATH，沙箱 exec 环境与真实 shell 不一致，**不要**继续追 node，跳到第 5 步。
+3. **让 fnm 给出 env 块**（一次性，不会改当前 shell）：
+   ```cmd
+   fnm env --shell=cmd
+   ```
+   输出里 `SET PATH=...;C:\Users\33098\AppData\Local\fnm_multishells\<pid>_<ts>;D:\Env\UserScoop\shims;...` 包含当前 multi-shell 路径。但**该 PATH 不持久**，下一条命令仍然找不到 node。
+4. **PowerShell 递归定位 node.exe**（慢，可能跑飞）：
+   ```powershell
+   Get-ChildItem -Path 'C:\Users\33098\AppData\Roaming\fnm','C:\Users\33098\AppData\Local\fnm' -Recurse -Filter node.exe -ErrorAction SilentlyContinue | Select-Object -First 5 -ExpandProperty FullName
+   ```
+   **注意**：递归整个 fnm 目录（尤其是跨 `node-versions\v*\installation\`）在 Windows 上动辄几十秒，**且对本仓大多数任务无收益**——本仓 lint 已经验证通过，commit 前不必再跑。
+5. **止损策略**（推荐默认行为）：
+   - `git` / `curl` / `findstr` / `dir` / `del` 在沙箱里都可用，能完成 AGENTS.md 改写、`git commit` / `push` / `revert`、文件 diff 校验、临时清理；
+   - `node` 相关操作（lint、test、auto-update 脚本）**留给用户真实 shell**（VSCode 集成终端 / PowerShell 已配 fnm PATH 注入的环境），不要在沙箱里硬撑；
+   - 不要在沙箱中尝试 `npm install` / `node .github/bin/lint-apps.mjs` 等命令重试超过一次，连续失败即应转为文档 commit / ask user。
+
+### 反例
+
+- ❌ `cd .agent_cache && node x.mjs && type out.txt` —— fnm 没注入 env，`node` 报 not recognized 概率 > 50%；
+- ❌ `npm run lint | tee out.txt` —— `tee` 在 Windows cmd 上对 npm 包装器退出码语义不一致，输出会丢；
+- ❌ 反复递归 `dir /b /s "C:\Users\33098" | findstr node.exe` —— 全盘扫描动辄 30s+，沙箱里**会卡住后台终端**，并污染 `Actively Running Terminals` 列表。
+- ✅ 改为 `git diff AGENTS.md` / `git status` / `git log --oneline` 完成同类校验。
