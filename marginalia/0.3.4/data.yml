@@ -1,0 +1,265 @@
+additionalProperties:
+  key: marginalia
+  name: marginalia
+  tags:
+    - AI
+    - Knowledge Base
+    - LLM
+  shortDescZh: 本地优先的私人知识库 + LLM 研究代理
+  shortDescEn: Local-first personal knowledge base with LLM research agent
+  description:
+    zh: Marginalia 是一个本地优先的私人知识库系统，集成了 LLM 研究代理能力。基于 FastAPI + PostgreSQL + MinIO 构建，支持 PDF、笔记、表格等多种异构资料摄入。许可证：AGPL-3.0。
+    en: Marginalia is a local-first personal knowledge management system with LLM research agent capabilities. Built on FastAPI, PostgreSQL, and MinIO, it ingests heterogeneous sources (PDFs, notes, spreadsheets). License: AGPL-3.0.
+    zh-Hant: Marginalia 是一個本地優先的私人知識庫系統，整合了 LLM 研究代理能力。授權條款：AGPL-3.0。
+    ja: Marginaliaは、ローカルファーストの個人用ナレッジベースシステムです。ライセンス：AGPL-3.0。
+    ko: Marginalia는 로컬 우선의 개인 지식 베이스 시스템입니다. 라이선스: AGPL-3.0.
+    ru: Marginalia — локально-приоритетная персональная система управления знаниями. Лицензия: AGPL-3.0.
+    ms: Marginalia ialah sistem pengurusan pengetahuan peribadi yang mengutamakan tempatan. Lesen: AGPL-3.0.
+    pt-br: Marginalia é um sistema pessoal de gestão de conhecimento local-first. Licença: AGPL-3.0.
+  type: tool
+  crossVersionUpdate: false
+  limit: 0
+  recommend: 0
+  website: https://github.com/shenmintao/marginalia
+  github: https://github.com/shenmintao/marginalia
+  formFields:
+    # 镜像由 compose 硬编码为 muhfalihr/marginalia:v0.3.4（第三方构建，amd64-only）
+    - default: '8000'
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Host HTTP Port
+      labelZh: 宿主机 HTTP 端口
+      label:
+        en: Host HTTP Port
+        zh: 宿主机 HTTP 端口
+        zh-Hant: 主機 HTTP 埠
+        ja: ホスト側 HTTP ポート
+        ko: 호스트 HTTP 포트
+        ru: HTTP-порт на хосте
+        ms: Port HTTP hos
+        pt-br: Porta HTTP no host
+      required: true
+      rule: paramPort
+      type: number
+    # 容器内 API 监听端口（与镜像约定一致，硬编码 8000；保留为 formField 以便自定义）
+    - default: '8000'
+      edit: true
+      envKey: API_INTERNAL_PORT
+      labelEn: Container API Port
+      labelZh: 容器内 API 端口
+      label:
+        en: Container API Port
+        zh: 容器内 API 端口
+        zh-Hant: 容器內 API 埠
+        ja: コンテナ内 API ポート
+        ko: 컨테이너 내부 API 포트
+        ru: Внутренний порт API (контейнер)
+        ms: Port API Dalaman (Bekas)
+        pt-br: Porta interna da API (contêiner)
+      required: true
+      type: number
+    # 必填：LLM 凭据（compose 强校验 ${LLM_DEFAULT_API_KEY:?}）
+    - default: ''
+      edit: true
+      envKey: LLM_DEFAULT_API_KEY
+      labelEn: LLM API Key (required)
+      labelZh: LLM API 密钥（必填）
+      label:
+        en: LLM API Key (required)
+        zh: LLM API 密钥（必填）
+        zh-Hant: LLM API 金鑰（必填）
+        ja: LLM API キー（必須）
+        ko: LLM API 키 (필수)
+        ru: Ключ API LLM (обязательно)
+        ms: Kunci API LLM (wajib)
+        pt-br: Chave API LLM (obrigatório)
+      required: true
+      type: password
+    - default: openai
+      edit: true
+      envKey: LLM_DEFAULT_PROVIDER
+      labelEn: LLM Provider
+      labelZh: LLM 提供方
+      label:
+        en: LLM Provider
+        zh: LLM 提供方
+        zh-Hant: LLM 提供者
+        ja: LLM プロバイダー
+        ko: LLM 제공자
+        ru: Провайдер LLM
+        ms: Penyedia LLM
+        pt-br: Provedor LLM
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: OpenAI
+          value: openai
+        - label: OpenAI Compatible
+          value: openai-compatible
+        - label: Anthropic
+          value: anthropic
+    - default: gpt-4o-mini
+      edit: true
+      envKey: LLM_DEFAULT_MODEL
+      labelEn: LLM Model
+      labelZh: LLM 模型
+      label:
+        en: LLM Model
+        zh: LLM 模型
+        zh-Hant: LLM 模型
+        ja: LLM モデル
+        ko: LLM 모델
+        ru: Модель LLM
+        ms: Model LLM
+        pt-br: Modelo LLM
+      required: true
+      type: text
+    - default: ''
+      edit: true
+      envKey: LLM_DEFAULT_BASE_URL
+      labelEn: LLM Base URL (optional)
+      labelZh: LLM Base URL（可空）
+      label:
+        en: LLM Base URL (optional, for self-hosted / OpenAI-compatible gateways)
+        zh: LLM Base URL（可空，自建或 OpenAI 兼容网关时填写）
+        zh-Hant: LLM Base URL（可空，自建或 OpenAI 相容閘道時填寫）
+        ja: LLM ベース URL（任意、自前ホスティングまたは OpenAI 互換ゲートウェイ用）
+        ko: LLM 기본 URL (선택, 자체 호스팅 / OpenAI 호환 게이트웨이)
+        ru: Базовый URL LLM (необязательно, для собственных / OpenAI-совместимых шлюзов)
+        ms: URL Asas LLM (pilihan, untuk get laluan sendiri / serasi OpenAI)
+        pt-br: URL base do LLM (opcional, para gateways próprios / compatíveis com OpenAI)
+      required: false
+      type: text
+    # API 鉴权（上游 LAN 暴露必填；默认留空即仅 loopback 可访问）
+    - default: ''
+      edit: true
+      envKey: MARGINALIA_API_TOKEN
+      labelEn: API Bearer Token (optional)
+      labelZh: API Bearer Token（可空）
+      label:
+        en: API Bearer Token (required for LAN access, optional for loopback)
+        zh: API Bearer Token（LAN 访问时必填，loopback 可空）
+        zh-Hant: API Bearer Token（LAN 存取時必填，loopback 可空）
+        ja: API ベアラートークン（LAN アクセス時は必須、loopback は任意）
+        ko: API Bearer 토큰 (LAN 액세스 시 필수, loopback 선택)
+        ru: API Bearer Token (обязателен для доступа по LAN, необязателен для loopback)
+        ms: Token API Bearer (diperlukan untuk akses LAN, pilihan untuk loopback)
+        pt-br: Token Bearer da API (obrigatório para acesso LAN, opcional para loopback)
+      required: false
+      type: password
+    # PostgreSQL 凭据
+    - default: marginalia
+      edit: true
+      envKey: POSTGRES_USER
+      labelEn: PostgreSQL User
+      labelZh: PostgreSQL 用户名
+      label:
+        en: PostgreSQL User
+        zh: PostgreSQL 用户名
+        zh-Hant: PostgreSQL 使用者名稱
+        ja: PostgreSQL ユーザー名
+        ko: PostgreSQL 사용자 이름
+        ru: Пользователь PostgreSQL
+        ms: Nama pengguna PostgreSQL
+        pt-br: Usuário PostgreSQL
+      required: true
+      type: text
+    - default: marginalia
+      edit: true
+      envKey: POSTGRES_PASSWORD
+      labelEn: PostgreSQL Password
+      labelZh: PostgreSQL 密码
+      label:
+        en: PostgreSQL Password
+        zh: PostgreSQL 密码
+        zh-Hant: PostgreSQL 密碼
+        ja: PostgreSQL パスワード
+        ko: PostgreSQL 비밀번호
+        ru: Пароль PostgreSQL
+        ms: Kata laluan PostgreSQL
+        pt-br: Senha PostgreSQL
+      required: true
+      type: password
+    - default: marginalia
+      edit: true
+      envKey: POSTGRES_DB
+      labelEn: PostgreSQL Database
+      labelZh: PostgreSQL 数据库名
+      label:
+        en: PostgreSQL Database
+        zh: PostgreSQL 数据库名
+        zh-Hant: PostgreSQL 資料庫名稱
+        ja: PostgreSQL データベース名
+        ko: PostgreSQL 데이터베이스 이름
+        ru: Имя базы данных PostgreSQL
+        ms: Nama pangkalan data PostgreSQL
+        pt-br: Nome do banco de dados PostgreSQL
+      required: true
+      type: text
+    # MinIO 凭据
+    - default: marginalia
+      edit: true
+      envKey: MINIO_ROOT_USER
+      labelEn: MinIO Root User
+      labelZh: MinIO 根用户
+      label:
+        en: MinIO Root User
+        zh: MinIO 根用户
+        zh-Hant: MinIO 根使用者
+        ja: MinIO ルートユーザー
+        ko: MinIO 루트 사용자
+        ru: Корневой пользователь MinIO
+        ms: Pengguna Root MinIO
+        pt-br: Usuário root do MinIO
+      required: true
+      type: text
+    - default: marginalia
+      edit: true
+      envKey: MINIO_ROOT_PASSWORD
+      labelEn: MinIO Root Password
+      labelZh: MinIO 根密码
+      label:
+        en: MinIO Root Password
+        zh: MinIO 根密码
+        zh-Hant: MinIO 根密碼
+        ja: MinIO ルートパスワード
+        ko: MinIO 루트 비밀번호
+        ru: Пароль root MinIO
+        ms: Kata laluan Root MinIO
+        pt-br: Senha root do MinIO
+      required: true
+      type: password
+    - default: '9001'
+      edit: true
+      envKey: PANEL_APP_PORT_MINIO_CONSOLE
+      labelEn: MinIO Console Port
+      labelZh: MinIO 控制台端口
+      label:
+        en: MinIO Console Port (local debug; bind to 127.0.0.1 only)
+        zh: MinIO 控制台端口（本地调试；仅绑定 127.0.0.1）
+        zh-Hant: MinIO 控制台埠（本地除錯；僅綁定 127.0.0.1）
+        ja: MinIO コンソールポート（ローカルデバッグ、127.0.0.1 のみバインド）
+        ko: MinIO 콘솔 포트 (로컬 디버그, 127.0.0.1만 바인딩)
+        ru: Порт консоли MinIO (локальная отладка, привязка только к 127.0.0.1)
+        ms: Port Konsol MinIO (penyahpepijatan tempatan, ikat pada 127.0.0.1 sahaja)
+        pt-br: Porta do Console MinIO (depuração local, vincular apenas a 127.0.0.1)
+      required: true
+      rule: paramPort
+      type: number
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text

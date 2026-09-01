@@ -1,0 +1,205 @@
+# Marginalia Docker Compose
+# 镜像源：muhfalihr/marginalia:v0.3.4（第三方构建，amd64-only）
+# 官方仓库：https://github.com/shenmintao/marginalia
+# 注：官方未发布镜像，使用社区预构建；如需自行构建，请用 `docker build -t muhfalihr/marginalia:v0.3.4 https://github.com/shenmintao/marginalia.git#v0.3.4`
+
+networks:
+  1panel-network:
+    external: true
+
+services:
+  # 主服务：Marginalia API（uvicorn + FastAPI）
+  api:
+    container_name: ${CONTAINER_NAME}
+    image: muhfalihr/marginalia:v0.3.4
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    environment:
+      # 容器元信息
+      - TZ=${TZ}
+      - APP_ENV=prod
+      # API 监听
+      - MARGINALIA_API_HOST=0.0.0.0
+      - MARGINALIA_API_PORT=${API_INTERNAL_PORT}
+      - MARGINALIA_API_TOKEN=${MARGINALIA_API_TOKEN}
+      # 后端：PostgreSQL
+      - DB_BACKEND=postgres
+      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${CONTAINER_NAME}-postgres:5432/${POSTGRES_DB}
+      # 对象存储：MinIO（S3 兼容）
+      - STORAGE_BACKEND=s3
+      - S3_ENDPOINT_URL=http://${CONTAINER_NAME}-minio:9000
+      - S3_ACCESS_KEY=${MINIO_ROOT_USER}
+      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - S3_BUCKET=marginalia
+      - S3_REGION=us-east-1
+      # LLM 凭据（必填，compose 强校验）
+      - LLM_DEFAULT_PROVIDER=${LLM_DEFAULT_PROVIDER}
+      - LLM_DEFAULT_API_KEY=${LLM_DEFAULT_API_KEY:?set LLM_DEFAULT_API_KEY in 1Panel app params}
+      - LLM_DEFAULT_MODEL=${LLM_DEFAULT_MODEL}
+      - LLM_DEFAULT_BASE_URL=${LLM_DEFAULT_BASE_URL}
+      # Worker 配置：API 进程内不跑 worker，独立 worker 服务处理
+      - WORKER_ENABLED=false
+    command:
+      - uvicorn
+      - marginalia.main:app
+      - --host=0.0.0.0
+      - --port=${API_INTERNAL_PORT}
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:${API_INTERNAL_PORT}
+    networks:
+      - 1panel-network
+    volumes:
+      - ./data/library:/data/library
+      - ./data/objects:/data/objects
+      - ./data/runtime:/data/runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: always
+    labels:
+      createdBy: "Apps"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${API_INTERNAL_PORT}/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # 异步 worker：处理 ingest 流水线与周期任务
+  worker:
+    container_name: ${CONTAINER_NAME}-worker
+    image: muhfalihr/marginalia:v0.3.4
+    environment:
+      - TZ=${TZ}
+      - APP_ENV=prod
+      - DB_BACKEND=postgres
+      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${CONTAINER_NAME}-postgres:5432/${POSTGRES_DB}
+      - STORAGE_BACKEND=s3
+      - S3_ENDPOINT_URL=http://${CONTAINER_NAME}-minio:9000
+      - S3_ACCESS_KEY=${MINIO_ROOT_USER}
+      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - S3_BUCKET=marginalia
+      - S3_REGION=us-east-1
+      - LLM_DEFAULT_PROVIDER=${LLM_DEFAULT_PROVIDER}
+      - LLM_DEFAULT_API_KEY=${LLM_DEFAULT_API_KEY}
+      - LLM_DEFAULT_MODEL=${LLM_DEFAULT_MODEL}
+      - LLM_DEFAULT_BASE_URL=${LLM_DEFAULT_BASE_URL}
+      - WORKER_ENABLED=true
+    command:
+      - marginalia-worker
+      - --log-level=INFO
+    networks:
+      - 1panel-network
+    volumes:
+      - ./data/library:/data/library
+      - ./data/objects:/data/objects
+      - ./data/runtime:/data/runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: always
+    labels:
+      createdBy: "Apps"
+
+  # PostgreSQL：元数据库
+  postgres:
+    container_name: ${CONTAINER_NAME}-postgres
+    image: postgres:16-alpine
+    environment:
+      - TZ=${TZ}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    networks:
+      - 1panel-network
+    volumes:
+      - ${CONTAINER_NAME}-pgdata:/var/lib/postgresql/data
+    restart: always
+    labels:
+      createdBy: "Apps"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # MinIO：S3 兼容对象存储
+  minio:
+    container_name: ${CONTAINER_NAME}-minio
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      - TZ=${TZ}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    networks:
+      - 1panel-network
+    volumes:
+      - ${CONTAINER_NAME}-miniodata:/data
+    ports:
+      # MinIO 控制台仅绑定 loopback（本地调试）
+      - 127.0.0.1:${PANEL_APP_PORT_MINIO_CONSOLE}:9001
+    restart: always
+    labels:
+      createdBy: "Apps"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # MinIO 初始化：创建 marginalia 桶
+  minio-init:
+    container_name: ${CONTAINER_NAME}-minio-init
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        mc alias set local http://${CONTAINER_NAME}-minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
+        mc mb local/marginalia --ignore-existing &&
+        exit 0;
+    networks:
+      - 1panel-network
+    restart: "no"
+    labels:
+      createdBy: "Apps"
+
+  # DB 准备：运行 Alembic 数据库迁移
+  db-prepare:
+    container_name: ${CONTAINER_NAME}-db-prepare
+    image: muhfalihr/marginalia:v0.3.4
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - TZ=${TZ}
+      - DB_BACKEND=postgres
+      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${CONTAINER_NAME}-postgres:5432/${POSTGRES_DB}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        echo "Waiting for database..." &&
+        sleep 5 &&
+        marginalia-db-prepare &&
+        exit 0;
+    networks:
+      - 1panel-network
+    restart: "no"
+    labels:
+      createdBy: "Apps"
+
+volumes:
+  ${CONTAINER_NAME}-pgdata:
+  ${CONTAINER_NAME}-miniodata:
