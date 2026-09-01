@@ -55,9 +55,9 @@ Marginalia 是一个本地优先的个人知识管理系统，集成了 LLM 研�
 | `/data/library` | `./data/library` | 资料库元数据与目录树 |
 | `/data/objects` | `./data/objects` | 资料对象存储（指向 MinIO S3 桶） |
 | `/data/runtime` | `./data/runtime` | 运行时缓存与日志 |
-| `/data`（MinIO） | 命名卷 `${CONTAINER_NAME}-miniodata` | MinIO 对象存储 |
+| `/data`（MinIO） | `./data/minio` | MinIO 对象存储 |
 
-> **PostgreSQL 不在本地落盘**：本应用复用 1Panel 主机的 `1Panel-postgresql-XXXX` 容器，库与表都建在 1Panel 主 PG（默认 PG 18）中，元数据卷 `${CONTAINER_NAME}-miniodata` 仅负责 MinIO 对象存储。
+> **PostgreSQL 不在本地落盘**：本应用复用 1Panel 主机的 `1Panel-postgresql-XXXX` 容器，库与表都建在 1Panel 主 PG（默认 PG 18）中，`./data/minio` 仅负责 MinIO 对象存储。
 
 ## 服务架构
 
@@ -172,7 +172,7 @@ docker push muhfalihr/marginalia:v0.3.6
 A：可以直接用。**v0.3.4 已切换为"复用 1Panel 主 PG 18"模式**，本应用不再捆绑独立 PG 容器。整体架构：
 
 - **数据库**：使用 1Panel 主机上已部署的 `1Panel-postgresql-XXXX` 容器（默认 PG 18），元数据落在 `marginalia` 库中；
-- **对象存储**：本应用仍自带 MinIO（命名卷 `${CONTAINER_NAME}-miniodata`）；
+- **对象存储**：本应用仍自带 MinIO（bind mount `./data/minio` → 容器内 `/data`）；
 - **迁移**：由上游 [`src/marginalia/db/bootstrap.py`](https://github.com/shenmintao/marginalia/blob/main/src/marginalia/db/bootstrap.py) 在 `uvicorn` 启动时自动调用 `bootstrap_schema()` 完成建表 + 16 个增量 shim + stamp `alembic_version`，**无需独立迁移容器**。
 
 **完整部署步骤**（首次安装）：

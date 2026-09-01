@@ -139,7 +139,7 @@ services:
     networks:
       - 1panel-network
     volumes:
-      - ${CONTAINER_NAME}-miniodata:/data
+      - ./data/minio:/data
     ports:
       # MinIO 控制台仅绑定 loopback（本地调试）
       - 127.0.0.1:${PANEL_APP_PORT_MINIO_CONSOLE}:9001
@@ -171,6 +171,3 @@ services:
     restart: "no"
     labels:
       createdBy: "Apps"
-
-volumes:
-  ${CONTAINER_NAME}-miniodata:
