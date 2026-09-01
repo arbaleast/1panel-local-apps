@@ -23,6 +23,7 @@
 | llmwiki | LLM Wiki 知识库（占位应用，详见 README 风险说明） | latest |
 | mediago | 媒体嗅探与下载 | 3.5.0 |
 | mihomo | 代理工具 | v1.19.18 |
+| marginalia | 本地优先的私人知识库 + LLM 研究代理 | 0.3.7 |
 | music-tag-web | 自托管音乐库标签刮削与元数据管理 | 2.7.7 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
 | moviepilot | 影视自动化 | 2.15.6 |

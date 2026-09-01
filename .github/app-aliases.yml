@@ -33,6 +33,9 @@ aliases:
     desc: 媒体嗅探与下载
   mihomo:
     desc: 代理工具
+  marginalia:
+    dir: marginalia
+    desc: 本地优先的私人知识库 + LLM 研究代理
   pgvector:
     desc: 向量数据库
   qdrant:

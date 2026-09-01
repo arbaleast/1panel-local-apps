@@ -1,0 +1,130 @@
+# Marginalia Docker Compose
+# 镜像源：ghcr.io/shenmintao/marginalia:v0.3.7（上游官方 GHCR 镜像，amd64-only）
+# 官方仓库：https://github.com/shenmintao/marginalia
+# 注：上游在 GHCR 发布 v0.3.7，取代旧的 DockerHub 第三方构建 muhfalihr/marginalia:v0.3.4。
+# 如需自建：docker build -t ghcr.io/shenmintao/marginalia:v0.3.7 https://github.com/shenmintao/marginalia.git#v0.3.7
+
+networks:
+  1panel-network:
+    external: true
+
+services:
+  # 主服务：Marginalia API（uvicorn + FastAPI）
+  api:
+    container_name: ${CONTAINER_NAME}
+    image: ghcr.io/shenmintao/marginalia:v0.3.7
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    environment:
+      # 容器元信息
+      - TZ=${TZ}
+      - APP_ENV=prod
+      - LOG_LEVEL=${LOG_LEVEL}
+      # API 监听
+      - MARGINALIA_API_HOST=${MARGINALIA_API_HOST}
+      - MARGINALIA_API_PORT=${API_INTERNAL_PORT}
+      - MARGINALIA_API_TOKEN=${MARGINALIA_API_TOKEN}
+      - MARGINALIA_UPLOAD_TOKEN=${MARGINALIA_UPLOAD_TOKEN}
+      - MARGINALIA_UPLOAD_MAX_BYTES=${MARGINALIA_UPLOAD_MAX_BYTES}
+      # 后端：PostgreSQL
+      - DB_BACKEND=postgres
+      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      # 对象存储：外部 S3 兼容存储（已移除 bundled minio，需自备）
+      # ⚠️ 需确认上游 marginalia 在 STORAGE_BACKEND=s3 时能正常访问外部 endpoint
+      - STORAGE_BACKEND=${STORAGE_BACKEND}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_REGION=${S3_REGION}
+      # LLM 凭据（必填，compose 强校验）
+      - LLM_DEFAULT_PROVIDER=${LLM_DEFAULT_PROVIDER}
+      - LLM_DEFAULT_API_KEY=${LLM_DEFAULT_API_KEY:?set LLM_DEFAULT_API_KEY in 1Panel app params}
+      - LLM_DEFAULT_MODEL=${LLM_DEFAULT_MODEL}
+      - LLM_DEFAULT_BASE_URL=${LLM_DEFAULT_BASE_URL}
+      # Embedding 子 profile（留空=上游自动回退到 LLM_DEFAULT_*）
+      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY}
+      - EMBEDDING_BASE_URL=${EMBEDDING_BASE_URL}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      # Rerank 子 profile
+      - RERANK_ENABLED=${RERANK_ENABLED}
+      # 检索与生命周期
+      - SEMANTIC_RECALL_ENABLED=${SEMANTIC_RECALL_ENABLED}
+      - AUTO_LIFECYCLE_ENABLED=${AUTO_LIFECYCLE_ENABLED}
+      - LIBRARY_DOCUMENT_LIMIT=${LIBRARY_DOCUMENT_LIMIT}
+      - MAINTENANCE_DAILY_TOKEN_BUDGET=${MAINTENANCE_DAILY_TOKEN_BUDGET}
+      # Worker 配置：API 进程内不跑 worker，独立 worker 服务处理
+      - WORKER_ENABLED=false
+    command:
+      - uvicorn
+      - marginalia.main:app
+      - --host=0.0.0.0
+      - --port=${API_INTERNAL_PORT}
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:${API_INTERNAL_PORT}
+    networks:
+      - 1panel-network
+    volumes:
+      - ./data/library:/data/library
+      - ./data/objects:/data/objects
+      - ./data/runtime:/data/runtime
+    restart: always
+    labels:
+      createdBy: "Apps"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${API_INTERNAL_PORT}/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # 异步 worker：处理 ingest 流水线与周期任务
+  worker:
+    container_name: ${CONTAINER_NAME}-worker
+    image: ghcr.io/shenmintao/marginalia:v0.3.7
+    environment:
+      - TZ=${TZ}
+      - APP_ENV=prod
+      - LOG_LEVEL=${LOG_LEVEL}
+      - DB_BACKEND=postgres
+      - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - STORAGE_BACKEND=${STORAGE_BACKEND}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_REGION=${S3_REGION}
+      - LLM_DEFAULT_PROVIDER=${LLM_DEFAULT_PROVIDER}
+      - LLM_DEFAULT_API_KEY=${LLM_DEFAULT_API_KEY}
+      - LLM_DEFAULT_MODEL=${LLM_DEFAULT_MODEL}
+      - LLM_DEFAULT_BASE_URL=${LLM_DEFAULT_BASE_URL}
+      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY}
+      - EMBEDDING_BASE_URL=${EMBEDDING_BASE_URL}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - RERANK_ENABLED=${RERANK_ENABLED}
+      - SEMANTIC_RECALL_ENABLED=${SEMANTIC_RECALL_ENABLED}
+      - AUTO_LIFECYCLE_ENABLED=${AUTO_LIFECYCLE_ENABLED}
+      - LIBRARY_DOCUMENT_LIMIT=${LIBRARY_DOCUMENT_LIMIT}
+      - MAINTENANCE_DAILY_TOKEN_BUDGET=${MAINTENANCE_DAILY_TOKEN_BUDGET}
+      - WORKER_ENABLED=true
+    command:
+      - marginalia-worker
+      - --log-level=INFO
+    networks:
+      - 1panel-network
+    volumes:
+      - ./data/library:/data/library
+      - ./data/objects:/data/objects
+      - ./data/runtime:/data/runtime
+    restart: always
+    labels:
+      createdBy: "Apps"
+
+  # 提示：原 bundled minio + minio-init 服务已移除。
+  # 现需外部 S3 兼容存储（MinIO、SeaweedFS、AWS S3、阿里 OSS 兼容端点等），
+  # 通过 1Panel 计划任务面板中自行部署并通过 S3_ENDPOINT_URL 注入。
+  # 部署前请确认上游 marginalia 在 STORAGE_BACKEND=s3 时能正常访问外部 endpoint。
+  # （参考 commit / PR 描述中的"上游验证"提示。）

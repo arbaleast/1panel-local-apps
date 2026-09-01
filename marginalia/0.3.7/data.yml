@@ -1,0 +1,583 @@
+additionalProperties:
+  key: marginalia
+  name: marginalia
+  tags:
+    - AI
+    - Knowledge Base
+    - LLM
+  shortDescZh: 本地优先的私人知识库 + LLM 研究代理
+  shortDescEn: Local-first personal knowledge base with LLM research agent
+  description:
+    zh: "Marginalia 是一个本地优先的私人知识库系统，集成了 LLM 研究代理能力。基于 FastAPI + PostgreSQL + 外部 S3 兼容存储构建，支持 PDF、笔记、表格等多种异构资料摄入。许可证：AGPL-3.0。"
+    en: "Marginalia is a local-first personal knowledge management system with LLM research agent capabilities. Built on FastAPI, PostgreSQL, and an external S3-compatible store, it ingests heterogeneous sources (PDFs, notes, spreadsheets). License — AGPL-3.0."
+    zh-Hant: "Marginalia 是一個本地優先的私人知識庫系統，整合了 LLM 研究代理能力。授權條款：AGPL-3.0。"
+    ja: "Marginaliaは、ローカルファーストの個人用ナレッジベースシステムです。ライセンス：AGPL-3.0。"
+    ko: "Marginalia는 로컬 우선의 개인 지식 베이스 시스템입니다. 라이선스: AGPL-3.0."
+    ru: "Marginalia — локально-приоритетная персональная система управления знаниями. Лицензия: AGPL-3.0."
+    ms: "Marginalia ialah sistem pengurusan pengetahuan peribadi yang mengutamakan tempatan. Lesen: AGPL-3.0."
+    pt-br: "Marginalia é um sistema pessoal de gestão de conhecimento local-first. Licença: AGPL-3.0."
+  type: tool
+  crossVersionUpdate: false
+  limit: 0
+  recommend: 0
+  website: https://github.com/shenmintao/marginalia
+  github: https://github.com/shenmintao/marginalia
+  formFields:
+    # 镜像由 compose 硬编码为 ghcr.io/shenmintao/marginalia:v0.3.7（上游官方 GHCR 镜像，amd64-only）
+    - default: '8000'
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Host HTTP Port
+      labelZh: 宿主机 HTTP 端口
+      label:
+        en: Host HTTP Port
+        zh: 宿主机 HTTP 端口
+        zh-Hant: 主機 HTTP 埠
+        ja: ホスト側 HTTP ポート
+        ko: 호스트 HTTP 포트
+        ru: HTTP-порт на хосте
+        ms: Port HTTP hos
+        pt-br: Porta HTTP no host
+      required: true
+      rule: paramPort
+      type: number
+    # 容器内 API 监听端口（与镜像约定一致，硬编码 8000；保留为 formField 以便自定义）
+    - default: '8000'
+      edit: true
+      envKey: API_INTERNAL_PORT
+      labelEn: Container API Port
+      labelZh: 容器内 API 端口
+      label:
+        en: Container API Port
+        zh: 容器内 API 端口
+        zh-Hant: 容器內 API 埠
+        ja: コンテナ内 API ポート
+        ko: 컨테이너 내부 API 포트
+        ru: Внутренний порт API (контейнер)
+        ms: Port API Dalaman (Bekas)
+        pt-br: Porta interna da API (contêiner)
+      required: true
+      type: number
+    # 必填：LLM 凭据（compose 强校验 ${LLM_DEFAULT_API_KEY:?}）
+    - default: ''
+      edit: true
+      envKey: LLM_DEFAULT_API_KEY
+      labelEn: LLM API Key (required)
+      labelZh: LLM API 密钥（必填）
+      label:
+        en: LLM API Key (required)
+        zh: LLM API 密钥（必填）
+        zh-Hant: LLM API 金鑰（必填）
+        ja: LLM API キー（必須）
+        ko: LLM API 키 (필수)
+        ru: Ключ API LLM (обязательно)
+        ms: Kunci API LLM (wajib)
+        pt-br: Chave API LLM (obrigatório)
+      required: true
+      type: password
+    - default: openai
+      edit: true
+      envKey: LLM_DEFAULT_PROVIDER
+      labelEn: LLM Provider
+      labelZh: LLM 提供方
+      label:
+        en: LLM Provider
+        zh: LLM 提供方
+        zh-Hant: LLM 提供者
+        ja: LLM プロバイダー
+        ko: LLM 제공자
+        ru: Провайдер LLM
+        ms: Penyedia LLM
+        pt-br: Provedor LLM
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: OpenAI
+          value: openai
+        - label: OpenAI Compatible
+          value: openai-compatible
+        - label: Anthropic
+          value: anthropic
+    - default: gpt-4o-mini
+      edit: true
+      envKey: LLM_DEFAULT_MODEL
+      labelEn: LLM Model
+      labelZh: LLM 模型
+      label:
+        en: LLM Model
+        zh: LLM 模型
+        zh-Hant: LLM 模型
+        ja: LLM モデル
+        ko: LLM 모델
+        ru: Модель LLM
+        ms: Model LLM
+        pt-br: Modelo LLM
+      required: true
+      type: text
+    - default: ''
+      edit: true
+      envKey: LLM_DEFAULT_BASE_URL
+      labelEn: LLM Base URL (optional)
+      labelZh: LLM Base URL（可空）
+      label:
+        en: LLM Base URL (optional, for self-hosted / OpenAI-compatible gateways)
+        zh: LLM Base URL（可空，自建或 OpenAI 兼容网关时填写）
+        zh-Hant: LLM Base URL（可空，自建或 OpenAI 相容閘道時填寫）
+        ja: LLM ベース URL（任意、自前ホスティングまたは OpenAI 互換ゲートウェイ用）
+        ko: LLM 기본 URL (선택, 자체 호스팅 / OpenAI 호환 게이트웨이)
+        ru: Базовый URL LLM (необязательно, для собственных / OpenAI-совместимых шлюзов)
+        ms: URL Asas LLM (pilihan, untuk get laluan sendiri / serasi OpenAI)
+        pt-br: URL base do LLM (opcional, para gateways próprios / compatíveis com OpenAI)
+      required: false
+      type: text
+    # API 鉴权（上游 LAN 暴露必填；默认留空即仅 loopback 可访问）
+    - default: ''
+      edit: true
+      envKey: MARGINALIA_API_TOKEN
+      labelEn: API Bearer Token (optional)
+      labelZh: API Bearer Token（可空）
+      label:
+        en: API Bearer Token (required for LAN access, optional for loopback)
+        zh: API Bearer Token（LAN 访问时必填，loopback 可空）
+        zh-Hant: API Bearer Token（LAN 存取時必填，loopback 可空）
+        ja: API ベアラートークン（LAN アクセス時は必須、loopback は任意）
+        ko: API Bearer 토큰 (LAN 액세스 시 필수, loopback 선택)
+        ru: API Bearer Token (обязателен для доступа по LAN, необязателен для loopback)
+        ms: Token API Bearer (diperlukan untuk akses LAN, pilihan untuk loopback)
+        pt-br: Token Bearer da API (obrigatório para acesso LAN, opcional para loopback)
+      required: false
+      type: password
+    # PostgreSQL 凭据（复用 1Panel 主机 PG 18，不捆绑独立容器）
+    # 容器名 1Panel-postgresql-XXXX 含随机后缀，必须由用户填写；留空会让部署页报缺值
+    - default: ''
+      edit: true
+      envKey: POSTGRES_HOST
+      labelEn: PostgreSQL Host (1Panel container name)
+      labelZh: PostgreSQL 主机（1Panel 容器名）
+      label:
+        en: PostgreSQL host (1Panel-postgresql container name, e.g. 1Panel-postgresql-ZU4y)
+        zh: PostgreSQL 主机（1Panel-postgresql 容器名，如 1Panel-postgresql-ZU4y）
+        zh-Hant: PostgreSQL 主機（1Panel-postgresql 容器名，如 1Panel-postgresql-ZU4y）
+        ja: 'PostgreSQL ホスト（1Panel-postgresql コンテナ名、例: 1Panel-postgresql-ZU4y）'
+        ko: 'PostgreSQL 호스트 (1Panel-postgresql 컨테이너 이름, 예: 1Panel-postgresql-ZU4y)'
+        ru: Хост PostgreSQL (имя контейнера 1Panel-postgresql, напр. 1Panel-postgresql-ZU4y)
+        ms: Hos PostgreSQL (nama bekas 1Panel-postgresql, cth. 1Panel-postgresql-ZU4y)
+        pt-br: Host PostgreSQL (nome do contêiner 1Panel-postgresql, ex. 1Panel-postgresql-ZU4y)
+      required: true
+      type: text
+    - default: '5432'
+      edit: true
+      envKey: POSTGRES_PORT
+      labelEn: PostgreSQL Port
+      labelZh: PostgreSQL 端口
+      label:
+        en: PostgreSQL port (default 5432)
+        zh: PostgreSQL 端口（默认 5432）
+        zh-Hant: PostgreSQL 埠（預設 5432）
+        ja: PostgreSQL ポート（デフォルト 5432）
+        ko: PostgreSQL 포트 (기본 5432)
+        ru: Порт PostgreSQL (по умолчанию 5432)
+        ms: Port PostgreSQL (lalai 5432)
+        pt-br: Porta PostgreSQL (padrão 5432)
+      required: true
+      rule: paramPort
+      type: number
+    - default: ''
+      edit: true
+      envKey: POSTGRES_USER
+      labelEn: PostgreSQL User
+      labelZh: PostgreSQL 用户名
+      label:
+        en: PostgreSQL user (1Panel random user, e.g. user_wEJsSp)
+        zh: PostgreSQL 用户名（1Panel 随机用户，如 user_wEJsSp）
+        zh-Hant: PostgreSQL 使用者名稱（1Panel 隨機使用者，如 user_wEJsSp）
+        ja: 'PostgreSQL ユーザー名（1Panel ランダムユーザー、例: user_wEJsSp）'
+        ko: 'PostgreSQL 사용자 이름 (1Panel 임의 사용자, 예: user_wEJsSp)'
+        ru: Пользователь PostgreSQL (случайный пользователь 1Panel, напр. user_wEJsSp)
+        ms: Nama pengguna PostgreSQL (pengguna rawak 1Panel, cth. user_wEJsSp)
+        pt-br: Usuário PostgreSQL (usuário aleatório do 1Panel, ex. user_wEJsSp)
+      required: true
+      type: text
+    - default: ''
+      edit: true
+      envKey: POSTGRES_PASSWORD
+      labelEn: PostgreSQL Password (1Panel PG)
+      labelZh: PostgreSQL 密码（1Panel 主库）
+      label:
+        en: PostgreSQL password (from 1Panel application store, 1Panel-postgresql page)
+        zh: PostgreSQL 密码（取自 1Panel 应用商店 1Panel-postgresql 详情页）
+        zh-Hant: PostgreSQL 密碼（取自 1Panel 應用商店 1Panel-postgresql 詳情頁）
+        ja: PostgreSQL パスワード（1Panel アプリストアの 1Panel-postgresql ページから）
+        ko: PostgreSQL 비밀번호 (1Panel 앱 스토어의 1Panel-postgresql 페이지에서)
+        ru: Пароль PostgreSQL (со страницы 1Panel-postgresql в магазине приложений 1Panel)
+        ms: Kata laluan PostgreSQL (daripada halaman 1Panel-postgresql di kedai aplikasi 1Panel)
+        pt-br: Senha PostgreSQL (da página 1Panel-postgresql na loja de apps 1Panel)
+      required: true
+      type: password
+    - default: marginalia
+      edit: true
+      envKey: POSTGRES_DB
+      labelEn: PostgreSQL Database
+      labelZh: PostgreSQL 数据库名
+      label:
+        en: 'Database name. Must pre-create in 1Panel PG: CREATE DATABASE marginalia;'
+        zh: '数据库名。需在 1Panel 主库预先创建：CREATE DATABASE marginalia;'
+        zh-Hant: '資料庫名。需在 1Panel 主庫預先建立：CREATE DATABASE marginalia;'
+        ja: 'データベース名。1Panel 主 DB に事前作成が必要: CREATE DATABASE marginalia;'
+        ko: '데이터베이스 이름. 1Panel 주 DB에 사전 생성 필요: CREATE DATABASE marginalia;'
+        ru: 'Имя базы данных. Требуется предварительно создать в 1Panel: CREATE DATABASE marginalia;'
+        ms: 'Nama pangkalan data. Wujudkan terdahulu dalam DB utama 1Panel: CREATE DATABASE marginalia;'
+        pt-br: 'Nome do banco. Pré-criar no DB principal do 1Panel: CREATE DATABASE marginalia;'
+      required: true
+      type: text
+    # 外部 S3 兼容存储凭据（已移除 bundled minio）
+    - default: http://minio:9000
+      edit: true
+      envKey: S3_ENDPOINT_URL
+      labelEn: S3 Endpoint URL
+      labelZh: S3 Endpoint URL
+      label:
+        en: S3 endpoint URL when STORAGE_BACKEND=s3 (e.g. http://minio:9000, https://s3.amazonaws.com)
+        zh: S3 endpoint 地址（当 STORAGE_BACKEND=s3 时；例如 http://minio:9000）
+        zh-Hant: S3 endpoint 位址（當 STORAGE_BACKEND=s3 時；例如 http://minio:9000）
+        ja: S3 エンドポイント URL（STORAGE_BACKEND=s3 の時。例 http://minio:9000）
+        ko: S3 엔드포인트 URL (STORAGE_BACKEND=s3 일 때. 예 http://minio:9000)
+        ru: URL endpoint S3 (при STORAGE_BACKEND=s3; напр. http://minio:9000)
+        ms: URL endpoint S3 (apabila STORAGE_BACKEND=s3; cth http://minio:9000)
+        pt-br: URL do endpoint S3 (quando STORAGE_BACKEND=s3; ex http://minio:9000)
+      required: true
+      type: text
+    - default: marginalia
+      edit: true
+      envKey: S3_ACCESS_KEY
+      labelEn: S3 Access Key
+      labelZh: S3 Access Key
+      label:
+        en: S3 access key (when STORAGE_BACKEND=s3)
+        zh: S3 Access Key（当 STORAGE_BACKEND=s3 时）
+        zh-Hant: S3 Access Key（當 STORAGE_BACKEND=s3 時）
+        ja: S3 アクセスキー（STORAGE_BACKEND=s3 の時）
+        ko: S3 액세스 키 (STORAGE_BACKEND=s3 일 때)
+        ru: Ключ доступа S3 (при STORAGE_BACKEND=s3)
+        ms: Kunci akses S3 (apabila STORAGE_BACKEND=s3)
+        pt-br: Chave de acesso S3 (quando STORAGE_BACKEND=s3)
+      required: true
+      type: text
+    - default: marginalia
+      edit: true
+      envKey: S3_SECRET_KEY
+      labelEn: S3 Secret Key
+      labelZh: S3 Secret Key
+      label:
+        en: S3 secret key (when STORAGE_BACKEND=s3)
+        zh: S3 Secret Key（当 STORAGE_BACKEND=s3 时）
+        zh-Hant: S3 Secret Key（當 STORAGE_BACKEND=s3 時）
+        ja: S3 シークレットキー（STORAGE_BACKEND=s3 の時）
+        ko: S3 시크릿 키 (STORAGE_BACKEND=s3 일 때)
+        ru: Секретный ключ S3 (при STORAGE_BACKEND=s3)
+        ms: Kunci rahsia S3 (apabila STORAGE_BACKEND=s3)
+        pt-br: Chave secreta S3 (quando STORAGE_BACKEND=s3)
+      required: true
+      type: password
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    # === A 组：开箱即用价值最高的 5 个 ===
+    - default: s3
+      edit: true
+      envKey: STORAGE_BACKEND
+      labelEn: Storage Backend
+      labelZh: 存储后端
+      label:
+        en: Storage Backend (s3=external S3/MinIO; local=UUID flat; mirror=folder tree)
+        zh: 存储后端（s3=外部 S3/MinIO；local=UUID 扁平目录；mirror=目录镜像）
+        zh-Hant: 儲存後端（s3=外部 S3/MinIO；local=UUID 扁平目錄；mirror=目錄鏡像）
+        ja: ストレージバックエンド（s3=外部 S3/MinIO；local=UUID フラット；mirror=フォルダツリー）
+        ko: 스토리지 백엔드 (s3=외부 S3/MinIO; local=UUID 플랫; mirror=폴더 트리)
+        ru: Бэкенд хранилища (s3=внешний S3/MinIO; local=UUID плоский; mirror=дерево папок)
+        ms: Backend Storan (s3=S3/MinIO luaran; local=UUID rata; mirror=pokok folder)
+        pt-br: Backend de armazenamento (s3=S3/MinIO externo; local=UUID plano; mirror=árvore de pastas)
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: S3 (External S3/MinIO, default)
+          value: s3
+        - label: Local (UUID flat)
+          value: local
+        - label: Mirror (folder tree)
+          value: mirror
+    - default: '0'
+      edit: true
+      envKey: MARGINALIA_UPLOAD_MAX_BYTES
+      labelEn: Upload Max Size (bytes, 0=unlimited)
+      labelZh: 单次上传上限（字节，0=不限）
+      label:
+        en: Upload Max Size in bytes (0=unlimited, default 200MB=209715200)
+        zh: 单次上传上限（字节，0=不限，默认建议 200MB=209715200）
+        zh-Hant: 單次上傳上限（位元組，0=不限，預設建議 200MB=209715200）
+        ja: 単一アップロード上限（バイト、0=無制限、デフォルト 200MB=209715200 推奨）
+        ko: 단일 업로드 상한 (바이트, 0=무제한, 기본 200MB=209715200 권장)
+        ru: Максимум одного аплоада в байтах (0=без лимита, рекомендуется 200MB=209715200)
+        ms: Had muat naik maksimum (bait, 0=tidak terhad, lalai 200MB=209715200)
+        pt-br: Tamanho máximo de upload (bytes, 0=ilimitado, padrão 200MB=209715200)
+      required: true
+      type: number
+    - default: '0'
+      edit: true
+      envKey: LIBRARY_DOCUMENT_LIMIT
+      labelEn: Library Document Limit (0=unlimited)
+      labelZh: 资料库文档上限（0=不限）
+      label:
+        en: Max documents in library (0=unlimited). Prevents runaway ingest.
+        zh: 资料库最大文档数（0=不限）。防止无限摄入。
+        zh-Hant: 資料庫最大文件數（0=不限）。防止無限攝入。
+        ja: ライブラリの最大文書数（0=無制限）。暴走摄入を防止。
+        ko: 자료库 최대 문서 수 (0=무제한). 무한 수집 방지.
+        ru: Макс. документов в библиотеке (0=без лимита). Защита от бесконечного импорта.
+        ms: Had maksimum dokumen perpustakaan (0=tidak terhad). Cegah ingesti tidak terkawal.
+        pt-br: Limite de documentos da biblioteca (0=ilimitado). Evita ingestão descontrolada.
+      required: true
+      type: number
+    - default: '0'
+      edit: true
+      envKey: MAINTENANCE_DAILY_TOKEN_BUDGET
+      labelEn: Daily Maintenance Token Budget (0=unlimited)
+      labelZh: 维护日 token 预算（0=不限）
+      label:
+        en: Daily LLM token budget for background maintenance (0=unlimited)
+        zh: 后台维护任务每日 LLM token 预算（0=不限）
+        zh-Hant: 背景維護任務每日 LLM token 預算（0=不限）
+        ja: バックグラウンド保守の日次 LLM トークン予算（0=無制限）
+        ko: 백그라운드 유지보수의 일일 LLM 토큰 예산 (0=무제한)
+        ru: Дневной бюджет LLM-токенов для фоновых задач (0=без лимита)
+        ms: Belanjawan token LLM harian untuk tugas latar belakang (0=tidak terhad)
+        pt-br: Orçamento diário de tokens LLM para manutenção em segundo plano (0=ilimitado)
+      required: true
+      type: number
+    - default: 0.0.0.0
+      edit: true
+      envKey: MARGINALIA_API_HOST
+      labelEn: Container API Bind Address
+      labelZh: 容器内 API 绑定地址
+      label:
+        en: Container API bind address (0.0.0.0=any, 127.0.0.1=loopback only)
+        zh: 容器内 API 绑定地址（0.0.0.0=任意，127.0.0.1=仅本机）
+        zh-Hant: 容器內 API 綁定地址（0.0.0.0=任意，127.0.0.1=僅本機）
+        ja: コンテナ内 API バインドアドレス（0.0.0.0=全て、127.0.0.1=ループバックのみ）
+        ko: 컨테이너 내부 API 바인드 주소 (0.0.0.0=모두, 127.0.0.1=루프백만)
+        ru: Адрес привязки API в контейнере (0.0.0.0=любой, 127.0.0.1=только loopback)
+        ms: Alamat ikat API dalam bekas (0.0.0.0=sebarang, 127.0.0.1=loopback sahaja)
+        pt-br: Endereço de bind da API no contêiner (0.0.0.0=qualquer, 127.0.0.1=só loopback)
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: 0.0.0.0 (any, default)
+          value: 0.0.0.0
+        - label: 127.0.0.1 (loopback only)
+          value: 127.0.0.1
+    # === B 组：进阶 6 个 ===
+    - default: 'true'
+      edit: true
+      envKey: SEMANTIC_RECALL_ENABLED
+      labelEn: Semantic Recall
+      labelZh: 语义检索开关
+      label:
+        en: Enable semantic recall (vector search). Off = keyword-only.
+        zh: 启用语义检索（向量搜索）。关闭则仅关键词。
+        zh-Hant: 啟用語意檢索（向量搜尋）。關閉則僅關鍵字。
+        ja: セマンティック検索を有効化（ベクトル検索）。オフ=キーワードのみ。
+        ko: 시맨틱 검색 활성화 (벡터 검색). 끄면 키워드만.
+        ru: Включить семантический поиск (векторный). Выкл=только ключевые слова.
+        ms: Aktifkan carian semantik (carian vektor). Mati = kata kunci sahaja.
+        pt-br: Ativar busca semântica (vetorial). Desligado = somente palavras-chave.
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: 'true'
+          value: 'true'
+        - label: 'false'
+          value: 'false'
+    - default: 'false'
+      edit: true
+      envKey: AUTO_LIFECYCLE_ENABLED
+      labelEn: Auto Lifecycle
+      labelZh: 自动生命周期
+      label:
+        en: Enable automatic library lifecycle (retention/cleanup)
+        zh: 启用资料库自动生命周期（保留/清理）
+        zh-Hant: 啟用資料庫自動生命週期（保留/清理）
+        ja: ライブラリの自動ライフサイクルを有効化（保持/クリーンアップ）
+        ko: 자료库 자동 수명주기 활성화 (보관/정리)
+        ru: Включить авто-жизненный цикл библиотеки (хранение/очистка)
+        ms: Aktifkan kitaran hayat automatik perpustakaan (pengekalan/pembersihan)
+        pt-br: Ativar ciclo de vida automático da biblioteca (retenção/limpeza)
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: 'true'
+          value: 'true'
+        - label: 'false'
+          value: 'false'
+    - default: marginalia
+      edit: true
+      envKey: S3_BUCKET
+      labelEn: S3 Bucket Name
+      labelZh: S3 桶名
+      label:
+        en: S3 bucket name (when STORAGE_BACKEND=s3). Default marginalia.
+        zh: S3 桶名（当 STORAGE_BACKEND=s3 时）。默认 marginalia。
+        zh-Hant: S3 桶名（當 STORAGE_BACKEND=s3 時）。預設 marginalia。
+        ja: S3 バケット名（STORAGE_BACKEND=s3 の時）。デフォルト marginalia。
+        ko: S3 버킷 이름 (STORAGE_BACKEND=s3 일 때). 기본 marginalia.
+        ru: Имя S3 бакета (при STORAGE_BACKEND=s3). По умолчанию marginalia.
+        ms: Nama baldi S3 (apabila STORAGE_BACKEND=s3). Lalai marginalia.
+        pt-br: Nome do bucket S3 (quando STORAGE_BACKEND=s3). Padrão marginalia.
+      required: true
+      type: text
+    - default: us-east-1
+      edit: true
+      envKey: S3_REGION
+      labelEn: S3 Region
+      labelZh: S3 区域
+      label:
+        en: S3 region identifier (when STORAGE_BACKEND=s3). Default us-east-1.
+        zh: S3 区域标识（当 STORAGE_BACKEND=s3 时）。默认 us-east-1。
+        zh-Hant: S3 區域標識（當 STORAGE_BACKEND=s3 時）。預設 us-east-1。
+        ja: S3 リージョン識別子（STORAGE_BACKEND=s3 の時）。デフォルト us-east-1。
+        ko: S3 리전 식별자 (STORAGE_BACKEND=s3 일 때). 기본 us-east-1.
+        ru: Идентификатор региона S3 (при STORAGE_BACKEND=s3). По умолчанию us-east-1.
+        ms: Pengecam wilayah S3 (apabila STORAGE_BACKEND=s3). Lalai us-east-1.
+        pt-br: Identificador de região S3 (quando STORAGE_BACKEND=s3). Padrão us-east-1.
+      required: true
+      type: text
+    - default: ''
+      edit: true
+      envKey: MARGINALIA_UPLOAD_TOKEN
+      labelEn: Upload Endpoint Token (optional)
+      labelZh: 上传端点 Token（可空）
+      label:
+        en: Separate bearer token for upload endpoint (defaults to API token if empty)
+        zh: 上传端点独立 Bearer Token（留空=沿用 API Token）
+        zh-Hant: 上傳端點獨立 Bearer Token（留空=沿用 API Token）
+        ja: アップロードエンドポイント専用 Bearer Token（空=API Token を流用）
+        ko: 업로드 엔드포인트 전용 Bearer 토큰 (비움=API 토큰 사용)
+        ru: Отдельный bearer-токен для эндпоинта загрузки (пусто=наследует API токен)
+        ms: Token Bearer berasingan untuk muat naik (kosong=guna token API)
+        pt-br: Token bearer separado para endpoint de upload (vazio=usa o token da API)
+      required: false
+      type: password
+    - default: INFO
+      edit: true
+      envKey: LOG_LEVEL
+      labelEn: Log Level
+      labelZh: 日志级别
+      label:
+        en: Application log level
+        zh: 应用日志级别
+        zh-Hant: 應用日誌級別
+        ja: アプリログレベル
+        ko: 앱 로그 레벨
+        ru: Уровень логирования приложения
+        ms: Tahap log aplikasi
+        pt-br: Nível de log da aplicação
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: DEBUG
+          value: DEBUG
+        - label: INFO
+          value: INFO
+        - label: WARNING
+          value: WARNING
+        - label: ERROR
+          value: ERROR
+    # === C 组：Embedding / Rerank 子 profile 4 个 ===
+    - default: ''
+      edit: true
+      envKey: EMBEDDING_API_KEY
+      labelEn: Embedding API Key (optional)
+      labelZh: Embedding API 密钥（可空）
+      label:
+        en: Embedding API key (empty = reuse LLM_DEFAULT_API_KEY)
+        zh: Embedding API 密钥（留空=沿用 LLM_DEFAULT_API_KEY）
+        zh-Hant: Embedding API 金鑰（留空=沿用 LLM_DEFAULT_API_KEY）
+        ja: Embedding API キー（空=LLM_DEFAULT_API_KEY を流用）
+        ko: Embedding API 키 (비움=LLM_DEFAULT_API_KEY 재사용)
+        ru: Ключ API Embedding (пусто=наследует LLM_DEFAULT_API_KEY)
+        ms: Kunci API Embedding (kosong=guna LLM_DEFAULT_API_KEY)
+        pt-br: Chave API de Embedding (vazio=reusa LLM_DEFAULT_API_KEY)
+      required: false
+      type: password
+    - default: ''
+      edit: true
+      envKey: EMBEDDING_BASE_URL
+      labelEn: Embedding Base URL (optional)
+      labelZh: Embedding Base URL（可空）
+      label:
+        en: Embedding base URL (empty = inherit from LLM_DEFAULT_BASE_URL)
+        zh: Embedding Base URL（留空=沿用 LLM_DEFAULT_BASE_URL）
+        zh-Hant: Embedding Base URL（留空=沿用 LLM_DEFAULT_BASE_URL）
+        ja: Embedding ベース URL（空=LLM_DEFAULT_BASE_URL を継承）
+        ko: Embedding 기본 URL (비움=LLM_DEFAULT_BASE_URL 상속)
+        ru: Базовый URL Embedding (пусто=наследует LLM_DEFAULT_BASE_URL)
+        ms: URL Asas Embedding (kosong=warisi LLM_DEFAULT_BASE_URL)
+        pt-br: URL base de Embedding (vazio=herda LLM_DEFAULT_BASE_URL)
+      required: false
+      type: text
+    - default: text-embedding-3-small
+      edit: true
+      envKey: EMBEDDING_MODEL
+      labelEn: Embedding Model
+      labelZh: Embedding 模型
+      label:
+        en: Embedding model name (default OpenAI text-embedding-3-small)
+        zh: Embedding 模型名（默认 OpenAI text-embedding-3-small）
+        zh-Hant: Embedding 模型名（預設 OpenAI text-embedding-3-small）
+        ja: Embedding モデル名（デフォルト OpenAI text-embedding-3-small）
+        ko: Embedding 모델 이름 (기본 OpenAI text-embedding-3-small)
+        ru: Имя модели Embedding (по умолчанию OpenAI text-embedding-3-small)
+        ms: Nama model Embedding (lalai OpenAI text-embedding-3-small)
+        pt-br: Nome do modelo de Embedding (padrão OpenAI text-embedding-3-small)
+      required: true
+      type: text
+    - default: 'false'
+      edit: true
+      envKey: RERANK_ENABLED
+      labelEn: Rerank
+      labelZh: Rerank 开关
+      label:
+        en: Enable rerank stage (uses qwen3-rerank by default)
+        zh: 启用 Rerank 阶段（默认 qwen3-rerank）
+        zh-Hant: 啟用 Rerank 階段（預設 qwen3-rerank）
+        ja: Rerank ステージを有効化（デフォルト qwen3-rerank）
+        ko: Rerank 단계 활성화 (기본 qwen3-rerank)
+        ru: Включить этап Rerank (по умолчанию qwen3-rerank)
+        ms: Aktifkan peringkat Rerank (lalai qwen3-rerank)
+        pt-br: Ativar estágio de Rerank (padrão qwen3-rerank)
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: 'true'
+          value: 'true'
+        - label: 'false'
+          value: 'false'
