@@ -8,14 +8,14 @@ additionalProperties:
   shortDescZh: 本地优先的私人知识库 + LLM 研究代理
   shortDescEn: Local-first personal knowledge base with LLM research agent
   description:
-    zh: Marginalia 是一个本地优先的私人知识库系统，集成了 LLM 研究代理能力。基于 FastAPI + PostgreSQL + MinIO 构建，支持 PDF、笔记、表格等多种异构资料摄入。许可证：AGPL-3.0。
-    en: Marginalia is a local-first personal knowledge management system with LLM research agent capabilities. Built on FastAPI, PostgreSQL, and MinIO, it ingests heterogeneous sources (PDFs, notes, spreadsheets). License: AGPL-3.0.
-    zh-Hant: Marginalia 是一個本地優先的私人知識庫系統，整合了 LLM 研究代理能力。授權條款：AGPL-3.0。
-    ja: Marginaliaは、ローカルファーストの個人用ナレッジベースシステムです。ライセンス：AGPL-3.0。
-    ko: Marginalia는 로컬 우선의 개인 지식 베이스 시스템입니다. 라이선스: AGPL-3.0.
-    ru: Marginalia — локально-приоритетная персональная система управления знаниями. Лицензия: AGPL-3.0.
-    ms: Marginalia ialah sistem pengurusan pengetahuan peribadi yang mengutamakan tempatan. Lesen: AGPL-3.0.
-    pt-br: Marginalia é um sistema pessoal de gestão de conhecimento local-first. Licença: AGPL-3.0.
+    zh: "Marginalia 是一个本地优先的私人知识库系统，集成了 LLM 研究代理能力。基于 FastAPI + PostgreSQL + MinIO 构建，支持 PDF、笔记、表格等多种异构资料摄入。许可证：AGPL-3.0。"
+    en: "Marginalia is a local-first personal knowledge management system with LLM research agent capabilities. Built on FastAPI, PostgreSQL, and MinIO, it ingests heterogeneous sources (PDFs, notes, spreadsheets). License — AGPL-3.0."
+    zh-Hant: "Marginalia 是一個本地優先的私人知識庫系統，整合了 LLM 研究代理能力。授權條款：AGPL-3.0。"
+    ja: "Marginaliaは、ローカルファーストの個人用ナレッジベースシステムです。ライセンス：AGPL-3.0。"
+    ko: "Marginalia는 로컬 우선의 개인 지식 베이스 시스템입니다. 라이선스: AGPL-3.0."
+    ru: "Marginalia — локально-приоритетная персональная система управления знаниями. Лицензия: AGPL-3.0."
+    ms: "Marginalia ialah sistem pengurusan pengetahuan peribadi yang mengutamakan tempatan. Lesen: AGPL-3.0."
+    pt-br: "Marginalia é um sistema pessoal de gestão de conhecimento local-first. Licença: AGPL-3.0."
   type: tool
   crossVersionUpdate: false
   limit: 0
