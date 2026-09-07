@@ -1,0 +1,145 @@
+additionalProperties:
+  key: ignis
+  name: ignis 0.8.10
+  tags:
+    - Note
+    - Knowledge Base
+    - Self-hosted
+  shortDescZh: 在浏览器中运行 Obsidian（无需远程桌面）
+  shortDescEn: Run Obsidian in the browser, no remote desktop required
+  description:
+    zh: "Ignis 是一个由社区开发的自托管互操作工具，让你在浏览器中直接使用 Obsidian 笔记应用，免去远程桌面的开销与延迟。注意：Ignis 本身不内置鉴权，请务必通过反向代理 + HTTPS + 鉴权方式对外暴露。许可证：AGPL-3.0。"
+    en: "Ignis is a self-hosted, community-built interoperability tool that lets you run the Obsidian note-taking app in the browser without a remote-desktop session. Note: Ignis has no built-in authentication. Expose it only through a reverse proxy with HTTPS and authentication. License — AGPL-3.0."
+    zh-Hant: "Ignis 是一個由社群開發的自架互操作工具，讓你直接在瀏覽器中使用 Obsidian 筆記應用，免去遠端桌面的開銷與延遲。授權條款：AGPL-3.0。"
+    ja: "Ignis はコミュニティ開発のセルフホスト型相互運用ツールです。ライセンス：AGPL-3.0。"
+    ko: "Ignis는 커뮤니티에서 개발한 자체 호스팅 상호운용 도구입니다. 라이선스: AGPL-3.0."
+    ru: "Ignis — самохостируемый инструмент совместимости от сообщества. Лицензия: AGPL-3.0."
+    ms: "Ignis ialah alat interoperabiliti kendiri-sendiri dari komuniti. Lesen: AGPL-3.0."
+    pt-br: "Ignis é uma ferramenta de interoperabilidade auto-hospedada da comunidade. Licença: AGPL-3.0."
+  type: tool
+  crossVersionUpdate: false
+  limit: 0
+  recommend: 0
+  website: https://ignis.thiefling.com/
+  github: https://github.com/Nystik-gh/ignis
+  # 镜像由 compose 硬编码为 nobbe/ignis:0.8.10（上游 DockerHub 官方镜像，amd64+arm64），便于 auto-update 自动检测
+  formFields:
+    # 容器 HTTP 端口（compose 映射到上游默认 8080）
+    - default: '8080'
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Host HTTP Port
+      labelZh: 宿主机 HTTP 端口
+      label:
+        en: Host HTTP Port
+        zh: 宿主机 HTTP 端口
+        zh-Hant: 主機 HTTP 埠
+        ja: ホスト側 HTTP ポート
+        ko: 호스트 HTTP 포트
+        ru: HTTP-порт на хосте
+        ms: Port HTTP hos
+        pt-br: Porta HTTP no host
+      required: true
+      rule: paramPort
+      type: number
+    # 时区
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    # 容器内进程用户 ID（与宿主机挂载目录的属主对齐，避免权限问题）
+    - default: '1000'
+      edit: true
+      envKey: PUID
+      labelEn: Container User UID
+      labelZh: 容器进程用户 UID
+      label:
+        en: Container user UID. Match the owner UID of the mounted vault/data directory on the host.
+        zh: 容器进程用户 UID。建议与宿主机挂载目录的属主 UID 一致，避免读写权限问题。
+        zh-Hant: 容器行程使用者 UID。建議與主機掛載目錄的屬主 UID 一致，避免讀寫權限問題。
+        ja: コンテナプロセスの UID。ホスト側マウントディレクトリの所有者 UID と一致させることを推奨。
+        ko: 컨테이너 프로세스 UID. 호스트 마운트 디렉터리 소유자 UID와 일치시킬 것을 권장.
+        ru: UID пользователя процесса контейнера. Рекомендуется совпадать с UID владельца каталога на хосте.
+        ms: UID pengguna proses bekas. Disyorkan agar sepadan dengan UID pemilik direktori hos.
+        pt-br: UID do processo no contêiner. Recomenda-se alinhar com o UID do dono do diretório no host.
+      required: true
+      type: number
+    - default: '1000'
+      edit: true
+      envKey: PGID
+      labelEn: Container User GID
+      labelZh: 容器进程用户 GID
+      label:
+        en: Container user GID. Match the owner GID of the mounted vault/data directory on the host.
+        zh: 容器进程用户 GID。建议与宿主机挂载目录的属主 GID 一致。
+        zh-Hant: 容器行程使用者 GID。建議與主機掛載目錄的屬主 GID 一致。
+        ja: コンテナプロセスの GID。ホスト側マウントディレクトリの所有者 GID と一致させる。
+        ko: 컨테이너 프로세스 GID. 호스트 마운트 디렉터리 소유자 GID와 일치.
+        ru: GID пользователя процесса контейнера. Рекомендуется совпадать с GID владельца каталога на хосте.
+        ms: GID pengguna proses bekas. Disyorkan agar sepadan dengan GID pemilik direktori hos.
+        pt-br: GID do processo no contêiner. Recomenda-se alinhar com o GID do dono do diretório no host.
+      required: true
+      type: number
+    # Obsidian 客户端版本（首次启动自动下载该版本的 .asar.gz）
+    - default: '1.12.7'
+      edit: true
+      envKey: OBSIDIAN_VERSION
+      labelEn: Obsidian Version
+      labelZh: Obsidian 客户端版本
+      label:
+        en: Obsidian client version downloaded on first run (must match a release tag at obsidianmd/obsidian-releases).
+        zh: 首次启动时下载的 Obsidian 客户端版本（须对应 obsidianmd/obsidian-releases 的 release tag，如 1.12.7）。
+        zh-Hant: 首次啟動時下載的 Obsidian 用戶端版本（須對應 obsidianmd/obsidian-releases 的 release tag）。
+        ja: 初回起動時にダウンロードされる Obsidian クライアントのバージョン（obsidianmd/obsidian-releases のリリースタグに対応）。
+        ko: 최초 실행 시 다운로드할 Obsidian 클라이언트 버전 (obsidianmd/obsidian-releases의 릴리스 태그와 일치).
+        ru: Версия клиента Obsidian, загружаемая при первом запуске (должна соответствовать тегу релиза в obsidianmd/obsidian-releases).
+        ms: Versi klien Obsidian yang dimuat turun pada larian pertama (mesti memadankan tag rilis di obsidianmd/obsidian-releases).
+        pt-br: Versão do cliente Obsidian baixada no primeiro start (deve corresponder a uma tag de release no obsidianmd/obsidian-releases).
+      required: true
+      type: text
+    # 离线安装包（留空=在线下载；可填 .deb / .asar.gz / .asar 路径，离线场景使用）
+    - default: ''
+      edit: true
+      envKey: OBSIDIAN_PACKAGE
+      labelEn: Offline Obsidian Package (optional)
+      labelZh: 离线安装包路径（可空）
+      label:
+        en: 'Optional: path to a local .deb / .asar.gz / .asar Obsidian package. Leave empty for online download.'
+        zh: '可选：本地 .deb / .asar.gz / .asar 离线安装包路径。留空则自动从 GitHub 下载。'
+        zh-Hant: '可選：本機 .deb / .asar.gz / .asar 離線安裝包路徑。留空則自動從 GitHub 下載。'
+        ja: '任意：ローカルの .deb / .asar.gz / .asar パッケージへのパス。空欄なら GitHub から自動取得。'
+        ko: '선택: 로컬 .deb / .asar.gz / .asar 패키지 경로. 비워두면 GitHub에서 자동 다운로드.'
+        ru: 'Необязательно: путь к локальному пакету Obsidian (.deb / .asar.gz / .asar). Пусто — автозагрузка с GitHub.'
+        ms: 'Pilihan: laluan ke pakej .deb / .asar.gz / .asar Obsidian tempatan. Biarkan kosong untuk muat turun automatik dari GitHub.'
+        pt-br: 'Opcional: caminho para um pacote .deb / .asar.gz / .asar local do Obsidian. Vazio = download automático do GitHub.'
+      required: false
+      type: text
+    # 写盘去抖（毫秒）。网络/慢文件系统下增大可降低 Obsidian 写盘频率
+    - default: '1000'
+      edit: true
+      envKey: WRITE_COALESCE_MS
+      labelEn: Write Coalesce (ms)
+      labelZh: 写盘去抖（毫秒）
+      label:
+        en: 'Debounce window (ms) for batched writes. Increase if your host FS is slow (e.g. NFS, SMB).'
+        zh: '写盘去抖窗口（毫秒）。宿主机磁盘较慢（NFS/SMB 等）时可适当增大。'
+        zh-Hant: '寫盤去抖窗口（毫秒）。主機磁碟較慢（NFS/SMB 等）時可適當增大。'
+        ja: '書き込みデバウンス窓（ミリ秒）。ホスト FS が遅い場合（NFS/SMB 等）は大きめに。'
+        ko: '쓰기 디바운스 윈도우 (ms). 호스트 FS가 느린 경우 (NFS/SMB 등) 값을 늘리세요.'
+        ru: 'Окно дебаунса записи (мс). Увеличьте при медленном хосте (NFS, SMB и т.п.).'
+        ms: 'Tingkap debounce tulis (ms). Tingkatkan jika FS hos perlahan (cth. NFS, SMB).'
+        pt-br: 'Janela de debounce de escrita (ms). Aumente se o FS do host for lento (NFS, SMB etc.).'
+      required: true
+      type: number

@@ -1,0 +1,24 @@
+additionalProperties:
+  key: ignis
+  name: Ignis
+  tags:
+    - Note
+    - Knowledge Base
+    - Self-hosted
+  shortDescZh: 在浏览器中运行 Obsidian（无需远程桌面）
+  shortDescEn: Run Obsidian in the browser, no remote desktop required
+  description:
+    zh: "Ignis 是一个由社区开发的自托管互操作工具，让你在浏览器中直接使用 Obsidian 笔记应用，免去远程桌面的开销与延迟。基于 Node.js 22 + obsidian-headless 实现容器内启动 Obsidian 的 Electron 应用并通过 Web 端暴露，兼容 Obsidian 桌面端大部分 API 与插件生态。注意：Ignis 本身不内置鉴权，请务必通过反向代理 + HTTPS + 鉴权方式对外暴露，否则任何能访问到该实例的人都能读写整个 vault。许可证：AGPL-3.0。"
+    en: "Ignis is a self-hosted, community-built interoperability tool that lets you run the Obsidian note-taking app in the browser without a remote-desktop session. It boots Obsidian's Electron app inside a container (Node.js 22 + obsidian-headless) and exposes it as a web app, supporting most desktop Obsidian APIs and plugins. Note: Ignis has no built-in authentication. Expose it only through a reverse proxy with HTTPS and authentication, or anyone who can reach the instance can read and write the entire vault. License — AGPL-3.0."
+    zh-Hant: "Ignis 是一個由社群開發的自架互操作工具，讓你直接在瀏覽器中使用 Obsidian 筆記應用，免去遠端桌面的開銷與延遲。基於 Node.js 22 + obsidian-headless 在容器內啟動 Obsidian 的 Electron 應用並透過 Web 端暴露，兼容 Obsidian 桌面端大部分 API 與外掛生態。注意：Ignis 本身未內建驗證，請務必透過反向代理 + HTTPS + 驗證方式對外暴露，否則任何能訪問到該實例的人皆可讀寫整個 vault。授權條款：AGPL-3.0。"
+    ja: "Ignis はコミュニティ開発のセルフホスト型相互運用ツールで、リモートデスクトップなしでブラウザから直接 Obsidian ノートアプリを利用できるようにします。Node.js 22 + obsidian-headless によりコンテナ内で Obsidian の Electron アプリを起動し、Web 経由で公開します。デスクトップ版 Obsidian の API とプラグインの大半と互換性があります。注意：Ignis 自体には認証機能がありません。リバースプロキシ + HTTPS + 認証を経由して公開してください。到達可能なユーザーは vault 全体を読み書きできます。ライセンス：AGPL-3.0。"
+    ko: "Ignis는 커뮤니티에서 개발한 자체 호스팅 상호운용 도구로, 원격 데스크톱 없이 브라우저에서 직접 Obsidian 노트 앱을 사용할 수 있게 해줍니다. Node.js 22 + obsidian-headless로 컨테이너 내부에서 Obsidian의 Electron 앱을 부팅해 웹으로 노출하며, 데스크톱 Obsidian의 대부분의 API와 플러그인 생태계와 호환됩니다. 주의: Ignis에는 기본 인증 기능이 없습니다. 인스턴스에 접근 가능한 모든 사용자가 vault 전체를 읽고 쓸 수 있으므로, 반드시 역방향 프록시 + HTTPS + 인증을 통해 외부에 노출하세요. 라이선스: AGPL-3.0."
+    ru: "Ignis — это разработанный сообществом самохостируемый инструмент совместимости, который позволяет запускать приложение Obsidian в браузере без удалённого рабочего стола. Он поднимает Electron-приложение Obsidian внутри контейнера (Node.js 22 + obsidian-headless) и предоставляет его через веб-интерфейс, поддерживая большинство API и плагинов десктопной версии. Внимание: Ignis не имеет встроенной аутентификации. Открывайте экземпляр только через обратный прокси с HTTPS и аутентификацией — иначе любой, кто достучится до сервиса, сможет читать и писать весь vault. Лицензия: AGPL-3.0."
+    ms: "Ignis ialah alat interoperabiliti kendiri-sendiri yang dibina oleh komuniti, yang membolehkan anda menjalankan aplikasi not Obsidian terus dalam pelayar tanpa sesi desktop jauh. Ia melancarkan aplikasi Electron Obsidian dalam bekas (Node.js 22 + obsidian-headless) dan mendedahkannya sebagai aplikasi web, menyokong kebanyakan API dan plugin Obsidian desktop. Perhatian: Ignis tiada pengesahan terbina dalam. Dedahkan hanya melalui proksi terbalik dengan HTTPS dan pengesahan, jika tidak sesiapa sahaja yang dapat mencapai kejadian boleh membaca dan menulis keseluruhan vault. Lesen: AGPL-3.0."
+    pt-br: "Ignis é uma ferramenta de interoperabilidade auto-hospedada, criada pela comunidade, que permite executar o aplicativo Obsidian no navegador sem uma sessão de área de trabalho remota. Ela inicializa o aplicativo Electron do Obsidian dentro de um contêiner (Node.js 22 + obsidian-headless) e o expõe como um app web, compatível com a maior parte das APIs e do ecossistema de plugins do Obsidian desktop. Atenção: o Ignis não tem autenticação integrada. Exponha-o apenas por meio de um reverse proxy com HTTPS e autenticação — caso contrário, qualquer pessoa que alcance a instância poderá ler e gravar todo o vault. Licença: AGPL-3.0."
+  type: tool
+  crossVersionUpdate: false
+  limit: 0
+  recommend: 0
+  website: https://ignis.thiefling.com/
+  github: https://github.com/Nystik-gh/ignis

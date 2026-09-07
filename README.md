@@ -13,6 +13,7 @@
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
 | handbrake | 视频转码 | 1.11.2-ls36 |
 | hindsight | AI 记忆系统 | 0.9.2 |
+| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.10 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 2026081705-arm64 |

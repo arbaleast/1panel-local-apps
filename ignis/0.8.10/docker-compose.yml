@@ -1,0 +1,56 @@
+# Ignis Docker Compose
+# 镜像源：nobbe/ignis:0.8.10（上游 DockerHub 官方镜像，多架构）
+# 上游仓库：https://github.com/Nystik-gh/ignis
+# 注意：Ignis 不内置鉴权，部署后必须通过反向代理 + HTTPS + 鉴权方式对外暴露
+# 首次启动会从 obsidianmd/obsidian-releases 下载指定版本的 Obsidian .asar.gz
+
+networks:
+  1panel-network:
+    external: true
+
+services:
+  # 主服务：在浏览器中运行 Obsidian（Node.js 22 + obsidian-headless）
+  ignis:
+    container_name: ${CONTAINER_NAME}
+    image: nobbe/ignis:0.8.10
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    environment:
+      - TZ=${TZ}
+      # 上游固定监听 8080
+      - PORT=8080
+      - VAULT_ROOT=/vaults
+      - DATA_ROOT=/app/data
+      # Obsidian 客户端版本与首次启动资源路径
+      - OBSIDIAN_VERSION=${OBSIDIAN_VERSION}
+      - OBSIDIAN_ASSETS_PATH=/app/obsidian-app
+      # 容器内进程用户/组（与宿主机挂载目录属主对齐）
+      - PUID=${PUID}
+      - PGID=${PGID}
+      # 离线安装包（留空=在线下载）
+      - OBSIDIAN_PACKAGE=${OBSIDIAN_PACKAGE}
+      # 写盘去抖窗口（毫秒）
+      - WRITE_COALESCE_MS=${WRITE_COALESCE_MS}
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8080
+    networks:
+      - 1panel-network
+    volumes:
+      # Obsidian vault 目录：存放 .md 笔记与 .obsidian 配置
+      - ./data/vaults:/vaults
+      # 运行时数据：插件状态、同步状态、认证 token 等
+      - ./data/runtime:/app/data
+      # Obsidian 客户端资源（首次启动自动下载，可持久化避免重复下载）
+      - ./data/obsidian-app:/app/obsidian-app
+    restart: always
+    labels:
+      createdBy: "Apps"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
