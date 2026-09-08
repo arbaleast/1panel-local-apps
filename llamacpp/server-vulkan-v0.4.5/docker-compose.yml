@@ -1,0 +1,27 @@
+networks:
+    1panel-network:
+        external: true
+services:
+    llamacpp:
+        container_name: ${CONTAINER_NAME}
+        deploy:
+            resources:
+                limits:
+                    cpus: ${CPUS}
+                    memory: ${MEMORY_LIMIT}
+        environment:
+            - NVIDIA_VISIBLE_DEVICES=all
+            - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+        runtime: nvidia
+        image: ${IMAGE}
+        labels:
+            createdBy: Apps
+        networks:
+            - 1panel-network
+        ports:
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8080
+        restart: always
+        volumes:
+            - ./data/models:/models
+        entrypoint: ["/bin/sh", "-c"]
+        command: ["exec /app/llama-server --host 0.0.0.0 --port 8080 -m /models/${MODEL_FILE} -ngl ${GPU_LAYERS} -c ${CTX_SIZE} -t ${THREADS} $(case ${ENABLE_EMBEDDINGS} in true) echo --embeddings;; esac)"]

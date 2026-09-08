@@ -77,7 +77,7 @@ services:
         - --spider
         - http://localhost:7700/health
       timeout: 5s
-    image: getmeili/meilisearch:v1.13.3
+    image: getmeili/meilisearch:v1.53.2
     labels:
       createdBy: Apps
     networks:

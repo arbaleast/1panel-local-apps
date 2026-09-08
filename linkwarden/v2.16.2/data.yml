@@ -28,7 +28,6 @@ additionalProperties:
   github: https://github.com/linkwarden/linkwarden
   document: https://docs.linkwarden.app/self-hosting/installation
   formFields:
-    # ---- 宿主机端口（Web UI 暴露端口）----
     - default: "3000"
       edit: true
       envKey: PANEL_APP_PORT_HTTP
@@ -46,7 +45,6 @@ additionalProperties:
       required: true
       rule: paramPort
       type: number
-    # ---- PostgreSQL 密码（上游自动构建 DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres）----
     - default: ""
       edit: true
       envKey: POSTGRES_PASSWORD
@@ -63,7 +61,6 @@ additionalProperties:
         pt-br: Senha Postgres (obrigatório)
       required: true
       type: password
-    # ---- Meilisearch 主密钥（必填）----
     - default: ""
       edit: true
       envKey: MEILI_MASTER_KEY
@@ -80,7 +77,6 @@ additionalProperties:
         pt-br: Chave mestra do Meilisearch (obrigatório)
       required: true
       type: password
-    # ---- NextAuth 密钥（必填，用于 JWT 签名）----
     - default: ""
       edit: true
       envKey: NEXTAUTH_SECRET
@@ -97,7 +93,6 @@ additionalProperties:
         pt-br: Segredo NextAuth (obrigatório)
       required: true
       type: password
-    # ---- NextAuth 访问地址（需与实际访问 URL 一致，含 /api/v1/auth 路径）----
     - default: http://localhost:3000
       edit: true
       envKey: NEXTAUTH_URL
@@ -114,7 +109,6 @@ additionalProperties:
         pt-br: URL NextAuth
       required: true
       type: text
-    # ---- 容器内服务端口（固定 3000，无需修改，隐藏 UI 字段）----
     - default: "3000"
       edit: true
       envKey: SERVER_PORT
@@ -132,7 +126,6 @@ additionalProperties:
       required: false
       type: text
       hidden: true
-    # ---- 时区 ----
     - default: Asia/Shanghai
       edit: true
       envKey: TZ
@@ -149,7 +142,6 @@ additionalProperties:
         pt-br: Fuso horário
       required: true
       type: text
-    # ---- 资源限制 ----
     - default: "2"
       edit: true
       envKey: PANEL_APP_CPUS
@@ -182,7 +174,6 @@ additionalProperties:
         pt-br: Limite de memória (MB, 0=ilimitado)
       required: false
       type: number
-    # ---- 绑定 IP（Traefik 反代场景用 0.0.0.0）----
     - default: 0.0.0.0
       edit: true
       envKey: HOST_IP
