@@ -446,19 +446,19 @@ async function main() {
     }
   }
 
+  // "有更新" 是正常业务流,不再是退出码信号。
+  // CI 通过 updates.json + has-updates 判定分流:
+  //   - 无更新: updates.json 写空数组, has-updates=false, job success
+  //   - 有更新: updates.json 写非空数组, has-updates=true, 开 PR 步骤跑
+  // 真正异常（脚本崩溃 / 依赖缺失）由 main().catch 兜底 process.exit(1)。
   const out = { updates, scanned: targetApps.length, timestamp: new Date().toISOString() };
   fs.writeFileSync('updates.json', JSON.stringify(out, null, 2));
   log(`完成: ${updates.length} 个版本有更新`);
-
-  // [DEBUG-hindsight] 检测到更新时返回非零退出码，便于 CI 区分"有更新"和"无更新"
-  if (updates.length > 0) {
-    process.exit(1);
-  }
 }
 
 // 仅当作为 CLI 直接执行（而非被 import）时才跑 main()。
 // 原因：原实现在模块顶层无条件调用 main().catch，测试 .github/lib/detect-updates.test.mjs
-// 一旦 import 本文件即触发：DockerHub/GHCR 网络调用 + 检测到更新时 process.exit(1)，
+// 一旦 import 本文件即触发：DockerHub/GHCR 网络调用 → 写 updates.json → 抛错/退出，
 // 导致 node --test 在第一个 case 之前静默终止，输出仅为 'test failed' + exit code 1。
 // ESM 标准做法：用 import.meta.url 与 process.argv[1] 标准化后的 file:// URL 对比。
 const isCliInvocation =
