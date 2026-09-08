@@ -207,4 +207,85 @@ describe('registry', () => {
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:pg', 'pg');
     assert.equal(tag, 'pg-1.16.0');
   });
+
+  // 14. DockerHubAdapter semver+后缀变体：v3.2.18-arm32v7 → v3.2.29-arm32v7（anirss 回归用例）
+  it('DockerHubAdapter matches semver+suffix variant (v3.2.18-arm32v7 -> v3.2.29-arm32v7)', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({
+            results: [
+              { name: 'latest' },
+              { name: 'v3.2.18' },
+              { name: 'v3.2.18-arm32v7' },
+              { name: 'v3.2.24' },
+              { name: 'v3.2.24-arm32v7' },
+              { name: 'v3.2.28' },
+              { name: 'v3.2.28-arm32v7' },
+              { name: 'v3.2.29' },
+              { name: 'v3.2.29-arm32v7' },
+            ],
+          }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('wushuo894/ani-rss:v3.2.18-arm32v7', 'v3.2.18-arm32v7');
+    assert.equal(tag, 'v3.2.29-arm32v7');
+  });
+
+  // 15. DockerHubAdapter semver+后缀：无当前 suffix 的变体（prefix 形式 1）时, 纯 v3.2.9 不走变体分支
+  it('DockerHubAdapter: pure v3.2.24 falls back to pickLatest (no arm32v7)', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({
+            results: [
+              { name: 'v3.2.18-arm32v7' },
+              { name: 'v3.2.24' },
+              { name: 'v3.2.29' },
+              { name: 'v3.2.29-arm32v7' },
+            ],
+          }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('wushuo894/ani-rss:v3.2.24', 'v3.2.24');
+    // 形态 3 不匹配（无 -suffix）；形态 1/2 prefix='v' 被 ^v\d 排除 → fallback
+    assert.equal(tag, 'v3.2.29');
+  });
+
+  // 16. DockerHubAdapter semver+后缀：suffix 不存在时 fallback，不误报
+  it('DockerHubAdapter: semver+suffix with no same-suffix tags falls back to pickLatest', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({
+            results: [
+              { name: 'v3.2.24' },
+              { name: 'v3.2.29' },
+            ],
+          }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('wushuo894/ani-rss:v3.2.18-arm64v8', 'v3.2.18-arm64v8');
+    // 形态 3 suffix=arm64v8 找不到同 suffix → 走 fallback
+    assert.equal(tag, 'v3.2.29');
+  });
+
+  // 17. GhcrAdapter semver+后缀变体
+  it('GhcrAdapter matches semver+suffix variant (v3.2.18-arm32v7 -> v3.2.29-arm32v7)', async () => {
+    const fetchMock = makeMockFetch([
+      () => ({ ok: true, json: async () => ({ token: 'anon-token' }) }),
+      () => ({
+        ok: true,
+        json: async () => ({
+          tags: ['v3.2.18', 'v3.2.18-arm32v7', 'v3.2.24', 'v3.2.24-arm32v7', 'v3.2.29', 'v3.2.29-arm32v7'],
+        }),
+      }),
+    ]);
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const tag = await adapter.getLatestTag('ghcr.io/org/repo:v3.2.18-arm32v7', 'v3.2.18-arm32v7');
+    assert.equal(tag, 'v3.2.29-arm32v7');
+  });
 });

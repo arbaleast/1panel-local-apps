@@ -187,3 +187,46 @@ operable program or batch file.
 - ❌ `npm run lint | tee out.txt` —— `tee` 在 Windows cmd 上对 npm 包装器退出码语义不一致，输出会丢；
 - ❌ 反复递归 `dir /b /s "C:\Users\33098" | findstr node.exe` —— 全盘扫描动辄 30s+，沙箱里**会卡住后台终端**，并污染 `Actively Running Terminals` 列表。
 - ✅ 改为 `git diff AGENTS.md` / `git status` / `git log --oneline` 完成同类校验。
+
+## anirss 不更新根因复盘（2026-09-08）
+
+**症状**：上游 wushuo894/ani-rss 在 2026-09-05 发布 v3.2.29 / v3.2.29-arm32v7，但本仓 `anirss/` 下最末版本仍停留在 v3.2.24（2026-08-28）。`detect-updates.mjs` cron 周一拍不出 PR。
+
+**根因**（[`registry.mjs`](.github/lib/registry.mjs:90) refactor 引入的回归）：
+
+`DockerHubAdapter.getLatestTag` 的 variant 正则 `^([a-zA-Z][a-zA-Z0-9]*)(?:-|$)/` 对 `currentTag='v3.2.18-arm32v7'` 永远不匹配（'v' 之后是 '3'，既不是 `-` 也不是 `$`）。fallback 走 `pickLatest(stable)` → `pickLatest` 内部 `PURE_SEMVER_RE = /^v?\d+\.\d+\.\d+$/` 把所有 `*-arm32v7` tag 过滤掉，永远返回无后缀的 `v3.2.29`。
+
+**链式后果**（[`detect-updates.mjs`](.github/scripts/detect-updates.mjs:303-322) hardcode 路径）：
+
+1. anirss 9 个 versionDir 全部把 `maxTo` 设为 `v3.2.29`（arm32v7 后缀在 fallback 中被丢）
+2. 9 次循环对同一 `v3.2.29/` 目录 `rmSync` + `cpSync` 覆盖，**`v3.2.29-arm32v7/` 目录永远不会被创建**
+3. 1Panel UI 版本下拉中 arm32v7 用户拿不到 v3.2.29
+
+**PR #14 全空 before/after 同根**：cron 周一 2026-08-25 跑 `detect-updates.mjs`（refactor 之后首次），所有应用遍历后 `serviceChanges` 全部为空（refactor 在 `processApp` 返回路径上漏处理），所以全 PR 空修改。这与本仓 firecrawl/handbrake/hindsight/jellyfin/linkwarden/llamacpp/moviepilot/qdrant/searxng/syncthing/vane 全军覆没**同源**。
+
+**修复**（[`.github/lib/registry.mjs`](.github/lib/registry.mjs:87)）：
+
+variant 识别扩展为 3 种 currentTag 形态：
+1. 裸变体 `'pg'` → 匹配 `'pg-1.16.0'`（AGENTS.md 已有业务，行为不变）
+2. 变体+版本 `'pg-1.16.0'` → 匹配 `'pg-1.16.1'`（行为不变）
+3. **semver+后缀 `'v3.2.18-arm32v7'` → 匹配 `'v3.2.29-arm32v7'`**（新增）
+
+形态 3 实现：先正则提取 suffix，再 `pickLatest(stable.filter(t => t.endsWith('-' + suffix)))`。同 suffix 的版本不存在时（如上游删了 arm32v7）走 fallback，避免误报。
+
+**清理**：[`GhcrAdapter`](.github/lib/registry.mjs:132) 内部残留的 `[DEBUG-hindsight]` 8 处 `console.log` 全部删除（PR #13 hindsight 修复遗留）。
+
+**回归测试**（[`.github/lib/registry.test.mjs`](.github/lib/registry.test.mjs:200)）：
+
+- case 14: `v3.2.18-arm32v7` → `v3.2.29-arm32v7`（anirss 核心场景）
+- case 15: `v3.2.24`（无后缀）走 fallback 拿到 `v3.2.29`
+- case 16: `v3.2.18-arm64v8`（suffix 不存在）走 fallback 不误报
+- case 17: GHCR 同样形态 3 支持
+
+**手动补救**：anirss 补出 `v3.2.29/` + `v3.2.29-arm32v7/` 两个目录（cpSync v3.2.24 / v3.2.18-arm32v7 后改 compose image），保证 1Panel UI 当下可用。
+
+**教训**：
+
+- 变体识别是**两个维度**的复合查询：prefix（裸变体语义）+ suffix（semver 后缀架构）。原正则只支持 prefix 一种形态，semver+后缀这种主流架构（anirss/handbrake/scrob 等都这样）会全部走错路径。
+- 测试覆盖不足：原 `registry.test.mjs` 只测了 `pg` / `railway`（anythingllm 业务），没有 `v3.2.X-arm32v7` 这种 semver+suffix 形态。新增 case 14-17 锁死该形态。
+- DEBUG 日志 `[DEBUG-hindsight]` 这种前缀在 PR 合入时**没有清理**——下次类似 PR 应检查 `git grep DEBUG-`。
+- `pickLatest` 的 `PURE_SEMVER_RE` 过滤是双刃剑：把变体 tag 当作"非 semver"丢掉，导致上游有同 suffix 但版本号低时不报错。需要上游**专门**给 suffix 维度筛选（不能完全靠 pickLatest 退路）。

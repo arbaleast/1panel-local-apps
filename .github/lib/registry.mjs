@@ -84,17 +84,38 @@ export class DockerHubAdapter {
     const stable = results.filter(t => !this.UNSTABLE_RE.test(t.name));
     if (stable.length === 0) return null;
 
-    // 如果有当前 tag 且以字母开头（可能是变体标识，如 pg、railway），尝试匹配同前缀的版本化 tag
-    // 同时支持裸变体 'pg' 和带连字符的 'pg-1.16.0' 两种形态
+    // 如果有当前 tag，尝试按"变体维度"匹配同 suffix 的版本化 tag。
+    // 支持 3 种 currentTag 形态：
+    //   1. 裸变体: 'pg'            → 匹配 'pg-1.16.0'（prefix = 'pg', suffix = undefined）
+    //   2. 变体+版本: 'pg-1.16.0'  → 匹配 'pg-1.16.1'（prefix = 'pg', suffix = undefined）
+    //   3. semver+后缀: 'v3.2.18-arm32v7' → 匹配 'v3.2.29-arm32v7'（prefix = 'v', suffix = 'arm32v7'）
+    //
+    // 形态 1/2 行为不变（AGENTS.md 业务：anythingllm/railway 等需要）；形态 3 修复 anirss/handbrake 类
+    // hardcode 应用的"丢后缀"bug（9 个 versionDir 全收敛到 v3.2.29，v3.2.29-arm32v7 永远不生成）。
     if (currentTag) {
+      // 形态 3：vX.Y.Z-suffix（pure semver base + 短横线后缀）
+      const semverSuffixMatch = currentTag.match(/^v\d+\.\d+\.\d+-([a-z0-9][a-z0-9-]*)$/i);
+      if (semverSuffixMatch) {
+        const suffix = semverSuffixMatch[1]; // 如 'arm32v7'
+        const variantTags = stable
+          .filter(t => /^v\d+\.\d+\.\d+-([a-z0-9][a-z0-9-]*)$/i.test(t.name))
+          .filter(t => t.name.toLowerCase().endsWith(`-${suffix.toLowerCase()}`));
+        if (variantTags.length > 0) {
+          return pickLatest(variantTags.map(t => t.name));
+        }
+        // 同 suffix 的版本不存在（如上游删了 arm32v7）→ 走 fallback，避免误报
+      }
+
+      // 形态 1/2：字母开头的变体（pg / railway / pg-1.16.0）
       const variantMatch = currentTag.match(/^([a-zA-Z][a-zA-Z0-9]*)(?:-|$)/);
       if (variantMatch) {
-        const prefix = variantMatch[1]; // 如 'pg'
-        const variantTags = stable.filter(t => t.name.startsWith(`${prefix}-`));
-        if (variantTags.length > 0) {
-          // 从变体 tag 中选最新版本
-          const variantVersions = variantTags.map(t => t.name);
-          return pickLatest(variantVersions);
+        const prefix = variantMatch[1];
+        // 排除 vX.Y.Z-* 形态被这里误捕获（理论上 semverSuffixMatch 已先匹配，但保留防御）
+        if (!/^v\d/i.test(prefix)) {
+          const variantTags = stable.filter(t => t.name.startsWith(`${prefix}-`));
+          if (variantTags.length > 0) {
+            return pickLatest(variantTags.map(t => t.name));
+          }
         }
       }
     }
@@ -135,18 +156,12 @@ export class GhcrAdapter {
       const tokenRes = await this.fetchImpl(
         `https://ghcr.io/token?scope=repository:${repo}:pull`
       );
-      // [DEBUG-hindsight] token 获取结果
-      console.log(`[DEBUG-hindsight] token fetch status: ${tokenRes.status} for ${repo}`);
       if (tokenRes.ok) {
         const tokenData = await tokenRes.json();
         token = tokenData?.token ?? null;
-        console.log(`[DEBUG-hindsight] token obtained: ${token ? 'yes (len=' + token.length + ')' : 'null'}`);
-      } else {
-        console.log(`[DEBUG-hindsight] token fetch failed, will try anonymous`);
       }
-    } catch (e) {
+    } catch (_) {
       // token 获取失败，降级为匿名调用
-      console.log(`[DEBUG-hindsight] token fetch threw: ${e.message}`);
     }
 
     // 构建请求头
@@ -161,55 +176,56 @@ export class GhcrAdapter {
         `https://ghcr.io/v2/${repo}/tags/list?n=1000`,
         { headers }
       );
-    } catch (e) {
-      // [DEBUG-hindsight] API 调用异常
-      console.log(`[DEBUG-hindsight] API fetch threw for ${repo}: ${e.message}`);
+    } catch (_) {
       return null;
     }
-    // [DEBUG-hindsight] API 响应状态
-    console.log(`[DEBUG-hindsight] API response status: ${res.status} for ${repo}`);
-    if (!res.ok) {
-      console.log(`[DEBUG-hindsight] API response not ok, returning null`);
-      return null;
-    }
+    if (!res.ok) return null;
 
     let data;
     try {
       data = await res.json();
-    } catch (e) {
-      console.log(`[DEBUG-hindsight] JSON parse failed: ${e.message}`);
+    } catch (_) {
       return null;
     }
 
     const allTags = data?.tags ?? [];
     const stable = allTags.filter(t => !this.UNSTABLE_RE.test(t));
-    // [DEBUG-hindsight] tag 过滤结果
-    console.log(`[DEBUG-hindsight] total tags: ${allTags.length}, stable: ${stable.length}, allStable: ${JSON.stringify(allTags.slice(0, 20))}`);
-    if (stable.length === 0) {
-      console.log(`[DEBUG-hindsight] no stable tags after filter, returning null`);
-      return null;
-    }
+    if (stable.length === 0) return null;
 
-    // 如果有当前 tag 且以字母开头（可能是变体标识，如 pg、railway），尝试匹配同前缀的版本化 tag
-    // 同时支持裸变体 'pg' 和带连字符的 'pg-1.16.0' 两种形态
+    // 如果有当前 tag，尝试按"变体维度"匹配同 suffix 的版本化 tag。
+    // 支持 3 种 currentTag 形态（与 DockerHubAdapter 一致）：
+    //   1. 裸变体: 'pg'            → 匹配 'pg-1.16.0'
+    //   2. 变体+版本: 'pg-1.16.0'  → 匹配 'pg-1.16.1'
+    //   3. semver+后缀: 'v3.2.18-arm32v7' → 匹配 'v3.2.29-arm32v7'
     if (currentTag) {
+      // 形态 3：vX.Y.Z-suffix
+      const semverSuffixMatch = currentTag.match(/^v\d+\.\d+\.\d+-([a-z0-9][a-z0-9-]*)$/i);
+      if (semverSuffixMatch) {
+        const suffix = semverSuffixMatch[1];
+        const variantTags = stable
+          .filter(t => /^v\d+\.\d+\.\d+-([a-z0-9][a-z0-9-]*)$/i.test(t))
+          .filter(t => t.toLowerCase().endsWith(`-${suffix.toLowerCase()}`));
+        if (variantTags.length > 0) {
+          return pickLatest(variantTags);
+        }
+        // 同 suffix 的版本不存在 → 走 fallback
+      }
+
+      // 形态 1/2：字母开头的变体
       const variantMatch = currentTag.match(/^([a-zA-Z][a-zA-Z0-9]*)(?:-|$)/);
       if (variantMatch) {
-        const prefix = variantMatch[1]; // 如 'pg'
-        const variantTags = stable.filter(t => t.startsWith(`${prefix}-`));
-        if (variantTags.length > 0) {
-          // 从变体 tag 中选最新版本
-          const result = pickLatest(variantTags);
-          console.log(`[DEBUG-hindsight] variant match prefix=${prefix}, result=${result}`);
-          return result;
+        const prefix = variantMatch[1];
+        if (!/^v\d/i.test(prefix)) {
+          const variantTags = stable.filter(t => t.startsWith(`${prefix}-`));
+          if (variantTags.length > 0) {
+            return pickLatest(variantTags);
+          }
         }
       }
     }
 
     // 回退：从所有稳定 tag 中选最新
-    const result = pickLatest(stable);
-    console.log(`[DEBUG-hindsight] final pickLatest result: ${result}`);
-    return result;
+    return pickLatest(stable);
   }
 }
 
