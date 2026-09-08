@@ -6,7 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as yaml from 'js-yaml';
 // 共享模块：semver 比较、镜像 registry 适配器、应用目录扫描
 import { parse, compare } from '../lib/semver.mjs';
@@ -456,7 +456,18 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// 仅当作为 CLI 直接执行（而非被 import）时才跑 main()。
+// 原因：原实现在模块顶层无条件调用 main().catch，测试 .github/lib/detect-updates.test.mjs
+// 一旦 import 本文件即触发：DockerHub/GHCR 网络调用 + 检测到更新时 process.exit(1)，
+// 导致 node --test 在第一个 case 之前静默终止，输出仅为 'test failed' + exit code 1。
+// ESM 标准做法：用 import.meta.url 与 process.argv[1] 标准化后的 file:// URL 对比。
+const isCliInvocation =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+
+if (isCliInvocation) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
