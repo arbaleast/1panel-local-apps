@@ -1,0 +1,39 @@
+# Dendrite v0.15.2 — Matrix homeserver (Monolith)
+# 镜像源：ghcr.io/element-hq/dendrite-monolith:v0.15.2
+# 官方文档：https://element-hq.github.io/dendrite/
+# init.sh 在首次启动时生成 matrix_key.pem 与 dendrite.yaml，
+# 已存在的文件不会被覆盖（升级 / 重启安全）。
+
+networks:
+  1panel-network:
+    external: true
+
+services:
+  monolith:
+    container_name: ${CONTAINER_NAME}
+    image: ghcr.io/element-hq/dendrite-monolith:v0.15.2
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8008
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTPS}:8448
+    environment:
+      - TZ=${TZ}
+    volumes:
+      # 工作目录 = /etc/dendrite（镜像 WORKDIR），同时作为数据 / 配置 / 日志根
+      - ${DATA_PATH}:/etc/dendrite
+      # 首次启动初始化脚本：生成 matrix_key.pem 与 dendrite.yaml
+      - ./scripts/init.sh:/usr/local/bin/init.sh:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/init.sh"]
+    command:
+      - --http-bind-address=0.0.0.0:8008
+      - --https-bind-address=0.0.0.0:8448
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8008/_matrix/client/versions || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s

@@ -1,0 +1,28 @@
+additionalProperties:
+  key: dendrite
+  name: Dendrite
+  tags:
+    - Chat
+    - Matrix
+    - Federation
+  shortDescZh: Matrix 协议新一代 homeserver
+  shortDescEn: Next-generation Matrix homeserver written in Go
+  description:
+    zh: Element 团队用 Go 编写的新一代 Matrix homeserver，支持 Federation、客户端 API、端到端加密，可作为轻量自托管聊天服务使用。
+    en: Next-generation Matrix homeserver written in Go by Element. Supports federation, client-server API, end-to-end encryption; suitable as a lightweight self-hosted chat backend.
+    zh-Hant: Element 團隊以 Go 撰寫的新一代 Matrix homeserver，支援 Federation、Client-Server API、端對端加密。
+    ja: Element チームが Go で開発した次世代 Matrix homeserver。Federation / Client-Server API / E2E 暗号化をサポート。
+    ko: Element 팀이 Go로 작성한 차세대 Matrix homeserver. Federation / Client-Server API / E2E 암호화를 지원.
+    ru: Современный Matrix homeserver на Go от Element. Поддержка федерации, Client-Server API и E2E-шифрования.
+    ms: Matrix homeserver generasi baharu yang ditulis dalam Go oleh Element. Sokongan federation, Client-Server API, E2E encryption.
+    pt-br: Matrix homeserver de próxima geração escrito em Go pela Element. Suporta federação, API cliente-servidor e criptografia E2E.
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://element-hq.github.io/dendrite/
+  github: https://github.com/element-hq/dendrite
+  document: https://element-hq.github.io/dendrite/
