@@ -35,7 +35,7 @@ Element 团队（Matrix 协议原作者）用 Go 编写的新一代 Matrix homes
 1. 1Panel 应用商店 → 本地 → 找到 **Dendrite** → 安装
 2. 关键表单（其余字段可保留默认）：
    - **Server Name**：填你的 Matrix 域名（例 `matrix.example.com`），**必须**与反代配置一致
-   - **Database URL**：默认 `file:dendrite.db`（SQLite，单机自用足够）。详见下方「切到 PostgreSQL」段落。
+   - **Database Type**：默认 `sqlite`（单机自用足够）。切到 `postgres` 详见下方「切到 PostgreSQL」段落。
    - **Registration Shared Secret**：留空 = 禁止公开注册（推荐）。
      如需管理员创建账号，填一个强随机串（`openssl rand -hex 32`），然后用
      `POST /_synapse/admin/v1/register` 或 Element 客户端「高级设置 → 自定义服务器」
@@ -54,23 +54,22 @@ Element 团队（Matrix 协议原作者）用 Go 编写的新一代 Matrix homes
    - **用户名**（自动生成的 1Panel 随机用户，例 `user_wEJsSp`）
    - **密码**
    - **数据库名**（先在 1Panel-PG 控制台用 `CREATE DATABASE dendrite;` 预创建）
-2. 回到本应用的 **Database URL** 字段，按下面格式拼：
+2. 回到本应用的安装表单，把 **Database Type** 从 `sqlite` 改为 `postgres`，然后填下面 5 个分字段（**不要填在一个长字符串里**——1Panel 前端会用 `^[a-zA-Z0-9._-]{2,64}$` 校验单字段，含 `:` / `@` / `?` 的连接串会被前端拦截，所以本应用按字段拆分，由 `init.sh` 在容器内拼 DSN）：
 
-   ```
-   postgresql://<USER>:<PASSWORD>@<CONTAINER_NAME>:<PORT>/<DB_NAME>?sslmode=disable
-   ```
+   | 字段 | 示例值 |
+   |------|--------|
+   | **DB Host** | `1Panel-postgresql-ZU4y` |
+   | **DB Port** | `5432` |
+   | **DB Name** | `dendrite` |
+   | **DB User** | `user_wEJsSp` |
+   | **DB Password** | `password_tyrcEJ` |
 
-   用上面的示例值就是：
-
-   ```
-   postgresql://user_wEJsSp:password_tyrcEJ@1Panel-postgresql-ZU4y:5432/dendrite?sslmode=disable
-   ```
-
-3. 重新部署。`init.sh` 会用新连接串覆盖 `dendrite.yaml` 里的 SQLite 段（如果 `dendrite.yaml` 已经存在则不会自动改，请先手动 `rm ${DATA_PATH}/dendrite.yaml` 或在容器内编辑）。
+3. 重新部署。`init.sh` 会用 6 个分字段拼成 `postgres://user_wEJsSp:password_tyrcEJ@1Panel-postgresql-ZU4y:5432/dendrite?sslmode=disable` 然后喂给 `generate-config`。
+4. **如 `dendrite.yaml` 已经存在**（重部署场景），请先在容器内 `rm ${DATA_PATH}/dendrite.yaml` 再启动——`init.sh` 只在文件不存在时才生成。
 
 ### ⚠️ 容器名命名规则
 
-1Panel 自动生成的 PG 容器名形如 `1Panel-postgresql-ZU4y`，后缀是 **Base32 `[A-Z0-9]` 4 字符随机串**（**仅**大写字母 + 数字）。填 `Database URL` 时主机名段必须**完整、精确**照抄容器名：
+1Panel 自动生成的 PG 容器名形如 `1Panel-postgresql-ZU4y`，后缀是 **Base32 `[A-Z0-9]` 4 字符随机串**（**仅**大写字母 + 数字）。填 **DB Host** 字段时必须**完整、精确**照抄容器名：
 
 - ✅ 正确：`1Panel-postgresql-ZU4y`
 - ❌ 错误：`1panel-postgresql-zu4y`（小写）、`1Panel-postgresql_ZU4y`（下划线）、`1Panel-postgresql-ZU4y.local`（多余后缀）
@@ -78,6 +77,17 @@ Element 团队（Matrix 协议原作者）用 Go 编写的新一代 Matrix homes
 容器名区分大小写，1Panel 内网 DNS 也只解析大写版本。写错会得到 `dial tcp: lookup ... no such host`。
 
 > **本规则对所有依赖 1Panel 部署的 Postgres / Redis / 其他 1Panel-* 应用都成立**——主机名段必须与 1Panel 控制台显示的容器名完全一致（通常形如 `1Panel-<app>-<base32>`）。
+
+### 为什么本应用把连接串拆成 6 个字段
+
+1Panel 1.10+ 前端对 formField 的 `rule: paramCommon` 用 `/^[a-zA-Z0-9]{1}[a-zA-Z0-9._-]{1,63}$/` 校验（参考 1Panel `frontend/src/global/form-rules.ts:369`），含 `:` / `@` / `?` / `/` 的完整 Postgres DSN 会被前端直接拒绝，提示「支持英文、数字、.-和_，长度 2-64」。本应用按字段拆分后：
+
+- `DB Host`（容器名）→ `paramCommon` ✅
+- `DB Port`（端口号）→ `paramPort` ✅
+- `DB Name` / `DB User` → `paramCommon` ✅
+- `DB Password` → `paramComplexity` ✅
+
+每个字段的校验都跟字段语义一致，没有「提示和实际校验对不上」的违和感。
 
 ## 注册账号（管理员侧）
 

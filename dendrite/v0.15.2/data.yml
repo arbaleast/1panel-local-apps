@@ -98,23 +98,113 @@ additionalProperties:
       required: true
       rule: paramPath
       type: text
-    - default: file:dendrite.db
+    - default: sqlite
       edit: true
-      envKey: DATABASE_URL
-      labelEn: Database URL
-      labelZh: 数据库连接串
+      envKey: DB_TYPE
+      labelEn: Database Type
+      labelZh: 数据库类型
       label:
-        en: Database URL
-        zh: 数据库连接串
-        zh-Hant: 資料庫連線字串
-        ja: データベース URL
-        ko: 데이터베이스 URL
-        ru: URL БД
-        ms: URL Pangkalan Data
-        pt-br: URL do Banco de Dados
+        en: Database Type
+        zh: 数据库类型
+        zh-Hant: 資料庫類型
+        ja: データベース種別
+        ko: 데이터베이스 유형
+        ru: Тип БД
+        ms: Jenis Pangkalan Data
+        pt-br: Tipo de Banco de Dados
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: SQLite (file:dendrite.db, self-hosted only)
+          value: sqlite
+        - label: PostgreSQL (external, recommended for production)
+          value: postgres
+    - default: 1Panel-postgresql
+      edit: true
+      envKey: DB_HOST
+      labelEn: DB Host
+      labelZh: 数据库主机
+      label:
+        en: DB Host
+        zh: 数据库主机
+        zh-Hant: 資料庫主機
+        ja: DB ホスト
+        ko: DB 호스트
+        ru: Хост БД
+        ms: Hos DB
+        pt-br: Host do BD
       required: true
       rule: paramCommon
       type: text
+    - default: '5432'
+      edit: true
+      envKey: DB_PORT
+      labelEn: DB Port
+      labelZh: 数据库端口
+      label:
+        en: DB Port
+        zh: 数据库端口
+        zh-Hant: 資料庫埠
+        ja: DB ポート
+        ko: DB 포트
+        ru: Порт БД
+        ms: Port DB
+        pt-br: Porta do BD
+      required: true
+      rule: paramPort
+      type: number
+    - default: dendrite
+      edit: true
+      envKey: DB_NAME
+      labelEn: DB Name
+      labelZh: 数据库名
+      label:
+        en: DB Name
+        zh: 数据库名
+        zh-Hant: 資料庫名
+        ja: DB 名
+        ko: DB 이름
+        ru: Имя БД
+        ms: Nama DB
+        pt-br: Nome do BD
+      required: true
+      rule: paramCommon
+      type: text
+    - default: postgres
+      edit: true
+      envKey: DB_USER
+      labelEn: DB User
+      labelZh: 数据库用户名
+      label:
+        en: DB User
+        zh: 数据库用户名
+        zh-Hant: 資料庫使用者
+        ja: DB ユーザー
+        ko: DB 사용자
+        ru: Пользователь БД
+        ms: Pengguna DB
+        pt-br: Usuário do BD
+      required: true
+      rule: paramCommon
+      type: text
+    - default: ''
+      edit: true
+      envKey: DB_PASSWORD
+      labelEn: DB Password
+      labelZh: 数据库密码
+      label:
+        en: DB Password
+        zh: 数据库密码
+        zh-Hant: 資料庫密碼
+        ja: DB パスワード
+        ko: DB 비밀번호
+        ru: Пароль БД
+        ms: Kata Laluan DB
+        pt-br: Senha do BD
+      required: true
+      rule: paramComplexity
+      type: password
     - default: ''
       edit: true
       envKey: REGISTRATION_SHARED_SECRET
