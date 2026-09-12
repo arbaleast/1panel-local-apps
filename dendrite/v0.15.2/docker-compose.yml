@@ -1,8 +1,17 @@
 # Dendrite v0.15.2 — Matrix homeserver (Monolith)
 # 镜像源：ghcr.io/element-hq/dendrite-monolith:v0.15.2
 # 官方文档：https://element-hq.github.io/dendrite/
-# init.sh 在首次启动时生成 matrix_key.pem 与 dendrite.yaml，
-# 已存在的文件不会被覆盖（升级 / 重启安全）。
+#
+# 首次启动流程:
+#   1. 1Panel 调 scripts/init.sh (在 1Panel 宿主机跑, 不是容器内)
+#   2. init.sh 通过 docker run + 挂载 ${DATA_PATH} 到 /etc/dendrite, 调用
+#      镜像里的 generate-keys / generate-config 生成 matrix_key.pem /
+#      dendrite.yaml 到 ${DATA_PATH} 目录
+#   3. init.sh 退出后, 1Panel 跑 docker compose up -d 起容器
+#   4. 容器用 ENTRYPOINT ["/usr/bin/dendrite"] 直接跑 (镜像自带的),
+#      -config /etc/dendrite/dendrite.yaml 读配置
+#   5. 已存在的 matrix_key.pem / dendrite.yaml 不会被 init.sh 覆盖
+#      (升级 / 重启安全; 用户后续手动改 dendrite.yaml 也会被保留)
 
 networks:
   1panel-network:
@@ -22,21 +31,14 @@ services:
       - ${HOST_IP}:${PANEL_APP_PORT_HTTPS}:8448
     environment:
       - TZ=${TZ}
-      - DB_TYPE=${DB_TYPE}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - SERVER_NAME=${SERVER_NAME}
-      - REGISTRATION_SHARED_SECRET=${REGISTRATION_SHARED_SECRET}
     volumes:
-      # 工作目录 = /etc/dendrite（镜像 WORKDIR），同时作为数据 / 配置 / 日志根
+      # 工作目录 = /etc/dendrite (镜像 WORKDIR), 同时作为数据 / 配置 / 日志根。
+      # matrix_key.pem / dendrite.yaml 由 init.sh (宿主机跑) 写到该目录,
+      # 容器起来时直接读。
       - ${DATA_PATH}:/etc/dendrite
-      # 首次启动初始化脚本：生成 matrix_key.pem 与 dendrite.yaml
-      - ./scripts/init.sh:/usr/local/bin/init.sh:ro
-    entrypoint: ["/bin/sh", "/usr/local/bin/init.sh"]
+    # 镜像 ENTRYPOINT: ["/usr/bin/dendrite"], 用 command 追加监听地址。
     command:
+      - --config=/etc/dendrite/dendrite.yaml
       - --http-bind-address=0.0.0.0:8008
       - --https-bind-address=0.0.0.0:8448
     healthcheck:
