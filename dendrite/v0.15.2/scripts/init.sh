@@ -10,16 +10,27 @@
 # - 镜像 WORKDIR=/etc/dendrite，由 DATA_PATH bind-mount 提供
 # - 已存在的 matrix_key.pem / dendrite.yaml 不会被覆盖（升级 / 重启安全）
 # - 用户后续手动修改 dendrite.yaml 后再次启动也会被保留（我们只在文件首次生成时改）
-
-set -eu
+# - 所有环境变量用 ${VAR:-default} 兜底，避免 1Panel 偶发不注入 / 严格模式下未定义报错
+# - 不开 `set -e`：希望即使 generate-config 失败 exec 仍然启动，容器不会无限重启
 
 CONFIG_DIR=/etc/dendrite
 KEY_FILE="${CONFIG_DIR}/matrix_key.pem"
 CONFIG_FILE="${CONFIG_DIR}/dendrite.yaml"
 
+# 容器注入的 1Panel 自动变量（豁免表）：CONTAINER_NAME / HOST_IP / HOST_ADDRESS /
+# PANEL_DB_PORT / CPUS / MEMORY_LIMIT 不会被注入到 formFields；用户字段也兜底防 unbound。
+DB_TYPE="${DB_TYPE:-sqlite}"
+DB_HOST="${DB_HOST:-}"
+DB_PORT="${DB_PORT:-5432}"
+DB_NAME="${DB_NAME:-dendrite}"
+DB_USER="${DB_USER:-postgres}"
+DB_PASSWORD="${DB_PASSWORD:-}"
+SERVER_NAME="${SERVER_NAME:-matrix.local}"
+REGISTRATION_SHARED_SECRET="${REGISTRATION_SHARED_SECRET:-}"
+
 # ---------- 1. 拼装 DATABASE_URL ----------
 # 拆分字段的目的：避开 1Panel formField `paramCommon` 规则对单字段的
-# ^[a-zA-Z0-9._-]{2,64}$ 限制（连接串含 : / @ / ? / 字符会被前端拦）。
+# ^[a-zA-Z0-9._-]{2,64}$ 限制（连接串含 : / @ / ? 字符会被前端拦）。
 # 这里把 6 个分字段在容器内拼成上游需要的 DSN。
 case "${DB_TYPE}" in
     sqlite)
