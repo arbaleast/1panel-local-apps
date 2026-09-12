@@ -36,14 +36,14 @@ additionalProperties:
       labelEn: Client API Port
       labelZh: 客户端 API 端口
       label:
-        en: Client API Port (used by Element / third-party clients)
-        zh: 客户端 API 端口（Element Web / 移动端 / 第三方客户端连接）
-        zh-Hant: Client API 埠（Element / 第三方客戶端連線）
-        ja: クライアント API ポート（Element / サードパーティクライアント用）
-        ko: 클라이언트 API 포트 (Element / 타사 클라이언트)
-        ru: Порт Client API (Element / сторонние клиенты)
-        ms: Port API Pelanggan (Element / pelanggan pihak ketiga)
-        pt-br: Porta da API cliente (Element / clientes de terceiros)
+        en: Client API Port
+        zh: 客户端 API 端口
+        zh-Hant: Client API 埠
+        ja: クライアント API ポート
+        ko: 클라이언트 API 포트
+        ru: Порт Client API
+        ms: Port API Pelanggan
+        pt-br: Porta da API cliente
       required: true
       rule: paramPort
       type: number
@@ -53,14 +53,14 @@ additionalProperties:
       labelEn: Federation Port
       labelZh: 联邦端口
       label:
-        en: Federation Port (server-to-server, only needed if you run your own TLS here)
-        zh: 联邦端口（服务器间互联；如由反向代理终结 TLS 则无需对外开放）
-        zh-Hant: 聯邦埠（伺服器間通訊；如由反代終止 TLS 可不對外開放）
-        ja: フェレーションポート（サーバ間連携。TLS を終端する場合は不要）
-        ko: 페더레이션 포트 (서버 간 통신, 역방향 프록시가 TLS 종료 시 불필요)
-        ru: Порт федерации (сервер-сервер; можно не открывать, если TLS завершает reverse proxy)
-        ms: Port Persekutuan (pelayan-ke-pelayan; tidak perlu dibuka jika proksi songsang menamatkan TLS)
-        pt-br: Porta de federação (servidor-a-servidor; desnecessária se o reverse proxy finalizar TLS)
+        en: Federation Port
+        zh: 联邦端口
+        zh-Hant: 聯邦埠
+        ja: フェレーションポート
+        ko: 페더레이션 포트
+        ru: Порт федерации
+        ms: Port Persekutuan
+        pt-br: Porta de federação
       required: true
       rule: paramPort
       type: number
@@ -70,14 +70,14 @@ additionalProperties:
       labelEn: Server Name
       labelZh: 服务器域名
       label:
-        en: "Server name — your Matrix homeserver domain (e.g. matrix.example.com). Must be a valid public domain that points to this host."
-        zh: "服务器域名 — Matrix homeserver 的对外域名（如 matrix.example.com），需为可解析到本机的公网域名"
-        zh-Hant: "伺服器域名 — Matrix homeserver 的對外域名（如 matrix.example.com），需可解析到本機"
-        ja: "サーバー名 — Matrix homeserver の公開ドメイン（例: matrix.example.com）。本機へ名前解決可能であること。"
-        ko: "서버 이름 — Matrix homeserver의 공개 도메인(예: matrix.example.com). 본 호스트로 해석 가능해야 함."
-        ru: "Имя сервера — публичный домен Matrix homeserver (напр. matrix.example.com). Должен резолвиться в этот хост."
-        ms: "Nama pelayan — domain Matrix homeserver (cth: matrix.example.com). Mesti boleh diselesaikan ke hos ini."
-        pt-br: "Nome do servidor — domínio público do Matrix homeserver (ex. matrix.example.com). Precisa resolver para este host."
+        en: Server Name
+        zh: 服务器域名
+        zh-Hant: 伺服器域名
+        ja: サーバー名
+        ko: 서버 이름
+        ru: Имя сервера
+        ms: Nama pelayan
+        pt-br: Nome do servidor
       required: true
       rule: paramCommon
       type: text
@@ -87,14 +87,14 @@ additionalProperties:
       labelEn: Data folder path
       labelZh: 数据文件夹路径
       label:
-        en: Data folder path (dendrite.yaml, matrix_key.pem, media, jetstream, searchindex)
-        zh: 数据文件夹路径（dendrite.yaml、matrix_key.pem、media、jetstream、searchindex）
-        zh-Hant: 資料夾路徑（dendrite.yaml、matrix_key.pem、media、jetstream、searchindex）
-        ja: データフォルダ（dendrite.yaml、matrix_key.pem、media、jetstream、searchindex）
-        ko: 데이터 폴더 경로 (dendrite.yaml, matrix_key.pem, media, jetstream, searchindex)
-        ru: Путь к папке данных (dendrite.yaml, matrix_key.pem, media, jetstream, searchindex)
-        ms: Laluan folder data (dendrite.yaml, matrix_key.pem, media, jetstream, searchindex)
-        pt-br: Caminho da pasta de dados (dendrite.yaml, matrix_key.pem, media, jetstream, searchindex)
+        en: Data folder path
+        zh: 数据文件夹路径
+        zh-Hant: 資料夾路徑
+        ja: データフォルダ
+        ko: 데이터 폴더 경로
+        ru: Путь к папке данных
+        ms: Laluan folder data
+        pt-br: Caminho da pasta de dados
       required: true
       rule: paramPath
       type: text
@@ -104,14 +104,14 @@ additionalProperties:
       labelEn: Database URL
       labelZh: 数据库连接串
       label:
-        en: "Database URL. Default uses SQLite at file:dendrite.db (under DATA_PATH). For external Postgres use: postgres://user:pass@host:5432/dbname?sslmode=disable"
-        zh: "数据库连接串。默认 SQLite 存储于 DATA_PATH/dendrite.db。外部 Postgres 填：postgres://user:pass@host:5432/dbname?sslmode=disable"
-        zh-Hant: "資料庫連線字串。預設 SQLite 存於 DATA_PATH/dendrite.db。外部 Postgres：postgres://user:pass@host:5432/dbname?sslmode=disable"
-        ja: "データベース URL。既定は SQLite（DATA_PATH/dendrite.db）。外部 Postgres は postgres://user:pass@host:5432/dbname?sslmode=disable"
-        ko: "데이터베이스 URL. 기본은 SQLite (DATA_PATH/dendrite.db). 외부 Postgres는 postgres://user:pass@host:5432/dbname?sslmode=disable"
-        ru: "URL БД. По умолчанию SQLite (DATA_PATH/dendrite.db). Внешний Postgres: postgres://user:pass@host:5432/dbname?sslmode=disable"
-        ms: "URL pangkalan data. Lalai SQLite (DATA_PATH/dendrite.db). Postgres luaran: postgres://user:pass@host:5432/dbname?sslmode=disable"
-        pt-br: "URL do banco. Padrão SQLite (DATA_PATH/dendrite.db). Postgres externo: postgres://user:pass@host:5432/dbname?sslmode=disable"
+        en: Database URL
+        zh: 数据库连接串
+        zh-Hant: 資料庫連線字串
+        ja: データベース URL
+        ko: 데이터베이스 URL
+        ru: URL БД
+        ms: URL Pangkalan Data
+        pt-br: URL do Banco de Dados
       required: true
       rule: paramCommon
       type: text
@@ -121,14 +121,14 @@ additionalProperties:
       labelEn: Registration Shared Secret
       labelZh: 注册共享密钥
       label:
-        en: Shared secret for admin-side account creation via POST /_synapse/admin/v1/register (Element-callable). Leave empty to disable all public registration. Setting a value turns on token-based registration.
-        zh: 用于管理员侧通过 POST /_synapse/admin/v1/register 创建账号的共享密钥（Element 客户端可用）。留空 = 关闭所有公开注册。填写后启用基于 token 的注册。
-        zh-Hant: 管理員透過 POST /_synapse/admin/v1/register 建立帳號的共享密鑰（Element 客戶端可用）。留空 = 關閉所有公開註冊。填寫後啟用基於 token 的註冊。
-        ja: 管理者が POST /_synapse/admin/v1/register でアカウント作成に使う共有鍵（Element クライアントから使用可）。空 = 公開登録を全て無効化。値を設定するとトークン登録が有効化。
-        ko: 관리자가 POST /_synapse/admin/v1/register 로 계정 생성에 사용하는 공유 시크릿 (Element 클라이언트에서 사용 가능). 비움 = 공개 등록 비활성. 값 설정 시 토큰 기반 등록 활성화.
-        ru: Общий секрет для создания аккаунтов администратором через POST /_synapse/admin/v1/register. Пусто = регистрация отключена. Установка значения включает token-регистрацию.
-        ms: Rahsia dikongsi untuk cipta akaun pentadbir melalui POST /_synapse/admin/v1/register. Kosongkan untuk lumpuhkan pendaftaran. Isi nilai untuk dayakan pendaftaran token.
-        pt-br: Segredo compartilhado para admin criar contas via POST /_synapse/admin/v1/register. Vazio desabilita todo registro público. Definir um valor ativa o registro por token.
+        en: Registration Shared Secret
+        zh: 注册共享密钥
+        zh-Hant: 註冊共享密鑰
+        ja: 登録共有鍵
+        ko: 등록 공유 시크릿
+        ru: Общий секрет регистрации
+        ms: Rahsia dikongsi pendaftaran
+        pt-br: Segredo compartilhado de registro
       required: false
       rule: paramCommon
       type: text

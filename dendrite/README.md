@@ -33,16 +33,51 @@ Element 团队（Matrix 协议原作者）用 Go 编写的新一代 Matrix homes
 ## 安装步骤
 
 1. 1Panel 应用商店 → 本地 → 找到 **Dendrite** → 安装
-2. 关键表单：
+2. 关键表单（其余字段可保留默认）：
    - **Server Name**：填你的 Matrix 域名（例 `matrix.example.com`），**必须**与反代配置一致
-   - **Database URL**：默认 `file:dendrite.db`（SQLite，单机自用足够）
-     - 切到 PostgreSQL：先在 1Panel 安装一个 Postgres 实例，连接串形如：
-       `postgres://user:pass@1Panel-postgresql-xxxx:5432/dendrite?sslmode=disable`
+   - **Database URL**：默认 `file:dendrite.db`（SQLite，单机自用足够）。详见下方「切到 PostgreSQL」段落。
    - **Registration Shared Secret**：留空 = 禁止公开注册（推荐）。
-     - 如需管理员创建账号，填一个强随机串（`openssl rand -hex 32`），然后用
-       `POST /_synapse/admin/v1/register` 或 Element 客户端「高级设置 → 自定义服务器」
-       配合 shared secret 注册。
+     如需管理员创建账号，填一个强随机串（`openssl rand -hex 32`），然后用
+     `POST /_synapse/admin/v1/register` 或 Element 客户端「高级设置 → 自定义服务器」
+     配合 shared secret 注册。
 3. 启动后访问 `https://matrix.example.com/_matrix/client/versions` 应返回 JSON 200
+
+## 切到 PostgreSQL
+
+默认 SQLite 适合自用 / 家庭场景，**生产或联邦用户**请改用外部 Postgres（性能与并发远好于 SQLite）。
+
+步骤：
+
+1. 1Panel 应用商店 → 安装 **PostgreSQL** 应用（任意版本），记下部署完成后页面上显示的：
+   - **容器名**（例 `1Panel-postgresql-ZU4y`）
+   - **端口**（默认 `5432`）
+   - **用户名**（自动生成的 1Panel 随机用户，例 `user_wEJsSp`）
+   - **密码**
+   - **数据库名**（先在 1Panel-PG 控制台用 `CREATE DATABASE dendrite;` 预创建）
+2. 回到本应用的 **Database URL** 字段，按下面格式拼：
+
+   ```
+   postgresql://<USER>:<PASSWORD>@<CONTAINER_NAME>:<PORT>/<DB_NAME>?sslmode=disable
+   ```
+
+   用上面的示例值就是：
+
+   ```
+   postgresql://user_wEJsSp:password_tyrcEJ@1Panel-postgresql-ZU4y:5432/dendrite?sslmode=disable
+   ```
+
+3. 重新部署。`init.sh` 会用新连接串覆盖 `dendrite.yaml` 里的 SQLite 段（如果 `dendrite.yaml` 已经存在则不会自动改，请先手动 `rm ${DATA_PATH}/dendrite.yaml` 或在容器内编辑）。
+
+### ⚠️ 容器名命名规则
+
+1Panel 自动生成的 PG 容器名形如 `1Panel-postgresql-ZU4y`，后缀是 **Base32 `[A-Z0-9]` 4 字符随机串**（**仅**大写字母 + 数字）。填 `Database URL` 时主机名段必须**完整、精确**照抄容器名：
+
+- ✅ 正确：`1Panel-postgresql-ZU4y`
+- ❌ 错误：`1panel-postgresql-zu4y`（小写）、`1Panel-postgresql_ZU4y`（下划线）、`1Panel-postgresql-ZU4y.local`（多余后缀）
+
+容器名区分大小写，1Panel 内网 DNS 也只解析大写版本。写错会得到 `dial tcp: lookup ... no such host`。
+
+> **本规则对所有依赖 1Panel 部署的 Postgres / Redis / 其他 1Panel-* 应用都成立**——主机名段必须与 1Panel 控制台显示的容器名完全一致（通常形如 `1Panel-<app>-<base32>`）。
 
 ## 注册账号（管理员侧）
 

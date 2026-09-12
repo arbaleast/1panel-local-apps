@@ -142,7 +142,13 @@ npm run lint      # 等价 node .github/bin/lint-apps.mjs，扫描全部 data.ym
   1. `additionalProperties: { key, name, type, formFields, ... }`（紧凑）
   2. `{ name?, title?, description?, additionalProperties: {...} }`（顶层有可选 `name`/`title`/`description` + 嵌套 `additionalProperties`）
   两种**不可混用**：选了形式 1 就不要再在根级写 `name:`/`title:`/`description:`，否则 YAML 不会报但 zod 报 Invalid union 之外的奇怪错。
-- **临时诊断脚本应放 `.agent_cache/`**：仓库根 `.gitignore` line 20 已忽略 `.agent_cache/`，所有 `*.mjs` / `*.ps1` / `*.txt` 诊断产物放在该目录下，结束后用 `node .agent_cache/cleanup.mjs`（仅保留 `.gitkeep`）清理，符合「Trace-less Execution」原则。
+- **临时诊断脚本应放 `.agent_cache/`**：仓库根 `.gitignore` line 20 已忽略 `.agent_cache/`，所有 `*.mjs` / `*.ps1` / `txt` 诊断产物放在该目录下，结束后用 `node .agent_cache/cleanup.mjs`（仅保留 `.gitkeep`）清理，符合「Trace-less Execution」原则。
+- **1Panel formField 没有 `help:` / `placeholder:` 渲染**：实测 1Panel [`params/index.vue`](https://github.com/1Panel-dev/1Panel/blob/dev/frontend/src/views/app-store/detail/params/index.vue) 的 `el-input` 只绑定 `v-model="form[p.envKey]"` 并读取 `p.default` / `p.label`，**整个模板里没有 `p.help` 也没有 `p.placeholder` 任何引用**。这意味着：
+  - 写 `help:` 字段在 lint 里不会被拒绝（zod `passthrough` 沉默通过），UI 上也**完全不显示**。仓库里 [`searxng/2026.9.7-3e454637f/data.yml`](searxng/2026.9.7-3e454637f/data.yml:65) / [`mineru/3.4.2/data.yml`](mineru/3.4.2/data.yml:174) / [`vane/v1.12.2/data.yml`](vane/v1.12.2/data.yml:121) 都用 `help:` 但用户看不到，是历史遗留死代码。
+  - 写 `placeholder:` 同样不生效（前端没有这个 prop 绑定）。
+  - **正确做法**：把"提示文字"塞进 `default` 字段（作为示例值；Element Plus 的 `<el-input>` 会把 `default` 当输入框初始值，但用户**删掉**才会清空——不是灰色 placeholder），或者把冗长说明拆到 **README.md** 的「安装 / 配置」段落，**不要**堆在 `label` 里把标题拉成 2-3 行。
+  - **dendrite 复盘（2026-09-11）**：[`dendrite/v0.15.2/data.yml`](dendrite/v0.15.2/data.yml:107) 最初把 `DATABASE_URL` 的 i18n label 写成 60+ 字符的"label 内嵌使用说明"（8 个语种 × 60 字符 = ~500 字符垃圾），1Panel UI 渲染成单行 label 后整行被截断 / 换行。**解决**：label 收回到 ≤12 字符短词（"数据库连接串" / "Database URL"），详细说明（含 Postgres 连接串示例、容器名命名规则）移到 README 的「安装 → 切到 PostgreSQL」段落。
+  - **1Panel-postgresql 容器名命名限制**：1Panel 自动生成的 PG 容器名形如 `1Panel-postgresql-ZU4y`，后缀是 Base32 `[A-Z0-9]` 4 字符随机串。用户填 `DATABASE_URL` 时，**Postgres 主机名段必须与该容器名完全一致**（仅大写字母与数字，**没有**短横线 / 下划线 / 小写字母）。如果上游应用层想做 host 校验，**不能**用 `^[a-z0-9-]+$` 之类的宽松正则，要用 `^[A-Za-z0-9-]+$` 且 host 部分须显式校验非空。本仓 `paramCommon` 规则本身不限制这个，由开发者根据上游网络拓扑自行决定。
 
 ## 沙箱中 `node` 不可见的应对
 
