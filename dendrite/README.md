@@ -35,7 +35,8 @@ Element 团队（Matrix 协议原作者）用 Go 编写的新一代 Matrix homes
 1. 1Panel 应用商店 → 本地 → 找到 **Dendrite** → 安装
 2. 关键表单（其余字段可保留默认）：
    - **Server Name**：填你的 Matrix 域名（例 `matrix.example.com`），**必须**与反代配置一致
-   - **Database Type**：默认 `sqlite`（单机自用足够）。切到 `postgres` 详见下方「切到 PostgreSQL」段落。
+   - **Database Type**：默认 `postgres`（连 1Panel 内置 PostgreSQL）。如需自用单机改成 `sqlite`，详见下方「切到 SQLite」段落。
+   - **DB Host / DB User / DB Password / DB Name**：默认值已是 1Panel-postgresql 应用最常见的形式，但**密码必须自己填**（1Panel-PG 控制台 → 详情页复制），否则连接会失败。详见下方「切到 PostgreSQL」段落。
    - **Registration Shared Secret**：留空 = 禁止公开注册（推荐）。
      如需管理员创建账号，填一个强随机串（`openssl rand -hex 32`），然后用
      `POST /_synapse/admin/v1/register` 或 Element 客户端「高级设置 → 自定义服务器」
@@ -44,28 +45,44 @@ Element 团队（Matrix 协议原作者）用 Go 编写的新一代 Matrix homes
 
 ## 切到 PostgreSQL
 
-默认 SQLite 适合自用 / 家庭场景，**生产或联邦用户**请改用外部 Postgres（性能与并发远好于 SQLite）。
+**默认配置**就是 PostgreSQL：DB Type=postgres，DB Host=1Panel-postgresql-ZU4y，DB Port=5432，DB Name=dendrite，DB User=postgres。**唯一必须自己填的是 DB Password**——1Panel UI 不会自动注入，需要从 1Panel PostgreSQL 应用详情页复制。
 
-步骤：
+完整步骤：
 
 1. 1Panel 应用商店 → 安装 **PostgreSQL** 应用（任意版本），记下部署完成后页面上显示的：
    - **容器名**（例 `1Panel-postgresql-ZU4y`）
    - **端口**（默认 `5432`）
-   - **用户名**（自动生成的 1Panel 随机用户，例 `user_wEJsSp`）
+   - **用户名**（自动生成的 1Panel 随机用户，例 `user_wEJsSp`——**可能不是 `postgres`**，按你实际部署为准）
    - **密码**
-   - **数据库名**（先在 1Panel-PG 控制台用 `CREATE DATABASE dendrite;` 预创建）
-2. 回到本应用的安装表单，把 **Database Type** 从 `sqlite` 改为 `postgres`，然后填下面 5 个分字段（**不要填在一个长字符串里**——1Panel 前端会用 `^[a-zA-Z0-9._-]{2,64}$` 校验单字段，含 `:` / `@` / `?` 的连接串会被前端拦截，所以本应用按字段拆分，由 `init.sh` 在容器内拼 DSN）：
+   - **数据库名**（先在 1Panel-PG 控制台用 `CREATE DATABASE dendrite;` 预创建，1Panel 也可能自动建好）
+2. 回到本应用的安装表单，**5 个分字段**（**不要填在一个长字符串里**——1Panel 前端会用 `^[a-zA-Z0-9._-]{2,64}$` 校验单字段，含 `:` / `@` / `?` 的连接串会被前端拦截，所以本应用按字段拆分，由 `init.sh` 在容器内拼 DSN）：
 
-   | 字段 | 示例值 |
-   |------|--------|
-   | **DB Host** | `1Panel-postgresql-ZU4y` |
-   | **DB Port** | `5432` |
-   | **DB Name** | `dendrite` |
-   | **DB User** | `user_wEJsSp` |
-   | **DB Password** | `password_tyrcEJ` |
+   | 字段 | 默认值 | 你的值（按 1Panel-PG 实际填） |
+   |------|--------|------|
+   | **DB Type** | `postgres` | 保持 `postgres` |
+   | **DB Host** | `1Panel-postgresql-ZU4y` | 改为你实际的容器名 |
+   | **DB Port** | `5432` | 一般不变 |
+   | **DB Name** | `dendrite` | 改为你预创建的库名 |
+   | **DB User** | `postgres` | 改为 1Panel-PG 控制台显示的随机用户 |
+   | **DB Password** | 空（**必填**）| 填 1Panel-PG 控制台复制的密码 |
+
+   完整示例值：
+
+   ```
+   DB Type:    postgres
+   DB Host:    1Panel-postgresql-ZU4y
+   DB Port:    5432
+   DB Name:    dendrite
+   DB User:    user_wEJsSp
+   DB Password: password_tyrcEJ
+   ```
 
 3. 重新部署。`init.sh` 会用 6 个分字段拼成 `postgres://user_wEJsSp:password_tyrcEJ@1Panel-postgresql-ZU4y:5432/dendrite?sslmode=disable` 然后喂给 `generate-config`。
 4. **如 `dendrite.yaml` 已经存在**（重部署场景），请先在容器内 `rm ${DATA_PATH}/dendrite.yaml` 再启动——`init.sh` 只在文件不存在时才生成。
+
+## 切到 SQLite
+
+如果只是想本地玩玩 / 不想装 1Panel-PG，把表单里的 **DB Type** 改成 `sqlite`，其他 DB_* 字段会被忽略。`init.sh` 会用 `file:/etc/dendrite/dendrite.db`（位于 `${DATA_PATH}` 目录下），单文件、零依赖、单机自用足够。注意 SQLite 在大量联邦房间时性能很差，只适合自用 / 家庭。
 
 ### ⚠️ 容器名命名规则
 

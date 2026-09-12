@@ -98,7 +98,7 @@ additionalProperties:
       required: true
       rule: paramPath
       type: text
-    - default: sqlite
+    - default: postgres
       edit: true
       envKey: DB_TYPE
       labelEn: Database Type
@@ -120,7 +120,7 @@ additionalProperties:
           value: sqlite
         - label: PostgreSQL (external, recommended for production)
           value: postgres
-    - default: 1Panel-postgresql
+    - default: 1Panel-postgresql-ZU4y
       edit: true
       envKey: DB_HOST
       labelEn: DB Host
