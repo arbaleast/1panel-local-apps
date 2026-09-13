@@ -1,0 +1,222 @@
+additionalProperties:
+  key: jellystat
+  name: jellystat 1.1.11
+  type: tool
+  formFields:
+    - envKey: PANEL_APP_PORT_HTTP
+      label:
+        en: Web UI Port
+        zh: Web UI 端口
+        zh-Hant: Web UI 連接埠
+        ja: Web UI ポート
+        ko: 웹 UI 포트
+      type: service
+      required: true
+      default: "3000"
+    - envKey: TZ
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 타임존
+      type: select
+      required: true
+      default: Etc/UTC
+      values:
+        - label: Asia/Shanghai (UTC+8)
+          value: Asia/Shanghai
+        - label: Asia/Tokyo (UTC+9)
+          value: Asia/Tokyo
+        - label: America/New_York (UTC-5)
+          value: America/New_York
+        - label: America/Los_Angeles (UTC-8)
+          value: America/Los_Angeles
+        - label: Europe/London (UTC+0)
+          value: Europe/London
+        - label: Europe/Paris (UTC+1)
+          value: Europe/Paris
+        - label: Etc/UTC (UTC+0)
+          value: Etc/UTC
+    - envKey: JWT_SECRET
+      label:
+        en: JWT Secret Key
+        zh: JWT 密钥
+        zh-Hant: JWT 密鑰
+        ja: JWT シークレットキー
+        ko: JWT 시크릿 키
+      type: password
+      required: true
+      default: ""
+    - envKey: POSTGRES_IP
+      label:
+        en: PostgreSQL Host
+        zh: PostgreSQL 主机
+        zh-Hant: PostgreSQL 主機
+        ja: PostgreSQL ホスト
+        ko: PostgreSQL 호스트
+      type: text
+      required: true
+      default: jellystat-db
+    - envKey: POSTGRES_PORT
+      label:
+        en: PostgreSQL Port
+        zh: PostgreSQL 端口
+        zh-Hant: PostgreSQL 連接埠
+        ja: PostgreSQL ポート
+        ko: PostgreSQL 포트
+      type: number
+      required: true
+      default: "5432"
+    - envKey: POSTGRES_USER
+      label:
+        en: PostgreSQL Username
+        zh: PostgreSQL 用户名
+        zh-Hant: PostgreSQL 用戶名
+        ja: PostgreSQL ユーザー名
+        ko: PostgreSQL 사용자명
+      type: text
+      required: true
+      default: postgres
+    - envKey: POSTGRES_PASSWORD
+      label:
+        en: PostgreSQL Password
+        zh: PostgreSQL 密码
+        zh-Hant: PostgreSQL 密碼
+        ja: PostgreSQL パスワード
+        ko: PostgreSQL 비밀번호
+      type: password
+      required: true
+      default: ""
+    - envKey: POSTGRES_DB
+      label:
+        en: PostgreSQL Database Name
+        zh: PostgreSQL 数据库名
+        zh-Hant: PostgreSQL 資料庫名稱
+        ja: PostgreSQL データベース名
+        ko: PostgreSQL 데이터베이스명
+      type: text
+      required: false
+      default: jfstat
+    - envKey: POSTGRES_SSL_ENABLED
+      label:
+        en: PostgreSQL SSL
+        zh: PostgreSQL SSL 连接
+        zh-Hant: PostgreSQL SSL 連線
+        ja: PostgreSQL SSL 接続
+        ko: PostgreSQL SSL 연결
+      type: select
+      required: false
+      default: "false"
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - envKey: IS_EMBY_API
+      label:
+        en: Use Emby API (instead of Jellyfin)
+        zh: 使用 Emby API（而非 Jellyfin）
+        zh-Hant: 使用 Emby API（而非 Jellyfin）
+        ja: Emby API を使用（Jellyfin の代わりに）
+        ko: Emby API 사용 (Jellyfin 대신)
+      type: select
+      required: false
+      default: "false"
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - envKey: REJECT_SELF_SIGNED_CERTIFICATES
+      label:
+        en: Reject Self-Signed Certificates
+        zh: 拒绝自签名证书
+        zh-Hant: 拒絕自簽名憑證
+        ja: 自己署名証明書を拒否
+        ko: 자체 서명 인증서 거부
+      type: select
+      required: false
+      default: "true"
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - envKey: MINIMUM_SECONDS_TO_INCLUDE_PLAYBACK
+      label:
+        en: Min Playback Duration (seconds)
+        zh: 最小播放时长（秒）
+        zh-Hant: 最小播放時長（秒）
+        ja: 最小再生時間（秒）
+        ko: 최소 재생 시간(초)
+      type: number
+      required: false
+      default: "1"
+    - envKey: POSTGRES_SSL_REJECT_UNAUTHORIZED
+      label:
+        en: PostgreSQL SSL Reject Unauthorized
+        zh: PostgreSQL SSL 拒绝未授权证书
+        zh-Hant: PostgreSQL SSL 拒絕未授權憑證
+        ja: PostgreSSL の未承認証明書を拒否
+        ko: PostgreSQL SSL 미인가 인증서 거부
+        ru: PostgreSQL SSL — отклонять неавторизованные сертификаты
+        ms: PostgreSQL SSL Tolak Sijil Tidak Dibenarkan
+        pt-br: PostgreSQL SSL — Rejeitar certificados não autorizados
+      type: select
+      required: false
+      default: "false"
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - envKey: JF_USE_WEBSOCKETS
+      label:
+        en: Use Jellyfin WebSockets
+        zh: 使用 Jellyfin WebSocket
+        zh-Hant: 使用 Jellyfin WebSocket
+        ja: Jellyfin WebSocket を使用
+        ko: Jellyfin WebSocket 사용
+        ru: Использовать WebSocket Jellyfin
+        ms: Gunakan WebSocket Jellyfin
+        pt-br: Usar WebSocket do Jellyfin
+      type: select
+      required: false
+      default: "true"
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - envKey: JS_USE_EXTERNAL_HOST
+      label:
+        en: Use External Host (Jellyfin on different host)
+        zh: 使用外部主机（Jellyfin 在不同主机时启用）
+        zh-Hant: 使用外部主機（Jellyfin 在不同主機時啟用）
+        ja: 外部ホストを使用（Jellyfin が別ホストにある場合）
+        ko: 외부 호스트 사용 (Jellyfin이 다른 호스트에 있는 경우)
+        ru: Использовать внешний хост (Jellyfin на другом хосте)
+        ms: Gunakan Hos Luaran (Jellyfin pada hos berbeza)
+        pt-br: Usar Host Externo (Jellyfin em outro host)
+      type: select
+      required: false
+      default: "false"
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - envKey: NEW_WATCH_EVENT_THRESHOLD_HOURS
+      label:
+        en: New Watch Event Threshold (hours)
+        zh: 新观看事件阈值（小时）
+        zh-Hant: 新觀看事件閾值（小時）
+        ja: 新規視聴イベントしきい値（時間）
+        ko: 신규 시청 이벤트 임계값(시간)
+        ru: Порог нового события просмотра (часы)
+        ms: Ambang Peristiwa Tontonan Baharu (jam)
+        pt-br: Limite de novo evento de visualização (horas)
+      type: number
+      required: false
+      default: "1"
