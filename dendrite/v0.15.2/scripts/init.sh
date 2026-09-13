@@ -130,17 +130,25 @@ if [ ! -f "${CONFIG_FILE}" ]; then
     mv "${CONFIG_FILE}.tmp" "${CONFIG_FILE}"
 
     # 注入注册策略
+    # 注意: generate-config 的 yaml.Marshal (gopkg.in/yaml.v2) 默认缩进是 4 空格,
+    # 不依赖具体缩进: 用宽松 sed, 匹配任一缩进 + 整行替换。
+    # sed 用 # 当分隔符 (避免与 BRE/ERE 的 | 交替冲突)。
     TMP_CONF="${CONFIG_FILE}.tmp2"
     if [ -n "${REGISTRATION_SHARED_SECRET}" ]; then
         echo "[init.sh] Enabling token-based registration (shared secret is set)"
-        sed \
-            -e "s|^  registration_disabled: true$|  registration_disabled: false|" \
-            -e "s|^  registration_shared_secret: \"\"$|  registration_shared_secret: \"${REGISTRATION_SHARED_SECRET}\"|" \
+        # 转义 sed 替换里 & / # 字符 (因为用 # 当分隔符了)
+        ESCAPED_SECRET=$(printf '%s' "${REGISTRATION_SHARED_SECRET}" | sed 's|[&/\]|\\&|g; s|#|\\#|g')
+        # 不假设缩进: ^[ ]* 匹配 0+ 空格, 然后整行匹配
+        #  关闭注册: 无论原来是 true/false 都改 false
+        #  注入 secret: 无论原来是 "" / "abc" 都改新值
+        sed -E \
+            -e "s#^([ ]*)registration_disabled:[[:space:]]*(true|false)[[:space:]]*\$#\\1registration_disabled: false#" \
+            -e "s#^([ ]*)registration_shared_secret:[[:space:]]*.*\$#\\1registration_shared_secret: \"${ESCAPED_SECRET}\"#" \
             "${CONFIG_FILE}" > "${TMP_CONF}"
     else
         echo "[init.sh] Keeping registration disabled (no shared secret)"
-        sed \
-            -e "s|^  registration_disabled: true$|  registration_disabled: true|" \
+        sed -E \
+            -e "s#^([ ]*)registration_disabled:[[:space:]]*(true|false)[[:space:]]*\$#\\1registration_disabled: true#" \
             "${CONFIG_FILE}" > "${TMP_CONF}"
     fi
     mv "${TMP_CONF}" "${CONFIG_FILE}"
