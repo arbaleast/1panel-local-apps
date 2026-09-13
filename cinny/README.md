@@ -96,8 +96,24 @@ A: 仅浏览器到容器的 80 端口；容器本身无对外网络依赖（除�
 **Q: 与 Synapse / Dendrite homeserver 配套？**
 A: 完全可以。本仓库另有 `dendrite` 应用可一起部署。
 
+**Q: 怎么注册账号？有默认账号密码吗？**
+A: **Cinny 本身只是 Matrix 客户端，不提供注册/账号管理功能——它只是一个聊天界面**。账号是注册在你登录的 Matrix homeserver 上的，跟 Cinny 容器无关。本容器没有"默认账号密码"，登录页要求你输入已经存在的 Matrix 账号。
+
+按使用场景分三种：
+
+| 场景 | 怎么注册 |
+| --- | --- |
+| 用 `matrix.org` 公共 homeserver（最省事） | 登录页 Homeserver 选 `matrix.org` → 点"Create account" → 填用户名 / 密码 / 同意条款 → 完成。账号存在 `matrix.org` 公共服务器上 |
+| 用本仓库的 `dendrite` 自建 homeserver | 先在本仓库装 `dendrite` 应用并启动 → 登录页 Homeserver 填你的 dendrite 域名（不带 `https://`）→ 如果你配了 `REGISTRATION_SHARED_SECRET`（首次安装 1Panel 表单），用 `register-admin` 或 Element 调用 `/_synapse/admin/v1/register` 走 token 注册；否则登录页通常有"Register"链接直接注册（取决于 dendrite 配的 `registration_disabled`） |
+| 用其他自建 homeserver | 在 homeserver 管理界面 / 文档里找注册入口。Cinny 只负责登录已存在的账号 |
+
+登录页输入框说明：
+- `Homeserver` — 你的 Matrix 服务器域名（必填）
+- `Username` — 完整 Matrix ID（例 `@yourname:matrix.org`）或仅用户名（例 `yourname`，Cinny 会按 Homeserver 自动补全）
+- `Password` — 你的 Matrix 账号密码
+
 **Q: 修改默认 homeserver 后没生效？**
-A: 三种排查：(1) 浏览器强制刷新（Ctrl+Shift+R / Cmd+Shift+R）清掉 `config.json` 缓存；(2) 确认 host 端 `./data/config.json` 的 `default_hs` 字段值已改；(3) 1Panel UI 重启 cinny 容器（修改 host 端文件后 bind mount 会自动重新挂载）。
+A: 三种排查：(1) 浏览器强制刷新（Ctrl+Shift+R / Cmd+Shift+R）清掉 `config.json` 缓存；(2) 确认 host 端 `./data/config.json` 的 `homeserverList[0]` 字段值已改为你想用的域名（不是 `defaultHs` 字段——Cinny v4.12.6 用 `homeserverList` 数组 + `defaultHomeserver` 数组下标）；(3) 1Panel UI 重启 cinny 容器（修改 host 端文件后 bind mount 会自动重新挂载）。
 
 **Q: init.sh 没跑或没生成 config.json？**
 A: 检查 1Panel 版本是否 ≥ v2.2.5（支持 init 钩子）。也可手动跑：在 1Panel 宿主机执行 `bash /opt/1panel/apps/local/cinny/cinny/v4.12.6/scripts/init.sh`。
