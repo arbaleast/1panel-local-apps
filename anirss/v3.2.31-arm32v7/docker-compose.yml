@@ -19,6 +19,8 @@ services:
     - JAVA_OPTS=${JAVA_OPTS}
     - SWAGGER_ENABLED=${SWAGGER_ENABLED}
     - MCP_ENABLED=${MCP_ENABLED}
+    - ANI_RSS_HOST_IP=${ANI_RSS_HOST_IP}
+    - QBT_PORT=${QBT_PORT}
     image: wushuo894/ani-rss:v3.2.31-arm32v7
     labels:
       createdBy: Apps
@@ -26,8 +28,10 @@ services:
       1panel-network:
         aliases:
         - ${CONTAINER_NAME}
+    ports:
+    - ${PANEL_APP_PORT_HTTP}:${SERVER_PORT}
     restart: always
     tty: true
     volumes:
     - ${CONFIG_PATH}:${CONFIG}
-    - ${MEDIA_PATH}:/media
+    - ${MEDIA_PATH}:/Media

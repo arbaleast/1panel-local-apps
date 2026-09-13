@@ -13,5 +13,5 @@ additionalProperties:
   crossVersionUpdate: true
   limit: 0
   recommend: 0
-  website: https://github.com/RSS-ANI/Ani-RSS
-  github: https://github.com/RSS-ANI/Ani-RSS
+  website: https://github.com/wushuo894/ani-rss
+  github: https://github.com/wushuo894/ani-rss

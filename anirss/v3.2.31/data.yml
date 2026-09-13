@@ -176,6 +176,40 @@ additionalProperties:
         pt-br: Porta no host
       required: true
       type: number
+    - default: "8080"
+      edit: true
+      envKey: QBT_PORT
+      labelEn: qBittorrent WebUI Port (host)
+      labelZh: qBittorrent 端口
+      label:
+        en: qBittorrent WebUI Port (host)
+        zh: qBittorrent 端口
+        zh-Hant: qBittorrent 埠
+        ja: qBittorrent ポート
+        ko: qBittorrent 포트
+        ru: Порт qBittorrent
+        ms: Port qBittorrent
+        pt-br: Porta qBittorrent
+      required: true
+      rule: paramPort
+      type: number
+    - default: host.docker.internal
+      edit: true
+      envKey: ANI_RSS_HOST_IP
+      labelEn: qBittorrent Host IP
+      labelZh: qBittorrent 主机 IP
+      label:
+        en: qBittorrent Host IP
+        zh: qBittorrent 主机 IP
+        zh-Hant: qBittorrent 主機 IP
+        ja: qBittorrent ホスト IP
+        ko: qBittorrent 호스트 IP
+        ru: IP-адрес хоста qBittorrent
+        ms: IP hos qBittorrent
+        pt-br: IP do host qBittorrent
+      required: true
+      rule: paramCommon
+      type: text
     - default: "-Xms64m -Xmx512m -Xss256k -XX:+UseG1GC"
       edit: true
       envKey: JAVA_OPTS
