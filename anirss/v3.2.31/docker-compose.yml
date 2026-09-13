@@ -29,7 +29,7 @@ services:
         aliases:
         - ${CONTAINER_NAME}
     ports:
-    - ${PANEL_APP_PORT_HTTP}:${SERVER_PORT}
+      - ${PANEL_APP_PORT_HTTP}:${SERVER_PORT}
     restart: always
     tty: true
     volumes:
