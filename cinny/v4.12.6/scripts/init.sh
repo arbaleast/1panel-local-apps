@@ -5,21 +5,26 @@
 #   (appspec: "Installation initialization, before container startup")
 # 执行环境: 1Panel 宿主机（不是容器内！）。
 #
+# Cinny config.json 真实结构（v4.12.6 实测）:
+#   {
+#     "defaultHomeserver": 1,                                  // homeserverList 数组下标
+#     "homeserverList": ["converser.eu", "matrix.org", ...],   // 域名数组（不含 https://）
+#     "allowCustomHomeservers": true,
+#     ...
+#   }
+# 因此「默认 homeserver」实际是：把用户填的域名追加到 homeserverList 开头，
+# 并把 defaultHomeserver 改为 0（指向新加的那一项）。
+#
 # 工作流程:
 #   1. 从 1Panel 写的 .env 加载 formField 值（DEFAULT_HOMESERVER / IMAGE / APP_VERSION）
 #   2. 若 host 端 ./data/config.json 不存在：
-#        a) 用 docker run 临时起 cinny 镜像（带 nginx 静态文件），
-#           挂载 host ./data 到 /out，把镜像内 /app/config.json 拷到 /out/config.json
-#        b) 用 jq 改写 default_hs 字段为用户填的 DEFAULT_HOMESERVER
-#      若 host 端 ./data/config.json 已存在：保留用户历史编辑（不覆盖）
-#   3. 兜底：若 jq 不可用则用 sed 替换（容错）
+#        docker run 临时 cinny 镜像，把镜像内 /app/config.json 拷到 host ./data/config.json
+#      若 host 端已存在：保留用户历史编辑（不覆盖）
+#   3. 用 jq (优先) 或 sed/awk (兜底)：
+#        a) 把 DEFAULT_HOMESERVER 域名添加到 homeserverList 数组开头
+#           （若已存在则不重复添加，先移除旧位置）
+#        b) 把 defaultHomeserver 改为 0
 #   4. exit 0 → 1Panel 接着 docker compose up -d 启动 cinny 容器
-#
-# 容器内的事:
-#   cinny 容器启动时，./data/config.json 已包含用户自定义的 default_hs。
-#   compose 把 ./data/config.json bind mount 到容器内 /app/config.json:ro。
-#   nginx 的 rewrite 规则把请求 /config.json 映射到 /app/config.json，
-#   前端 fetch /config.json 即可读到用户配置。
 #
 # 升级行为:
 #   1Panel 升级/参数更新时不重跑 init.sh（appspec.md 明示）。
@@ -52,7 +57,7 @@ else
 fi
 
 # 兜底默认值
-DEFAULT_HOMESERVER="${DEFAULT_HOMESERVER:-https://matrix.org}"
+DEFAULT_HOMESERVER="${DEFAULT_HOMESERVER:-matrix.org}"
 IMAGE="${IMAGE:-ghcr.io/cinnyapp/cinny}"
 APP_VERSION="${APP_VERSION:-v4.12.6}"
 
@@ -68,6 +73,10 @@ echo "[cinny-init] Host data dir: ${HOST_DATA_DIR}"
 echo "[cinny-init] DEFAULT_HOMESERVER: ${DEFAULT_HOMESERVER}"
 echo "[cinny-init] Image: ${IMAGE}:${APP_VERSION}"
 
+# 兜底：去掉可能的 https:// 前缀
+DEFAULT_HOMESERVER_CLEAN=$(printf '%s' "${DEFAULT_HOMESERVER}" | sed -E 's#^https?://##; s#/$##')
+echo "[cinny-init] DEFAULT_HOMESERVER (cleaned): ${DEFAULT_HOMESERVER_CLEAN}"
+
 # ---------- 1. 镜像 / docker 可用性检查 ----------
 if ! command -v docker >/dev/null 2>&1; then
     echo "[cinny-init] FATAL: docker not found in PATH (init.sh must run on 1Panel host)" >&2
@@ -79,9 +88,6 @@ if [ -f "${CONFIG_FILE}" ]; then
     echo "[cinny-init] Reusing existing ${CONFIG_FILE} (preserves user edits)"
 else
     echo "[cinny-init] Extracting default config.json from ${IMAGE}:${APP_VERSION}..."
-    # 用同一镜像跑一个临时容器，把 /app/config.json 拷到 host /out
-    # --entrypoint="" 覆盖镜像默认 nginx ENTRYPOINT；改用 sh 跑 cp
-    # 注意：必须先把镜像拉下来（如果本地没有）；pull 失败也继续（用本地已有）
     if ! docker pull "${IMAGE}:${APP_VERSION}" >/dev/null 2>&1; then
         echo "[cinny-init] WARNING: docker pull failed, will try to use local image if present"
     fi
@@ -92,37 +98,66 @@ else
     echo "[cinny-init] Wrote default config to ${CONFIG_FILE}"
 fi
 
-# ---------- 3. 用 jq 或 sed 注入用户 DEFAULT_HOMESERVER ----------
+# ---------- 3. 注入用户 DEFAULT_HOMESERVER 到 homeserverList ----------
 if command -v jq >/dev/null 2>&1; then
-    echo "[cinny-init] Patching default_hs with jq"
+    echo "[cinny-init] Patching homeserverList with jq"
     TMP_FILE="${CONFIG_FILE}.tmp"
-    jq --arg hs "${DEFAULT_HOMESERVER}" '.default_hs = $hs' "${CONFIG_FILE}" > "${TMP_FILE}"
+    jq --arg hs "${DEFAULT_HOMESERVER_CLEAN}" '
+        # 把 defaultHs 移到 0；先从数组移除（若有）再 unshift
+        .homeserverList = ([$hs] + (.homeserverList | map(select(. != $hs))))
+        | .defaultHomeserver = 0
+    ' "${CONFIG_FILE}" > "${TMP_FILE}"
     mv "${TMP_FILE}" "${CONFIG_FILE}"
 else
-    # 兜底：sed 替换 default_hs 字符串值（jq 不可用时）
-    # 用 # 作分隔符避免与 https:// 中的 / 冲突
-    # 用 [ ] 匹配可能的空格/制表符（POSIX BRE 兼容，GNU/BSD sed 都支持）
-    echo "[cinny-init] Patching default_hs with sed (jq not available)"
+    # 兜底: sed 处理 (jq 不可用时)
+    # Cinny 镜像默认 config.json 用单行 inline 数组形式:
+    #   "homeserverList": ["converser.eu", "matrix.org", ...]
+    # 但也兼容多行形式:
+    #   "homeserverList": [
+    #     "converser.eu",
+    #     ...
+    #   ]
+    # GNU sed 走 ERE, 支持 [[:space:]] POSIX 字符类
+    echo "[cinny-init] Patching homeserverList with sed (jq not available)"
     TMP_FILE="${CONFIG_FILE}.tmp"
-    if grep -q '"default_hs"' "${CONFIG_FILE}"; then
-        sed -E 's#("default_hs"[ ]*:[ ]*)"[^"]*"#\1"'"${DEFAULT_HOMESERVER}"'"#' \
-            "${CONFIG_FILE}" > "${TMP_FILE}"
+
+    # 步骤 1: 移除 homeserverList 中可能已存在的同域名（避免重复）
+    # 同时处理两种数组形式:
+    #   单行: "hs", "hs2", "hs3"  → 移除 "hs", 或 ", "hs"  (后者不干净, 走第二种)
+    #   多行: \n    "hs",\n
+    # 简化: 先尝试多行 (独立一行), 再尝试单行 inline (用 "hs" 周围 context)
+    # 用 sed 把 "hs",? 替换为空; 同时清理可能残留的 ", ,"
+    sed -E "/^\s*\"${DEFAULT_HOMESERVER_CLEAN}\",?\s*\$/d; s#(\"${DEFAULT_HOMESERVER_CLEAN}\",\s*)##g; s#(,\s*\"${DEFAULT_HOMESERVER_CLEAN}\")##g" \
+        "${CONFIG_FILE}" > "${TMP_FILE}"
+
+    # 步骤 2: 在 homeserverList 第一个条目之前插入新域名
+    # 用 2 个 capture group: \1 = "homeserverList": [   \2 = "converser.eu" (原 first entry)
+    # 优先尝试单行形式: "homeserverList": ["converser.eu", ...]
+    if sed -E 's#("homeserverList"\s*:\s*\[\s*)"([^"]+)"#\1"'"${DEFAULT_HOMESERVER_CLEAN}"'", "\2"#' "${TMP_FILE}" > "${TMP_FILE}.2" \
+            && grep -q "\"${DEFAULT_HOMESERVER_CLEAN}\"" "${TMP_FILE}.2"; then
+        # 单行形式命中
+        mv "${TMP_FILE}.2" "${TMP_FILE}"
     else
-        # 上游某版本可能改字段名，尝试其他常见 key
-        for key in defaultHs defaultHsUrl; do
-            if grep -q "\"${key}\"" "${CONFIG_FILE}"; then
-                sed -E "s#(\"${key}\"[ ]*:[ ]*)\"[^\"]*\"#\\1\"${DEFAULT_HOMESERVER}\"#" \
-                    "${CONFIG_FILE}" > "${TMP_FILE}"
-                break
-            fi
-        done
-        if [ ! -f "${TMP_FILE}" ]; then
-            echo "[cinny-init] WARNING: no default_hs/defaultHs key found, leaving config.json unchanged"
-            exit 0
-        fi
+        # 多行形式: "homeserverList": [\n  "converser.eu",
+        # 严格匹配 [ 后紧邻行尾（不吞 \n），避免 replacement 与原内容重复
+        sed -E 's#("homeserverList"\s*:\s*\[)$#\1\n    "'"${DEFAULT_HOMESERVER_CLEAN}"'",#' \
+            "${TMP_FILE}" > "${TMP_FILE}.2"
+        mv "${TMP_FILE}.2" "${TMP_FILE}"
     fi
-    mv "${TMP_FILE}" "${CONFIG_FILE}"
+
+    # 步骤 3: 把 defaultHomeserver 改为 0
+    sed -E 's#("defaultHomeserver"[[:space:]]*:[[:space:]]*)[0-9]+#\10#' \
+        "${TMP_FILE}" > "${TMP_FILE}.2"
+    mv "${TMP_FILE}.2" "${CONFIG_FILE}"
+    rm -f "${TMP_FILE}"
 fi
 
 chmod 0644 "${CONFIG_FILE}"
-echo "[cinny-init] Init complete. cinny container will now start with custom default_hs."
+echo "[cinny-init] Final homeserverList:"
+if command -v jq >/dev/null 2>&1; then
+    jq '.homeserverList' "${CONFIG_FILE}"
+    echo "[cinny-init] Final defaultHomeserver: $(jq '.defaultHomeserver' "${CONFIG_FILE}")"
+else
+    grep -A20 "homeserverList" "${CONFIG_FILE}" | head -15
+fi
+echo "[cinny-init] Init complete. cinny container will now start with custom default homeserver."
