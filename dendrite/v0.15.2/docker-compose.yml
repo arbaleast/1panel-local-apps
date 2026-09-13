@@ -37,10 +37,21 @@ services:
       # 容器起来时直接读。
       - ${DATA_PATH}:/etc/dendrite
     # 镜像 ENTRYPOINT: ["/usr/bin/dendrite"], 用 command 追加监听地址。
+    # -really-enable-open-registration: 关掉 dendrite v0.15.2 的硬编码安全检查
+    #   (它要求注册必须配 captcha 或 OpenRegistrationWithoutVerificationEnabled,
+    #    而 registration_shared_secret 模式不算 secondary verification,
+    #    会被 check 拦下: "Failed to start due to configuration errors").
+    #   这个 flag 等同于 yaml 里写 open_registration_without_verification_enabled: true.
+    #   配合 init.sh 注入的 registration_shared_secret, 实际效果是:
+    #   - Web 端 Element/Cinny "创建账号" 按钮可用 (任何人能注册)
+    #   - 同时保留 registration_shared_secret, 防止别人滥用
+    #   接受的安全风险: 任何能访问 homeserver 的人都能注册账号。
+    #   想收紧就把 secret 改长 / 在反代层加 IP 限流。
     command:
       - --config=/etc/dendrite/dendrite.yaml
       - --http-bind-address=0.0.0.0:8008
       - --https-bind-address=0.0.0.0:8448
+      - --really-enable-open-registration
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8008/_matrix/client/versions || exit 1"]
       interval: 30s
