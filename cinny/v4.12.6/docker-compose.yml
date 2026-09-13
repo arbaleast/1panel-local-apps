@@ -1,0 +1,37 @@
+networks:
+  1panel-network:
+    external: true
+
+# Cinny v4.12.6 — 官方 ghcr.io 镜像，nginx 静态服务
+# 镜像源：ghcr.io/cinnyapp/cinny:v4.12.6（linux/amd64 + linux/arm64 双架构）
+# 容器内：nginx:1.31.5-alpine 监听 :80，服务 /app/ 下 dist/ 静态资源
+# 自托管文档：https://github.com/cinnyapp/cinny#self-hosting
+#
+# 注：Cinny 的 default homeserver / explore pages 在 build 阶段写入 dist/config.json，
+# 镜像内无运行时环境变量覆盖入口。如需自定义默认 homeserver：
+#   1) 停止容器
+#   2) 编辑 ./data/config.json（结构见 https://github.com/cinnyapp/cinny/blob/dev/config.json）
+#   3) 取消下方 config volume 注释行启用 bind mount
+#   4) 重启容器；nginx rewrite 规则会把请求 /config.json 映射到 /app/config.json
+# 默认留空以使用镜像内置配置（登录页默认显示 matrix.org）。
+
+services:
+  cinny:
+    container_name: ${CONTAINER_NAME}
+    image: ${IMAGE}:${APP_VERSION}
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:80
+    volumes:
+      # 可选：自定义 config.json（默认注释；启用前先在 ./data/config.json 放好文件）
+      # - ./data/config.json:/app/config.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

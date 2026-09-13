@@ -8,6 +8,8 @@
 |------|------|----------|
 | anirss | 动漫 RSS | v3.2.29-arm32v7 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
+| cinny | Matrix 聊天客户端 | v4.12.6 |
+| dendrite | Matrix 协议新一代 homeserver | v0.15.2 |
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
 | firecrawl | 网页爬虫 | 2.11.209 |
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |

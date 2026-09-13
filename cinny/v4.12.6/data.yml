@@ -1,0 +1,80 @@
+additionalProperties:
+  key: cinny
+  name: cinny v4.12.6
+  tags:
+    - Matrix
+    - Chat
+    - E2EE
+    - Self-hosted
+  shortDescZh: 简洁优雅的 Matrix 聊天客户端
+  shortDescEn: Yet another elegant Matrix chat client
+  description:
+    en: Cinny is a Matrix client focusing on simplicity and elegance, with built-in E2EE end-to-end encryption, spaces, threads, search, and rich media. Self-host by serving the static web app from any container; connect to any Matrix homeserver.
+    zh: Cinny 是一款简洁优雅的 Matrix 聊天客户端，内置端到端加密（E2EE）、Spaces、话题、消息搜索与富媒体支持。自托管只需运行官方容器即可访问静态前端，对接任意 Matrix homeserver。
+    zh-Hant: Cinny 是一款簡潔優雅的 Matrix 聊天用戶端，內建端對端加密（E2EE）、Spaces、話題、訊息搜尋與多媒體支援。自架只需執行官方容器即可存取靜態前端，並對接任意 Matrix homeserver。
+    ja: Cinny はシンプルでエレガントな Matrix クライアントで、E2EE 暗号化、Spaces、スレッド、検索、豊富なメディア機能を備えています。任意の Matrix ホームサーバーに接続できる公式コンテナをセルフホストするだけです。
+    ko: Cinny는 단순하고 우아한 Matrix 클라이언트로, E2EE 종단간 암호화, Spaces, 스레드, 검색, 풍부한 미디어 기능을 제공합니다. 공식 컨테이너를 자체 호스팅하여 모든 Matrix 홈서버에 연결할 수 있습니다.
+    ru: Cinny — элегантный Matrix-клиент с E2EE-шифрованием, Spaces, тредами, поиском и поддержкой мультимедиа. Самостоятельно разместите официальный контейнер и подключайтесь к любому Matrix homeserver.
+    ms: Cinny ialah pelanggan Matrix yang ringkas dan elegan dengan penyulitan hujung-ke-hujung (E2EE), Spaces, utas, carian dan sokongan media. Hos sendiri kontena rasmi dan sambung ke mana-mana Matrix homeserver.
+    pt-br: Cinny é um cliente Matrix elegante e simples, com criptografia E2EE ponta a ponta, Spaces, tópicos, busca e suporte a mídia. Basta hospedar o contêiner oficial e conectar a qualquer homeserver Matrix.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://cinny.in
+  github: https://github.com/cinnyapp/cinny
+  formFields:
+    # ---- 镜像源（变量型应用，ghcr.io 官方，linux/amd64+arm64 双架构）----
+    - default: ghcr.io/cinnyapp/cinny
+      edit: true
+      envKey: IMAGE
+      labelEn: Image
+      labelZh: 镜像
+      label:
+        en: Image
+        zh: 镜像
+        zh-Hant: 映像
+        ja: イメージ
+        ko: 이미지
+        ru: Образ
+        ms: Imej
+        pt-br: Imagem
+      required: true
+      rule: paramImageTag
+      type: text
+    # ---- 镜像版本（v-prefix semver，例 v4.12.6）----
+    - default: v4.12.6
+      edit: true
+      envKey: APP_VERSION
+      labelEn: App Version
+      labelZh: 应用版本
+      label:
+        en: App Version
+        zh: 应用版本
+        zh-Hant: 應用版本
+        ja: アプリバージョン
+        ko: 앱 버전
+        ru: Версия приложения
+        ms: Versi Aplikasi
+        pt-br: Versão do aplicativo
+      required: true
+      rule: paramImageTag
+      type: text
+    # ---- HTTP 端口（容器内 Nginx 监听 80）----
+    - default: 40080
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
