@@ -36,48 +36,38 @@ cinny/
 2. 选择版本 `v4.12.6`
 3. 主机侧 HTTP 端口默认 `40080`（容器内固定 `80`），按需修改
 4. 镜像默认 `ghcr.io/cinnyapp/cinny:v4.12.6`（双架构）
-5. 提交安装
+5. **默认 Homeserver** 字段填入 Matrix homeserver 地址（默认 `https://matrix.org`，可改为自建如 `https://matrix.example.com`）
+6. 提交安装 → 1Panel 会在启动容器前自动执行 `scripts/init.sh`，从 cinny 镜像导出默认 `config.json` 并把 `default_hs` 字段值替换为你填的 homeserver
 
-部署完成后访问 `http://<1Panel 主机 IP>:<HTTP 端口>` 即可打开 Cinny 登录页。
+部署完成后访问 `http://<1Panel 主机 IP>:<HTTP 端口>` 即可打开 Cinny 登录页（默认显示你配置的 homeserver）。
 
 ## 配置
 
 ### 默认 homeserver
 
-镜像内置的 `config.json` 默认登录页展示 `https://matrix.org`。如需改为自建 homeserver（如 `https://matrix.example.com`），有几种方案：
+镜像内置的 `config.json` 默认登录页展示 `https://matrix.org`。Cinny 的 `default_hs` 在 build 阶段写入 dist/config.json，官方镜像不读环境变量，所以需要通过 bind mount + init.sh 注入：
 
-**方案 A：使用 1Panel 反代重写 `/config.json`（推荐，无需改镜像）**
+- compose 把 `./data/config.json` 挂到容器内 `/app/config.json:ro`
+- `scripts/init.sh`（在 1Panel 宿主机跑）首次安装时从 cinny 镜像导出默认 `config.json` 到 host `./data/config.json`，再用 `jq` / `sed` 把 `default_hs` 字段值替换为你在 1Panel 表单填的 **默认 Homeserver**
+- 容器内 nginx 的 `rewrite ^/config.json$ /config.json` 把请求映射到 `/app/config.json`，前端 fetch 即可读到新值
 
-如果你在 1Panel 站点已经接入了 OpenResty / Traefik 反代，在代理层拦截 `/config.json` 返回自定义 JSON 即可，结构参考 [上游 config.json](https://github.com/cinnyapp/cinny/blob/dev/config.json)：
+**修改默认 homeserver**：
 
-```json
-{
-  "default_hs": "https://matrix.example.com",
-  "features": {},
-  "explore": {
-    "spaces": ["!roomid:matrix.example.com"],
-    "homeservers": ["https://matrix.example.com"]
-  },
-  "brand": "Cinny",
-  "permalinkPrefix": "https://matrix.to"
-}
-```
+| 场景 | 步骤 |
+| --- | --- |
+| 首次安装 | 在 1Panel 表单 **默认 Homeserver** 字段填入新地址 → 提交 |
+| 已部署，想换 homeserver | 编辑 `<install_path>/cinny/v4.12.6/data/config.json`，把 `default_hs` 改成新地址 → 在 1Panel UI 重启 cinny 容器（1Panel 升级/参数更新时不重跑 init.sh，appspec.md 明示） |
+| 想彻底清空 | 删除 `<install_path>/cinny/v4.12.6/data/config.json` + 卸载重装（init.sh 会重跑） |
 
-**方案 B：在浏览器登录页手动指定 homeserver**
+### 其他高级配置
 
-打开 Cinny → 在登录页"其他 homeserver"输入框手动输入 `https://matrix.example.com` → 登录。Cinny 会把用户上次输入的 homeserver 缓存在浏览器 `localStorage` 中。
-
-**方案 C：fork 仓库自行 rebuild 镜像**
-
-修改 `config.json` 后 `docker build` 自定义镜像，把 formField `IMAGE` 设为你的私有仓库地址。
-
-> 早期方案是"挂载自定义 config.json"（mount `./data/config.json` 到容器 `/app/config.json`），但 1Panel compose schema 不允许 volumes 块为空，且每次挂载空 config.json 会覆盖镜像内默认文件，行为不直观。本仓库改用以上更友好的方案。
+`config.json` 还有 `features` / `explore` / `brand` / `permalinkPrefix` 等字段可调。结构参考 [上游 config.json](https://github.com/cinnyapp/cinny/blob/dev/config.json)。在 host 端 `./data/config.json` 直接编辑保存即可（容器内是只读 bind mount，修改必须改 host 端）。
 
 ## 数据持久化
 
 | 容器内路径 | 主机侧路径 | 用途 |
 | --- | --- | --- |
-| `/app/.local-share` | `./data` | 容器内一个不影响业务的占位路径（镜像内不存在），让 1Panel schema 校验通过 |
+| `/app/config.json` | `./data/config.json` | 前端运行时配置（由 init.sh 从镜像提取后注入 default_hs） |
 
 Cinny 是纯静态前端 SPA，**无服务端状态、无数据库、无用户数据落盘**。所有房间、消息、密钥均存储在你登录的 Matrix homeserver 上，本容器只负责提供 HTML/JS 静态资源。
 
@@ -101,8 +91,11 @@ A: 仅浏览器到容器的 80 端口；容器本身无对外网络依赖（除�
 **Q: 与 Synapse / Dendrite homeserver 配套？**
 A: 完全可以。本仓库另有 `dendrite` 应用可一起部署。
 
-**Q: 默认 config.json 改了不生效？**
-A: 前端 fetch `/config.json` 是按 URL 缓存的，强制刷新（Ctrl+Shift+R / Cmd+Shift+R）即可。
+**Q: 修改默认 homeserver 后没生效？**
+A: 三种排查：(1) 浏览器强制刷新（Ctrl+Shift+R / Cmd+Shift+R）清掉 `config.json` 缓存；(2) 确认 host 端 `./data/config.json` 的 `default_hs` 字段值已改；(3) 1Panel UI 重启 cinny 容器（修改 host 端文件后 bind mount 会自动重新挂载）。
+
+**Q: init.sh 没跑或没生成 config.json？**
+A: 检查 1Panel 版本是否 ≥ v2.2.5（支持 init 钩子）。也可手动跑：在 1Panel 宿主机执行 `bash /opt/1panel/apps/local/cinny/cinny/v4.12.6/scripts/init.sh`。
 
 ## 许可
 

@@ -78,3 +78,20 @@ additionalProperties:
       required: true
       rule: paramPort
       type: number
+    # ---- 默认 homeserver（写入 ./data/config.json 的 default_hs 字段）----
+    - default: https://matrix.org
+      edit: true
+      envKey: DEFAULT_HOMESERVER
+      labelEn: Default Homeserver
+      labelZh: 默认 Homeserver
+      label:
+        en: Default Homeserver
+        zh: 默认 Homeserver
+        zh-Hant: 預設 Homeserver
+        ja: 既定の Homeserver
+        ko: 기본 Homeserver
+        ru: Домашний сервер по умолчанию
+        ms: Homeserver Lalai
+        pt-br: Homeserver padrão
+      required: true
+      type: text

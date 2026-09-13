@@ -7,13 +7,18 @@ networks:
 # 容器内：nginx:1.31.5-alpine 监听 :80，服务 /app/ 下 dist/ 静态资源
 # 自托管文档：https://github.com/cinnyapp/cinny#self-hosting
 #
-# 关于自定义默认 homeserver：Cinny 的 default_hs / explore pages 在 build 阶段
-# 写入 dist/config.json，镜像内无运行时环境变量覆盖入口，1Panel schema 也不允许
-# compose 出现空 volumes 块。本仓库选择最简方案：使用镜像内置默认
-# （登录页默认显示 matrix.org）。如需自定义默认 homeserver：
-#   1) 在外部反代（如 1Panel OpenResty / Traefik）中重写 /config.json
-#   2) 或 fork 仓库自行 rebuild 镜像
-# 详见 cinny/README.md "配置" 章节。
+# 关于默认 homeserver:
+#   Cinny 的 default_hs 在 build 阶段写入 dist/config.json，官方镜像不读
+#   环境变量。本应用通过 bind mount ./data/config.json → /app/config.json:ro
+#   让 1Panel 安装时把用户填的 DEFAULT_HOMESERVER 注入到该文件。
+#   scripts/init.sh 在 1Panel 宿主机跑（首次安装时），负责：
+#     1) 从 cinny 镜像导出默认 config.json 到 host ./data/config.json
+#     2) 用 jq/sed 把 default_hs 字段值替换为用户填的 DEFAULT_HOMESERVER
+#   容器内 nginx 的 rewrite 规则把请求 /config.json 映射到 /app/config.json，
+#   前端 fetch /config.json 即可读到用户配置。
+#
+#   升级/重装时 1Panel 不重跑 init.sh（appspec.md 明示）。如需改默认
+#   homeserver，编辑 host 端 ./data/config.json 后在 1Panel UI 重启容器。
 
 services:
   cinny:
@@ -26,11 +31,8 @@ services:
       createdBy: "Apps"
     ports:
       - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:80
-    # 持久化占位：挂载一个 host 端空目录到容器内一个不影响功能的路径，
-    # 让 1Panel schema 校验通过（其要求 volumes 必须是非空 array）。
-    # /app/.local-share 在镜像内不存在，bind mount 不会覆盖任何业务文件。
     volumes:
-      - ./data:/app/.local-share
+      - ./data/config.json:/app/config.json:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
       interval: 30s
