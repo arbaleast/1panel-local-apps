@@ -105,7 +105,9 @@ fi
 KEY_FILE="${HOST_DATA_DIR}/matrix_key.pem"
 if [ ! -f "${KEY_FILE}" ]; then
     echo "[init.sh] Generating matrix signing key (via docker run)..."
-    docker run --rm \
+    # 必须 --entrypoint="" 覆盖镜像默认 ENTRYPOINT ["/usr/bin/dendrite"],
+    # 否则 docker 会跑 dendrite 走 ParseFlags -> Load("dendrite.yaml") -> 找不到文件 fatal
+    docker run --rm --entrypoint "" \
         -v "${HOST_DATA_DIR}:/etc/dendrite" \
         "${DENDRITE_IMAGE}" \
         /usr/bin/generate-keys -private-key /etc/dendrite/matrix_key.pem
@@ -117,7 +119,7 @@ fi
 CONFIG_FILE="${HOST_DATA_DIR}/dendrite.yaml"
 if [ ! -f "${CONFIG_FILE}" ]; then
     echo "[init.sh] Generating dendrite.yaml (server=${SERVER_NAME})..."
-    docker run --rm \
+    docker run --rm --entrypoint "" \
         -v "${HOST_DATA_DIR}:/etc/dendrite" \
         "${DENDRITE_IMAGE}" \
         /usr/bin/generate-config \
