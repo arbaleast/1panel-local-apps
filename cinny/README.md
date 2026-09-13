@@ -44,40 +44,40 @@ cinny/
 
 ### 默认 homeserver
 
-镜像内置的 `config.json` 默认登录页展示 `https://matrix.org`。如需改为自建 homeserver（如 `https://matrix.example.com`），有两种方案：
+镜像内置的 `config.json` 默认登录页展示 `https://matrix.org`。如需改为自建 homeserver（如 `https://matrix.example.com`），有几种方案：
 
-**方案 A：挂载自定义 config.json（推荐，零重建）**
+**方案 A：使用 1Panel 反代重写 `/config.json`（推荐，无需改镜像）**
 
-1. 停止 Cinny 容器
-2. 编辑 `<install_path>/cinny/v4.12.6/data/config.json`，结构参考 [上游 config.json](https://github.com/cinnyapp/cinny/blob/dev/config.json)，示例：
-   ```json
-   {
-     "default_hs": "https://matrix.example.com",
-     "features": {},
-     "explore": {
-       "spaces": ["!roomid:matrix.example.com"],
-       "homeservers": ["https://matrix.example.com"]
-     },
-     "brand": "Cinny",
-     "permalinkPrefix": "https://matrix.to"
-   }
-   ```
-3. 编辑 `docker-compose.yml`，取消下方注释行：
-   ```yaml
-   volumes:
-     - ./data/config.json:/app/config.json:ro
-   ```
-4. 重启容器。Nginx 的 `rewrite ^/config.json$ /config.json` 会把请求映射到 `/app/config.json`，前端 fetch 即可读到新值
+如果你在 1Panel 站点已经接入了 OpenResty / Traefik 反代，在代理层拦截 `/config.json` 返回自定义 JSON 即可，结构参考 [上游 config.json](https://github.com/cinnyapp/cinny/blob/dev/config.json)：
 
-**方案 B：使用前端反向代理重写 `/config.json`**
+```json
+{
+  "default_hs": "https://matrix.example.com",
+  "features": {},
+  "explore": {
+    "spaces": ["!roomid:matrix.example.com"],
+    "homeservers": ["https://matrix.example.com"]
+  },
+  "brand": "Cinny",
+  "permalinkPrefix": "https://matrix.to"
+}
+```
 
-如果你的 1Panel 站点已经接入了 1Panel OpenResty / Traefik 反代，可在代理层拦截 `/config.json` 返回自定义 JSON；本应用镜像不感知。
+**方案 B：在浏览器登录页手动指定 homeserver**
+
+打开 Cinny → 在登录页"其他 homeserver"输入框手动输入 `https://matrix.example.com` → 登录。Cinny 会把用户上次输入的 homeserver 缓存在浏览器 `localStorage` 中。
+
+**方案 C：fork 仓库自行 rebuild 镜像**
+
+修改 `config.json` 后 `docker build` 自定义镜像，把 formField `IMAGE` 设为你的私有仓库地址。
+
+> 早期方案是"挂载自定义 config.json"（mount `./data/config.json` 到容器 `/app/config.json`），但 1Panel compose schema 不允许 volumes 块为空，且每次挂载空 config.json 会覆盖镜像内默认文件，行为不直观。本仓库改用以上更友好的方案。
 
 ## 数据持久化
 
 | 容器内路径 | 主机侧路径 | 用途 |
 | --- | --- | --- |
-| `/app/config.json` | `./data/config.json`（可选） | 自定义前端配置（默认 homeserver / explore pages） |
+| `/app/.local-share` | `./data` | 容器内一个不影响业务的占位路径（镜像内不存在），让 1Panel schema 校验通过 |
 
 Cinny 是纯静态前端 SPA，**无服务端状态、无数据库、无用户数据落盘**。所有房间、消息、密钥均存储在你登录的 Matrix homeserver 上，本容器只负责提供 HTML/JS 静态资源。
 
