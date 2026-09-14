@@ -64,38 +64,6 @@ additionalProperties:
         pt-br: Nome do contêiner
       required: true
       type: text
-    - default: "1000"
-      envKey: USER_ID
-      labelEn: User ID
-      labelZh: 用户 ID
-      label:
-        en: User ID
-        zh: 用户 ID
-        zh-Hant: 使用者 ID
-        ja: ユーザー ID
-        ko: 사용자 ID
-        ru: ID пользователя
-        ms: ID pengguna
-        pt-br: ID do usuário
-      required: true
-      type: number
-      edit: true
-    - default: "1000"
-      envKey: GROUP_ID
-      labelEn: Group ID
-      labelZh: 用户组 ID
-      label:
-        en: Group ID
-        zh: 用户组 ID
-        zh-Hant: 使用者群組 ID
-        ja: ユーザーグループ ID
-        ko: 사용자 그룹 ID
-        ru: ID группы пользователей
-        ms: ID kumpulan pengguna
-        pt-br: ID do grupo de usuários
-      required: true
-      type: number
-      edit: true
     - default: "022"
       edit: true
       envKey: UMASK
