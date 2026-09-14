@@ -10,8 +10,6 @@ services:
           cpus: ${CPUS}
           memory: ${MEMORY_LIMIT}
     environment:
-      - PUID=99
-      - PGID=100
       - UMASK=${UMASK}
       - TZ=${TZ}
       - SERVER_PORT=${SERVER_PORT}
@@ -21,6 +19,7 @@ services:
       - MCP_ENABLED=${MCP_ENABLED}
       - ANI_RSS_HOST_IP=${ANI_RSS_HOST_IP}
       - QBT_PORT=${QBT_PORT}
+    user: ${USER_ID}:${GROUP_ID}
     image: wushuo894/ani-rss:v3.2.31
     labels:
       createdBy: Apps

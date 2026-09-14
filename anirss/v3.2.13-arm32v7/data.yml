@@ -64,7 +64,7 @@ additionalProperties:
       pt-br: Nome do contêiner
     required: true
     type: text
-  - default: "0"
+  - default: "1000"
     envKey: USER_ID
     labelEn: User ID
     labelZh: 用户 ID
@@ -80,7 +80,7 @@ additionalProperties:
     required: true
     type: number
     edit: true
-  - default: "0"
+  - default: "1000"
     envKey: GROUP_ID
     labelEn: Group ID
     labelZh: 用户组 ID
