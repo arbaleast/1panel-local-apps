@@ -52,7 +52,7 @@ additionalProperties:
       pt-br: Caminho da pasta de mídia
     required: true
     type: text
-  - default: /dev/shm
+  - default: /data/dsh/home/日常/1panel-local-apps/jellyfin-cache
     edit: true
     envKey: CACHE_FOLDER_PATH
     labelEn: Cache folder path
