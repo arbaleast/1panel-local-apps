@@ -63,25 +63,44 @@ export class DockerHubAdapter {
   async getLatestTag(image, currentTag) {
     const { repo } = parseImage(image);
     // DockerHub API v2
-    const url = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=20&ordering=last_updated`;
-    let res;
-    try {
-      res = await this.fetchImpl(url);
-    } catch (_) {
-      return null;
-    }
-    if (!res.ok) return null;
+    // page_size=100 + 翻页兜底：anirss/handbrake/scrob/syncthing 等 hardcode 应用
+    // 单个镜像 30+ tag（每个 semver 配多架构后缀），page_size=20 会把 arm32v7 等变体截断到 page 1 之外，
+    // 导致形态 3 同 suffix 匹配失败、arm32v7 变体永远不生成新版本目录（PR #19 复盘）。
+    // 见 AGENTS.md "anirss 不更新根因复盘（2026-09-08）" 与本页注释。
+    // 上限 5 页（500 tag）覆盖当前所有 known 应用（最大 scrob ~80 tag）；超出时 fallback 到
+    // 已拉到的所有 tag，不影响"返回最新稳定 tag"主语义。
+    const PAGE_SIZE = 100;
+    const MAX_PAGES = 5;
+    const baseUrl = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=${PAGE_SIZE}&ordering=last_updated`;
 
-    let data;
-    try {
-      data = await res.json();
-    } catch (_) {
-      return null;
+    const allResults = [];
+    let nextUrl = baseUrl;
+    for (let page = 0; page < MAX_PAGES && nextUrl; page++) {
+      let res;
+      try {
+        res = await this.fetchImpl(nextUrl);
+      } catch (_) {
+        return null;
+      }
+      if (!res.ok) return null;
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (_) {
+        return null;
+      }
+
+      const results = data?.results ?? [];
+      allResults.push(...results);
+
+      // DockerHub 返回 next 为 null 时表示已到末页
+      if (!data?.next) break;
+      nextUrl = data.next;
     }
 
-    const results = data?.results ?? [];
     // 过滤不稳定标签
-    const stable = results.filter(t => !this.UNSTABLE_RE.test(t.name));
+    const stable = allResults.filter(t => !this.UNSTABLE_RE.test(t.name));
     if (stable.length === 0) return null;
 
     // 如果有当前 tag，尝试按"变体维度"匹配同 suffix 的版本化 tag。

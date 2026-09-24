@@ -273,6 +273,89 @@ describe('registry', () => {
     assert.equal(tag, 'v3.2.29');
   });
 
+  // 16b. PR #19 复盘：arm32v7 在 page 2（被 page_size=20 截断）时仍能识别
+  // 修复前：page_size=20 单页只拉 20 个 tag，anirss 30+ tag 导致 arm32v7 后缀全在 page 2
+  //   之外，形态 3 同 suffix 匹配走空集 → fallback 返回纯 semver 最新（v3.2.36）→ 漏检 arm32v7
+  // 修复后：page_size=100 + 翻页兜底 → page 1 拿不满就翻 page 2 → arm32v7 后缀在结果中
+  //   → 形态 3 同 suffix 匹配命中 → 返回 v3.2.36-arm32v7
+  it('DockerHubAdapter: semver+suffix matches when same-suffix tag is in page 2 (PR #19 regression)', async () => {
+    // 构造 30 个 tag：page 1 = 20 个（最旧到 v3.2.32），page 2 = 10 个（v3.2.33..v3.2.37）
+    // 其中 arm32v7 全部放在 page 2 模拟"被截断"
+    const page1 = [];
+    for (let v = 9; v <= 32; v++) {
+      page1.push({ name: `v3.2.${v}` });
+    }
+    // page 1 共 24 个（v3.2.9..v3.2.32），已经超过 20
+    // 重排：page 1 = 前 20 个（v3.2.9..v3.2.28）
+    const p1 = page1.slice(0, 20);
+    const p2 = page1.slice(20).concat([
+      { name: 'v3.2.33' }, { name: 'v3.2.33-arm32v7' },
+      { name: 'v3.2.34' }, { name: 'v3.2.34-arm32v7' },
+      { name: 'v3.2.35' }, { name: 'v3.2.35-arm32v7' },
+      { name: 'v3.2.36' }, { name: 'v3.2.36-arm32v7' },
+      { name: 'v3.2.37' }, { name: 'v3.2.37-arm32v7' },
+    ]);
+
+    const fetchMock = makeMockFetch([
+      () => ({
+        ok: true,
+        json: async () => ({ results: p1, next: 'https://hub.docker.com/v2/repositories/wushuo894/ani-rss/tags/?page=2&page_size=100&ordering=last_updated' }),
+      }),
+      () => ({
+        ok: true,
+        json: async () => ({ results: p2, next: null }),
+      }),
+    ]);
+    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock });
+    const tag = await adapter.getLatestTag('wushuo894/ani-rss:v3.2.32-arm32v7', 'v3.2.32-arm32v7');
+    assert.equal(tag, 'v3.2.37-arm32v7');
+  });
+
+  // 16c. 单页足够时（< 100 tag）不翻 page 2，避免多余 HTTP 调用
+  it('DockerHubAdapter: stops at last page when next=null', async () => {
+    let callCount = 0;
+    const fetchMock = () => {
+      callCount++;
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          results: [
+            { name: 'v3.2.36' }, { name: 'v3.2.36-arm32v7' },
+            { name: 'v3.2.32' }, { name: 'v3.2.32-arm32v7' },
+          ],
+          next: null,
+        }),
+      });
+    };
+    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock });
+    const tag = await adapter.getLatestTag('wushuo894/ani-rss:v3.2.32-arm32v7', 'v3.2.32-arm32v7');
+    assert.equal(tag, 'v3.2.36-arm32v7');
+    assert.equal(callCount, 1, '单页足够时只调 1 次 fetch');
+  });
+
+  // 16d. 超过 5 页（500 tag）时停止翻页，fallback 用已拉到的 tag 计算最新
+  // 防止 scrob 这类 80+ tag 镜像 + 大量历史 tag 触发无限翻页
+  it('DockerHubAdapter: caps pagination at MAX_PAGES (5) without infinite loop', async () => {
+    let callCount = 0;
+    const fetchMock = () => {
+      callCount++;
+      // 每页 100 个 v3.2.X tag + 永远返回 next（模拟"tag 数极多"）
+      const results = [];
+      for (let v = 1; v <= 100; v++) results.push({ name: `v1.0.${v}` });
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          results,
+          next: `https://hub.docker.com/v2/repositories/test/repo/tags/?page=${callCount + 1}&page_size=100`,
+        }),
+      });
+    };
+    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock });
+    const tag = await adapter.getLatestTag('test/repo:v1.0.0', 'v1.0.0');
+    assert.equal(callCount, 5, '最多 5 页翻页');
+    assert.equal(tag, 'v1.0.100');
+  });
+
   // 17. GhcrAdapter semver+后缀变体
   it('GhcrAdapter matches semver+suffix variant (v3.2.18-arm32v7 -> v3.2.29-arm32v7)', async () => {
     const fetchMock = makeMockFetch([

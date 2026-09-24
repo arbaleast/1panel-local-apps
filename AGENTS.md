@@ -83,7 +83,7 @@ npm run lint      # 等价 node .github/bin/lint-apps.mjs，扫描全部 data.ym
 
 ### DockerHub 镜像选取口径
 
-`DockerHubAdapter` 用 `page_size=20&ordering=last_updated` 取最近更新的 20 个 tag，再过滤不稳定关键字（`latest|nightly|dev|edge`）后选末位。GHCR 用 OCI Registry API + 匿名 token（`n=1000`），黑名单包含 `alpha|beta|rc|main|master`。
+`DockerHubAdapter` 用 `page_size=100&ordering=last_updated` 翻页（上限 5 页 = 500 tag）取所有相关 tag，再过滤不稳定关键字（`latest|nightly|dev|edge`）后选末位。`page_size` 2026-09-21 从 20 调到 100——anirss 类多架构镜像（30+ tag，每 semver 配 `-arm32v7`/`-arm64v8` 等后缀）单页 20 会被 `last_updated` 排序截到 page 1 之外，形态 3 变体匹配（同 suffix 末尾）找不到目标 → 漏检 arm32v7 新版本（PR #19 复盘）；翻页兜底防止 5+ tag/版本的镜像被切。GHCR 用 OCI Registry API + 匿名 token（`n=1000`），黑名单包含 `alpha|beta|rc|main|master`。
 
 ## Automation
 
