@@ -103,6 +103,26 @@ npm run lint      # 等价 node .github/bin/lint-apps.mjs，扫描全部 data.ym
 3. 由 1Panel 计划任务拉取最新仓库并触发本地应用同步
 4. 在 1Panel UI 重新部署应用
 
+### 沙箱中 Git Push
+
+沙箱 SSH 鉴权默认不可用，需手动配置 SSH 密钥：
+
+```bash
+# 1. 查找可用的 SSH 密钥（通常在 /data/dsh/home/ssh-key-vault/ 或 ~/.ssh/）
+ls -la /data/dsh/home/ssh-key-vault/
+
+# 2. 配置 git 使用 SSH 密钥
+git config core.sshCommand "ssh -i /data/dsh/home/ssh-key-vault/id_ed25519_deploy -o StrictHostKeyChecking=no"
+
+# 3. 切换到 SSH URL（如果 remote 是 HTTPS）
+git remote set-url origin git@github.com:arbaleast/1panel-local-apps.git
+
+# 4. 推送
+git push origin main
+```
+
+> 注意：如果 SSH 密钥有密码保护，需要使用 ssh-agent 或配置 GIT_SSH_COMMAND 加载密钥。
+
 ## Common Pitfalls
 
 - **禁止使用 `latest` 作为版本目录名或镜像 tag**：`latest` 会导致版本漂移，1Panel UI 中该目录名即为版本参数。应使用具体 semver / date-based / functional tag（如 `v1.2.3`、`2024.08`、`pg` 等）。仅当上游镜像完全无版本化 tag 时方可例外保留 `latest`（需在 PR 描述中注明根因）。
