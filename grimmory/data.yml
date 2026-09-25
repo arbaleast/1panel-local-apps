@@ -1,0 +1,26 @@
+additionalProperties:
+  key: grimmory
+  name: grimmory
+  tags:
+    - Book
+    - Library
+    - Self-hosted
+    - Reader
+  shortDescZh: 自托管电子书 / 漫画 / 有声书库（多用户 + 设备同步 + BookDrop 监控导入）
+  shortDescEn: Self-hosted library for ebooks, comics, and audiobooks (multi-user + KOReader sync + BookDrop import)
+  description:
+    zh: "Grimmory 是一个自托管的电子书 / 漫画 / 有声书库，支持 EPUB、MOBI、AZW、AZW3、FB2、PDF、CBZ/CBR/CB7、M4B/M4A/MP3/OPUS 等主流格式。它提供基于规则的书架（智能筛选 + 标签 + 全文搜索）、多用户隔离、KOReader / OPDS 设备同步、BookDrop 文件夹自动入库，以及来自 Google Books / Open Library / Amazon 的可编辑元数据。内置浏览器阅读器支持 PDF / EPUB / CBZ，附带批注、高亮与阅读进度跟踪。许可证：AGPL-3.0。"
+    en: "Grimmory is a self-hosted digital library for your ebooks, comics, and audiobooks. It supports EPUB, MOBI, AZW, AZW3, FB2, PDF, CBZ/CBR/CB7, and M4B/M4A/MP3/OPUS, with custom and dynamic shelves, full-text search, multi-user isolation, KOReader / OPDS device sync, BookDrop auto-import, and editable metadata pulled from Google Books, Open Library, and Amazon. The built-in browser reader renders PDF / EPUB / CBZ with annotations, highlights, and reading progress. License — AGPL-3.0."
+    zh-Hant: "Grimmory 是一個自架的電子書 / 漫畫 / 有聲書庫，支援 EPUB、MOBI、AZW、AZW3、FB2、PDF、CBZ/CBR/CB7、M4B/M4A/MP3/OPUS 等格式，提供自訂與動態書架、全文搜尋、多用戶隔離、KOReader / OPDS 裝置同步、BookDrop 自動入庫，以及來自 Google Books / Open Library / Amazon 的可編輯中繼資料。內建瀏覽器閱讀器可顯示 PDF / EPUB / CBZ，並提供註解、醒目提示與閱讀進度追蹤。授權條款：AGPL-3.0。"
+    ja: "Grimmory はセルフホスト型の電子書籍 / コミック / オーディオブックライブラリです。EPUB、MOBI、AZW、AZW3、FB2、PDF、CBZ/CBR/CB7、M4B/M4A/MP3/OPUS に対応し、スマートシェルフ、ルールベースフィルタリング、タグ、全文検索、複数ユーザー、KOReader / OPDS 同期、BookDrop 自動取り込み、Google Books / Open Library / Amazon からの編集可能なメタデータを提供します。内蔵ブラウザリーダーは PDF / EPUB / CBZ をハイライト、注釈、進捗追跡付きで表示します。ライセンス：AGPL-3.0。"
+    ko: "Grimmory는 셀프 호스팅 전자책 / 만화 / 오디오북 라이브러리입니다. EPUB, MOBI, AZW, AZW3, FB2, PDF, CBZ/CBR/CB7, M4B/M4A/MP3/OPUS를 지원하며, 스마트 선반, 규칙 기반 필터링, 태그, 전문 검색, 다중 사용자, KOReader / OPDS 동기화, BookDrop 자동 가져오기, Google Books / Open Library / Amazon의 편집 가능한 메타데이터를 제공합니다. 내장 브라우저 리더는 PDF / EPUB / CBZ를 주석, 강조 표시, 진행률 추적과 함께 표시합니다. 라이선스: AGPL-3.0."
+    ru: "Grimmory — самохостируемая библиотека электронных книг, комиксов и аудиокниг. Поддерживает EPUB, MOBI, AZW, AZW3, FB2, PDF, CBZ/CBR/CB7 и M4B/M4A/MP3/OPUS. Предоставляет умные полки с правилами, теги, полнотекстовый поиск, мультипользовательский режим, синхронизацию KOReader / OPDS, авто-импорт BookDrop и редактируемые метаданные из Google Books, Open Library и Amazon. Встроенный читалка рендерит PDF / EPUB / CBZ с аннотациями, выделением и отслеживанием прогресса. Лицензия: AGPL-3.0."
+    ms: "Grimmory ialah perpustakaan ebook / komik / audiobook kendiri-sendiri. Ia menyokong EPUB, MOBI, AZW, AZW3, FB2, PDF, CBZ/CBR/CB7, dan M4B/M4A/MP3/OPUS dengan rak pintar, penapisan berasaskan peraturan, tag, carian teks penuh, berbilang pengguna, penyegerakan KOReader / OPDS, import automatik BookDrop, dan metadata boleh sunting dari Google Books, Open Library, dan Amazon. Pembaca pelayar terbina dalam memaparkan PDF / EPUB / CBZ dengan anotasi, sorotan, dan penjejakan kemajuan. Lesen: AGPL-3.0."
+    pt-br: "Grimmory é uma biblioteca auto-hospedada de ebooks, quadrinhos e audiobooks. Suporta EPUB, MOBI, AZW, AZW3, FB2, PDF, CBZ/CBR/CB7 e M4B/M4A/MP3/OPUS, com prateleiras dinâmicas, filtragem por regras, tags, busca full-text, múltiplos usuários, sincronização KOReader / OPDS, importação automática via BookDrop e metadados editáveis do Google Books, Open Library e Amazon. O leitor no navegador renderiza PDF / EPUB / CBZ com anotações, destaques e acompanhamento de progresso. Licença: AGPL-3.0."
+  type: library
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://grimmory.org/
+  github: https://github.com/grimmory-tools/grimmory
+  document: https://grimmory.org/docs

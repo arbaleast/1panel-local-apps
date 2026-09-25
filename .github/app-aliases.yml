@@ -38,6 +38,9 @@ aliases:
   marginalia:
     dir: marginalia
     desc: 本地优先的私人知识库 + LLM 研究代理
+  grimmory:
+    dir: grimmory
+    desc: 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库）
   pgvector:
     desc: 向量数据库
   qdrant:

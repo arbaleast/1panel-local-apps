@@ -13,6 +13,7 @@
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
 | firecrawl | 网页爬虫 | 2.11.209 |
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
+| grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 | 1.11.2-ls41 |
 | hindsight | AI 记忆系统 | 0.10.0 |
 | ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.11 |

@@ -1,0 +1,85 @@
+# Grimmory Docker Compose
+# 镜像源：ghcr.io/grimmory-tools/grimmory:v3.5.0（多架构）
+# 上游仓库：https://github.com/grimmory-tools/grimmory
+# 上游部署模板：https://github.com/grimmory-tools/grimmory/blob/develop/deploy/compose/docker-compose.yml
+# 部署后访问 http://<服务器IP>:<PANEL_APP_PORT_HTTP>，首次启动需创建管理员账号
+# 重要：1Panel 顶层 volumes 块禁止使用 ${CONTAINER_NAME} 插值命名卷（详见 AGENTS.md），
+#       因此 mariadb 数据用相对路径 bind mount 而非命名卷。
+
+networks:
+  1panel-network:
+    external: true
+
+services:
+  # 主服务：Grimmory 主体
+  grimmory:
+    container_name: ${CONTAINER_NAME}
+    image: ghcr.io/grimmory-tools/grimmory:v3.5.0
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    environment:
+      - USER_ID=${APP_USER_ID}
+      - GROUP_ID=${APP_GROUP_ID}
+      - TZ=${TZ}
+      - DATABASE_URL=jdbc:mariadb://mariadb:3306/grimmory
+      - DATABASE_USERNAME=grimmory
+      - DATABASE_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=grimmory
+      - DISK_TYPE=${DISK_TYPE}
+      - API_DOCS_ENABLED=${API_DOCS_ENABLED}
+      - SWAGGER_ENABLED=${SWAGGER_ENABLED}
+      - FORCE_DISABLE_OIDC=${FORCE_DISABLE_OIDC}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:6060
+    networks:
+      - 1panel-network
+    volumes:
+      # 应用数据（H2/SQLite 缓存、上传、用户头像等）
+      - ./data/grimmory:/app/data
+      # 书架数据（EPUB / PDF / CBZ 等）
+      - ./data/books:/books
+      # BookDrop 监控目录：丢入此目录的文件会被 Grimmory 自动检测 + 入库
+      - ./data/bookdrop:/bookdrop
+    restart: always
+    labels:
+      createdBy: "Apps"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:6060/api/v1/healthcheck || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # MariaDB 数据库（linuxserver 官方镜像，多架构）
+  mariadb:
+    image: lscr.io/linuxserver/mariadb:11.4.8
+    container_name: ${CONTAINER_NAME}-mariadb
+    environment:
+      - PUID=${APP_USER_ID}
+      - PGID=${APP_GROUP_ID}
+      - TZ=${TZ}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=grimmory
+      - MYSQL_USER=grimmory
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./data/mariadb:/config
+    networks:
+      - 1panel-network
+    ports:
+      - ${HOST_IP}:${PANEL_DB_PORT}:3306
+    restart: always
+    labels:
+      createdBy: "Apps"
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

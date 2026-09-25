@@ -1,0 +1,227 @@
+additionalProperties:
+  key: grimmory
+  name: grimmory 3.5.0
+  tags:
+    - Book
+    - Library
+    - Self-hosted
+    - Reader
+  shortDescZh: 自托管电子书 / 漫画 / 有声书库（多用户 + 设备同步 + BookDrop 监控导入）
+  shortDescEn: Self-hosted library for ebooks, comics, and audiobooks (multi-user + KOReader sync + BookDrop import)
+  description:
+    zh: "Grimmory 是一个自托管的电子书 / 漫画 / 有声书库。它提供智能书架、多用户隔离、KOReader / OPDS 同步、BookDrop 自动入库，以及来自 Google Books / Open Library / Amazon 的可编辑元数据。许可证：AGPL-3.0。"
+    en: "Grimmory is a self-hosted digital library for your ebooks, comics, and audiobooks. License — AGPL-3.0."
+    zh-Hant: "Grimmory 是一個自架的電子書 / 漫畫 / 有聲書庫。授權條款：AGPL-3.0。"
+    ja: "Grimmory はセルフホスト型の電子書籍 / コミック / オーディオブックライブラリです。ライセンス：AGPL-3.0。"
+    ko: "Grimmory는 셀프 호스팅 전자책 / 만화 / 오디오북 라이브러리입니다. 라이선스: AGPL-3.0."
+    ru: "Grimmory — самохостируемая библиотека электронных книг, комиксов и аудиокниг. Лицензия: AGPL-3.0."
+    ms: "Grimmory ialah perpustakaan ebook / komik / audiobook kendiri-sendiri. Lesen: AGPL-3.0."
+    pt-br: "Grimmory é uma biblioteca auto-hospedada de ebooks, quadrinhos e audiobooks. Licença: AGPL-3.0."
+  type: library
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://grimmory.org/
+  github: https://github.com/grimmory-tools/grimmory
+  document: https://grimmory.org/docs
+  formFields:
+    - default: "6060"
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Host HTTP Port
+      labelZh: 宿主机 HTTP 端口
+      label:
+        en: Host HTTP Port
+        zh: 宿主机 HTTP 端口
+        zh-Hant: 主機 HTTP 埠
+        ja: ホスト側 HTTP ポート
+        ko: 호스트 HTTP 포트
+        ru: HTTP-порт на хосте
+        ms: Port HTTP hos
+        pt-br: Porta HTTP no host
+      required: true
+      rule: paramPort
+      type: number
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    - default: "1000"
+      edit: true
+      envKey: APP_USER_ID
+      labelEn: Container User UID
+      labelZh: 容器进程用户 UID
+      label:
+        en: Container process user UID. Match the owner UID of the mounted data/books/bookdrop directories on the host.
+        zh: 容器进程用户 UID。建议与宿主机挂载目录的属主 UID 一致，避免读写权限问题。
+        zh-Hant: 容器行程使用者 UID。建議與主機掛載目錄的屬主 UID 一致，避免讀寫權限問題。
+        ja: コンテナプロセスの UID。ホスト側マウントディレクトリの所有者 UID と一致させることを推奨。
+        ko: 컨테이너 프로세스 UID. 호스트 마운트 디렉터리 소유자 UID와 일치시킬 것을 권장.
+        ru: UID пользователя процесса контейнера. Рекомендуется совпадать с UID владельца каталога на хосте.
+        ms: UID pengguna proses bekas. Disyorkan agar sepadan dengan UID pemilik direktori hos.
+        pt-br: UID do processo no contêiner. Recomenda-se alinhar com o UID do dono do diretório no host.
+      required: true
+      type: number
+    - default: "1000"
+      edit: true
+      envKey: APP_GROUP_ID
+      labelEn: Container User GID
+      labelZh: 容器进程用户 GID
+      label:
+        en: Container process user GID. Match the owner GID of the mounted data/books/bookdrop directories on the host.
+        zh: 容器进程用户 GID。建议与宿主机挂载目录的属主 GID 一致。
+        zh-Hant: 容器行程使用者 GID。建議與主機掛載目錄的屬主 GID 一致。
+        ja: コンテナプロセスの GID。ホスト側マウントディレクトリの所有者 GID と一致させる。
+        ko: 컨테이너 프로세스 GID. 호스트 마운트 디렉터리 소유자 GID와 일치.
+        ru: GID пользователя процесса контейнера. Рекомендуется совпадать с GID владельца каталога на хосте.
+        ms: GID pengguna proses bekas. Disyorkan agar sepadan dengan UID pemilik direktori hos.
+        pt-br: GID do processo no contêiner. Recomenda-se alinhar com o GID do dono do diretório no host.
+      required: true
+      type: number
+    - default: "3306"
+      edit: true
+      envKey: PANEL_DB_PORT
+      labelEn: MariaDB Host Port
+      labelZh: MariaDB 宿主机端口
+      label:
+        en: MariaDB host port. The grimmory service connects to mariadb:3306 inside the network; this port is exposed only for optional external admin access.
+        zh: MariaDB 宿主机端口。grimmory 服务在容器网络中通过 mariadb:3306 连接，该端口仅用于宿主机可选的外部管理访问。
+        zh-Hant: MariaDB 主機埠。grimmory 服務在容器網路中透過 mariadb:3306 連線，該埠僅用於主機可選的外部管理存取。
+        ja: MariaDB のホスト側ポート。grimmory はコンテナネットワーク内で mariadb:3306 に接続し、このポートはホストからの任意の外部管理用です。
+        ko: MariaDB 호스트 포트. grimmory 서비스는 컨테이너 네트워크에서 mariadb:3306로 연결되며, 이 포트는 호스트의 선택적 외부 관리 접근용입니다.
+        ru: Хост-порт MariaDB. grimmory подключается к mariadb:3306 внутри сети; порт на хосте — только для опционального внешнего администрирования.
+        ms: Port hos MariaDB. Perkhidmatan grimmory menyambung ke mariadb:3306 dalam rangkaian; port hos hanya untuk akses pentadbiran luaran pilihan.
+        pt-br: Porta do host do MariaDB. O serviço grimmory conecta-se ao mariadb:3306 dentro da rede; esta porta é exposta apenas para administração externa opcional.
+      required: true
+      rule: paramPort
+      type: number
+    - default: ChangeMe_Grimmory_2025!
+      edit: true
+      envKey: DB_PASSWORD
+      labelEn: MariaDB User Password
+      labelZh: MariaDB 用户密码
+      label:
+        en: MariaDB password for the grimmory user. Must match the value used during first-time database creation. Change before first run.
+        zh: MariaDB grimmory 用户密码。需与首次创建数据库时使用的密码一致，部署前请修改。
+        zh-Hant: MariaDB grimmory 使用者密碼。需與首次建立資料庫時使用的密碼一致，部署前請修改。
+        ja: MariaDB grimmory ユーザーのパスワード。初回作成時と一致させる必要があります。デプロイ前に変更してください。
+        ko: MariaDB grimmory 사용자 비밀번호. 첫 생성 시 사용한 값과 일치해야 합니다. 배포 전 변경하세요.
+        ru: Пароль пользователя grimmory в MariaDB. Должен совпадать со значением при первом создании БД. Измените до первого запуска.
+        ms: Kata laluan pengguna grimmory MariaDB. Mesti sepadan dengan nilai semasa penciptaan pangkalan data pertama. Tukar sebelum penggunaan pertama.
+        pt-br: Senha do usuário grimmory no MariaDB. Deve corresponder ao valor usado na primeira criação do banco. Altere antes do primeiro uso.
+      required: true
+      rule: paramComplexity
+      type: password
+    - default: ChangeMe_MariaDBRoot_2025!
+      edit: true
+      envKey: MYSQL_ROOT_PASSWORD
+      labelEn: MariaDB Root Password
+      labelZh: MariaDB Root 密码
+      label:
+        en: MariaDB root password. Change before first run; it is only used internally by the database service.
+        zh: MariaDB root 密码。部署前请修改，仅 MariaDB 服务内部使用。
+        zh-Hant: MariaDB root 密碼。部署前請修改，僅 MariaDB 服務內部使用。
+        ja: MariaDB の root パスワード。デプロイ前に変更してください。MariaDB サービス内部でのみ使用されます。
+        ko: MariaDB root 비밀번호. 배포 전 변경하세요. MariaDB 서비스 내부에서만 사용됩니다.
+        ru: Пароль root MariaDB. Измените до первого запуска; используется только внутри службы MariaDB.
+        ms: Kata laluan root MariaDB. Tukar sebelum penggunaan pertama; hanya digunakan secara dalaman oleh perkhidmatan pangkalan data.
+        pt-br: Senha root do MariaDB. Altere antes do primeiro uso; usada apenas internamente pelo serviço de banco de dados.
+      required: true
+      rule: paramComplexity
+      type: password
+    - default: "true"
+      edit: true
+      envKey: API_DOCS_ENABLED
+      labelEn: Enable API Docs
+      labelZh: 启用 API 文档
+      label:
+        en: When true, exposes OpenAPI JSON at /api/openapi.json and public docs at /api/docs. Default off.
+        zh: 开启后在 /api/openapi.json 暴露 OpenAPI 文档，并提供公开的 /api/docs 页面，默认关闭。
+        zh-Hant: 開啟後在 /api/openapi.json 暴露 OpenAPI 文件，並提供公開的 /api/docs 頁面，預設關閉。
+        ja: true にすると、/api/openapi.json に OpenAPI JSON を、/api/docs に公開ドキュメントを公開します。デフォルトはオフ。
+        ko: true일 때 /api/openapi.json에 OpenAPI JSON을, /api/docs에 공개 문서를 노출합니다. 기본값은 비활성.
+        ru: При true предоставляет OpenAPI JSON на /api/openapi.json и публичные документы на /api/docs. По умолчанию выключено.
+        ms: Apabila true, mendedahkan OpenAPI JSON di /api/openapi.json dan dokumen awam di /api/docs. Lalai dimatikan.
+        pt-br: Quando true, expõe o OpenAPI JSON em /api/openapi.json e a documentação pública em /api/docs. Padrão desativado.
+      required: true
+      type: select
+      values:
+        - label: "false"
+          value: "false"
+        - label: "true"
+          value: "true"
+    - default: "false"
+      edit: true
+      envKey: FORCE_DISABLE_OIDC
+      labelEn: Force Disable OIDC
+      labelZh: 强制关闭 OIDC
+      label:
+        en: Force-disable OIDC login. Useful when the upstream proxy already provides SSO and double-auth breaks the flow.
+        zh: 强制关闭 OIDC 登录。当上游反向代理已提供 SSO 时启用，避免双重鉴权冲突。
+        zh-Hant: 強制關閉 OIDC 登入。當上游反向代理已提供 SSO 時啟用，避免雙重驗證衝突。
+        ja: OIDC ログインを強制的に無効化します。上位のリバースプロキシが SSO を提供している場合の二重認証回避に。
+        ko: OIDC 로그인을 강제로 비활성화합니다. 상위 리버스 프록시가 SSO를 제공할 때 이중 인증 충돌을 피하기 위해 사용.
+        ru: Принудительно отключает вход OIDC. Полезно, когда вышестоящий прокси уже даёт SSO, и двойная аутентификация ломает поток.
+        ms: Paksa lumpuhkan log masuk OIDC. Berguna apabila proksi hiliran sudah menyediakan SSO dan pengesahan berganda mengganggu aliran.
+        pt-br: Desativa forçadamente o login OIDC. Útil quando o proxy reverso já provê SSO e a autenticação dupla quebra o fluxo.
+      required: true
+      type: select
+      values:
+        - label: "false"
+          value: "false"
+        - label: "true"
+          value: "true"
+    - default: "true"
+      edit: true
+      envKey: SWAGGER_ENABLED
+      labelEn: Enable Swagger UI
+      labelZh: 启用 Swagger UI
+      label:
+        en: When true, the Swagger UI is bundled with the docs at /api/docs. Default on.
+        zh: 开启后在 /api/docs 页面附带 Swagger UI 调试界面，默认开启。
+        zh-Hant: 開啟後在 /api/docs 頁面附帶 Swagger UI 偵錯介面，預設開啟。
+        ja: true にすると、Swagger UI を /api/docs ドキュメントと一緒にバンドルします。デフォルトはオン。
+        ko: true일 때 Swagger UI를 /api/docs 문서와 함께 번들합니다. 기본값은 활성.
+        ru: При true Swagger UI добавляется к документации на /api/docs. По умолчанию включено.
+        ms: Apabila true, Swagger UI dibundel bersama dokumen di /api/docs. Lalai didayakan.
+        pt-br: Quando true, o Swagger UI é empacotado com a documentação em /api/docs. Padrão ativado.
+      required: true
+      type: select
+      values:
+        - label: "false"
+          value: "false"
+        - label: "true"
+          value: "true"
+    - default: LOCAL
+      edit: true
+      envKey: DISK_TYPE
+      labelEn: Storage Type
+      labelZh: 存储类型
+      label:
+        en: "Storage backend: LOCAL (default, direct file ops) or NETWORK (NFS/SMB — direct file ops disabled to avoid destructive changes on shared mounts)."
+        zh: "存储后端：LOCAL（默认，允许直接文件操作）或 NETWORK（NFS/SMB，禁用直接文件操作以避免对共享挂载造成破坏性更改）。"
+        zh-Hant: "儲存後端：LOCAL（預設，允許直接檔案操作）或 NETWORK（NFS/SMB，停用直接檔案操作以避免對共用掛載造成破壞性變更）。"
+        ja: "ストレージバックエンド：LOCAL（デフォルト、直接ファイル操作）または NETWORK（NFS/SMB、共有マウントでの破壊的変更を避けるため直接ファイル操作は無効）。"
+        ko: "스토리지 백엔드: LOCAL(기본값, 직접 파일 작업) 또는 NETWORK(NFS/SMB, 공유 마운트에서 파괴적 변경을 피하기 위해 직접 파일 작업 비활성화)."
+        ru: "Бэкенд хранилища: LOCAL (по умолчанию, прямые файловые операции) или NETWORK (NFS/SMB — прямые файловые операции отключены во избежание разрушительных изменений на общих монтированиях)."
+        ms: "Bahagian belakang storan: LOCAL (lalai, operasi fail terus) atau NETWORK (NFS/SMB — operasi fail terus dilumpuhkan untuk mengelakkan perubahan memusnahkan pada mount kongsi)."
+        pt-br: "Backend de armazenamento: LOCAL (padrão, operações diretas de arquivo) ou NETWORK (NFS/SMB — operações diretas de arquivo desativadas para evitar alterações destrutivas em montagens compartilhadas)."
+      required: true
+      type: select
+      values:
+        - label: LOCAL
+          value: LOCAL
+        - label: NETWORK
+          value: NETWORK
