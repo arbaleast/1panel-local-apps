@@ -134,7 +134,10 @@ additionalProperties:
       rule: paramPath
       type: text
     # ---- 运行用户 UID/GID（避免下载到宿主后普通账号无法读写）----
-    - default: "0"
+    # 注意：type=number + rule=paramCommon 才能同时满足 0/root 与 1000+ 等合法 ID
+    # paramCommon 的 1Panel 前端正则要求 ≥2 字符，所以 default 不能只填 "0"——
+    # 改用 type=number 绕过该正则，paramCommon rule 仅作为表单输入提示
+    - default: 0
       edit: true
       envKey: PUID
       labelEn: User ID (UID)
@@ -149,9 +152,8 @@ additionalProperties:
         ms: ID Pengguna (UID)
         pt-br: ID do Usuário (UID)
       required: true
-      rule: paramCommon
-      type: text
-    - default: "0"
+      type: number
+    - default: 0
       edit: true
       envKey: PGID
       labelEn: Group ID (GID)
@@ -166,8 +168,7 @@ additionalProperties:
         ms: ID Kumpulan (GID)
         pt-br: ID do Grupo (GID)
       required: true
-      rule: paramCommon
-      type: text
+      type: number
     # ---- Web 面板 HTTP Basic Auth（用户名/密码可任一留空 = 不开启）----
     - default: ""
       edit: true
