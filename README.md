@@ -6,7 +6,7 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.36 |
+| anirss | 动漫 RSS | v3.2.38 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
 | cinny | Matrix 聊天客户端 | v4.12.6 |
 | dendrite | Matrix 协议新一代 homeserver | v0.15.2 |
@@ -15,14 +15,14 @@
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 | 1.11.2-ls41 |
-| hindsight | AI 记忆系统 | 0.10.0 |
-| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.11 |
+| hindsight | AI 记忆系统 | 0.10.1 |
+| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.13 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 2026091410-arm64 |
 | jellystat | 免费的 Jellyfin 开源统计应用（Tautulli 替代品）。 | 1.1.12 |
 | linkwarden | Linkwarden 自托管书签管理器 | v2.16.3 |
-| llamacpp | 高性能本地 LLM 推理引擎 | server-vulkan-v0.4.6 |
+| llamacpp | 高性能本地 LLM 推理引擎 | server-vulkan-v0.4.7 |
 | llamaindex | LLM 数据框架 | v0.9.2 |
 | llmwiki | LLM Wiki 知识库（占位应用，详见 README 风险说明） | latest |
 | marginalia | 本地优先的私人知识库 + LLM 研究代理 | 0.3.7 |
@@ -30,17 +30,18 @@
 | mihomo | 代理工具 | v1.19.18 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
 | misaka | 御坂网络弹幕服务 | v2.8.9 |
-| moviepilot | 影视自动化 | 3.0.6 |
+| moviepilot | 影视自动化 | 3.0.8 |
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.7.7 |
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
 | pgvector | 向量数据库 | 0.8.6-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
 | qdrant | 向量搜索引擎 | v1.19.1-unprivileged |
-| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.17.0 |
-| searxng | 隐私搜索引擎 | 2026.9.20-fdd8525b1 |
+| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | v2.18.0 |
+| searxng | 隐私搜索引擎 | 2026.9.25-d8ae3abd5 |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | syncthing | 文件同步 | 2.1.5 |
 | traefik | 反向代理 | v3.6.6 |
+| xunlei | cnk3x 维护的迅雷远程下载服务（群晖提取版） | beta |
 | zashboard | Mihomo 面板 | latest |
 
 ## 快速开始
