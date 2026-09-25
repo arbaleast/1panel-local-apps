@@ -1,0 +1,228 @@
+additionalProperties:
+  key: xunlei
+  name: xunlei beta
+  tags:
+    - Downloader
+    - NAS
+    - BT
+  shortDescZh: cnk3x 维护的迅雷远程下载服务（群晖提取版）
+  shortDescEn: cnk3x Xunlei remote download service (extracted from Synology package)
+  description:
+    zh: 提取自群晖平台的迅雷远程下载套件，由 cnk3x 适配到通用 Linux / Docker 环境。提供 BT、磁力、HTTP/HTTPS/FTP/电驴等下载任务的网页面板和远程控制，通过手机迅雷 App 扫码登录后即可远程添加下载任务。
+    en: Xunlei remote download service extracted from the Synology package, repackaged by cnk3x for generic Linux / Docker. Web-based download manager for BT, magnet, HTTP/HTTPS/FTP/ed2k tasks; remote control via the Xunlei mobile app after QR-code login.
+    zh-Hant: 提取自群暉平臺的迅雷遠程下載套件，由 cnk3x 改寫到通用 Linux / Docker 環境。提供 BT、磁力、HTTP/HTTPS/FTP/ed2k 等下載任務的網頁面板與遠端控制，透過手機迅雷 App 掃碼登入後即可遠端新增下載任務。
+    ja: 群晖（Synology）NAS 向けパッケージから抽出された cnk3x 製の Xunlei リモートダウンロードサービス。BT / magnet / HTTP / HTTPS / FTP / ed2k タスクに対応する Web パネルと、モバイル Xunlei アプリの QR コードログインを通じたリモート制御を提供します。
+    ko: 群晖(Synology) 플랫폼에서 추출된 Xunlei 원격 다운로드 서비스로, cnk3x가 일반 Linux / Docker 환경에 맞게 재패키징했습니다. BT, magnet, HTTP/HTTPS/FTP/ed2k 다운로드를 위한 웹 패널과 모바일 Xunlei 앱의 QR 코드 로그인을 통한 원격 제어를 제공합니다.
+    ru: Сервис удалённой загрузки Xunlei, извлечённый из пакета Synology и перепакованный cnk3x для обычного Linux / Docker. Веб-панель для задач BT, magnet, HTTP/HTTPS/FTP/ed2k и удалённое управление через мобильное приложение Xunlei после входа по QR-коду.
+    ms: Perkhidmatan muat turun jauh Xunlei yang diekstrak daripada pakej Synology, dibungkus semula oleh cnk3x untuk Linux / Docker generik. Panel web untuk tugasan BT, magnet, HTTP/HTTPS/FTP/ed2k, dan kawalan jauh melalui aplikasi mudah alih Xunlei selepas log masuk kod QR.
+    pt-br: Serviço de download remoto do Xunlei extraído do pacote Synology e reempacotado por cnk3x para Linux / Docker genérico. Painel web para tarefas BT, magnet, HTTP/HTTPS/FTP/ed2k, e controle remoto pelo app móvel Xunlei após login por QR code.
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/cnk3x/xunlei
+  github: https://github.com/cnk3x/xunlei
+  formFields:
+    # ---- 镜像源（cnk3x 官方，DockerHub + GHCR 双源，默认 GHCR 拉取稳定）----
+    - default: ghcr.io/cnk3x/xunlei
+      edit: true
+      envKey: IMAGE
+      labelEn: Image
+      labelZh: 镜像
+      label:
+        en: Image
+        zh: 镜像
+        zh-Hant: 映像
+        ja: イメージ
+        ko: 이미지
+        ru: Образ
+        ms: Imej
+        pt-br: Imagem
+      required: true
+      rule: paramImageTag
+      type: text
+    # ---- 镜像版本：上游实际仅维护 beta 滚动 tag（4.0.0-beta、3.22.0-beta 等历史版本号均随 beta 更新）----
+    - default: beta
+      edit: true
+      envKey: APP_VERSION
+      labelEn: App Version
+      labelZh: 应用版本
+      label:
+        en: App Version
+        zh: 应用版本
+        zh-Hant: 應用版本
+        ja: アプリバージョン
+        ko: 앱 버전
+        ru: Версия приложения
+        ms: Versi Aplikasi
+        pt-br: Versão do aplicativo
+      required: true
+      rule: paramImageTag
+      type: text
+    # ---- HTTP 端口（容器内 Xunlei 面板固定监听 2345）----
+    - default: 2345
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 容器 hostname：迅雷 App 端展示的「设备名」----
+    - default: 1panel-xunlei
+      edit: true
+      envKey: HOSTNAME
+      labelEn: Device Name
+      labelZh: 设备名
+      label:
+        en: Device Name
+        zh: 设备名
+        zh-Hant: 裝置名稱
+        ja: デバイス名
+        ko: 장치명
+        ru: Имя устройства
+        ms: Nama peranti
+        pt-br: Nome do dispositivo
+      required: true
+      rule: paramCommon
+      type: text
+    # ---- 时区（迅雷面板日志、任务时间显示）----
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    # ---- 数据持久化根目录（./data/data 与 ./data/downloads 实际位置）----
+    - default: ./data
+      edit: true
+      envKey: DATA_PATH
+      labelEn: Data path
+      labelZh: 数据路径
+      label:
+        en: Data path
+        zh: 数据路径
+        zh-Hant: 數據路徑
+        ja: データパス
+        ko: 데이터 경로
+        ru: Путь к данным
+        ms: Laluan data
+        pt-br: Caminho dos dados
+      required: true
+      rule: paramPath
+      type: text
+    # ---- 运行用户 UID/GID（避免下载到宿主后普通账号无法读写）----
+    - default: "0"
+      edit: true
+      envKey: PUID
+      labelEn: User ID (UID)
+      labelZh: 运行用户 ID
+      label:
+        en: User ID (UID)
+        zh: 运行用户 ID
+        zh-Hant: 執行使用者 ID
+        ja: ユーザー ID (UID)
+        ko: 사용자 ID (UID)
+        ru: ID пользователя (UID)
+        ms: ID Pengguna (UID)
+        pt-br: ID do Usuário (UID)
+      required: true
+      rule: paramCommon
+      type: text
+    - default: "0"
+      edit: true
+      envKey: PGID
+      labelEn: Group ID (GID)
+      labelZh: 运行组 ID
+      label:
+        en: Group ID (GID)
+        zh: 运行组 ID
+        zh-Hant: 執行群組 ID
+        ja: グループ ID (GID)
+        ko: 그룹 ID (GID)
+        ru: ID группы (GID)
+        ms: ID Kumpulan (GID)
+        pt-br: ID do Grupo (GID)
+      required: true
+      rule: paramCommon
+      type: text
+    # ---- Web 面板 HTTP Basic Auth（用户名/密码可任一留空 = 不开启）----
+    - default: ""
+      edit: true
+      envKey: XL_DASHBOARD_USERNAME
+      labelEn: Web Username
+      labelZh: 面板用户名
+      label:
+        en: Web Username
+        zh: 面板用户名
+        zh-Hant: 面板使用者名稱
+        ja: パネルユーザー名
+        ko: 패널 사용자명
+        ru: Имя пользователя панели
+        ms: Nama pengguna panel
+        pt-br: Usuário do painel
+      required: false
+      rule: paramCommon
+      type: text
+    - default: ""
+      edit: true
+      envKey: XL_DASHBOARD_PASSWORD
+      labelEn: Web Password
+      labelZh: 面板密码
+      label:
+        en: Web Password
+        zh: 面板密码
+        zh-Hant: 面板密碼
+        ja: パネルパスワード
+        ko: 패널 비밀번호
+        ru: Пароль панели
+        ms: Kata laluan panel
+        pt-br: Senha do painel
+      required: false
+      rule: paramComplexity
+      type: password
+    # ---- 调试日志（默认关）----
+    - default: "false"
+      edit: true
+      envKey: XL_DEBUG
+      labelEn: Debug Logging
+      labelZh: 调试日志
+      label:
+        en: Debug Logging
+        zh: 调试日志
+        zh-Hant: 除錯日誌
+        ja: デバッグログ
+        ko: 디버그 로그
+        ru: Отладочные логи
+        ms: Log penyahpepijatan
+        pt-br: Log de depuração
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: 启用
+          value: "true"
+        - label: 禁用
+          value: "false"

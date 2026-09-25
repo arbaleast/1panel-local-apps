@@ -1,0 +1,45 @@
+networks:
+  1panel-network:
+    external: true
+
+# Xunlei 远程下载（cnk3x/xunlei）
+# 镜像源：cnk3x/xunlei:beta / ghcr.io/cnk3x/xunlei:beta
+# 双架构：linux/amd64 + linux/arm64
+# 启动入口：/xlp （启动 SPK launcher，从 https://down.sandai.net/nas/nasxunlei-DSM7-x86_64.spk 拉取并解压运行）
+# 默认 web 端口：2345（通过 XL_DASHBOARD_PORT 改）
+# 数据卷：/xunlei/data（账号、登录态、下载进度）+ /xunlei/downloads（默认下载保存目录）
+# 需 cap_add: SYS_ADMIN （SPK 启动器在容器内做 bind mount 自挂载）
+# 文档：https://github.com/cnk3x/xunlei
+
+services:
+  xunlei:
+    container_name: ${CONTAINER_NAME}
+    image: ${IMAGE}:${APP_VERSION}
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    hostname: ${HOSTNAME}
+    cap_add:
+      - SYS_ADMIN
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:2345
+    environment:
+      - TZ=${TZ}
+      - XL_DASHBOARD_PORT=2345
+      - XL_DASHBOARD_IP=
+      - XL_DASHBOARD_USERNAME=${XL_DASHBOARD_USERNAME}
+      - XL_DASHBOARD_PASSWORD=${XL_DASHBOARD_PASSWORD}
+      - XL_UID=${PUID}
+      - XL_GID=${PGID}
+      - XL_DEBUG=${XL_DEBUG}
+    volumes:
+      - ./data/data:/xunlei/data
+      - ./data/downloads:/xunlei/downloads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:2345/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

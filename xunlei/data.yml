@@ -1,0 +1,27 @@
+additionalProperties:
+  key: xunlei
+  name: Xunlei 远程下载
+  tags:
+    - Downloader
+    - NAS
+    - BT
+  shortDescZh: cnk3x 维护的迅雷远程下载服务（群晖提取版）
+  shortDescEn: cnk3x Xunlei remote download service (extracted from Synology package)
+  description:
+    zh: 提取自群晖平台的迅雷远程下载套件，由 cnk3x 适配到通用 Linux / Docker 环境。提供 BT、磁力、HTTP/HTTPS/FTP/电驴等下载任务的网页面板和远程控制，通过手机迅雷 App 扫码登录后即可远程添加下载任务。
+    en: Xunlei remote download service extracted from the Synology package, repackaged by cnk3x for generic Linux / Docker. Web-based download manager for BT, magnet, HTTP/HTTPS/FTP/ed2k tasks; remote control via the Xunlei mobile app after QR-code login.
+    zh-Hant: 提取自群暉平臺的迅雷遠程下載套件，由 cnk3x 改寫到通用 Linux / Docker 環境。提供 BT、磁力、HTTP/HTTPS/FTP/ed2k 等下載任務的網頁面板與遠端控制，透過手機迅雷 App 掃碼登入後即可遠端新增下載任務。
+    ja: 群晖（Synology）NAS 向けパッケージから抽出された cnk3x 製の Xunlei リモートダウンロードサービス。BT / magnet / HTTP / HTTPS / FTP / ed2k タスクに対応する Web パネルと、モバイル Xunlei アプリの QR コードログインを通じたリモート制御を提供します。
+    ko: 群晖(Synology) 플랫폼에서 추출된 Xunlei 원격 다운로드 서비스로, cnk3x가 일반 Linux / Docker 환경에 맞게 재패키징했습니다. BT, magnet, HTTP/HTTPS/FTP/ed2k 다운로드를 위한 웹 패널과 모바일 Xunlei 앱의 QR 코드 로그인을 통한 원격 제어를 제공합니다.
+    ru: Сервис удалённой загрузки Xunlei, извлечённый из пакета Synology и перепакованный cnk3x для обычного Linux / Docker. Веб-панель для задач BT, magnet, HTTP/HTTPS/FTP/ed2k и удалённое управление через мобильное приложение Xunlei после входа по QR-коду.
+    ms: Perkhidmatan muat turun jauh Xunlei yang diekstrak daripada pakej Synology, dibungkus semula oleh cnk3x untuk Linux / Docker generik. Panel web untuk tugasan BT, magnet, HTTP/HTTPS/FTP/ed2k, dan kawalan jauh melalui aplikasi mudah alih Xunlei selepas log masuk kod QR.
+    pt-br: Serviço de download remoto do Xunlei extraído do pacote Synology e reempacotado por cnk3x para Linux / Docker genérico. Painel web para tarefas BT, magnet, HTTP/HTTPS/FTP/ed2k, e controle remoto pelo app móvel Xunlei após login por QR code.
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/cnk3x/xunlei
+  github: https://github.com/cnk3x/xunlei
