@@ -93,8 +93,8 @@ additionalProperties:
     - default: "3306"
       edit: true
       envKey: PANEL_DB_PORT
-      labelEn: MariaDB Host Port
-      labelZh: MariaDB 宿主机端口
+      labelEn: DB Port
+      labelZh: 数据库端口
       label:
         en: MariaDB host port. The grimmory service connects to mariadb:3306 inside the network; this port is exposed only for optional external admin access.
         zh: MariaDB 宿主机端口。grimmory 服务在容器网络中通过 mariadb:3306 连接，该端口仅用于宿主机可选的外部管理访问。
@@ -110,66 +110,66 @@ additionalProperties:
     - default: mariadb
       edit: true
       envKey: DATABASE_HOST
-      labelEn: Database Hostname
-      labelZh: 数据库主机名
+      labelEn: DB Host
+      labelZh: DB 主机
       label:
-        en: "Database hostname inside the container network. Default 'mariadb' (the service name in this compose)."
-        zh: 容器网络内的数据库主机名。默认为 'mariadb'（本 compose 中的服务名）。
-        zh-Hant: 容器網路內的資料庫主機名。預設為 'mariadb'（本 compose 中的服務名）。
-        ja: コンテナネットワーク内のデータベースホスト名。デフォルトは 'mariadb'（この compose 内のサービス名）。
-        ko: 컨테이너 네트워크 내 데이터베이스 호스트명. 기본값은 'mariadb'(이 compose 내 서비스명)입니다.
-        ru: Имя хоста базы данных внутри контейнерной сети. По умолчанию 'mariadb' (имя сервиса в этом compose).
-        ms: Nama hos pangkalan data dalam rangkaian bekas. Lalai 'mariadb' (nama servis dalam compose ini).
-        pt-br: Nome do host do banco de dados dentro da rede do contêiner. Padrão 'mariadb' (nome do serviço neste compose).
+        en: Database host inside container network. Default 'mariadb'.
+        zh: 容器网络内的数据库主机名。默认为 'mariadb'。
+        zh-Hant: 容器網路內的資料庫主機名。預設為 'mariadb'。
+        ja: コンテナネットワーク内のデータベースホスト。デフォルトは 'mariadb'。
+        ko: 컨테이너 네트워크 내 DB 호스트. 기본값 'mariadb'.
+        ru: Хост БД в контейнерной сети. По умолчанию 'mariadb'.
+        ms: Hos pangkalan data dalam rangkaian bekas. Lalai 'mariadb'.
+        pt-br: Host do banco na rede do contêiner. Padrão 'mariadb'.
       required: true
       type: text
     - default: grimmory
       edit: true
       envKey: DATABASE_NAME
-      labelEn: Database Name
+      labelEn: DB Name
       labelZh: 数据库名
       label:
-        en: "Database name. Default 'grimmory'. Must match MYSQL_DATABASE in mariadb service."
-        zh: 数据库名。默认为 'grimmory'。需与 mariadb 服务的 MYSQL_DATABASE 一致。
-        zh-Hant: 資料庫名。預設為 'grimmory'。需與 mariadb 服務的 MYSQL_DATABASE 一致。
-        ja: データベース名。デフォルトは 'grimmory'。mariadb サービスの MYSQL_DATABASE と一致させる必要があります。
-        ko: 데이터베이스 이름. 기본값은 'grimmory'. mariadb 서비스의 MYSQL_DATABASE과 일치해야 합니다.
-        ru: Имя базы данных. По умолчанию 'grimmory'. Должно совпадать с MYSQL_DATABASE в сервисе mariadb.
-        ms: Nama pangkalan data. Lalai 'grimmory'. Mesti sepadan dengan MYSQL_DATABASE dalam servis mariadb.
-        pt-br: Nome do banco de dados. Padrão 'grimmory'. Deve corresponder ao MYSQL_DATABASE no serviço mariadb.
+        en: Database name. Default 'grimmory'.
+        zh: 数据库名。默认为 'grimmory'。
+        zh-Hant: 資料庫名。預設為 'grimmory'。
+        ja: データベース名。デフォルトは 'grimmory'。
+        ko: 데이터베이스 이름. 기본값 'grimmory'.
+        ru: Имя БД. По умолчанию 'grimmory'.
+        ms: Nama pangkalan data. Lalai 'grimmory'.
+        pt-br: Nome do banco. Padrão 'grimmory'.
       required: true
       type: text
     - default: ChangeMe_Grimmory_2025!
       edit: true
       envKey: DB_PASSWORD
-      labelEn: MariaDB User Password
-      labelZh: MariaDB 用户密码
+      labelEn: DB Password
+      labelZh: 数据库密码
       label:
-        en: MariaDB password for the grimmory user. Must match the value used during first-time database creation. Change before first run.
-        zh: MariaDB grimmory 用户密码。需与首次创建数据库时使用的密码一致，部署前请修改。
-        zh-Hant: MariaDB grimmory 使用者密碼。需與首次建立資料庫時使用的密碼一致，部署前請修改。
-        ja: MariaDB grimmory ユーザーのパスワード。初回作成時と一致させる必要があります。デプロイ前に変更してください。
-        ko: MariaDB grimmory 사용자 비밀번호. 첫 생성 시 사용한 값과 일치해야 합니다. 배포 전 변경하세요.
-        ru: Пароль пользователя grimmory в MariaDB. Должен совпадать со значением при первом создании БД. Измените до первого запуска.
-        ms: Kata laluan pengguna grimmory MariaDB. Mesti sepadan dengan nilai semasa penciptaan pangkalan data pertama. Tukar sebelum penggunaan pertama.
-        pt-br: Senha do usuário grimmory no MariaDB. Deve corresponder ao valor usado na primeira criação do banco. Altere antes do primeiro uso.
+        en: Password for DATABASE_USERNAME. Change before first run.
+        zh: 数据库用户密码。部署前请修改。
+        zh-Hant: 資料庫使用者密碼。部署前請修改。
+        ja: データベースユーザーパスワード。デプロイ前に変更。
+        ko: DB 사용자 비밀번호. 배포 전 변경.
+        ru: Пароль пользователя БД. Измените до первого запуска.
+        ms: Kata laluan pengguna pangkalan data. Tukar sebelum penggunaan pertama.
+        pt-br: Senha do usuário do banco. Altere antes do primeiro uso.
       required: true
       rule: paramComplexity
       type: password
     - default: ChangeMe_MariaDBRoot_2025!
       edit: true
       envKey: MYSQL_ROOT_PASSWORD
-      labelEn: MariaDB Root Password
-      labelZh: MariaDB Root 密码
+      labelEn: Root Password
+      labelZh: Root 密码
       label:
-        en: MariaDB root password. Change before first run; it is only used internally by the database service.
-        zh: MariaDB root 密码。部署前请修改，仅 MariaDB 服务内部使用。
-        zh-Hant: MariaDB root 密碼。部署前請修改，僅 MariaDB 服務內部使用。
-        ja: MariaDB の root パスワード。デプロイ前に変更してください。MariaDB サービス内部でのみ使用されます。
-        ko: MariaDB root 비밀번호. 배포 전 변경하세요. MariaDB 서비스 내부에서만 사용됩니다.
-        ru: Пароль root MariaDB. Измените до первого запуска; используется только внутри службы MariaDB.
-        ms: Kata laluan root MariaDB. Tukar sebelum penggunaan pertama; hanya digunakan secara dalaman oleh perkhidmatan pangkalan data.
-        pt-br: Senha root do MariaDB. Altere antes do primeiro uso; usada apenas internamente pelo serviço de banco de dados.
+        en: MariaDB root password. Change before first run.
+        zh: MariaDB root 密码。部署前请修改。
+        zh-Hant: MariaDB root 密碼。部署前請修改。
+        ja: MariaDB root パスワード。デプロイ前に変更。
+        ko: MariaDB root 비밀번호. 배포 전 변경.
+        ru: Пароль root MariaDB. Измените до первого запуска.
+        ms: Kata laluan root MariaDB. Tukar sebelum penggunaan pertama.
+        pt-br: Senha root do MariaDB. Altere antes do primeiro uso.
       required: true
       rule: paramComplexity
       type: password
