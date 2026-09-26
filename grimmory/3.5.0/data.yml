@@ -107,6 +107,38 @@ additionalProperties:
       required: true
       rule: paramPort
       type: number
+    - default: mariadb
+      edit: true
+      envKey: DATABASE_HOST
+      labelEn: Database Hostname
+      labelZh: 数据库主机名
+      label:
+        en: "Database hostname inside the container network. Default 'mariadb' (the service name in this compose)."
+        zh: 容器网络内的数据库主机名。默认为 'mariadb'（本 compose 中的服务名）。
+        zh-Hant: 容器網路內的資料庫主機名。預設為 'mariadb'（本 compose 中的服務名）。
+        ja: コンテナネットワーク内のデータベースホスト名。デフォルトは 'mariadb'（この compose 内のサービス名）。
+        ko: 컨테이너 네트워크 내 데이터베이스 호스트명. 기본값은 'mariadb'(이 compose 내 서비스명)입니다.
+        ru: Имя хоста базы данных внутри контейнерной сети. По умолчанию 'mariadb' (имя сервиса в этом compose).
+        ms: Nama hos pangkalan data dalam rangkaian bekas. Lalai 'mariadb' (nama servis dalam compose ini).
+        pt-br: Nome do host do banco de dados dentro da rede do contêiner. Padrão 'mariadb' (nome do serviço neste compose).
+      required: true
+      type: text
+    - default: grimmory
+      edit: true
+      envKey: DATABASE_NAME
+      labelEn: Database Name
+      labelZh: 数据库名
+      label:
+        en: "Database name. Default 'grimmory'. Must match MYSQL_DATABASE in mariadb service."
+        zh: 数据库名。默认为 'grimmory'。需与 mariadb 服务的 MYSQL_DATABASE 一致。
+        zh-Hant: 資料庫名。預設為 'grimmory'。需與 mariadb 服務的 MYSQL_DATABASE 一致。
+        ja: データベース名。デフォルトは 'grimmory'。mariadb サービスの MYSQL_DATABASE と一致させる必要があります。
+        ko: 데이터베이스 이름. 기본값은 'grimmory'. mariadb 서비스의 MYSQL_DATABASE과 일치해야 합니다.
+        ru: Имя базы данных. По умолчанию 'grimmory'. Должно совпадать с MYSQL_DATABASE в сервисе mariadb.
+        ms: Nama pangkalan data. Lalai 'grimmory'. Mesti sepadan dengan MYSQL_DATABASE dalam servis mariadb.
+        pt-br: Nome do banco de dados. Padrão 'grimmory'. Deve corresponder ao MYSQL_DATABASE no serviço mariadb.
+      required: true
+      type: text
     - default: ChangeMe_Grimmory_2025!
       edit: true
       envKey: DB_PASSWORD

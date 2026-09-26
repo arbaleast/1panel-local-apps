@@ -24,7 +24,9 @@ services:
       - USER_ID=${APP_USER_ID}
       - GROUP_ID=${APP_GROUP_ID}
       - TZ=${TZ}
-      - DATABASE_URL=jdbc:mariadb://mariadb:3306/grimmory
+      - DATABASE_HOST=mariadb
+      - DATABASE_PORT=3306
+      - DATABASE_NAME=grimmory
       - DATABASE_USERNAME=grimmory
       - DATABASE_PASSWORD=${DB_PASSWORD}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
