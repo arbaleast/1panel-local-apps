@@ -24,6 +24,7 @@ services:
       - USER_ID=${APP_USER_ID}
       - GROUP_ID=${APP_GROUP_ID}
       - TZ=${TZ}
+      - DATABASE_URL=${DATABASE_URL}
       - DATABASE_HOST=mariadb
       - DATABASE_PORT=3306
       - DATABASE_NAME=grimmory

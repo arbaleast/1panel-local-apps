@@ -139,6 +139,22 @@ additionalProperties:
         pt-br: Nome do banco. Padrão 'grimmory'.
       required: true
       type: text
+    - default: ""
+      edit: true
+      envKey: DATABASE_URL
+      labelEn: JDBC URL
+      labelZh: JDBC 连接串
+      label:
+        en: "JDBC connection URL. Leave empty to use internal DB; e.g. mysql://user:pass@host:3306/db"
+        zh: "JDBC 连接串。留空使用内置数据库；填写则使用外部数据库，格式：mysql://user:pass@host:3306/db"
+        zh-Hant: "JDBC 連線字串。留空使用內置資料庫；填寫則使用外部資料庫，格式：mysql://user:pass@host:3306/db"
+        ja: "JDBC 接続 URL。空欄は組み込み DB を使用；例：mysql://user:pass@host:3306/db"
+        ko: "JDBC URL. 비어있으면 내장 DB 사용; 예: mysql://user:pass@host:3306/db"
+        ru: "JDBC URL. Оставьте пустым для встроенной БД; напр. mysql://user:pass@host:3306/db"
+        ms: "URL JDBC. Kosongkan untuk menggunakan DB dalaman; contoh: mysql://user:pass@host:3306/db"
+        pt-br: "URL JDBC. Deixe vazio para usar DB interno; ex: mysql://user:pass@host:3306/db"
+      required: false
+      type: text
     - default: ChangeMe_Grimmory_2025!
       edit: true
       envKey: DB_PASSWORD
