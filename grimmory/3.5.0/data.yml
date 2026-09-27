@@ -90,23 +90,6 @@ additionalProperties:
         pt-br: GID do processo no contêiner. Recomenda-se alinhar com o GID do dono do diretório no host.
       required: true
       type: number
-    - default: "3306"
-      edit: true
-      envKey: PANEL_DB_PORT
-      labelEn: DB Port
-      labelZh: 数据库端口
-      label:
-        en: MariaDB host port. The grimmory service connects to mariadb:3306 inside the network; this port is exposed only for optional external admin access.
-        zh: MariaDB 宿主机端口。grimmory 服务在容器网络中通过 mariadb:3306 连接，该端口仅用于宿主机可选的外部管理访问。
-        zh-Hant: MariaDB 主機埠。grimmory 服務在容器網路中透過 mariadb:3306 連線，該埠僅用於主機可選的外部管理存取。
-        ja: MariaDB のホスト側ポート。grimmory はコンテナネットワーク内で mariadb:3306 に接続し、このポートはホストからの任意の外部管理用です。
-        ko: MariaDB 호스트 포트. grimmory 서비스는 컨테이너 네트워크에서 mariadb:3306로 연결되며, 이 포트는 호스트의 선택적 외부 관리 접근용입니다.
-        ru: Хост-порт MariaDB. grimmory подключается к mariadb:3306 внутри сети; порт на хосте — только для опционального внешнего администрирования.
-        ms: Port hos MariaDB. Perkhidmatan grimmory menyambung ke mariadb:3306 dalam rangkaian; port hos hanya untuk akses pentadbiran luaran pilihan.
-        pt-br: Porta do host do MariaDB. O serviço grimmory conecta-se ao mariadb:3306 dentro da rede; esta porta é exposta apenas para administração externa opcional.
-      required: true
-      rule: paramPort
-      type: number
     - default: ""
       edit: true
       envKey: DATABASE_URL
@@ -123,40 +106,6 @@ additionalProperties:
         pt-br: "URL JDBC. Vazio para usar DB interno"
       required: false
       type: text
-    - default: ChangeMe_Grimmory_2025!
-      edit: true
-      envKey: DB_PASSWORD
-      labelEn: DB Password
-      labelZh: 数据库密码
-      label:
-        en: Password for DATABASE_USERNAME. Change before first run.
-        zh: 数据库用户密码。部署前请修改。
-        zh-Hant: 資料庫使用者密碼。部署前請修改。
-        ja: データベースユーザーパスワード。デプロイ前に変更。
-        ko: DB 사용자 비밀번호. 배포 전 변경.
-        ru: Пароль пользователя БД. Измените до первого запуска.
-        ms: Kata laluan pengguna pangkalan data. Tukar sebelum penggunaan pertama.
-        pt-br: Senha do usuário do banco. Altere antes do primeiro uso.
-      required: true
-      rule: paramComplexity
-      type: password
-    - default: ChangeMe_MariaDBRoot_2025!
-      edit: true
-      envKey: MYSQL_ROOT_PASSWORD
-      labelEn: Root Password
-      labelZh: Root 密码
-      label:
-        en: MariaDB root password. Change before first run.
-        zh: MariaDB root 密码。部署前请修改。
-        zh-Hant: MariaDB root 密碼。部署前請修改。
-        ja: MariaDB root パスワード。デプロイ前に変更。
-        ko: MariaDB root 비밀번호. 배포 전 변경.
-        ru: Пароль root MariaDB. Измените до первого запуска.
-        ms: Kata laluan root MariaDB. Tukar sebelum penggunaan pertama.
-        pt-br: Senha root do MariaDB. Altere antes do primeiro uso.
-      required: true
-      rule: paramComplexity
-      type: password
     - default: "true"
       edit: true
       envKey: API_DOCS_ENABLED
