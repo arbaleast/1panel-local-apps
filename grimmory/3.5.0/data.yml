@@ -107,52 +107,20 @@ additionalProperties:
       required: true
       rule: paramPort
       type: number
-    - default: mariadb
-      edit: true
-      envKey: DATABASE_HOST
-      labelEn: DB Host
-      labelZh: DB 主机
-      label:
-        en: Database host inside container network. Default 'mariadb'.
-        zh: 容器网络内的数据库主机名。默认为 'mariadb'。
-        zh-Hant: 容器網路內的資料庫主機名。預設為 'mariadb'。
-        ja: コンテナネットワーク内のデータベースホスト。デフォルトは 'mariadb'。
-        ko: 컨테이너 네트워크 내 DB 호스트. 기본값 'mariadb'.
-        ru: Хост БД в контейнерной сети. По умолчанию 'mariadb'.
-        ms: Hos pangkalan data dalam rangkaian bekas. Lalai 'mariadb'.
-        pt-br: Host do banco na rede do contêiner. Padrão 'mariadb'.
-      required: true
-      type: text
-    - default: grimmory
-      edit: true
-      envKey: DATABASE_NAME
-      labelEn: DB Name
-      labelZh: 数据库名
-      label:
-        en: Database name. Default 'grimmory'.
-        zh: 数据库名。默认为 'grimmory'。
-        zh-Hant: 資料庫名。預設為 'grimmory'。
-        ja: データベース名。デフォルトは 'grimmory'。
-        ko: 데이터베이스 이름. 기본값 'grimmory'.
-        ru: Имя БД. По умолчанию 'grimmory'.
-        ms: Nama pangkalan data. Lalai 'grimmory'.
-        pt-br: Nome do banco. Padrão 'grimmory'.
-      required: true
-      type: text
     - default: ""
       edit: true
       envKey: DATABASE_URL
       labelEn: JDBC URL
       labelZh: JDBC 连接串
       label:
-        en: "JDBC connection URL. Leave empty to use internal DB; e.g. mysql://user:pass@host:3306/db"
-        zh: "JDBC 连接串。留空使用内置数据库；填写则使用外部数据库，格式：mysql://user:pass@host:3306/db"
-        zh-Hant: "JDBC 連線字串。留空使用內置資料庫；填寫則使用外部資料庫，格式：mysql://user:pass@host:3306/db"
-        ja: "JDBC 接続 URL。空欄は組み込み DB を使用；例：mysql://user:pass@host:3306/db"
-        ko: "JDBC URL. 비어있으면 내장 DB 사용; 예: mysql://user:pass@host:3306/db"
-        ru: "JDBC URL. Оставьте пустым для встроенной БД; напр. mysql://user:pass@host:3306/db"
-        ms: "URL JDBC. Kosongkan untuk menggunakan DB dalaman; contoh: mysql://user:pass@host:3306/db"
-        pt-br: "URL JDBC. Deixe vazio para usar DB interno; ex: mysql://user:pass@host:3306/db"
+        en: "JDBC URL. Leave empty to use built-in DB; e.g. mysql://user:pass@host:3306/db"
+        zh: "JDBC 连接串。留空使用内置数据库；填写使用外部数据库"
+        zh-Hant: "JDBC 字串。留空使用內置資料庫；填寫使用外部資料庫"
+        ja: "JDBC URL。空欄は組み込み DB"
+        ko: "JDBC URL. 비어있으면 내장 DB"
+        ru: "JDBC URL. Пусто = встроенная БД"
+        ms: "URL JDBC. Kosongkan untuk DB dalaman"
+        pt-br: "URL JDBC. Vazio para usar DB interno"
       required: false
       type: text
     - default: ChangeMe_Grimmory_2025!
