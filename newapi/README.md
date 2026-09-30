@@ -72,9 +72,9 @@ newapi/
 | `PG_USER` | ↑ | |
 | `PG_PASSWORD` | ↑ | |
 | `PG_DATABASE` | ↑ | |
-| `REDIS_HOST` | `redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}` | redis URL 标准格式 |
+| `REDIS_HOST` | `redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}` | redis URL 标准格式（含 auth） |
 | `REDIS_PORT` | ↑ | |
-| `REDIS_PASSWORD` | ↑ | |
+| `REDIS_PASSWORD` | ↑（**可空**） | 1Panel-redis 应用默认带密码 `1panel123`，无密码 redis 需手动改 compose，见下文 |
 
 字段语义和提示一对一，提交不再被拒。
 
@@ -85,6 +85,31 @@ newapi/
 3. 拷贝**完整容器名**（含后缀 4 个字符），填入 newapi 表单
 
 容器名规则：`1Panel-postgresql-XXXX` / `1Panel-redis-XXXX`，XXXX 是 1Panel 自动生成的 Base32 4 字符随机串（`[A-Z2-7]` 字母数字），**没有**下划线/短横线。
+
+### Redis 无密码模式（advanced）
+
+`REDIS_PASSWORD` 表单字段已标 `required: false`（可空），但本应用 compose 拼装固定为：
+```yaml
+REDIS_CONN_STRING=redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
+```
+**当 `REDIS_PASSWORD` 为空字符串时**，会拼出 `redis://:@host:6379`，上游 `redis.ParseURL` 直接报错 `failed to parse Redis connection string`。所以**仅清空字段会让 new-api 容器启动失败**。
+
+如果你的 redis 应用确实关掉了 `requirepass`（无密码鉴权），需要手动改 compose：
+
+1. SSH 到 1Panel 主机，编辑 `<install_path>/newapi/v1.0.0-rc.40/docker-compose.yml`
+2. 把
+   ```yaml
+   - REDIS_CONN_STRING=redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
+   ```
+   改为
+   ```yaml
+   - REDIS_CONN_STRING=redis://${REDIS_HOST}:${REDIS_PORT}
+   ```
+3. `REDIS_PASSWORD` 字段留空 + 1Panel UI 重启 new-api 容器
+
+`REDIS_PASSWORD` 为空 + 仍带 `:@` 片段的 compose → `redis.ParseURL` 报错 → 容器重启循环。这是用户**主动选择无 auth 模式**需要付出的代价。
+
+> 1Panel 内置 redis 应用**默认带密码** `1panel123`，绝大多数场景**无需**走无密码模式——直接保留默认密码即可。
 
 ### Session Secret（多节点必改）
 
@@ -127,6 +152,7 @@ A: 通常是外部 postgresql / redis 连不上。三步排查：
    - `pq: password authentication failed for user "user_wEJsSp"`：PG_USER / PG_PASSWORD 与 postgresql 应用不一致，去 postgresql 应用 UI 改用户密码后回填
    - `dial tcp ...:6379: connect: connection refused`：redis 应用没启 / 容器名错
    - `pq: database "newapi" does not exist`：PG_DATABASE 库没 pre-create，去 postgresql 应用 UI 创建一个空库 `newapi` 并赋权给当前用户
+   - `failed to parse Redis connection string`：`REDIS_PASSWORD` 字段被你**清空**了，但 compose 拼装仍带 `:@` 片段，触发了 redis.ParseURL 错误 → 改回填默认密码 `1panel123`，或参考上文「Redis 无密码模式」手动改 compose
 
 **Q: 想用 MySQL/MariaDB 而不是 PostgreSQL？**
 A: 手动编辑 `v1.0.0-rc.40/docker-compose.yml`，把 `SQL_DSN` 行改为：

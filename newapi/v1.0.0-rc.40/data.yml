@@ -229,21 +229,27 @@ additionalProperties:
       required: true
       rule: paramPort
       type: number
+    # ---- Redis 密码：可选 ——
+    #   1Panel-redis 应用默认带密码 1panel123，留默认即可
+    #   若你的 redis 应用关掉了 requirepass（无密码鉴权），清空此字段 + 手动改
+    #   compose 把 REDIS_CONN_STRING 拼装改为：
+    #     redis://${REDIS_HOST}:${REDIS_PORT}
+    #   （保留 redis://:${REDIS_PASSWORD}@... 形式但密码为空 → redis.ParseURL 报错）
     - default: 1panel123
       edit: true
       envKey: REDIS_PASSWORD
-      labelEn: Redis Password
-      labelZh: Redis 密码
+      labelEn: Redis Password (optional)
+      labelZh: Redis 密码（可空）
       label:
-        en: Redis Password
-        zh: Redis 密码
-        zh-Hant: Redis 密碼
-        ja: Redis パスワード
-        ko: Redis 비밀번호
-        ru: Пароль Redis
-        ms: Kata laluan Redis
-        pt-br: Senha Redis
-      required: true
+        en: Redis Password (optional)
+        zh: Redis 密码（可空）
+        zh-Hant: Redis 密碼（可空）
+        ja: Redis パスワード（任意）
+        ko: Redis 비밀번호 (선택)
+        ru: Пароль Redis (необязательно)
+        ms: Kata laluan Redis (pilihan)
+        pt-br: Senha Redis (opcional)
+      required: false
       rule: paramComplexity
       type: password
     # ---- 节点名（多节点部署时区分节点；单节点可保留默认）----
