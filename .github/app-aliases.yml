@@ -19,6 +19,9 @@ aliases:
   moviepilot:
     dir: moviepilot
     desc: 影视自动化
+  newapi:
+    dir: newapi
+    desc: AI/LLM API 聚合网关
   hindsight:
     dir: hindsight
     desc: AI 记忆系统

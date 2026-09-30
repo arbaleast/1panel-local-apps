@@ -33,6 +33,7 @@
 | misaka | 御坂网络弹幕服务 | v2.8.9 |
 | moviepilot | 影视自动化 | 3.0.10 |
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.7.7 |
+| newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
 | pgvector | 向量数据库 | 0.8.6-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |

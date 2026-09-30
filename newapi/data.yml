@@ -1,0 +1,27 @@
+additionalProperties:
+  key: newapi
+  name: New API
+  tags:
+    - AI
+    - LLM
+    - Gateway
+  shortDescZh: AI/LLM API 聚合网关（兼容 OpenAI / Claude / Gemini 等多上游）
+  shortDescEn: Aggregated AI/LLM API gateway compatible with OpenAI / Claude / Gemini
+  description:
+    zh: New API 是 QuantumNous 团队维护的 AI 大模型 API 聚合与分发平台，兼容 OpenAI / Anthropic / Gemini / Azure / AWS Bedrock 等多上游协议，支持渠道负载均衡、用户额度、配额管理、计费、兑换码、绘图、音频转写、任务插件等功能。内置 PostgreSQL + Redis 依赖，也可外接已有数据库。提供 Web 面板（默认 3000 端口）与 REST API，可作为多上游 AI 服务的统一入口。
+    en: New API is an aggregated AI/LLM API gateway by QuantumNous, compatible with OpenAI, Anthropic, Gemini, Azure, AWS Bedrock and many other upstream protocols. Provides channel load balancing, user quota, billing, redemption codes, image generation, audio transcription, task plugins and more. Bundled PostgreSQL + Redis are used by default but external databases are supported. Exposes a Web panel (default port 3000) and REST API as a unified entry point for multi-upstream AI services.
+    zh-Hant: New API 是 QuantumNous 團隊維護的 AI 大模型 API 聚合與分發平台，兼容 OpenAI / Anthropic / Gemini / Azure / AWS Bedrock 等多上游協議，支援渠道負載平衡、用戶額度、配額管理、計費、兌換碼、繪圖、音訊轉寫、工作流外掛等功能。內建 PostgreSQL + Redis 依賴，也可外接既有資料庫。提供 Web 面板（預設 3000 連接埠）與 REST API，可作為多上游 AI 服務的統一入口。
+    ja: New API は QuantumNous チームが维护する AI 大規模モデル API 集約・配信プラットフォーム。OpenAI / Anthropic / Gemini / Azure / AWS Bedrock など複数上游プロトコルに互換。チャネル負荷分散、ユーザー枠、クォータ管理、課金、引き換えコード、画像生成、音声文字起こし、タスクプラグインなどをサポート。PostgreSQL + Redis を内蔵し外部 DB にも対応。Web パネル（デフォルト 3000 ポート）と REST API を提供。
+    ko: New API는 QuantumNous 팀이 유지하는 AI 대규모 모델 API 집계·유통 플랫폼으로, OpenAI / Anthropic / Gemini / Azure / AWS Bedrock 등 다양한 업스트림 프로토콜과 호환됩니다. 채널 로드 밸런싱, 사용자 할당량, 청구, 교환 코드, 이미지 생성, 오디오 전사, 작업 플러그인 등을 지원합니다. PostgreSQL + Redis 내장, 외부 DB 연결 가능. Web 패널(기본 3000 포트)과 REST API 제공.
+    ru: New API — агрегирующая платформа AI/LLM API от QuantumNous, совместимая с OpenAI, Anthropic, Gemini, Azure, AWS Bedrock и другими протоколами. Поддержка балансировки каналов, квот пользователей, биллинга, кодов активации, генерации изображений, транскрибации аудио, плагинов задач. Встроенные PostgreSQL + Redis, либо внешние БД. Веб-панель (порт 3000 по умолчанию) и REST API.
+    ms: New API ialah platform pengagregatan dan pengagihan API model AI besar oleh QuantumNous, serasi dengan protokol OpenAI / Anthropic / Gemini / Azure / AWS Bedrock dan lain-lain. Menyokong pengimbangan beban saluran, kuota pengguna, pengebilan, kod tebusan, penjanaan imej, transkripsi audio, pemalam tugas. PostgreSQL + Redis terbina dalam atau pangkalan data luaran. Panel Web (lalai port 3000) dan REST API.
+    pt-br: New API é uma plataforma de agregação e distribuição de APIs de IA/LLM mantida pela QuantumNous, compatível com OpenAI, Anthropic, Gemini, Azure, AWS Bedrock e outros protocolos upstream. Suporta balanceamento de canais, cotas de usuários, cobrança, códigos de resgate, geração de imagens, transcrição de áudio, plugins de tarefas. PostgreSQL + Redis integrados, ou bancos externos. Painel Web (porta 3000 padrão) e REST API.
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/QuantumNous/new-api
+  github: https://github.com/QuantumNous/new-api
