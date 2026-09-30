@@ -8,14 +8,14 @@ additionalProperties:
   shortDescZh: AI/LLM API 聚合网关（兼容 OpenAI / Claude / Gemini 等多上游）
   shortDescEn: Aggregated AI/LLM API gateway compatible with OpenAI / Claude / Gemini
   description:
-    zh: New API 是 QuantumNous 团队维护的 AI 大模型 API 聚合与分发平台，兼容 OpenAI / Anthropic / Gemini / Azure / AWS Bedrock 等多上游协议，支持渠道负载均衡、用户额度、配额管理、计费、兑换码、绘图、音频转写、任务插件等功能。内置 PostgreSQL + Redis 依赖，也可外接已有数据库。提供 Web 面板（默认 3000 端口）与 REST API，可作为多上游 AI 服务的统一入口。
-    en: New API is an aggregated AI/LLM API gateway by QuantumNous, compatible with OpenAI, Anthropic, Gemini, Azure, AWS Bedrock and many other upstream protocols. Provides channel load balancing, user quota, billing, redemption codes, image generation, audio transcription, task plugins and more. Bundled PostgreSQL + Redis are used by default but external databases are supported. Exposes a Web panel (default port 3000) and REST API as a unified entry point for multi-upstream AI services.
-    zh-Hant: New API 是 QuantumNous 團隊維護的 AI 大模型 API 聚合與分發平台，兼容 OpenAI / Anthropic / Gemini / Azure / AWS Bedrock 等多上游協議，支援渠道負載平衡、用戶額度、配額管理、計費、兌換碼、繪圖、音訊轉寫、工作流外掛等功能。內建 PostgreSQL + Redis 依賴，也可外接既有資料庫。提供 Web 面板（預設 3000 連接埠）與 REST API，可作為多上游 AI 服務的統一入口。
-    ja: New API は QuantumNous チームが维护する AI 大規模モデル API 集約・配信プラットフォーム。OpenAI / Anthropic / Gemini / Azure / AWS Bedrock など複数上游プロトコルに互換。チャネル負荷分散、ユーザー枠、クォータ管理、課金、引き換えコード、画像生成、音声文字起こし、タスクプラグインなどをサポート。PostgreSQL + Redis を内蔵し外部 DB にも対応。Web パネル（デフォルト 3000 ポート）と REST API を提供。
-    ko: New API는 QuantumNous 팀이 유지하는 AI 대규모 모델 API 집계·유통 플랫폼으로, OpenAI / Anthropic / Gemini / Azure / AWS Bedrock 등 다양한 업스트림 프로토콜과 호환됩니다. 채널 로드 밸런싱, 사용자 할당량, 청구, 교환 코드, 이미지 생성, 오디오 전사, 작업 플러그인 등을 지원합니다. PostgreSQL + Redis 내장, 외부 DB 연결 가능. Web 패널(기본 3000 포트)과 REST API 제공.
-    ru: New API — агрегирующая платформа AI/LLM API от QuantumNous, совместимая с OpenAI, Anthropic, Gemini, Azure, AWS Bedrock и другими протоколами. Поддержка балансировки каналов, квот пользователей, биллинга, кодов активации, генерации изображений, транскрибации аудио, плагинов задач. Встроенные PostgreSQL + Redis, либо внешние БД. Веб-панель (порт 3000 по умолчанию) и REST API.
-    ms: New API ialah platform pengagregatan dan pengagihan API model AI besar oleh QuantumNous, serasi dengan protokol OpenAI / Anthropic / Gemini / Azure / AWS Bedrock dan lain-lain. Menyokong pengimbangan beban saluran, kuota pengguna, pengebilan, kod tebusan, penjanaan imej, transkripsi audio, pemalam tugas. PostgreSQL + Redis terbina dalam atau pangkalan data luaran. Panel Web (lalai port 3000) dan REST API.
-    pt-br: New API é uma plataforma de agregação e distribuição de APIs de IA/LLM mantida pela QuantumNous, compatível com OpenAI, Anthropic, Gemini, Azure, AWS Bedrock e outros protocolos upstream. Suporta balanceamento de canais, cotas de usuários, cobrança, códigos de resgate, geração de imagens, transcrição de áudio, plugins de tarefas. PostgreSQL + Redis integrados, ou bancos externos. Painel Web (porta 3000 padrão) e REST API.
+    zh: New API 是 QuantumNous 团队维护的 AI 大模型 API 聚合与分发平台，兼容 OpenAI / Anthropic / Gemini / Azure / AWS Bedrock 等多上游协议，支持渠道负载均衡、用户额度、配额管理、计费、兑换码、绘图、音频转写、任务插件等功能。需要外接 MySQL/MariaDB 与 Redis（默认配置指向 1Panel 内置 mariadb + redis 应用），提供 Web 面板（默认 3000 端口）与 REST API，可作为多上游 AI 服务的统一入口。
+    en: New API is an aggregated AI/LLM API gateway by QuantumNous, compatible with OpenAI, Anthropic, Gemini, Azure, AWS Bedrock and many other upstream protocols. Provides channel load balancing, user quota, billing, redemption codes, image generation, audio transcription, task plugins and more. Requires external MySQL/MariaDB and Redis (defaults target the bundled 1Panel mariadb + redis apps). Exposes a Web panel (default port 3000) and REST API as a unified entry point for multi-upstream AI services.
+    zh-Hant: New API 是 QuantumNous 團隊維護的 AI 大模型 API 聚合與分發平台，兼容 OpenAI / Anthropic / Gemini / Azure / AWS Bedrock 等多上游協議，支援渠道負載平衡、用戶額度、配額管理、計費、兌換碼、繪圖、音訊轉寫、工作流外掛等功能。需外接 MySQL/MariaDB 與 Redis（預設配置指向 1Panel 內建 mariadb + redis 應用），提供 Web 面板（預設 3000 連接埠）與 REST API，可作為多上游 AI 服務的統一入口。
+    ja: New API は QuantumNous チームが维护する AI 大規模モデル API 集約・配信プラットフォーム。OpenAI / Anthropic / Gemini / Azure / AWS Bedrock など複数上游プロトコルに互換。チャネル負荷分散、ユーザー枠、クォータ管理、課金、引き換えコード、画像生成、音声文字起こし、タスクプラグインなどをサポート。外部 MySQL/MariaDB と Redis が必要（デフォルトは 1Panel 内蔵 mariadb + redis アプリ）。Web パネル（デフォルト 3000 ポート）と REST API を提供。
+    ko: New API는 QuantumNous 팀이 유지하는 AI 대규모 모델 API 집계·유통 플랫폼으로, OpenAI / Anthropic / Gemini / Azure / AWS Bedrock 등 다양한 업스트림 프로토콜과 호환됩니다. 채널 로드 밸런싱, 사용자 할당량, 청구, 교환 코드, 이미지 생성, 오디오 전사, 작업 플러그인 등을 지원합니다. 외부 MySQL/MariaDB 및 Redis 필요(기본값은 1Panel 내장 mariadb + redis 앱). Web 패널(기본 3000 포트)과 REST API 제공.
+    ru: New API — агрегирующая платформа AI/LLM API от QuantumNous, совместимая с OpenAI, Anthropic, Gemini, Azure, AWS Bedrock и другими протоколами. Поддержка балансировки каналов, квот пользователей, биллинга, кодов активации, генерации изображений, транскрибации аудио, плагинов задач. Требует внешние MySQL/MariaDB и Redis (по умолчанию указывает на встроенные в 1Panel приложения mariadb + redis). Веб-панель (порт 3000 по умолчанию) и REST API.
+    ms: New API ialah platform pengagregatan dan pengagihan API model AI besar oleh QuantumNous, serasi dengan protokol OpenAI / Anthropic / Gemini / Azure / AWS Bedrock dan lain-lain. Menyokong pengimbangan beban saluran, kuota pengguna, pengebilan, kod tebusan, penjanaan imej, transkripsi audio, pemalam tugas. Memerlukan MySQL/MariaDB dan Redis luaran (lalai menunjuk aplikasi 1Panel terbina dalam mariadb + redis). Panel Web (lalai port 3000) dan REST API.
+    pt-br: New API é uma plataforma de agregação e distribuição de APIs de IA/LLM mantida pela QuantumNous, compatível com OpenAI, Anthropic, Gemini, Azure, AWS Bedrock e outros protocolos upstream. Suporta balanceamento de canais, cotas de usuários, cobrança, códigos de resgate, geração de imagens, transcrição de áudio, plugins de tarefas. Requer MySQL/MariaDB e Redis externos (padrão aponta para os apps mariadb + redis embutidos no 1Panel). Painel Web (porta 3000 padrão) e REST API.
   type: tool
   architectures:
     - amd64
@@ -97,62 +97,138 @@ additionalProperties:
         pt-br: Fuso horário
       required: true
       type: text
-    # ---- PostgreSQL 用户名（内置 PG 服务）----
-    - default: newapi
+    # ============================================================
+    # 外部 MySQL/MariaDB 连接（dendrite 复盘：完整 DSN 必拆分，paramCommon
+    # 正则 /^[a-zA-Z0-9]{1}[a-zA-Z0-9._-]{1,63}$/ 拒掉 : @ / 等字符）
+    # 上游 DSN 格式（Go MySQL driver）：<user>:<pass>@tcp(<host>:<port>)/<db>
+    # 默认指向 1Panel 内置 mariadb 应用：容器名 1Panel-mariadb-XXXX (Base32 4 字符)
+    # ============================================================
+    - default: 1Panel-mariadb-SHvg
       edit: true
-      envKey: POSTGRES_USER
-      labelEn: Postgres User
-      labelZh: PG 用户名
+      envKey: DB_HOST
+      labelEn: MariaDB Host
+      labelZh: MariaDB 主机
       label:
-        en: Postgres User
-        zh: PG 用户名
-        zh-Hant: PG 使用者名稱
-        ja: PG ユーザー名
-        ko: PG 사용자
-        ru: Пользователь PG
-        ms: Pengguna PG
-        pt-br: Usuário PG
+        en: MariaDB Host
+        zh: MariaDB 主机
+        zh-Hant: MariaDB 主機
+        ja: MariaDB ホスト
+        ko: MariaDB 호스트
+        ru: Хост MariaDB
+        ms: Hos MariaDB
+        pt-br: Host MariaDB
       required: true
       rule: paramCommon
       type: text
-    # ---- PostgreSQL 密码（内置 PG 服务）----
-    - default: ""
+    - default: 3306
       edit: true
-      envKey: POSTGRES_PASSWORD
-      labelEn: Postgres Password
-      labelZh: PG 密码
+      envKey: DB_PORT
+      labelEn: MariaDB Port
+      labelZh: MariaDB 端口
       label:
-        en: Postgres Password
-        zh: PG 密码
-        zh-Hant: PG 密碼
-        ja: PG パスワード
-        ko: PG 비밀번호
-        ru: Пароль PG
-        ms: Kata laluan PG
-        pt-br: Senha PG
+        en: MariaDB Port
+        zh: MariaDB 端口
+        zh-Hant: MariaDB 連接埠
+        ja: MariaDB ポート
+        ko: MariaDB 포트
+        ru: Порт MariaDB
+        ms: Port MariaDB
+        pt-br: Porta MariaDB
+      required: true
+      rule: paramPort
+      type: number
+    - default: root
+      edit: true
+      envKey: DB_USER
+      labelEn: DB User
+      labelZh: DB 用户名
+      label:
+        en: DB User
+        zh: DB 用户名
+        zh-Hant: DB 使用者名稱
+        ja: DB ユーザー名
+        ko: DB 사용자
+        ru: Пользователь БД
+        ms: Pengguna DB
+        pt-br: Usuário DB
+      required: true
+      rule: paramCommon
+      type: text
+    - default: 1panel123
+      edit: true
+      envKey: DB_PASSWORD
+      labelEn: DB Password
+      labelZh: DB 密码
+      label:
+        en: DB Password
+        zh: DB 密码
+        zh-Hant: DB 密碼
+        ja: DB パスワード
+        ko: DB 비밀번호
+        ru: Пароль БД
+        ms: Kata laluan DB
+        pt-br: Senha DB
       required: true
       rule: paramComplexity
       type: password
-    # ---- PostgreSQL 数据库名（内置 PG 服务）----
+    # ---- DB 名：new-api 会自动建表，建议手动 pre-create 一个空库并赋权 ----
     - default: newapi
       edit: true
-      envKey: POSTGRES_DB
-      labelEn: Postgres DB
-      labelZh: PG 数据库
+      envKey: DB_NAME
+      labelEn: DB Name
+      labelZh: DB 库名
       label:
-        en: Postgres DB
-        zh: PG 数据库
-        zh-Hant: PG 資料庫
-        ja: PG データベース
-        ko: PG 데이터베이스
-        ru: База данных PG
-        ms: Pangkalan Data PG
-        pt-br: Banco de dados PG
+        en: DB Name
+        zh: DB 库名
+        zh-Hant: DB 資料庫名稱
+        ja: DB 名前
+        ko: DB 이름
+        ru: Имя БД
+        ms: Nama DB
+        pt-br: Nome do BD
       required: true
       rule: paramCommon
       type: text
-    # ---- Redis 密码（内置 Redis 服务）----
-    - default: ""
+    # ============================================================
+    # 外部 Redis 连接（同 dendrite 拆分方案，REDIS_CONN_STRING 含 : @ / 必拆）
+    # Redis URL 格式：redis://:<password>@<host>:<port>
+    # 默认指向 1Panel 内置 redis 应用：容器名 1Panel-redis-XXXX (Base32 4 字符)
+    # ============================================================
+    - default: 1Panel-redis-wd53
+      edit: true
+      envKey: REDIS_HOST
+      labelEn: Redis Host
+      labelZh: Redis 主机
+      label:
+        en: Redis Host
+        zh: Redis 主机
+        zh-Hant: Redis 主機
+        ja: Redis ホスト
+        ko: Redis 호스트
+        ru: Хост Redis
+        ms: Hos Redis
+        pt-br: Host Redis
+      required: true
+      rule: paramCommon
+      type: text
+    - default: 6379
+      edit: true
+      envKey: REDIS_PORT
+      labelEn: Redis Port
+      labelZh: Redis 端口
+      label:
+        en: Redis Port
+        zh: Redis 端口
+        zh-Hant: Redis 連接埠
+        ja: Redis ポート
+        ko: Redis 포트
+        ru: Порт Redis
+        ms: Port Redis
+        pt-br: Porta Redis
+      required: true
+      rule: paramPort
+      type: number
+    - default: 1panel123
       edit: true
       envKey: REDIS_PASSWORD
       labelEn: Redis Password
@@ -169,7 +245,7 @@ additionalProperties:
       required: true
       rule: paramComplexity
       type: password
-    # ---- 节点名（多节点部署时区分节点；单节点可留空，nginx/app 反代会自动 fallback）----
+    # ---- 节点名（多节点部署时区分节点；单节点可保留默认）----
     - default: newapi-node-1
       edit: true
       envKey: NODE_NAME

@@ -6,12 +6,18 @@ networks:
 # 镜像源：calciumion/new-api（DockerHub，multi-arch manifest: linux/amd64 + linux/arm64）
 # 启动入口：/new-api --log-dir /app/logs（见上游 Dockerfile）
 # 默认 web 端口：3000（容器内固定）
-# 默认服务编排：new-api + postgres + redis（与上游 docker-compose.yml 一致；用户可手动改 SQLite 模式）
+#
+# 服务编排：仅 new-api 一个服务，依赖外部 1Panel-mariadb-* 与 1Panel-redis-*
+# （容器名由 1Panel 自动生成：[A-Za-z0-9]{4} 后缀，没有下划线/短横线/小写）
+# 上游 DSN 格式（Go MySQL driver）：
+#   SQL_DSN=<user>:<password>@tcp(<host>:<port>)/<db>
+# Redis 格式：
+#   REDIS_CONN_STRING=redis://:<password>@<host>:<port>
+#
 # 持久化（全部用相对路径 bind mount，避开 1Panel 拒绝顶层 volumes 变量命名）：
-#   ./data/data         -> new-api /data （应用数据 + SQLite 文件）
-#   ./data/logs         -> new-api /app/logs （日志，command --log-dir 指定）
-#   ./data/postgres     -> postgres /var/lib/postgresql/data
-#   ./data/redis        -> redis /data （AOF + RDB）
+#   ./data/data  -> new-api /data （应用数据）
+#   ./data/logs  -> new-api /app/logs （日志，--log-dir 指定）
+#
 # 文档：https://github.com/QuantumNous/new-api
 
 services:
@@ -28,17 +34,12 @@ services:
       - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3000
     environment:
       - TZ=${TZ}
-      - SQL_DSN=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - REDIS_CONN_STRING=redis://:${REDIS_PASSWORD}@redis:6379
+      - SQL_DSN=${DB_USER}:${DB_PASSWORD}@tcp(${DB_HOST}:${DB_PORT})/${DB_NAME}
+      - REDIS_CONN_STRING=redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
       - ERROR_LOG_ENABLED=${ERROR_LOG_ENABLED}
       - BATCH_UPDATE_ENABLED=${BATCH_UPDATE_ENABLED}
       - NODE_NAME=${NODE_NAME}
       - SESSION_SECRET=${SESSION_SECRET}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     volumes:
       - ./data/data:/data
       - ./data/logs:/app/logs
@@ -48,44 +49,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-
-  postgres:
-    image: postgres:15-alpine
-    restart: always
-    networks:
-      - 1panel-network
-    labels:
-      createdBy: "Apps"
-    environment:
-      - TZ=${TZ}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    restart: always
-    networks:
-      - 1panel-network
-    labels:
-      createdBy: "Apps"
-    command:
-      - redis-server
-      - --requirepass
-      - ${REDIS_PASSWORD}
-      - --appendonly
-      - "yes"
-    volumes:
-      - ./data/redis:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
