@@ -209,7 +209,9 @@ additionalProperties:
       tr: Abonelik Cronu
       zh-Hant: 訂閱排程更新 (cron)
     required: false
-    rule: paramCommon
+    # ⚠️ rule 必须省略：1Panel 的 checkParamCommon 正则只允许字母数字+.-_，
+    #   cron 表达式 0 */6 * * * 含 * + 空格 → 提交时被前端拒
+    #   (AGENTS.md dendrite 复盘同源)。不带 rule 渲染为宽松 text 框。
     type: text
   - default: ''
     edit: true

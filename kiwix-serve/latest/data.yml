@@ -73,6 +73,9 @@ additionalProperties:
       rule: paramPort
       type: number
     # ---- ZIM 文件路径: 容器内 /data 下文件名(空格分隔多个, 支持 *.zim 通配)----
+    # ⚠️ rule 必须省略：1Panel 的 checkParamCommon 正则只允许字母数字+.-_，
+    #   *.zim 含 * + 首字符 * → 提交时被前端拒（AGENTS.md dendrite 复盘同源）。
+    #   不带 rule 1Panel 渲染为宽松 text 框，kiwix-serve 自身支持通配。
     - default: "*.zim"
       edit: true
       envKey: ZIM_FILES
@@ -88,7 +91,6 @@ additionalProperties:
         ms: Fail ZIM
         pt-br: Arquivos ZIM
       required: true
-      rule: paramCommon
       type: text
     # ---- 可选: 启动时下载的 ZIM URL(填了就把 URL 的 .zim 拉到 /data)----
     - default: ""
