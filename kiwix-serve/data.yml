@@ -1,0 +1,27 @@
+additionalProperties:
+  key: kiwix-serve
+  name: Kiwix Serve
+  tags:
+    - Wiki
+    - Offline
+    - ZIM
+    - Library
+  shortDescZh: 离线维基百科与 ZIM 内容服务器
+  shortDescEn: Offline Wikipedia and ZIM content server
+  description:
+    en: kiwix-serve is the official Kiwix HTTP server for browsing .zim files offline. Host Wikipedia, Wiktionary, TED talks, medical references, and any other ZIM-format content behind a single web endpoint, with full-text search, library index, and built-in article reader. Built by the Kiwix non-profit for low-bandwidth, offline-first knowledge access.
+    zh: kiwix-serve 是 Kiwix 官方 HTTP 服务器，用于离线浏览 .zim 文件。可在单一 Web 入口托管维基百科、维基词典、TED 演讲、医学资料等任意 ZIM 格式内容，提供全文检索、资源索引与内置文章阅读器。由 Kiwix 非营利组织为低带宽、离线优先的知识访问场景打造。
+    zh-Hant: kiwix-serve 是 Kiwix 官方 HTTP 伺服器，用於離線瀏覽 .zim 檔。能在單一 Web 入口代管維基百科、維基詞典、TED 演講、醫學資料等任意 ZIM 格式內容，提供全文搜尋、資源索引與內建文章閱讀器。由 Kiwix 非營利組織為低頻寬、離線優先的知識存取場景打造。
+    ja: kiwix-serve は .zim ファイルをオフラインで配信する Kiwix 公式の HTTP サーバーです。Wikipedia、Wiktionary、TED 講演、医学リファレンスなど任意の ZIM コンテンツを単一の Web エンドポイントでホストでき、全文検索、ライブラリ インデックス、組み込みの閲覧機能を備えます。Kiwix 非営利団体が低帯域・オフラインファーストのナレッジ アクセス向けに開発しています。
+    ko: kiwix-serve는 .zim 파일을 오프라인으로 탐색할 수 있는 Kiwix 공식 HTTP 서버입니다. Wikipedia, Wiktionary, TED 강연, 의학 참고 자료 등 ZIM 형식 콘텐츠를 단일 웹 엔드포인트로 호스팅하며, 전문 검색, 라이브러리 인덱스, 내장 아티클 리더를 제공합니다. Kiwix 비영리 단체가 저대역역·오프라인 우선 지식 접근을 위해 만들었습니다.
+    ru: kiwix-serve — официальный HTTP-сервер Kiwix для офлайн-чтения файлов .zim. Обслуживает Wikipedia, Wiktionary, лекции TED, медицинские справочники и любой другой ZIM-контент через единую веб-точку, с полнотекстовым поиском, каталогом библиотеки и встроенным читалщиком. Разработан некоммерческой организацией Kiwix для сценариев с ограниченной пропускной способностью и офлайн-доступом.
+    ms: kiwix-serve ialah pelayan HTTP rasmi Kiwix untuk melayari fail .zim di luar talian. Hoskan Wikipedia, Wiktionary, ceramah TED, rujukan perubatan dan sebarang kandungan format ZIM lain melalui satu titik akhir web, lengkap dengan carian teks penuh, indeks perpustakaan dan pembaca artikel terbina. Dibangunkan oleh organisasi bukan untung Kiwix untuk akses pengetahuan jalur lebar rendah dan luar talian.
+    pt-br: kiwix-serve é o servidor HTTP oficial do Kiwix para navegar arquivos .zim offline. Hospeda Wikipedia, Wiktionary, palestras TED, referências médicas e qualquer outro conteúdo em formato ZIM através de um único endpoint web, com busca full-text, índice de biblioteca e leitor de artigos embutido. Construído pela organização sem fins lucrativos Kiwix para cenários de baixa largura de banda e conhecimento offline-first.
+  type: tool
+  architectures:
+    - amd64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://kiwix.org
+  github: https://github.com/kiwix/kiwix-tools

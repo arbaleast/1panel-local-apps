@@ -1,0 +1,128 @@
+additionalProperties:
+  key: kiwix-serve
+  name: kiwix-serve latest
+  tags:
+    - Wiki
+    - Offline
+    - ZIM
+    - Library
+  shortDescZh: 离线维基百科与 ZIM 内容服务器
+  shortDescEn: Offline Wikipedia and ZIM content server
+  description:
+    en: kiwix-serve is the official Kiwix HTTP server for browsing .zim files offline. Host Wikipedia, Wiktionary, TED talks, medical references, and any other ZIM-format content behind a single web endpoint, with full-text search, library index, and built-in article reader. Built by the Kiwix non-profit for low-bandwidth, offline-first knowledge access.
+    zh: kiwix-serve 是 Kiwix 官方 HTTP 服务器，用于离线浏览 .zim 文件。可在单一 Web 入口托管维基百科、维基词典、TED 演讲、医学资料等任意 ZIM 格式内容，提供全文检索、资源索引与内置文章阅读器。由 Kiwix 非营利组织为低带宽、离线优先的知识访问场景打造。
+    zh-Hant: kiwix-serve 是 Kiwix 官方 HTTP 伺服器，用於離線瀏覽 .zim 檔。能在單一 Web 入口代管維基百科、維基詞典、TED 演講、醫學資料等任意 ZIM 格式內容，提供全文搜尋、資源索引與內建文章閱讀器。由 Kiwix 非營利組織為低頻寬、離線優先的知識存取場景打造。
+    ja: kiwix-serve は .zim ファイルをオフラインで配信する Kiwix 公式の HTTP サーバーです。Wikipedia、Wiktionary、TED 講演、医学リファレンスなど任意の ZIM コンテンツを単一の Web エンドポイントでホストでき、全文検索、ライブラリ インデックス、組み込みの閲覧機能を備えます。Kiwix 非営利団体が低帯域・オフラインファーストのナレッジ アクセス向けに開発しています。
+    ko: kiwix-serve는 .zim 파일을 오프라인으로 탐색할 수 있는 Kiwix 공식 HTTP 서버입니다. Wikipedia, Wiktionary, TED 강연, 의학 참고 자료 등 ZIM 형식 콘텐츠를 단일 웹 엔드포인트로 호스팅하며, 전문 검색, 라이브러리 인덱스, 내장 아티클 리더를 제공합니다. Kiwix 비영리 단체가 저대역역·오프라인 우선 지식 접근을 위해 만들었습니다.
+    ru: kiwix-serve — официальный HTTP-сервер Kiwix для офлайн-чтения файлов .zim. Обслуживает Wikipedia, Wiktionary, лекции TED, медицинские справочники и любой другой ZIM-контент через единую веб-точку, с полнотекстовым поиском, каталогом библиотеки и встроенным читалщиком. Разработан некоммерческой организацией Kiwix для сценариев с ограниченной пропускной способностью и офлайн-доступом.
+    ms: kiwix-serve ialah pelayan HTTP rasmi Kiwix untuk melayari fail .zim di luar talian. Hoskan Wikipedia, Wiktionary, ceramah TED, rujukan perubatan dan sebarang kandungan format ZIM lain melalui satu titik akhir web, lengkap dengan carian teks penuh, indeks perpustakaan dan pembaca artikel terbina. Dibangunkan organisasi bukan untung Kiwix untuk akses pengetahuan jalur lebar rendah dan luar talian.
+    pt-br: kiwix-serve é o servidor HTTP oficial do Kiwix para navegar arquivos .zim offline. Hospeda Wikipedia, Wiktionary, palestras TED, referências médicas e qualquer outro conteúdo em formato ZIM através de um único endpoint web, com busca full-text, índice de biblioteca e leitor de artigos embutido. Construído pela organização sem fins lucrativos Kiwix para cenários de baixa largura de banda e conhecimento offline-first.
+  type: tool
+  architectures:
+    - amd64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://kiwix.org
+  github: https://github.com/kiwix/kiwix-tools
+  # ----------------------------------------------------------------------------
+  # 镜像版本与架构
+  # 注意: 用户明确要求使用 :latest 标签。AGENTS.md 警示:「禁止使用 latest
+  # 作为版本目录名或镜像 tag...仅当上游镜像完全无版本化 tag 时方可例外保留
+  # latest」。本仓此处例外: 上游 kiwix-serve 虽同时发布 3.1.x/3.2.x/3.3.x...
+  # 等语义化 tag, 但用户指定 :latest, 因此本应用不进入 auto-update 工作流的
+  # hardcode 检测范围(latest 标签本身是漂移源)。如未来要切到版本化 tag,
+  # 把目录从 latest/ 改名为 <version>/ 并把 image 改成 image: ...:<version>,
+  # 同时把 crossVersionUpdate 改为 true 即可。
+  # ----------------------------------------------------------------------------
+  formFields:
+    # ---- HTTP 端口: 主机侧端口映射到容器内 8080(kiwix-serve 默认端口)----
+    - default: 48080
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 容器内端口(kiwix-serve 监听端口, 默认 8080, 改这里一般不需要)----
+    - default: "8080"
+      edit: true
+      envKey: PORT
+      labelEn: Container Port
+      labelZh: 容器内端口
+      label:
+        en: Container Port
+        zh: 容器内端口
+        zh-Hant: 容器內連接埠
+        ja: コンテナ内ポート
+        ko: 컨테이너 내부 포트
+        ru: Порт внутри контейнера
+        ms: Port dalam bekas
+        pt-br: Porta interna do contêiner
+      required: true
+      rule: paramPort
+      type: number
+    # ---- ZIM 文件路径: 容器内 /data 下文件名(空格分隔多个, 支持 *.zim 通配)----
+    - default: "*.zim"
+      edit: true
+      envKey: ZIM_FILES
+      labelEn: ZIM Files
+      labelZh: ZIM 文件
+      label:
+        en: ZIM Files
+        zh: ZIM 文件
+        zh-Hant: ZIM 檔案
+        ja: ZIM ファイル
+        ko: ZIM 파일
+        ru: Файлы ZIM
+        ms: Fail ZIM
+        pt-br: Arquivos ZIM
+      required: true
+      rule: paramCommon
+      type: text
+    # ---- 可选: 启动时下载的 ZIM URL(填了就把 URL 的 .zim 拉到 /data)----
+    - default: ""
+      edit: true
+      envKey: DOWNLOAD
+      labelEn: ZIM Download URL
+      labelZh: ZIM 下载地址
+      label:
+        en: ZIM Download URL
+        zh: ZIM 下载地址
+        zh-Hant: ZIM 下載網址
+        ja: ZIM ダウンロード URL
+        ko: ZIM 다운로드 URL
+        ru: URL для загрузки ZIM
+        ms: URL muat turun ZIM
+        pt-br: URL de download ZIM
+      required: false
+      rule: paramCommon
+      type: text
+    # ---- 时区(影响 start.sh 内 wget 下载日志等时间戳)----
+    - default: UTC
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: false
+      rule: paramCommon
+      type: text

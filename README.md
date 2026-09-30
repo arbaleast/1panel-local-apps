@@ -21,6 +21,7 @@
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 2026091410-arm64 |
 | jellystat | 免费的 Jellyfin 开源统计应用（Tautulli 替代品）。 | 1.1.12 |
+| kiwix-serve | 离线维基百科与 ZIM 内容服务器 | latest |
 | linkwarden | Linkwarden 自托管书签管理器 | v2.16.3 |
 | llamacpp | 高性能本地 LLM 推理引擎 | server-vulkan-v0.4.7 |
 | llamaindex | LLM 数据框架 | v0.9.2 |

@@ -1,0 +1,59 @@
+networks:
+  1panel-network:
+    external: true
+
+# kiwix-serve (latest) — Kiwix 官方离线 ZIM HTTP 服务器
+# 镜像源: ghcr.io/kiwix/kiwix-serve:latest
+#   - 多架构: linux/amd64, linux/arm64, linux/arm/v7
+#   - 父镜像 (kiwix-tools) 基于 alpine:3.22, 体积小
+# 入口脚本: 上游镜像 ENTRYPOINT → /usr/local/bin/start.sh
+#   - 若 DOWNLOAD 非空, start.sh 在启动时 wget 该 URL 到 /data, 然后把
+#     下载文件名作为参数追加到 kiwix-serve 调用末尾
+#   - 若 DOWNLOAD 为空, kiwix-serve 直接服务 /data 下由 command: 提供的路径
+# 容器内: kiwix-serve 监听 $PORT (默认 8080), 非 root 用户 user:user (UID 1001)
+#   需要确保 /data 目录可写 (下载场景)
+#
+# 数据流:
+#   主机侧 ./data/zim/*.zim → 容器 /data/*.zim (kiwix-serve 自动索引整个目录)
+#
+# 用法示例:
+#   1. 准备 ZIM 文件: 把 wikipedia.zim / wiktionary.zim 等放到主机
+#      /opt/1panel/apps/kiwix-serve/latest/data/zim/ 下, 默认配置即可
+#      (command: *.zim 通配) 启动
+#   2. 远程下载场景: 在表单 ZIM 下载地址 填入 .zim URL, 清空 ZIM 文件 字段
+#      留空, 容器启动时会自动 wget 到 /data
+#   3. 自定义文件列表: 在 ZIM 文件 字段填入空格分隔的具体文件名
+#      (如 "wikipedia.zim wiktionary.zim"), 比通配更精确
+
+services:
+  kiwix-serve:
+    container_name: ${CONTAINER_NAME}
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:${PORT}
+    environment:
+      # kiwix-serve 监听端口(容器内)
+      PORT: ${PORT}
+      # 启动时下载的 ZIM URL(可空, 空则服务 /data 下已有文件)
+      DOWNLOAD: ${DOWNLOAD}
+      # 时区
+      TZ: ${TZ}
+    command:
+      - ${ZIM_FILES}
+    volumes:
+      # ZIM 文件库持久化: 主机 ./data/zim → 容器 /data
+      # 容器内 user 进程 UID=1001, 默认对 bind mount 有写权限
+      # (主机侧目录需保证 1Panel 主机用户可读, 写权限仅 DOWNLOAD 场景需要)
+      - ./data/zim:/data
+    healthcheck:
+      # kiwix-serve 启动后会在 :${PORT}/ 返回 200 (library index HTML)
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:${PORT}/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

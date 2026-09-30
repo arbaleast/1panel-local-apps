@@ -11,6 +11,8 @@ aliases:
   jellyfin:
     dir: jellyfin
     desc: 媒体服务器
+  kiwix-serve:
+    desc: 离线维基百科与 ZIM 内容服务器
   immich:
     dir: immich
     desc: 照片管理
