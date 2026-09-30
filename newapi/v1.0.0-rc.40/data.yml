@@ -98,94 +98,95 @@ additionalProperties:
       required: true
       type: text
     # ============================================================
-    # 外部 MySQL/MariaDB 连接（dendrite 复盘：完整 DSN 必拆分，paramCommon
+    # 外部 PostgreSQL 连接（dendrite 复盘：完整 DSN 必拆分，paramCommon
     # 正则 /^[a-zA-Z0-9]{1}[a-zA-Z0-9._-]{1,63}$/ 拒掉 : @ / 等字符）
-    # 上游 DSN 格式（Go MySQL driver）：<user>:<pass>@tcp(<host>:<port>)/<db>
-    # 默认指向 1Panel 内置 mariadb 应用：容器名 1Panel-mariadb-XXXX (Base32 4 字符)
+    # 上游 DSN 格式（PG 标准 URL）：
+    #   postgresql://<user>:<password>@<host>:<port>/<database>
+    # 默认指向 1Panel 内置 postgresql 应用：容器名 1Panel-postgresql-XXXX
     # ============================================================
-    - default: 1Panel-mariadb-SHvg
+    - default: 1Panel-postgresql-ZU4y
       edit: true
-      envKey: DB_HOST
-      labelEn: MariaDB Host
-      labelZh: MariaDB 主机
+      envKey: PG_HOST
+      labelEn: PostgreSQL Host
+      labelZh: PG 主机
       label:
-        en: MariaDB Host
-        zh: MariaDB 主机
-        zh-Hant: MariaDB 主機
-        ja: MariaDB ホスト
-        ko: MariaDB 호스트
-        ru: Хост MariaDB
-        ms: Hos MariaDB
-        pt-br: Host MariaDB
+        en: PostgreSQL Host
+        zh: PG 主机
+        zh-Hant: PG 主機
+        ja: PG ホスト
+        ko: PG 호스트
+        ru: Хост PostgreSQL
+        ms: Hos PostgreSQL
+        pt-br: Host PostgreSQL
       required: true
       rule: paramCommon
       type: text
-    - default: 3306
+    - default: 5432
       edit: true
-      envKey: DB_PORT
-      labelEn: MariaDB Port
-      labelZh: MariaDB 端口
+      envKey: PG_PORT
+      labelEn: PostgreSQL Port
+      labelZh: PG 端口
       label:
-        en: MariaDB Port
-        zh: MariaDB 端口
-        zh-Hant: MariaDB 連接埠
-        ja: MariaDB ポート
-        ko: MariaDB 포트
-        ru: Порт MariaDB
-        ms: Port MariaDB
-        pt-br: Porta MariaDB
+        en: PostgreSQL Port
+        zh: PG 端口
+        zh-Hant: PG 連接埠
+        ja: PG ポート
+        ko: PG 포트
+        ru: Порт PostgreSQL
+        ms: Port PostgreSQL
+        pt-br: Porta PostgreSQL
       required: true
       rule: paramPort
       type: number
-    - default: root
+    - default: user_wEJsSp
       edit: true
-      envKey: DB_USER
-      labelEn: DB User
-      labelZh: DB 用户名
+      envKey: PG_USER
+      labelEn: PG User
+      labelZh: PG 用户名
       label:
-        en: DB User
-        zh: DB 用户名
-        zh-Hant: DB 使用者名稱
-        ja: DB ユーザー名
-        ko: DB 사용자
-        ru: Пользователь БД
-        ms: Pengguna DB
-        pt-br: Usuário DB
+        en: PG User
+        zh: PG 用户名
+        zh-Hant: PG 使用者名稱
+        ja: PG ユーザー名
+        ko: PG 사용자
+        ru: Пользователь PG
+        ms: Pengguna PG
+        pt-br: Usuário PG
       required: true
       rule: paramCommon
       type: text
-    - default: 1panel123
+    - default: password_tyrcEJ
       edit: true
-      envKey: DB_PASSWORD
-      labelEn: DB Password
-      labelZh: DB 密码
+      envKey: PG_PASSWORD
+      labelEn: PG Password
+      labelZh: PG 密码
       label:
-        en: DB Password
-        zh: DB 密码
-        zh-Hant: DB 密碼
-        ja: DB パスワード
-        ko: DB 비밀번호
-        ru: Пароль БД
-        ms: Kata laluan DB
-        pt-br: Senha DB
+        en: PG Password
+        zh: PG 密码
+        zh-Hant: PG 密碼
+        ja: PG パスワード
+        ko: PG 비밀번호
+        ru: Пароль PG
+        ms: Kata laluan PG
+        pt-br: Senha PG
       required: true
       rule: paramComplexity
       type: password
-    # ---- DB 名：new-api 会自动建表，建议手动 pre-create 一个空库并赋权 ----
+    # ---- PG 库名：new-api 启动时会自动建表，建议手动 pre-create 空库并赋权 ----
     - default: newapi
       edit: true
-      envKey: DB_NAME
-      labelEn: DB Name
-      labelZh: DB 库名
+      envKey: PG_DATABASE
+      labelEn: PG Database
+      labelZh: PG 库名
       label:
-        en: DB Name
-        zh: DB 库名
-        zh-Hant: DB 資料庫名稱
-        ja: DB 名前
-        ko: DB 이름
-        ru: Имя БД
-        ms: Nama DB
-        pt-br: Nome do BD
+        en: PG Database
+        zh: PG 库名
+        zh-Hant: PG 資料庫名稱
+        ja: PG データベース名
+        ko: PG 데이터베이스
+        ru: База данных PG
+        ms: Pangkalan Data PG
+        pt-br: Banco de dados PG
       required: true
       rule: paramCommon
       type: text

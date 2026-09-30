@@ -7,10 +7,10 @@ networks:
 # 启动入口：/new-api --log-dir /app/logs（见上游 Dockerfile）
 # 默认 web 端口：3000（容器内固定）
 #
-# 服务编排：仅 new-api 一个服务，依赖外部 1Panel-mariadb-* 与 1Panel-redis-*
+# 服务编排：仅 new-api 一个服务，依赖外部 1Panel-postgresql-* 与 1Panel-redis-*
 # （容器名由 1Panel 自动生成：[A-Za-z0-9]{4} 后缀，没有下划线/短横线/小写）
-# 上游 DSN 格式（Go MySQL driver）：
-#   SQL_DSN=<user>:<password>@tcp(<host>:<port>)/<db>
+# 上游 DSN 格式（PG 标准 URL，参 AGENTS.md dendrite 复盘拆分方案）：
+#   SQL_DSN=postgresql://<user>:<password>@<host>:<port>/<database>
 # Redis 格式：
 #   REDIS_CONN_STRING=redis://:<password>@<host>:<port>
 #
@@ -34,7 +34,7 @@ services:
       - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3000
     environment:
       - TZ=${TZ}
-      - SQL_DSN=${DB_USER}:${DB_PASSWORD}@tcp(${DB_HOST}:${DB_PORT})/${DB_NAME}
+      - SQL_DSN=postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DATABASE}
       - REDIS_CONN_STRING=redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
       - ERROR_LOG_ENABLED=${ERROR_LOG_ENABLED}
       - BATCH_UPDATE_ENABLED=${BATCH_UPDATE_ENABLED}
