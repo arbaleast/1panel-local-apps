@@ -95,20 +95,20 @@ additionalProperties:
     #   并在容器详情页复制其容器名。本应用与 1Panel-postgresql 共享同一外部网络
     #   1panel-network，按容器名直连，不走端口映射。
     # ----------------------------------------------------------------------------
-    - default: 1Panel-postgresql-XXXX
+    - default: 1Panel-postgresql-ZU4y
       edit: true
       envKey: POSTGRES_HOST
       labelEn: PostgreSQL Host
       labelZh: PostgreSQL 主机
       label:
-        en: PostgreSQL host (1Panel-postgresql container name, e.g. 1Panel-postgresql-ZU4y)
-        zh: PostgreSQL 主机（1Panel-postgresql 容器名，如 1Panel-postgresql-ZU4y）
-        zh-Hant: PostgreSQL 主機（1Panel-postgresql 容器名，如 1Panel-postgresql-ZU4y）
-        ja: "PostgreSQL ホスト（1Panel-postgresql コンテナ名、例: 1Panel-postgresql-ZU4y）"
-        ko: "PostgreSQL 호스트 (1Panel-postgresql 컨테이너 이름, 예: 1Panel-postgresql-ZU4y)"
-        ru: Хост PostgreSQL (имя контейнера 1Panel-postgresql, напр. 1Panel-postgresql-ZU4y)
-        ms: Hos PostgreSQL (nama bekas 1Panel-postgresql, cth. 1Panel-postgresql-ZU4y)
-        pt-br: Host PostgreSQL (nome do contêiner 1Panel-postgresql, ex. 1Panel-postgresql-ZU4y)
+        en: PostgreSQL host (prefilled 1Panel-postgresql container name - verify)
+        zh: PostgreSQL 主机（已预填 1Panel-postgresql 容器名 — 请核对）
+        zh-Hant: PostgreSQL 主機（已預填 1Panel-postgresql 容器名 — 請核對）
+        ja: PostgreSQL ホスト（1Panel-postgresql コンテナ名をプレフィル — 確認してください）
+        ko: PostgreSQL 호스트 (1Panel-postgresql 컨테이너 이름 미리 채움 — 확인하세요)
+        ru: Хост PostgreSQL (имя контейнера 1Panel-postgresql предзаполнено — проверьте)
+        ms: Hos PostgreSQL (nama bekas 1Panel-postgresql telah diisi awal — sahkan)
+        pt-br: Host PostgreSQL (nome do contêiner 1Panel-postgresql pré-preenchido — verifique)
       required: true
       rule: paramCommon
       type: text
@@ -135,48 +135,59 @@ additionalProperties:
     # ----------------------------------------------------------------------------
     # PostgreSQL 用户名（必填；填 1Panel-postgresql 生成的随机用户名，如 user_wEJsSp）
     # ----------------------------------------------------------------------------
-    - default: ""
+    - default: user_wEJsSp
       edit: true
       envKey: POSTGRES_USER
       labelEn: PostgreSQL User
       labelZh: PostgreSQL 用户名
       label:
-        en: PostgreSQL user (1Panel random user, e.g. user_wEJsSp)
-        zh: PostgreSQL 用户名（1Panel 随机用户，如 user_wEJsSp）
-        zh-Hant: PostgreSQL 使用者名稱（1Panel 隨機使用者，如 user_wEJsSp）
-        ja: "PostgreSQL ユーザー名（1Panel ランダムユーザー、例: user_wEJsSp）"
-        ko: "PostgreSQL 사용자 이름 (1Panel 임의 사용자, 예: user_wEJsSp)"
-        ru: Пользователь PostgreSQL (случайный пользователь 1Panel, напр. user_wEJsSp)
-        ms: Nama pengguna PostgreSQL (pengguna rawak 1Panel, cth. user_wEJsSp)
-        pt-br: Usuário PostgreSQL (usuário aleatório do 1Panel, ex. user_wEJsSp)
+        en: PostgreSQL user (prefilled 1Panel-postgresql random user - verify)
+        zh: PostgreSQL 用户名（已预填 1Panel-postgresql 随机用户 — 请核对）
+        zh-Hant: PostgreSQL 使用者名稱（已預填 1Panel-postgresql 隨機使用者 — 請核對）
+        ja: PostgreSQL ユーザー名（1Panel-postgresql ランダムユーザーをプレフィル — 確認してください）
+        ko: PostgreSQL 사용자 이름 (1Panel-postgresql 임의 사용자를 미리 채움 — 확인하세요)
+        ru: Пользователь PostgreSQL (случайный пользователь 1Panel-postgresql предзаполнен — проверьте)
+        ms: Nama pengguna PostgreSQL (pengguna rawak 1Panel-postgresql telah diisi awal — sahkan)
+        pt-br: Usuário PostgreSQL (usuário aleatório do 1Panel-postgresql pré-preenchido — verifique)
       required: true
       rule: paramCommon
       type: text
     # ----------------------------------------------------------------------------
-    # PostgreSQL 密码（必填；填 1Panel-postgresql 生成的密码；复杂度校验）
+    # PostgreSQL 密码（必填；已预填 1Panel-postgresql 的密码）
+    #
+    # 为什么不加 rule:
+    #   本字段的值由 1Panel-postgresql 生成，**不是用户自己选的**。1Panel 的
+    #   paramComplexity 要求 8-32 位且通常强制含数字 / 特殊字符，而 1Panel
+    #   自动生成的形如 password_tyrcEJ（纯字母 + 下划线，无数字）的口令
+    #   会被前端正则拒掉 → 用户根本无法提交表单，只能被迫改成别的密码 →
+    #   连不上自己的库。故与其他「用户自选密钥」字段（JWT_SECRET /
+    #   SETUP_BOOTSTRAP_TOKEN 保留 paramComplexity）区别对待：
+    #   这里只靠 required: true 保证非空，type: password 保证输入框掩码，
+    #   不施加复杂度策略。同本仓 marginalia 的 POSTGRES_PASSWORD 写法。
     # ----------------------------------------------------------------------------
-    - default: ""
+    - default: password_tyrcEJ
       edit: true
       envKey: POSTGRES_PASSWORD
       labelEn: PostgreSQL Password
       labelZh: PostgreSQL 密码
       label:
-        en: PostgreSQL password (from 1Panel-postgresql detail page)
-        zh: PostgreSQL 密码（取自 1Panel-postgresql 容器详情页）
-        zh-Hant: PostgreSQL 密碼（取自 1Panel-postgresql 容器詳情頁）
-        ja: PostgreSQL パスワード（1Panel-postgresql コンテナ詳細ページから）
-        ko: PostgreSQL 비밀번호 (1Panel-postgresql 컨테이너 상세 페이지에서)
-        ru: Пароль PostgreSQL (со страницы контейнера 1Panel-postgresql)
-        ms: Kata laluan PostgreSQL (daripada halaman bekas 1Panel-postgresql)
-        pt-br: Senha PostgreSQL (da página do contêiner 1Panel-postgresql)
+        en: PostgreSQL password (prefilled from 1Panel-postgresql - change if you rotated it)
+        zh: PostgreSQL 密码（已预填 1Panel-postgresql 密码 — 若已轮换请修改）
+        zh-Hant: PostgreSQL 密碼（已預填 1Panel-postgresql 密碼 — 若已輪換請修改）
+        ja: PostgreSQL パスワード（1Panel-postgresql の値をプレフィル — 変更済みなら修正）
+        ko: PostgreSQL 비밀번호 (1Panel-postgresql 값 미리 채움 — 변경했다면 수정)
+        ru: Пароль PostgreSQL (предзаполнено из 1Panel-postgresql — измените, если ротировали)
+        ms: Kata laluan PostgreSQL (diisi awal daripada 1Panel-postgresql — ubah jika telah diputar)
+        pt-br: Senha PostgreSQL (pré-preenchido do 1Panel-postgresql — altere se já rotacionou)
       required: true
-      rule: paramComplexity
       type: password
     # ----------------------------------------------------------------------------
-    # PostgreSQL 数据库名（必填；填 1Panel-postgresql 生成的随机 DB 名，如 postgres_wEJsSp）
-    #   也可以在 1Panel-postgresql 详情页用 Navicat / psql 登入后预创建：
-    #     CREATE DATABASE bookorbit;
-    #   然后填入此字段。BookOrbit 启动时会自动跑迁移建表。
+    # PostgreSQL 数据库名（必填；**留空需部署时手填**）
+    #   DSN 中不含路径段，故本仓无法预填。两种填法：
+    #     a) 填 1Panel-postgresql 安装时生成的随机库名（形如 postgres_XXXXXX）
+    #     b) 先用 Navicat / psql 登入 1Panel-postgresql 预创建专用库，再填其名字：
+    #        CREATE DATABASE bookorbit;
+    #   BookOrbit 启动时会自动在该库跑迁移建表。
     # ----------------------------------------------------------------------------
     - default: ""
       edit: true
@@ -184,76 +195,92 @@ additionalProperties:
       labelEn: PostgreSQL Database
       labelZh: PostgreSQL 数据库名
       label:
-        en: PostgreSQL database name (1Panel random, e.g. postgres_wEJsSp; or pre-create CREATE DATABASE bookorbit;)
-        zh: PostgreSQL 数据库名（1Panel 随机，如 postgres_wEJsSp；或预创建 CREATE DATABASE bookorbit;）
-        zh-Hant: PostgreSQL 資料庫名（1Panel 隨機，如 postgres_wEJsSp；或預建立 CREATE DATABASE bookorbit;）
-        ja: "PostgreSQL データベース名（1Panel ランダム、例: postgres_wEJsSp；または事前作成 CREATE DATABASE bookorbit;）"
-        ko: "PostgreSQL 데이터베이스 이름 (1Panel 임의, 예: postgres_wEJsSp; 또는 사전 생성 CREATE DATABASE bookorbit;)"
-        ru: "Имя базы PostgreSQL (случайное 1Panel, напр. postgres_wEJsSp; либо предварительно CREATE DATABASE bookorbit;)"
-        ms: "Nama pangkalan data PostgreSQL (1Panel rawak, cth. postgres_wEJsSp; atau pra-wujudkan CREATE DATABASE bookorbit;)"
-        pt-br: "Nome do banco PostgreSQL (1Panel aleatório, ex. postgres_wEJsSp; ou pré-criar CREATE DATABASE bookorbit;)"
+        en: PostgreSQL database name (REQUIRED, left blank on purpose - fill at deploy time)
+        zh: PostgreSQL 数据库名（必填，故意留空 — 部署时手填）
+        zh-Hant: PostgreSQL 資料庫名（必填，故意留空 — 部署時手填）
+        ja: PostgreSQL データベース名（必須，故意に空欄 — 配置時に記入）
+        ko: PostgreSQL 데이터베이스 이름 (필수, 의도적으로 비워둠 — 배포 시 입력)
+        ru: Имя базы PostgreSQL (обязательно, намеренно пусто — заполните при установке)
+        ms: Nama pangkalan data PostgreSQL (wajib, sengaja kosong — isi semasa pemasangan)
+        pt-br: Nome do banco PostgreSQL (obrigatório, vazio de propósito — preencha na instalação)
       required: true
       rule: paramCommon
       type: text
     # ----------------------------------------------------------------------------
-    # JWT 签名密钥（必填，复杂度校验）
+    # JWT 签名密钥（**可留空**；留空则由应用自行生成 / 降级）
+    #
+    # 为什么不用 paramComplexity:
+    #   上游文档推荐 `openssl rand -hex 32` → 64 个十六进制字符，而 1Panel 的
+    #   paramComplexity 常规约束为 8-32 位，用户照文档生成的合法密钥会被前端
+    #   正则拒掉。base64 形式（+ / =）更是必然被拒。故不施加长度 / 字符集策略，
+    #   只靠 type: password 掩码，任意非空字符串均可提交。
     # ----------------------------------------------------------------------------
     - default: ""
       edit: true
       envKey: JWT_SECRET
-      labelEn: JWT Secret
-      labelZh: JWT 签名密钥
+      labelEn: JWT Secret (optional)
+      labelZh: JWT 签名密钥（可空）
       label:
-        en: JWT Secret
-        zh: JWT 签名密钥
-        zh-Hant: JWT 簽名密鑰
-        ja: JWT 署名鍵
-        ko: JWT 서명 키
-        ru: Секрет подписи JWT
-        ms: Kunci tandatangan JWT
-        pt-br: Chave de assinatura JWT
-      required: true
-      rule: paramComplexity
+        en: JWT Secret (optional - leave blank to auto-generate)
+        zh: JWT 签名密钥（可空 — 留空则自动生成）
+        zh-Hant: JWT 簽名密鑰（可空 — 留空則自動生成）
+        ja: JWT 署名鍵（任意 — 空欄なら自動生成）
+        ko: JWT 서명 키 (선택 — 비워두면 자동 생성)
+        ru: Секрет подписи JWT (необязательно — пусто = сгенерируется автоматически)
+        ms: Kunci tandatangan JWT (pilihan — kosong = dijana automatik)
+        pt-br: Chave de assinatura JWT (opcional — vazio = gerada automaticamente)
+      required: false
       type: password
     # ----------------------------------------------------------------------------
-    # 首次安装一次性引导 Token（必填，复杂度校验；与上游 /auth/setup 配合）
+    # 首次安装一次性引导 Token（**可留空**；与上游 /auth/setup 配合）
+    #
+    # 留空的后果：首次访问 /auth/setup 时不需要 Token 即可创建管理员。
+    # 公网部署建议填写，避免任何人都能抢先注册管理员。
     # ----------------------------------------------------------------------------
     - default: ""
       edit: true
       envKey: SETUP_BOOTSTRAP_TOKEN
-      labelEn: Setup Bootstrap Token
-      labelZh: 安装引导 Token
+      labelEn: Setup Token (optional)
+      labelZh: 安装引导 Token（可空）
       label:
-        en: Setup Bootstrap Token
-        zh: 安装引导 Token
-        zh-Hant: 安裝引導 Token
-        ja: セットアップ Bootstrap トークン
-        ko: 설치 부트스트랩 토큰
-        ru: Токен первоначальной настройки
-        ms: Token Bootstrap Pemasangan
-        pt-br: Token de bootstrap de instalação
-      required: true
-      rule: paramComplexity
+        en: Setup Token (optional - blank = anyone can claim first admin)
+        zh: 安装引导 Token（可空 — 留空则任何人都能抢先建管理员）
+        zh-Hant: 安裝引導 Token（可空 — 留空則任何人都能搶先建管理員）
+        ja: セットアップ Token（任意 — 空欄なら誰でも最初の管理者を作成可）
+        ko: 설치 Token (선택 — 비워두면 누구나 첫 관리자 계정 생성 가능)
+        ru: Токен настройки (необязательно — пусто = первый админ доступен любому)
+        ms: Token Setup (pilihan — kosong = sesiapa boleh jadi admin pertama)
+        pt-br: Token de configuração (opcional — vazio = qualquer um pode criar o 1º admin)
+      required: false
       type: password
     # ----------------------------------------------------------------------------
-    # 外部访问 URL（必填，影响 Kobo 同步端点与邮件链接）
+    # 外部访问 URL（**可留空**；影响 Kobo 同步端点回调与邮件内链接）
+    #
+    # 为什么不用 paramCommon:
+    #   1Panel 的 checkParamCommon 正则是 `^[a-zA-Z0-9]{1}[a-zA-Z0-9._-]{1,63}$`
+    #   （前端报错文案即「支持英文、数字、.-和_,长度2-64」）。而 URL 形如
+    #   https://books.example.com 含 `:` `/`，**必被正则拒掉**。1Panel v1 的
+    #   paramHttp 规则不在本仓 FORMFIELD_RULE_WHITELIST 内，无法使用。
+    #   故不设 rule，任意 URL 均可提交。
+    #
+    # 留空的后果：Kobo / KOReader 同步端点回调、Send-to-Kindle 邮件内链接
+    # 会缺少正确基址而失效，故公网部署仍建议填写。
     # ----------------------------------------------------------------------------
-    - default: http://your-server-ip:48300
+    - default: ""
       edit: true
       envKey: APP_URL
-      labelEn: External App URL
-      labelZh: 外部访问 URL
+      labelEn: External URL (optional)
+      labelZh: 外部访问 URL（可空）
       label:
-        en: External App URL
-        zh: 外部访问 URL
-        zh-Hant: 外部存取 URL
-        ja: 外部アクセス URL
-        ko: 외부 액세스 URL
-        ru: Внешний URL приложения
-        ms: URL Akses Luaran
-        pt-br: URL externo do app
-      required: true
-      rule: paramCommon
+        en: External URL (optional - needed for Kobo sync and email links)
+        zh: 外部访问 URL（可空 — Kobo 同步与邮件链接需用）
+        zh-Hant: 外部存取 URL（可空 — Kobo 同步與郵件連結需用）
+        ja: 外部 URL（任意 — Kobo 同期とメールリンクに必要）
+        ko: 외부 URL (선택 — Kobo 동기화 및 이메일 링크에 필요)
+        ru: Внешний URL (необязательно — нужен для синхронизации Kobo и ссылок в письмах)
+        ms: URL Luaran (pilihan — diperlukan untuk penyegerakan Kobo dan pautan e-mel)
+        pt-br: URL externo (opcional — necessário para sincronização Kobo e links de e-mail)
+      required: false
       type: text
     # ----------------------------------------------------------------------------
     # 容器进程 UID（与宿主机挂载目录属主一致，常见 NAS 用户为 1000）
@@ -316,22 +343,26 @@ additionalProperties:
       rule: paramCommon
       type: text
     # ----------------------------------------------------------------------------
-    # 时区
+    # 时区（IANA 名称，如 Asia/Shanghai / America/New_York / UTC）
+    #
+    # 为什么不用 paramCommon:
+    #   IANA 时区名统一为 `区域/城市` 形式，含 `/`，而 checkParamCommon 的
+    #   正则 `[a-zA-Z0-9._-]` 不含 `/` → 默认值 Asia/Shanghai 会被前端拒掉。
+    #   paramSelect 需要预置 values 枚举（数百个时区），成本过高。故不设 rule。
     # ----------------------------------------------------------------------------
     - default: Asia/Shanghai
       edit: true
       envKey: TZ
-      labelEn: Timezone
-      labelZh: 时区
+      labelEn: Timezone (IANA name)
+      labelZh: 时区（IANA 名称）
       label:
-        en: Timezone
-        zh: 时区
-        zh-Hant: 時區
-        ja: タイムゾーン
-        ko: 시간대
-        ru: Часовой пояс
-        ms: Zon waktu
-        pt-br: Fuso horário
+        en: Timezone (IANA name, e.g. Asia/Shanghai or UTC)
+        zh: 时区（IANA 名称，如 Asia/Shanghai 或 UTC）
+        zh-Hant: 時區（IANA 名稱，如 Asia/Shanghai 或 UTC）
+        ja: "タイムゾーン（IANA 名、例: Asia/Shanghai / UTC）"
+        ko: "시간대 (IANA 이름, 예: Asia/Shanghai 또는 UTC)"
+        ru: Часовой пояс (имя IANA, напр. Asia/Shanghai или UTC)
+        ms: Zon masa (nama IANA, cth. Asia/Shanghai atau UTC)
+        pt-br: Fuso horário (nome IANA, ex. Asia/Shanghai ou UTC)
       required: false
-      rule: paramCommon
       type: text

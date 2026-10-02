@@ -61,11 +61,17 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required, please set the 1Panel-postgresql password in 1Panel app form}
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required, please set the 1Panel-postgresql database name in 1Panel app form}
       # 不注入 DATABASE_URL —— 上游 compose 端 DATABASE_URL 默认空，应用读 POSTGRES_* 各字段
-      # 应用密钥
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required, please set it in 1Panel app form}
-      SETUP_BOOTSTRAP_TOKEN: ${SETUP_BOOTSTRAP_TOKEN:?SETUP_BOOTSTRAP_TOKEN is required, please set it in 1Panel app form}
-      # 外部访问 URL（影响 Kobo 端点 / 邮件链接）
-      APP_URL: ${APP_URL:?APP_URL is required, please set it in 1Panel app form}
+      # 应用密钥：冒号语法对齐上游
+      #   上游《Secrets from files》原文：docker-compose.yml marks several keys as
+      #   required... Removing one of those lines entirely fails before the container
+      #   starts. An empty value is accepted.
+      #     ${VAR?msg}   未设置 → 报错；空值 → 放行（= 上游语义，表单可留空）
+      #     ${VAR:?msg}  未设置 或 空值 → 报错（比上游严，会卡住「可空」字段）
+      # 故这三个用 `?` 而非 `:?`；留空时由应用自行生成 / 降级。
+      JWT_SECRET: ${JWT_SECRET?JWT_SECRET is unset; blank it for auto-generation, or set your own}
+      SETUP_BOOTSTRAP_TOKEN: ${SETUP_BOOTSTRAP_TOKEN?SETUP_BOOTSTRAP_TOKEN is unset; blank it to skip the setup prompt}
+      # 外部访问 URL（可空；影响 Kobo 端点回调与邮件内链接）
+      APP_URL: ${APP_URL?APP_URL is unset; blank it if not behind a reverse proxy}
       # 时区
       TZ: ${TZ}
       # 容器进程 UID/GID（NAS 套件常需对齐宿主机 books 目录属主）

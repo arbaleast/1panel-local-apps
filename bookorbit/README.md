@@ -80,9 +80,9 @@ BookOrbit 上游强制要求 4 个 PG 扩展：`uuid-ossp` / `pg_trgm` / `unacce
    - `POSTGRES_USER`：填 1Panel-postgresql 生成的随机用户名（如 `user_wEJsSp`）
    - `POSTGRES_PASSWORD`：填 1Panel-postgresql 生成的密码
    - `POSTGRES_DB`：填 1Panel-postgresql 生成的数据库名（如 `postgres_wEJsSp`），或预创建的 `bookorbit`
-   - `JWT_SECRET`：建议 `openssl rand -hex 32`
-   - `SETUP_BOOTSTRAP_TOKEN`：首次安装一次性引导 Token，建议 `openssl rand -hex 16`
-   - `APP_URL`：外部访问 URL，例如 `http://your-server-ip:48300`（反向代理后改为 `https://books.example.com`）
+   - `JWT_SECRET`：**可留空**（留空由应用自动生成）；如要自定，建议 `openssl rand -hex 32`
+   - `SETUP_BOOTSTRAP_TOKEN`：**可留空**（留空则 `/auth/setup` 无需 Token 即可建管理员，公网部署务必填写）
+   - `APP_URL`：**可留空**（留空则 Kobo 端点回调与邮件内链接缺基址而失效）；公网部署须填 `https://books.example.com`
 4. 主机侧 HTTP 端口默认 `48300`（容器内 `3000`）
 5. **挂载目录属主**：若宿主机 `./data/books` 不属于 `1000:1000`（NAS 套件常见），在主机侧执行：
    ```bash
@@ -91,7 +91,7 @@ BookOrbit 上游强制要求 4 个 PG 扩展：`uuid-ossp` / `pg_trgm` / `unacce
    否则首次扫描会因 `EACCES` 找不到书
 6. 把你的书（EPUB / PDF / CBZ / M4B …）放入 `bookorbit/3.2.0/data/books/`
 7. 提交安装
-8. 等 ~30s，浏览器访问 `http://<1Panel 主机 IP>:48300`，使用上面设置的 `SETUP_BOOTSTRAP_TOKEN` 完成管理员账号创建
+8. 等 ~30s，浏览器访问 `http://<1Panel 主机 IP>:48300`，用 `SETUP_BOOTSTRAP_TOKEN` 完成管理员账号创建（该字段留空则直接进创建页）
 
 ## 配置
 
@@ -102,18 +102,20 @@ BookOrbit 上游强制要求 4 个 PG 扩展：`uuid-ossp` / `pg_trgm` / `unacce
 | 应用镜像 | `ghcr.io/bookorbit/bookorbit` | 是 | GHCR 官方多架构镜像 |
 | 应用版本 | `3.2.0` | 是 | 上游 GitHub release tag（如未来要跟随上游 `v3.2.1` release，先确认 GHCR 是否真的推了 `3.2.1` tag） |
 | HTTP 端口 | `48300` | 是 | 主机侧端口（容器内固定 `3000`） |
-| PostgreSQL 主机 | `1Panel-postgresql-XXXX` | 是 | **填 1Panel-postgresql 容器名**（如 `1Panel-postgresql-ZU4y`），不是 LAN IP。两容器共享 `1panel-network` 外部网络，按容器名互通 |
+| PostgreSQL 主机 | `1Panel-postgresql-ZU4y` | 是 | **填 1Panel-postgresql 容器名**，不是 LAN IP。两容器共享 `1panel-network` 外部网络，按容器名互通 |
 | PostgreSQL 端口 | `5432` | 是 | 1Panel-postgresql 监听端口（除非安装时改了，否则 `5432`） |
-| PostgreSQL 用户名 | （空） | 是 | 填 1Panel-postgresql 详情页显示的随机用户名（如 `user_wEJsSp`） |
-| PostgreSQL 密码 | （空） | 是 | 填 1Panel-postgresql 详情页显示的随机密码 |
-| PostgreSQL 数据库名 | （空） | 是 | 填 1Panel-postgresql 详情页显示的随机库名（如 `postgres_wEJsSp`），或预创建的 `bookorbit` |
-| JWT Secret | （空） | 是 | **首次部署前必须修改**；建议 `openssl rand -hex 32` |
-| Setup Bootstrap Token | （空） | 是 | **首次部署前必须修改**；首次登录时使用，建议 `openssl rand -hex 16` |
-| 外部访问 URL | `http://your-server-ip:48300` | 是 | 公网部署务必改为反代域名（如 `https://books.example.com`），影响 Kobo 端点回调与邮件链接 |
+| PostgreSQL 用户名 | `user_wEJsSp` | 是 | 已预填 1Panel-postgresql 随机用户名，部署前核对 |
+| PostgreSQL 密码 | `password_tyrcEJ` | 是 | 已预填 1Panel-postgresql 密码；若已轮换请改 |
+| PostgreSQL 数据库名 | （空） | 是 | **故意留空，部署时手填**：填 1Panel-postgresql 的随机库名，或先 `CREATE DATABASE bookorbit;` 再填 `bookorbit` |
+| JWT Secret | （空） | 否 | 留空由应用自动生成；如要自定建议 `openssl rand -hex 32` |
+| Setup Token | （空） | 否 | 留空则 `/auth/setup` 无需 Token 即可建管理员；**公网部署务必填写**（否则任何人可抢先注册） |
+| 外部访问 URL | （空） | 否 | 留空则 Kobo 端点回调与邮件内链接失效；公网部署须填反代域名（如 `https://books.example.com`） |
 | Process UID | `1000` | 否 | 与宿主机 `./data/books` 属主一致，NAS 用户常需调整 |
 | Process GID | `1000` | 否 | 同上 |
 | Node.js 堆内存 (MB) | `auto` | 否 | 250K+ 书的库建议显式设 `4096` 或 `8192` 防 OOM；`auto` = 容器自适应 |
-| 时区 | `Asia/Shanghai` | 否 | 容器时区 |
+| 时区 | `Asia/Shanghai` | 否 | IANA 名称（`区域/城市`），如 `Asia/Shanghai` / `UTC` |
+
+> **为什么 `APP_URL` / `TZ` 等字段没有校验规则？** 1Panel 的 `paramCommon` 正则是 `^[a-zA-Z0-9]{1}[a-zA-Z0-9._-]{1,63}$`，前端报错文案即「支持英文、数字、.-和_,长度2-64」。它**不含** `:` `/` `@`，因此 URL（`https://a.b`）、IANA 时区（`Asia/Shanghai`）会被直接拒掉。1Panel v1 的 `paramHttp` 规则不在本仓 `FORMFIELD_RULE_WHITELIST` 内无法使用，故这类字段一律**不设 `rule`**，靠 `required` 控制是否必填。同理 `JWT_SECRET` 不用 `paramComplexity`——上游推荐的 `openssl rand -hex 32` 有 64 个字符，超出 complexity 的常见 8-32 位限制，照文档生成反而会被拒。
 
 ### 高级配置（手动）
 
@@ -241,8 +243,9 @@ BookOrbit v2.10+ 支持 Kokoro FastAPI TTS。上游提供 opt-in `tts` profile�
 - **扫描完成但找不到书**：
   1. 检查 `PUID`/`PGID` 是否与 `./data/books` 属主一致（`ls -ldn ./data/books`）
   2. 不一致就 `chown -R <uid>:<gid> ./data/books`
-- **登录页提示「Invalid setup token」**：1Panel 表单中 `SETUP_BOOTSTRAP_TOKEN` 被 trim（含空格/换行），重新填一次
-- **`POSTGRES_* is required` / `JWT_SECRET is required` / `SETUP_BOOTSTRAP_TOKEN is required`**：compose 强校验未读到值，重新填表单调起
+- **登录页提示「Invalid setup token」**：`SETUP_BOOTSTRAP_TOKEN` 被 trim（含空格/换行），重新填一次；或干脆留空（此时该字段不参与校验）
+- **表单提交报「支持英文、数字、.-和_,长度2-64」**：这是 1Panel `paramCommon` 的报错文案。该正则不含 `:` `/` `@`，URL 与 IANA 时区无法通过。本仓已对 `APP_URL` / `时区` / `JWT_SECRET` 等字段去掉 `rule`，若你自行新增了带 URL 形态的字段，请同样**不要**配 `paramCommon`
+- **`POSTGRES_* is required`**：compose 强校验未读到值，重新填表单后点「创建」（库名 `POSTGRES_DB` 留空必然报错，需手填）
 - **`EACCES` / `permission denied`**：见上文「挂载目录属主」
 - **iOS / Apple Watch App 连不上自托管服务器**：检查反代后 `APP_URL` 是否已更新为公网域名，且 iOS 设备能访问该域名（HTTPS + 受信证书）
 
