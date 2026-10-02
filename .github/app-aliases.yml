@@ -19,6 +19,10 @@ aliases:
   moviepilot:
     dir: moviepilot
     desc: 影视自动化
+  music-tag-web:
+    desc: 音乐标签刮削与媒体库管理 Web 应用
+  navi-homepage:
+    desc: 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端）
   newapi:
     dir: newapi
     desc: AI/LLM API 聚合网关

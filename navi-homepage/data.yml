@@ -1,0 +1,28 @@
+additionalProperties:
+  key: navi-homepage
+  name: Navi Homepage
+  tags:
+    - Navigation
+    - Home
+    - Dashboard
+    - Bookmark
+  shortDescZh: 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端）
+  shortDescEn: Lightweight personal homepage with visual editor and zero-dep Node backend
+  description:
+    zh: 'Navi Homepage 是 DamiSunshine 开发的轻量级个人导航面板：前端可视化编辑、零依赖 Node 后端（仅用 Node 内置模块，无 npm install）的 All-in-One Docker 镜像。卡片拖拽排序、拼音搜索、Ctrl+K 命令面板、卡片标签跨分组检索、内外网双地址自动切换、Docker 服务发现、227 个内置图标离线可用、首页系统状态板、含图片的 zip 备份、访问密码保护。可作为内网 / NAS 的统一入口。'
+    en: 'Navi Homepage is a lightweight personal dashboard by DamiSunshine: an all-in-one Docker image with a visual frontend editor and a zero-dependency Node backend (built only on Node built-ins, no npm install). Drag-and-drop sorting, pinyin search, Ctrl/⌘+K command palette, cross-group tag lookup, automatic LAN/WAN address switching, Docker service discovery, 227 built-in offline icons, home status board, image-inclusive zip backup, and optional password protection. A single entry point for LAN/NAS services.'
+    zh-Hant: 'Navi Homepage 是 DamiSunshine 開發的輕量級個人導航面板：前端可視化編輯、零依賴 Node 後端（僅用 Node 內建模組，無 npm install）的 All-in-One Docker 映像。卡片拖曳排序、拼音搜尋、Ctrl+K 指令面板、卡片標籤跨分組檢索、內外網雙地址自動切換、Docker 服務探索、227 個內建圖示離線可用、首頁系統狀態板、含圖片的 zip 備份、訪問密碼保護。可作為內網 / NAS 的統一入口。'
+    ja: 'Navi Homepage は DamiSunshine が開発した軽量な個人ダッシュボードです。ビジュアル編集可能なフロントエンドと、ゼロ依存の Node バックエンド（Node の組み込みモジュールだけを使い、npm install 不要）を統合した All-in-One Docker イメージ。カードのドラッグ＆ドロップ並べ替え、ピンイン検索、Ctrl/⌘+K コマンドパレット、カードタグのグループ横断検索、LAN/WAN アドレス自動切替、Docker サービス検出、227 個の組み込みオフラインアイコン、ホームステータスボード、画像を含む zip バックアップ、オプションのパスワード保護を備えます。LAN/NAS の単一エントリーポイントとして機能します。'
+    ko: 'Navi Homepage는 DamiSunshine이 개발한 경량 개인 대시보드입니다. 시각적 편집이 가능한 프런트엔드와 제로 의존성 Node 백엔드(Node 내장 모듈만 사용, npm install 불필요)를 결합한 All-in-One Docker 이미지. 카드 드래그 정렬, 병음 검색, Ctrl/⌘+K 명령 팔레트, 카드 태그 그룹 간 검색, LAN/WAN 주소 자동 전환, Docker 서비스 검색, 227개 내장 오프라인 아이콘, 홈 상태 보드, 이미지 포함 zip 백업, 선택적 비밀번호 보호를 제공합니다. LAN/NAS의 단일 진입점 역할을 합니다.'
+    ru: 'Navi Homepage — лёгкая персональная панель от DamiSunshine: монолитный Docker-образ с визуальным редактором во фронтенде и Node-бэкендом без внешних зависимостей (только встроенные модули Node, npm install не требуется). Перетаскивание карточек, поиск по пиньиню, командная палитра Ctrl/⌘+K, поиск по тегам карточек между группами, автопереключение LAN/WAN адресов, обнаружение Docker-сервисов, 227 встроенных офлайн-иконок, панель состояния на главной, zip-бэкап с изображениями, опциональная защита паролем. Единая точка входа для LAN/NAS.'
+    ms: 'Navi Homepage ialah papan pemuka peribadi ringan oleh DamiSunshine: imej Docker all-in-one dengan editor visual di bahagian hadapan dan bahagian belakang Node tanpa kebergantungan (hanya modul terbina dalam Node, tiada npm install). Susun atur seret dan lepas, carian pinyin, palet perintah Ctrl/⌘+K, carian tag kad merentas kumpulan, pertukaran alamat LAN/WAN automatik, penemuan perkhidmatan Docker, 227 ikon luar talian terbina dalam, papan status utama, sandaran zip termasuk imej, dan perlindungan kata laluan pilihan. Satu titik masuk untuk perkhidmatan LAN/NAS.'
+    pt-br: 'Navi Homepage é um painel pessoal leve da DamiSunshine: imagem Docker all-in-one com editor visual no front-end e back-end Node sem dependências (apenas módulos nativos do Node, sem npm install). Ordenar cartões por arrastar e soltar, busca por pinyin, paleta de comandos Ctrl/⌘+K, busca por tags de cartão entre grupos, troca automática de endereços LAN/WAN, descoberta de serviços Docker, 227 ícones offline embutidos, painel de status na home, backup em zip com imagens e proteção opcional por senha. Um ponto de entrada único para serviços LAN/NAS.'
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/DamiSunshine/navi-homepage
+  github: https://github.com/DamiSunshine/navi-homepage

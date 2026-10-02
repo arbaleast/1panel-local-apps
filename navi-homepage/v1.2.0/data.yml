@@ -1,0 +1,297 @@
+additionalProperties:
+  key: navi-homepage
+  name: navi-homepage v1.2.0
+  tags:
+    - Navigation
+    - Home
+    - Dashboard
+    - Bookmark
+  shortDescZh: 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端）
+  shortDescEn: Lightweight personal homepage with visual editor and zero-dep Node backend
+  description:
+    zh: Navi Homepage v1.2.0 — 19 个测试套件 / 981 项断言 0 失败。零依赖 Node 后端，All-in-One Docker 镜像。
+    en: Navi Homepage v1.2.0 — 19 test suites / 981 assertions / 0 failures. Zero-dep Node backend, all-in-one Docker image.
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/DamiSunshine/navi-homepage
+  github: https://github.com/DamiSunshine/navi-homepage
+  formFields:
+    # ----------------------------------------------------------------------------
+    # 镜像源（多架构 GHCR manifest，按 tag 选 amd64 / arm64）
+    # ----------------------------------------------------------------------------
+    - default: ghcr.io/damisunshine/navi-homepage
+      edit: true
+      envKey: IMAGE
+      labelEn: Image
+      labelZh: 镜像
+      label:
+        en: Image
+        zh: 镜像
+        zh-Hant: 映像
+        ja: イメージ
+        ko: 이미지
+        ru: Образ
+        ms: Imej
+        pt-br: Imagem
+      required: true
+      rule: paramImageTag
+      type: text
+    - default: v1.2.0
+      edit: true
+      envKey: APP_VERSION
+      labelEn: Version
+      labelZh: 版本
+      label:
+        en: Version
+        zh: 版本
+        zh-Hant: 版本
+        ja: バージョン
+        ko: 버전
+        ru: Версия
+        ms: Versi
+        pt-br: Versão
+      required: true
+      rule: paramImageTag
+      type: text
+    # ----------------------------------------------------------------------------
+    # HTTP 端口：主机侧端口 → 容器 80（Navi 内部监听 80，由反向协议栈转给 Node）
+    # ----------------------------------------------------------------------------
+    - default: 48090
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ----------------------------------------------------------------------------
+    # 访问密码（必填，compose 用 ${NAVI_PASSWORD:?...} 强制校验）
+    #   警告：暴露公网时务必设强密码；留空会导致 compose 启动失败。
+    #   默认 navi-homepage 是首次登录提示要求重设，但不会强制。
+    # ----------------------------------------------------------------------------
+    - default: navi-homepage
+      edit: true
+      envKey: NAVI_PASSWORD
+      labelEn: Access Password
+      labelZh: 访问密码
+      label:
+        en: Access Password
+        zh: 访问密码
+        zh-Hant: 訪問密碼
+        ja: アクセスパスワード
+        ko: 접근 비밀번호
+        ru: Пароль доступа
+        ms: Kata Laluan Akses
+        pt-br: Senha de acesso
+      required: true
+      rule: paramComplexity
+      type: password
+    # ----------------------------------------------------------------------------
+    # 可选：登录用户名（不填则仅用密码；填了则用户名 + 密码同时校验）
+    #   rule: paramCommon — 1Panel 的 paramCommon 规则不允许 :@/? 等字符，
+    #   用户名字段因此必须只含字母数字 . - _，长度 2-64，足够。
+    # ----------------------------------------------------------------------------
+    - default: ""
+      edit: true
+      envKey: NAVI_USERNAME
+      labelEn: Login Username
+      labelZh: 登录用户名
+      label:
+        en: Login Username
+        zh: 登录用户名
+        zh-Hant: 登入使用者名稱
+        ja: ログインユーザー名
+        ko: 로그인 사용자 이름
+        ru: Имя пользователя
+        ms: Nama Pengguna Log Masuk
+        pt-br: Nome de usuário
+      required: false
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 会话有效期（小时），默认 72（3 天）
+    # ----------------------------------------------------------------------------
+    - default: "72"
+      edit: true
+      envKey: SESSION_TTL_HOURS
+      labelEn: Session TTL (hours)
+      labelZh: 会话有效期（小时）
+      label:
+        en: Session TTL (hours)
+        zh: 会话有效期（小时）
+        zh-Hant: 工作階段有效期（小時）
+        ja: セッション TTL（時間）
+        ko: 세션 TTL (시간)
+        ru: Срок сессии (часы)
+        ms: TTL Sesi (jam)
+        pt-br: TTL da sessão (horas)
+      required: true
+      rule: paramCommon
+      type: number
+    # ----------------------------------------------------------------------------
+    # 站点标题 / 副标题（仅展示层，不写回 config.json）
+    #   这两个变量 Navi 启动时通过 SITE_TITLE / SITE_SUBTITLE 读入
+    # ----------------------------------------------------------------------------
+    - default: Navi
+      edit: true
+      envKey: SITE_TITLE
+      labelEn: Site Title
+      labelZh: 站点标题
+      label:
+        en: Site Title
+        zh: 站点标题
+        zh-Hant: 站點標題
+        ja: サイトタイトル
+        ko: 사이트 제목
+        ru: Название сайта
+        ms: Tajuk Laman
+        pt-br: Título do site
+      required: false
+      rule: paramCommon
+      type: text
+    - default: 个人导航站
+      edit: true
+      envKey: SITE_SUBTITLE
+      labelEn: Site Subtitle
+      labelZh: 站点副标题
+      label:
+        en: Site Subtitle
+        zh: 站点副标题
+        zh-Hant: 站點副標題
+        ja: サイトサブタイトル
+        ko: 사이트 부제목
+        ru: Подпись сайта
+        ms: Sub-tajuk Laman
+        pt-br: Subtítulo do site
+      required: false
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 内网 / 外网地址基址（不填则 Navi 自动探测）
+    #   这两个 host 形如 "192.168.1.10" 或 "nav.example.com"，不含协议头与路径。
+    #   1Panel paramCommon 规则：英文数字 . - _ ，长度 2-64，足够单段 host。
+    # ----------------------------------------------------------------------------
+    - default: ""
+      edit: true
+      envKey: NAVI_LAN_HOST
+      labelEn: LAN Host
+      labelZh: 内网地址
+      label:
+        en: LAN Host
+        zh: 内网地址
+        zh-Hant: 內網位址
+        ja: LAN ホスト
+        ko: LAN 호스트
+        ru: LAN-адрес
+        ms: Hos LAN
+        pt-br: Host LAN
+      required: false
+      rule: paramCommon
+      type: text
+    - default: ""
+      edit: true
+      envKey: NAVI_WAN_HOST
+      labelEn: WAN Host
+      labelZh: 外网地址
+      label:
+        en: WAN Host
+        zh: 外网地址
+        zh-Hant: 外網位址
+        ja: WAN ホスト
+        ko: WAN 호스트
+        ru: WAN-адрес
+        ms: Hos WAN
+        pt-br: Host WAN
+      required: false
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 状态板开关：首页顶部一行 Widget（容器数 / CPU / 内存 / 磁盘，30s 轮询）
+    #   1Panel formField 不支持 boolean，用 select 模拟（详见 AGENTS.md）。
+    #   关闭后整块静默隐藏。
+    # ----------------------------------------------------------------------------
+    - default: "true"
+      edit: true
+      envKey: NAVI_STATUS_BOARD
+      labelEn: Status Board
+      labelZh: 状态板
+      label:
+        en: Status Board
+        zh: 状态板
+        zh-Hant: 狀態板
+        ja: ステータスボード
+        ko: 상태 보드
+        ru: Панель состояния
+        ms: Papan Status
+        pt-br: Painel de status
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: 启用
+          value: "true"
+        - label: 禁用
+          value: "false"
+    # ----------------------------------------------------------------------------
+    # Docker 服务发现开关：挂载 /var/run/docker.sock 时启用「自动识别容器 + 匹配图标 + 生成卡片」
+    #   关闭后 Navi 自动降级为扫描本机监听端口（仍可手动添加卡片）。
+    #   注意：1Panel host 默认不把 /var/run/docker.sock 暴露给应用容器；
+    #   如需启用，需在 1Panel UI 「编排」里手动添加
+    #   `/var/run/docker.sock:/var/run/docker.sock:ro` 挂载项。
+    # ----------------------------------------------------------------------------
+    - default: "false"
+      edit: true
+      envKey: DOCKER_DISCOVERY
+      labelEn: Docker Discovery
+      labelZh: Docker 服务发现
+      label:
+        en: Docker Discovery
+        zh: Docker 服务发现
+        zh-Hant: Docker 服務探索
+        ja: Docker 検出
+        ko: Docker 검색
+        ru: Обнаружение Docker
+        ms: Penemuan Docker
+        pt-br: Descoberta Docker
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: 启用
+          value: "true"
+        - label: 禁用
+          value: "false"
+    # ----------------------------------------------------------------------------
+    # 时区
+    # ----------------------------------------------------------------------------
+    - default: UTC
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: false
+      rule: paramCommon
+      type: text

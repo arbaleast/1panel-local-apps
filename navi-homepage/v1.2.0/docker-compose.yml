@@ -1,0 +1,85 @@
+networks:
+  1panel-network:
+    external: true
+
+# ============================================================
+# navi-homepage (v1.2.0) — 轻量级个人导航站
+#   镜像源: ghcr.io/damisunshine/navi-homepage
+#     - 多架构: linux/amd64, linux/arm64（上游 GitHub Actions 在每个 tag 自动构建）
+#     - 父镜像: 基于 Alpine + Node 20 运行时，零外部 npm 依赖
+#   入口脚本: 上游镜像 ENTRYPOINT → /app/server.js
+#     - 监听容器内 80 端口（由内置反向协议栈转给 Node http server）
+#     - 数据文件: /app/data/config.json（mount 到主机 ./data）
+#     - 上传目录: /app/data/uploads（mount 到主机 ./data/uploads）
+#   容器内: 默认以 root 运行，可读写 /app/data。
+#
+# 数据流:
+#   主机侧 ./data/config.json  → 容器 /app/data/config.json
+#   主机侧 ./data/uploads/     → 容器 /app/data/uploads/
+#
+# 关键设计点:
+#   1. 整目录挂载 ./data:/app/data —— 上游 README 强调这是必须的。
+#      单文件挂载下写配置会走"跨挂载点 rename"，在部分平台触发
+#      EBUSY/EXDEV 保存失败；整目录挂载 rename 发生在同一挂载点内，
+#      天然规避。
+#   2. 首次启动前 ./data/config.json 必须存在 —— init.sh 会从镜像内
+#      /app/public/config.example.json 复制示例配置（若主机文件不存在）。
+#   3. ${NAVI_PASSWORD:?...} 强制校验 —— 留空时 compose 启动直接报错。
+#      1Panel formFields 中该字段 required: true + rule: paramComplexity，
+#      不会让用户提交空值。
+#   4. 容器以 root 运行，监听 80 端口（容器内）。
+#
+# 可选: Docker 服务发现 (DOCKER_DISCOVERY=true)
+#   挂载 /var/run/docker.sock 后 Navi 自动识别宿主机容器并生成卡片。
+#   出于安全考虑，1Panel 默认不暴露 docker socket，应用 socket 挂载
+#   需用户手动在 1Panel UI「编排」中添加：
+#     /var/run/docker.sock:/var/run/docker.sock:ro
+#   然后将 DOCKER_DISCOVERY 字段切到「启用」。
+# ============================================================
+
+services:
+  navi-homepage:
+    container_name: ${CONTAINER_NAME}
+    image: ${IMAGE}:${APP_VERSION}
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:80
+    environment:
+      # 访问密码（必填，留空会触发 compose 启动错误）
+      NAVI_PASSWORD: ${NAVI_PASSWORD:?NAVI_PASSWORD is required, please set it in 1Panel app form}
+      # 可选: 登录用户名（不填则仅用密码）
+      NAVI_USERNAME: ${NAVI_USERNAME}
+      # 会话有效期（小时），默认 72
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS}
+      # 站点展示信息（仅展示层，不写回 config.json）
+      SITE_TITLE: ${SITE_TITLE}
+      SITE_SUBTITLE: ${SITE_SUBTITLE}
+      # 内网 / 外网地址基址（不填则 Navi 自动探测）
+      NAVI_LAN_HOST: ${NAVI_LAN_HOST}
+      NAVI_WAN_HOST: ${NAVI_WAN_HOST}
+      # 首页状态板（true 启用，false 关闭；整块静默隐藏）
+      NAVI_STATUS_BOARD: ${NAVI_STATUS_BOARD}
+      # Docker 服务发现开关（需先在 1Panel UI 「编排」中手动挂载
+      # /var/run/docker.sock:/var/run/docker.sock:ro 才能生效；
+      # 关闭时 Navi 自动降级为扫描本机监听端口）
+      DOCKER_DISCOVERY: ${DOCKER_DISCOVERY}
+      # 时区
+      TZ: ${TZ}
+      # 容器内监听端口（写死 80，与 ports 映射对齐；Navi 启动器读 PORT）
+      PORT: "80"
+    volumes:
+      # 整目录挂载（关键！）—— 见文件头注释
+      - ./data:/app/data
+      # 可选: Docker 服务发现所需的 socket（1Panel 默认不挂载，按需添加）
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      # Navi 启动后会在 :80/ 返回 200（首页 HTML）
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:80/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
