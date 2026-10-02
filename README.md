@@ -8,6 +8,7 @@
 |------|------|----------|
 | anirss | 动漫 RSS | v3.2.39 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
+| bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.2.0 |
 | cinny | Matrix 聊天客户端 | v4.12.6 |
 | dendrite | Matrix 协议新一代 homeserver | v0.15.2 |
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |

@@ -1,0 +1,311 @@
+additionalProperties:
+  key: bookorbit
+  name: bookorbit 3.2.0
+  tags:
+    - Book
+    - Library
+    - Reader
+    - Self-hosted
+    - EPUB
+    - Audiobook
+    - Comic
+    - PDF
+    - KOReader
+    - Kobo
+    - OIDC
+  shortDescZh: 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO）
+  shortDescEn: Self-hosted library for ebooks, audiobooks, comics and PDFs (KOReader/Kobo two-way sync + multi-user + OIDC/SSO)
+  description:
+    zh: 'BookOrbit v3.2.0 — 上游 [bookorbit/bookorbit](https://github.com/bookorbit/bookorbit) 3.2.0 release。镜像：ghcr.io/bookorbit/bookorbit:3.2.0（多架构 linux/amd64 + linux/arm64）。配套 PostgreSQL 18 + pgvector 数据库。新增 iPad 大屏布局、库设置面板化、元数据一键对比合并、可分数完成度阈值、独立的电子书与有声书封面、按用户隐藏 Requests 等。'
+    en: 'BookOrbit v3.2.0 — upstream [bookorbit/bookorbit](https://github.com/bookorbit/bookorbit) 3.2.0 release. Image: ghcr.io/bookorbit/bookorbit:3.2.0 (multi-arch linux/amd64 + linux/arm64). Bundled PostgreSQL 18 + pgvector. Adds iPad layouts, single-sheet library editor, two-pane metadata match sheet, fractional completion thresholds, independent ebook and audiobook covers, per-user Requests visibility, and more.'
+  type: library
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://bookorbit.app
+  github: https://github.com/bookorbit/bookorbit
+  document: https://bookorbit.app/installation
+  formFields:
+    # ----------------------------------------------------------------------------
+    # 镜像源（GHCR 官方多架构镜像）
+    # ----------------------------------------------------------------------------
+    - default: ghcr.io/bookorbit/bookorbit
+      edit: true
+      envKey: APP_IMAGE
+      labelEn: App Image
+      labelZh: 应用镜像
+      label:
+        en: App Image
+        zh: 应用镜像
+        zh-Hant: 應用映像
+        ja: アプリイメージ
+        ko: 앱 이미지
+        ru: Образ приложения
+        ms: Imej Aplikasi
+        pt-br: Imagem do app
+      required: true
+      rule: paramImageTag
+      type: text
+    # ----------------------------------------------------------------------------
+    # 上游版本号（GHCR tag，与上游 GitHub release tag 一致，如 3.2.0）
+    # ----------------------------------------------------------------------------
+    - default: 3.2.0
+      edit: true
+      envKey: APP_VERSION
+      labelEn: App Version
+      labelZh: 应用版本
+      label:
+        en: App Version
+        zh: 应用版本
+        zh-Hant: 應用版本
+        ja: アプリバージョン
+        ko: 앱 버전
+        ru: Версия приложения
+        ms: Versi Aplikasi
+        pt-br: Versão do app
+      required: true
+      rule: paramImageTag
+      type: text
+    # ----------------------------------------------------------------------------
+    # HTTP 端口：主机侧端口 → 容器 3000
+    # ----------------------------------------------------------------------------
+    - default: 48300
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ----------------------------------------------------------------------------
+    # PostgreSQL 端口：主机侧端口 → 容器 5432（外部管理用）
+    # ----------------------------------------------------------------------------
+    - default: 48332
+      edit: true
+      envKey: PANEL_DB_PORT
+      labelEn: PostgreSQL Port
+      labelZh: PostgreSQL 端口
+      label:
+        en: PostgreSQL Port
+        zh: PostgreSQL 端口
+        zh-Hant: PostgreSQL 連接埠
+        ja: PostgreSQL ポート
+        ko: PostgreSQL 포트
+        ru: Порт PostgreSQL
+        ms: Port PostgreSQL
+        pt-br: Porta PostgreSQL
+      required: true
+      rule: paramPort
+      type: number
+    # ----------------------------------------------------------------------------
+    # PostgreSQL 用户名（必填，PG 与 App 共享同一变量）
+    # ----------------------------------------------------------------------------
+    - default: bookorbit
+      edit: true
+      envKey: POSTGRES_USER
+      labelEn: PostgreSQL User
+      labelZh: PostgreSQL 用户名
+      label:
+        en: PostgreSQL User
+        zh: PostgreSQL 用户名
+        zh-Hant: PostgreSQL 使用者名稱
+        ja: PostgreSQL ユーザー名
+        ko: PostgreSQL 사용자 이름
+        ru: Имя пользователя PostgreSQL
+        ms: Nama pengguna PostgreSQL
+        pt-br: Usuário PostgreSQL
+      required: true
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # PostgreSQL 密码（必填，复杂度校验）
+    # ----------------------------------------------------------------------------
+    - default: ""
+      edit: true
+      envKey: POSTGRES_PASSWORD
+      labelEn: PostgreSQL Password
+      labelZh: PostgreSQL 密码
+      label:
+        en: PostgreSQL Password
+        zh: PostgreSQL 密码
+        zh-Hant: PostgreSQL 密碼
+        ja: PostgreSQL パスワード
+        ko: PostgreSQL 비밀번호
+        ru: Пароль PostgreSQL
+        ms: Kata laluan PostgreSQL
+        pt-br: Senha PostgreSQL
+      required: true
+      rule: paramComplexity
+      type: password
+    # ----------------------------------------------------------------------------
+    # PostgreSQL 数据库名
+    # ----------------------------------------------------------------------------
+    - default: bookorbit
+      edit: true
+      envKey: POSTGRES_DB
+      labelEn: PostgreSQL Database
+      labelZh: PostgreSQL 数据库名
+      label:
+        en: PostgreSQL Database
+        zh: PostgreSQL 数据库名
+        zh-Hant: PostgreSQL 資料庫名
+        ja: PostgreSQL データベース名
+        ko: PostgreSQL 데이터베이스 이름
+        ru: Имя базы данных PostgreSQL
+        ms: Nama pangkalan data PostgreSQL
+        pt-br: Banco PostgreSQL
+      required: true
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # JWT 签名密钥（必填，复杂度校验）
+    # ----------------------------------------------------------------------------
+    - default: ""
+      edit: true
+      envKey: JWT_SECRET
+      labelEn: JWT Secret
+      labelZh: JWT 签名密钥
+      label:
+        en: JWT Secret
+        zh: JWT 签名密钥
+        zh-Hant: JWT 簽名密鑰
+        ja: JWT 署名鍵
+        ko: JWT 서명 키
+        ru: Секрет подписи JWT
+        ms: Kunci tandatangan JWT
+        pt-br: Chave de assinatura JWT
+      required: true
+      rule: paramComplexity
+      type: password
+    # ----------------------------------------------------------------------------
+    # 首次安装一次性引导 Token（必填，复杂度校验；与上游 /auth/setup 配合）
+    # ----------------------------------------------------------------------------
+    - default: ""
+      edit: true
+      envKey: SETUP_BOOTSTRAP_TOKEN
+      labelEn: Setup Bootstrap Token
+      labelZh: 安装引导 Token
+      label:
+        en: Setup Bootstrap Token
+        zh: 安装引导 Token
+        zh-Hant: 安裝引導 Token
+        ja: セットアップ Bootstrap トークン
+        ko: 설치 부트스트랩 토큰
+        ru: Токен первоначальной настройки
+        ms: Token Bootstrap Pemasangan
+        pt-br: Token de bootstrap de instalação
+      required: true
+      rule: paramComplexity
+      type: password
+    # ----------------------------------------------------------------------------
+    # 外部访问 URL（必填，影响 Kobo 同步端点与邮件链接）
+    # ----------------------------------------------------------------------------
+    - default: http://your-server-ip:48300
+      edit: true
+      envKey: APP_URL
+      labelEn: External App URL
+      labelZh: 外部访问 URL
+      label:
+        en: External App URL
+        zh: 外部访问 URL
+        zh-Hant: 外部存取 URL
+        ja: 外部アクセス URL
+        ko: 외부 액세스 URL
+        ru: Внешний URL приложения
+        ms: URL Akses Luaran
+        pt-br: URL externo do app
+      required: true
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 容器进程 UID（与宿主机挂载目录属主一致，常见 NAS 用户为 1000）
+    # ----------------------------------------------------------------------------
+    - default: "1000"
+      edit: true
+      envKey: PUID
+      labelEn: Process UID
+      labelZh: 容器进程 UID
+      label:
+        en: Process UID
+        zh: 容器进程 UID
+        zh-Hant: 容器行程 UID
+        ja: コンテナプロセス UID
+        ko: 컨테이너 프로세스 UID
+        ru: UID процесса
+        ms: UID Proses
+        pt-br: UID do processo
+      required: false
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 容器进程 GID（与宿主机挂载目录属主一致，常见 NAS 用户为 1000）
+    # ----------------------------------------------------------------------------
+    - default: "1000"
+      edit: true
+      envKey: PGID
+      labelEn: Process GID
+      labelZh: 容器进程 GID
+      label:
+        en: Process GID
+        zh: 容器进程 GID
+        zh-Hant: 容器行程 GID
+        ja: コンテナプロセス GID
+        ko: 컨테이너 프로세스 GID
+        ru: GID процесса
+        ms: GID Proses
+        pt-br: GID do processo
+      required: false
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # Node.js 堆内存上限（MB；auto = 容器自动检测；大库可调高至 4096+）
+    # ----------------------------------------------------------------------------
+    - default: auto
+      edit: true
+      envKey: NODE_MAX_OLD_SPACE_SIZE
+      labelEn: Node.js Heap (MB)
+      labelZh: Node.js 堆内存 (MB)
+      label:
+        en: Node.js Heap (MB)
+        zh: Node.js 堆内存 (MB)
+        zh-Hant: Node.js 堆積記憶體 (MB)
+        ja: Node.js ヒープ (MB)
+        ko: Node.js 힙 메모리 (MB)
+        ru: Кучная память Node.js (МБ)
+        ms: Timbunan Node.js (MB)
+        pt-br: Memória heap do Node.js (MB)
+      required: false
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 时区
+    # ----------------------------------------------------------------------------
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: false
+      rule: paramCommon
+      type: text

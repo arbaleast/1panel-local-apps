@@ -34,6 +34,8 @@ aliases:
   # 以下条目 dir 与短名相同，省略 dir
   anirss:
     desc: 动漫 RSS
+  bookorbit:
+    desc: 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO）
   cinny:
     desc: Matrix 聊天客户端
   firecrawl:
