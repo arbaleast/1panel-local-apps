@@ -16,8 +16,8 @@ additionalProperties:
   shortDescZh: 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO）
   shortDescEn: Self-hosted library for ebooks, audiobooks, comics and PDFs (KOReader/Kobo two-way sync + multi-user + OIDC/SSO)
   description:
-    zh: 'BookOrbit v3.2.0 — 上游 [bookorbit/bookorbit](https://github.com/bookorbit/bookorbit) 3.2.0 release。镜像：ghcr.io/bookorbit/bookorbit:3.2.0（多架构 linux/amd64 + linux/arm64）。配套 PostgreSQL 18 + pgvector 数据库。新增 iPad 大屏布局、库设置面板化、元数据一键对比合并、可分数完成度阈值、独立的电子书与有声书封面、按用户隐藏 Requests 等。'
-    en: 'BookOrbit v3.2.0 — upstream [bookorbit/bookorbit](https://github.com/bookorbit/bookorbit) 3.2.0 release. Image: ghcr.io/bookorbit/bookorbit:3.2.0 (multi-arch linux/amd64 + linux/arm64). Bundled PostgreSQL 18 + pgvector. Adds iPad layouts, single-sheet library editor, two-pane metadata match sheet, fractional completion thresholds, independent ebook and audiobook covers, per-user Requests visibility, and more.'
+    zh: 'BookOrbit v3.2.0 — 上游 [bookorbit/bookorbit](https://github.com/bookorbit/bookorbit) 3.2.0 release。镜像：ghcr.io/bookorbit/bookorbit:3.2.0（多架构 linux/amd64 + linux/arm64）。本应用不捆绑数据库，需先部署本仓 pgvector/ 应用（PostgreSQL 18 + pgvector，含 uuid-ossp / pg_trgm / unaccent / vector 四个必需扩展），再填其容器名与随机账号连接。新增 iPad 大屏布局、库设置面板化、元数据一键对比合并、可分数完成度阈值、独立的电子书与有声书封面、按用户隐藏 Requests 等。'
+    en: 'BookOrbit v3.2.0 — upstream [bookorbit/bookorbit](https://github.com/bookorbit/bookorbit) 3.2.0 release. Image: ghcr.io/bookorbit/bookorbit:3.2.0 (multi-arch linux/amd64 + linux/arm64). This app bundles no database: deploy the repo''s pgvector/ app first (PostgreSQL 18 + pgvector with the four required extensions uuid-ossp / pg_trgm / unaccent / vector), then enter its container name and random credentials. Adds iPad layouts, single-sheet library editor, two-pane metadata match sheet, fractional completion thresholds, independent ebook and audiobook covers, per-user Requests visibility, and more.'
   type: library
   architectures:
     - amd64
@@ -90,47 +90,70 @@ additionalProperties:
       rule: paramPort
       type: number
     # ----------------------------------------------------------------------------
-    # PostgreSQL 端口：主机侧端口 → 容器 5432（外部管理用）
+    # PostgreSQL 主机（必填；填 1Panel-postgresql 容器名，如 1Panel-postgresql-ZU4y）
+    #   安装前请先在 1Panel 应用商店部署 1Panel-postgresql (pgvector/pgvector) 应用，
+    #   并在容器详情页复制其容器名。本应用与 1Panel-postgresql 共享同一外部网络
+    #   1panel-network，按容器名直连，不走端口映射。
     # ----------------------------------------------------------------------------
-    - default: 48332
+    - default: 1Panel-postgresql-XXXX
       edit: true
-      envKey: PANEL_DB_PORT
+      envKey: POSTGRES_HOST
+      labelEn: PostgreSQL Host
+      labelZh: PostgreSQL 主机
+      label:
+        en: PostgreSQL host (1Panel-postgresql container name, e.g. 1Panel-postgresql-ZU4y)
+        zh: PostgreSQL 主机（1Panel-postgresql 容器名，如 1Panel-postgresql-ZU4y）
+        zh-Hant: PostgreSQL 主機（1Panel-postgresql 容器名，如 1Panel-postgresql-ZU4y）
+        ja: "PostgreSQL ホスト（1Panel-postgresql コンテナ名、例: 1Panel-postgresql-ZU4y）"
+        ko: "PostgreSQL 호스트 (1Panel-postgresql 컨테이너 이름, 예: 1Panel-postgresql-ZU4y)"
+        ru: Хост PostgreSQL (имя контейнера 1Panel-postgresql, напр. 1Panel-postgresql-ZU4y)
+        ms: Hos PostgreSQL (nama bekas 1Panel-postgresql, cth. 1Panel-postgresql-ZU4y)
+        pt-br: Host PostgreSQL (nome do contêiner 1Panel-postgresql, ex. 1Panel-postgresql-ZU4y)
+      required: true
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # PostgreSQL 端口（必填；外部 DB 端口；通常 5432）
+    # ----------------------------------------------------------------------------
+    - default: "5432"
+      edit: true
+      envKey: POSTGRES_PORT
       labelEn: PostgreSQL Port
       labelZh: PostgreSQL 端口
       label:
-        en: PostgreSQL Port
-        zh: PostgreSQL 端口
-        zh-Hant: PostgreSQL 連接埠
-        ja: PostgreSQL ポート
-        ko: PostgreSQL 포트
-        ru: Порт PostgreSQL
-        ms: Port PostgreSQL
-        pt-br: Porta PostgreSQL
+        en: PostgreSQL Port (default 5432)
+        zh: PostgreSQL 端口（默认 5432）
+        zh-Hant: PostgreSQL 連接埠（預設 5432）
+        ja: PostgreSQL ポート（デフォルト 5432）
+        ko: PostgreSQL 포트 (기본 5432)
+        ru: Порт PostgreSQL (по умолчанию 5432)
+        ms: Port PostgreSQL (lalai 5432)
+        pt-br: Porta PostgreSQL (padrão 5432)
       required: true
       rule: paramPort
       type: number
     # ----------------------------------------------------------------------------
-    # PostgreSQL 用户名（必填，PG 与 App 共享同一变量）
+    # PostgreSQL 用户名（必填；填 1Panel-postgresql 生成的随机用户名，如 user_wEJsSp）
     # ----------------------------------------------------------------------------
-    - default: bookorbit
+    - default: ""
       edit: true
       envKey: POSTGRES_USER
       labelEn: PostgreSQL User
       labelZh: PostgreSQL 用户名
       label:
-        en: PostgreSQL User
-        zh: PostgreSQL 用户名
-        zh-Hant: PostgreSQL 使用者名稱
-        ja: PostgreSQL ユーザー名
-        ko: PostgreSQL 사용자 이름
-        ru: Имя пользователя PostgreSQL
-        ms: Nama pengguna PostgreSQL
-        pt-br: Usuário PostgreSQL
+        en: PostgreSQL user (1Panel random user, e.g. user_wEJsSp)
+        zh: PostgreSQL 用户名（1Panel 随机用户，如 user_wEJsSp）
+        zh-Hant: PostgreSQL 使用者名稱（1Panel 隨機使用者，如 user_wEJsSp）
+        ja: "PostgreSQL ユーザー名（1Panel ランダムユーザー、例: user_wEJsSp）"
+        ko: "PostgreSQL 사용자 이름 (1Panel 임의 사용자, 예: user_wEJsSp)"
+        ru: Пользователь PostgreSQL (случайный пользователь 1Panel, напр. user_wEJsSp)
+        ms: Nama pengguna PostgreSQL (pengguna rawak 1Panel, cth. user_wEJsSp)
+        pt-br: Usuário PostgreSQL (usuário aleatório do 1Panel, ex. user_wEJsSp)
       required: true
       rule: paramCommon
       type: text
     # ----------------------------------------------------------------------------
-    # PostgreSQL 密码（必填，复杂度校验）
+    # PostgreSQL 密码（必填；填 1Panel-postgresql 生成的密码；复杂度校验）
     # ----------------------------------------------------------------------------
     - default: ""
       edit: true
@@ -138,34 +161,37 @@ additionalProperties:
       labelEn: PostgreSQL Password
       labelZh: PostgreSQL 密码
       label:
-        en: PostgreSQL Password
-        zh: PostgreSQL 密码
-        zh-Hant: PostgreSQL 密碼
-        ja: PostgreSQL パスワード
-        ko: PostgreSQL 비밀번호
-        ru: Пароль PostgreSQL
-        ms: Kata laluan PostgreSQL
-        pt-br: Senha PostgreSQL
+        en: PostgreSQL password (from 1Panel-postgresql detail page)
+        zh: PostgreSQL 密码（取自 1Panel-postgresql 容器详情页）
+        zh-Hant: PostgreSQL 密碼（取自 1Panel-postgresql 容器詳情頁）
+        ja: PostgreSQL パスワード（1Panel-postgresql コンテナ詳細ページから）
+        ko: PostgreSQL 비밀번호 (1Panel-postgresql 컨테이너 상세 페이지에서)
+        ru: Пароль PostgreSQL (со страницы контейнера 1Panel-postgresql)
+        ms: Kata laluan PostgreSQL (daripada halaman bekas 1Panel-postgresql)
+        pt-br: Senha PostgreSQL (da página do contêiner 1Panel-postgresql)
       required: true
       rule: paramComplexity
       type: password
     # ----------------------------------------------------------------------------
-    # PostgreSQL 数据库名
+    # PostgreSQL 数据库名（必填；填 1Panel-postgresql 生成的随机 DB 名，如 postgres_wEJsSp）
+    #   也可以在 1Panel-postgresql 详情页用 Navicat / psql 登入后预创建：
+    #     CREATE DATABASE bookorbit;
+    #   然后填入此字段。BookOrbit 启动时会自动跑迁移建表。
     # ----------------------------------------------------------------------------
-    - default: bookorbit
+    - default: ""
       edit: true
       envKey: POSTGRES_DB
       labelEn: PostgreSQL Database
       labelZh: PostgreSQL 数据库名
       label:
-        en: PostgreSQL Database
-        zh: PostgreSQL 数据库名
-        zh-Hant: PostgreSQL 資料庫名
-        ja: PostgreSQL データベース名
-        ko: PostgreSQL 데이터베이스 이름
-        ru: Имя базы данных PostgreSQL
-        ms: Nama pangkalan data PostgreSQL
-        pt-br: Banco PostgreSQL
+        en: PostgreSQL database name (1Panel random, e.g. postgres_wEJsSp; or pre-create CREATE DATABASE bookorbit;)
+        zh: PostgreSQL 数据库名（1Panel 随机，如 postgres_wEJsSp；或预创建 CREATE DATABASE bookorbit;）
+        zh-Hant: PostgreSQL 資料庫名（1Panel 隨機，如 postgres_wEJsSp；或預建立 CREATE DATABASE bookorbit;）
+        ja: "PostgreSQL データベース名（1Panel ランダム、例: postgres_wEJsSp；または事前作成 CREATE DATABASE bookorbit;）"
+        ko: "PostgreSQL 데이터베이스 이름 (1Panel 임의, 예: postgres_wEJsSp; 또는 사전 생성 CREATE DATABASE bookorbit;)"
+        ru: "Имя базы PostgreSQL (случайное 1Panel, напр. postgres_wEJsSp; либо предварительно CREATE DATABASE bookorbit;)"
+        ms: "Nama pangkalan data PostgreSQL (1Panel rawak, cth. postgres_wEJsSp; atau pra-wujudkan CREATE DATABASE bookorbit;)"
+        pt-br: "Nome do banco PostgreSQL (1Panel aleatório, ex. postgres_wEJsSp; ou pré-criar CREATE DATABASE bookorbit;)"
       required: true
       rule: paramCommon
       type: text

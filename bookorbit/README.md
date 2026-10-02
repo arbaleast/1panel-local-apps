@@ -9,6 +9,8 @@
 - **当前版本目录**: `3.2.0/`（与上游 [GitHub release tag v3.2.0](https://github.com/bookorbit/bookorbit/releases/tag/v3.2.0) 对齐；镜像 tag 不带 `v` 前缀）
 - **License**: AGPL-3.0
 
+> ⚠️ **本应用使用外部 PostgreSQL**：本 compose 不再捆绑 PostgreSQL 服务。部署前请先在 1Panel 应用商店部署 **`1Panel-postgresql`**（pgvector/pgvector 应用，本仓已收录为 [`pgvector/`](pgvector/)），并在容器详情页复制其容器名 / 随机用户 / 密码 / 数据库名到本应用表单。详见下文「[安装](#安装)」段。
+
 ## 功能要点
 
 ### 阅读体验与同步
@@ -42,34 +44,54 @@ bookorbit/
 ├── README.md                # 本说明
 └── 3.2.0/                   # 当前版本（与上游 GitHub release tag v3.2.0 对齐，镜像 tag 为 3.2.0）
     ├── data.yml             # 版本元数据 + formFields
-    ├── docker-compose.yml
+    ├── docker-compose.yml   # 仅一个 app 服务，引用外部 1Panel-postgresql
     └── data/                # 持久化占位（.gitkeep）
         ├── books/           # ← 首次启动前由用户填充电子书 / 漫画 / 有声书 / PDF
-        ├── app/             # ← 应用配置 / 缓存 / 上传
-        └── postgres/        # ← PostgreSQL 18 + pgvector 数据
+        └── app/             # ← 应用配置 / 缓存 / 上传
 ```
+
+> **PG 数据目录说明**：本 compose 不再包含 `data/postgres/`。PostgreSQL 数据由 1Panel-postgresql 应用独立持久化在自己的 `data/pgvector/` 目录，多个应用（grimmory、dendrite、bookorbit…）可共享同一外部 DB 实例的不同 database。
 
 ## 安装
 
-> ⚠️ **强制要求（上游 README 明确标注）**：NAS / 网络存储配置 **不受支持**。`./data/books`、`./data/app`、`./data/postgres` 都必须是本地文件系统（ext4 / btrfs / xfs 等），不要放在 SMB / CIFS / NFS / FUSE / 云挂载 / 分布式文件系统上，否则扫描、移动、重命名、文件通知、权限、缓存与一致性可能行为异常。详见上游 README 的「Unsupported Storage Configurations」段。
+> ⚠️ **强制要求（上游 README 明确标注）**：NAS / 网络存储配置 **不受支持**。`./data/books` 与 `./data/app` 都必须是本地文件系统（ext4 / btrfs / xfs 等），不要放在 SMB / CIFS / NFS / FUSE / 云挂载 / 分布式文件系统上。1Panel-postgresql 同样如此（其 `data/pgvector/` 也必须是本地文件系统）。详见上游 README 的「Unsupported Storage Configurations」段。
+
+### 0. 前置：部署 1Panel-postgresql（PostgreSQL 18 + pgvector）
+
+BookOrbit 上游强制要求 4 个 PG 扩展：`uuid-ossp` / `pg_trgm` / `unaccent` / `vector` (pgvector)。`1Panel-postgresql`（本仓 [`pgvector/0.8.7-pg18-trixie/`](../../pgvector/0.8.7-pg18-trixie/)）基于 `pgvector/pgvector` 镜像，**已包含全部 4 个扩展**，开箱即用。
+
+1. 1Panel → 应用商店 → 本地应用 → 搜索 **`1Panel-postgresql`**（或 `pgvector`）→ 安装
+2. 记住安装时设置的端口（默认 `5432`）
+3. 安装完成后到 容器 详情页，复制以下 4 个值（后续填到 BookOrbit 表单）：
+   - **容器名**（形如 `1Panel-postgresql-ZU4y`，1Panel 自动生成 Base32 4 字符后缀）
+   - **数据库用户名**（形如 `user_wEJsSp`，1Panel 随机生成）
+   - **数据库密码**（1Panel 自动生成的强密码）
+   - **数据库名**（形如 `postgres_wEJsSp`，或自行用 Navicat / psql 登入后 `CREATE DATABASE bookorbit;` 预创建）
+
+> 💡 **预创建数据库（可选但推荐）**：用 Navicat / pgAdmin / psql 登入 `1Panel-postgresql` 后执行 `CREATE DATABASE bookorbit;`，可避免 BookOrbit app 用户没有 `CREATE DATABASE` 权限时无法自动建库的尴尬。
+
+### 1. 安装 BookOrbit 本体
 
 1. 1Panel → 应用商店 → 本地应用 → 选择 **BookOrbit**
 2. 选择版本 `3.2.0`
 3. **必填参数（首次部署前必须修改）**：
-   - `POSTGRES_PASSWORD`：PostgreSQL 密码，建议 `openssl rand -hex 24`
-   - `JWT_SECRET`：JWT 签名密钥，建议 `openssl rand -hex 32`
+   - `POSTGRES_HOST`：填上一步骤拿到的 1Panel-postgresql **容器名**（如 `1Panel-postgresql-ZU4y`），**不是** LAN IP
+   - `POSTGRES_PORT`：默认 `5432`（除非 1Panel-postgresql 安装时改了端口）
+   - `POSTGRES_USER`：填 1Panel-postgresql 生成的随机用户名（如 `user_wEJsSp`）
+   - `POSTGRES_PASSWORD`：填 1Panel-postgresql 生成的密码
+   - `POSTGRES_DB`：填 1Panel-postgresql 生成的数据库名（如 `postgres_wEJsSp`），或预创建的 `bookorbit`
+   - `JWT_SECRET`：建议 `openssl rand -hex 32`
    - `SETUP_BOOTSTRAP_TOKEN`：首次安装一次性引导 Token，建议 `openssl rand -hex 16`
    - `APP_URL`：外部访问 URL，例如 `http://your-server-ip:48300`（反向代理后改为 `https://books.example.com`）
 4. 主机侧 HTTP 端口默认 `48300`（容器内 `3000`）
-5. PostgreSQL 端口默认 `48332`（容器内 `5432`；仅用于外部管理）
-6. **挂载目录属主**：若宿主机 `./data/books` 不属于 `1000:1000`（NAS 套件常见），在主机侧执行：
+5. **挂载目录属主**：若宿主机 `./data/books` 不属于 `1000:1000`（NAS 套件常见），在主机侧执行：
    ```bash
    chown -R 1000:1000 bookorbit/3.2.0/data/books
    ```
    否则首次扫描会因 `EACCES` 找不到书
-7. 把你的书（EPUB / PDF / CBZ / M4B …）放入 `bookorbit/3.2.0/data/books/`
-8. 提交安装
-9. 等 ~30s，浏览器访问 `http://<1Panel 主机 IP>:48300`，使用上面设置的 `SETUP_BOOTSTRAP_TOKEN` 完成管理员账号创建
+6. 把你的书（EPUB / PDF / CBZ / M4B …）放入 `bookorbit/3.2.0/data/books/`
+7. 提交安装
+8. 等 ~30s，浏览器访问 `http://<1Panel 主机 IP>:48300`，使用上面设置的 `SETUP_BOOTSTRAP_TOKEN` 完成管理员账号创建
 
 ## 配置
 
@@ -80,10 +102,11 @@ bookorbit/
 | 应用镜像 | `ghcr.io/bookorbit/bookorbit` | 是 | GHCR 官方多架构镜像 |
 | 应用版本 | `3.2.0` | 是 | 上游 GitHub release tag（如未来要跟随上游 `v3.2.1` release，先确认 GHCR 是否真的推了 `3.2.1` tag） |
 | HTTP 端口 | `48300` | 是 | 主机侧端口（容器内固定 `3000`） |
-| PostgreSQL 端口 | `48332` | 是 | 主机侧端口（容器内固定 `5432`） |
-| PostgreSQL 用户名 | `bookorbit` | 是 | 同时供 PostgreSQL 与 BookOrbit app 使用 |
-| PostgreSQL 密码 | （空） | 是 | **首次部署前必须修改**；建议 `openssl rand -hex 24` |
-| PostgreSQL 数据库名 | `bookorbit` | 是 | 与用户名同名即可 |
+| PostgreSQL 主机 | `1Panel-postgresql-XXXX` | 是 | **填 1Panel-postgresql 容器名**（如 `1Panel-postgresql-ZU4y`），不是 LAN IP。两容器共享 `1panel-network` 外部网络，按容器名互通 |
+| PostgreSQL 端口 | `5432` | 是 | 1Panel-postgresql 监听端口（除非安装时改了，否则 `5432`） |
+| PostgreSQL 用户名 | （空） | 是 | 填 1Panel-postgresql 详情页显示的随机用户名（如 `user_wEJsSp`） |
+| PostgreSQL 密码 | （空） | 是 | 填 1Panel-postgresql 详情页显示的随机密码 |
+| PostgreSQL 数据库名 | （空） | 是 | 填 1Panel-postgresql 详情页显示的随机库名（如 `postgres_wEJsSp`），或预创建的 `bookorbit` |
 | JWT Secret | （空） | 是 | **首次部署前必须修改**；建议 `openssl rand -hex 32` |
 | Setup Bootstrap Token | （空） | 是 | **首次部署前必须修改**；首次登录时使用，建议 `openssl rand -hex 16` |
 | 外部访问 URL | `http://your-server-ip:48300` | 是 | 公网部署务必改为反代域名（如 `https://books.example.com`），影响 Kobo 端点回调与邮件链接 |
@@ -125,6 +148,21 @@ BookOrbit v2.10+ 支持 Kokoro FastAPI TTS。上游提供 opt-in `tts` profile�
 
 详细见上游 [Kokoro Text-to-Speech](https://bookorbit.app/text-to-speech/)。
 
+### 多应用共享 1Panel-postgresql
+
+同一 `1Panel-postgresql` 实例可服务多个应用（grimmory、dendrite、bookorbit 等），各自建独立数据库：
+
+1. 在 1Panel-postgresql 容器内 `psql` 创建独立数据库：
+   ```sql
+   CREATE DATABASE bookorbit;
+   CREATE DATABASE grimmory;
+   CREATE DATABASE dendrite;
+   -- 每个库独立 owner / schema 隔离
+   ```
+2. 每个应用表单中的 `POSTGRES_DB` 填对应库名，`POSTGRES_USER` 可共用同一用户（注意该用户需对所有目标库有 `CONNECT` 权限）
+
+> PostgreSQL 单实例跑多个应用完全 OK，每个应用 schema / 数据完全独立。
+
 ## 升级
 
 ### 跟随上游 release（跨版本升级）
@@ -134,7 +172,18 @@ BookOrbit v2.10+ 支持 Kokoro FastAPI TTS。上游提供 opt-in `tts` profile�
 3. 在新 `data.yml` 中把 `APP_VERSION` 默认值同步改成新版本号（如 `3.3.0`）
 4. 由 1Panel 计划任务拉取最新仓库 → 用户在 1Panel UI 选择新版本重新部署
 
-> 由于 `./data/app`、`./data/books`、`./data/postgres` 均为相对路径 bind mount，跨版本升级数据不会丢失；上游 BookOrbit 在启动时自动跑数据库迁移。
+> 由于 `./data/app` 与 `./data/books` 均为相对路径 bind mount，跨版本升级数据不会丢失；上游 BookOrbit 在启动时自动跑数据库迁移（外部 PG 模式下也会自动连到 1Panel-postgresql 跑迁移）。
+
+### 1Panel-postgresql 升级（如 PostgreSQL 16 → 18）
+
+若 1Panel-postgresql 大版本升级（如 pg16 → pg18），老数据目录需迁移：
+
+1. 旧版本 PG 容器内 `pg_dumpall -U postgres > dump.sql`
+2. 停掉旧版本 1Panel-postgresql，**重命名**其 `data/pgvector/` 目录（不要直接删，先备份）
+3. 安装新版本 1Panel-postgresql，应用启动后会自动 initdb 空目录
+4. `psql -U postgres -f dump.sql` 恢复数据
+
+详见上游 BookOrbit [Moving from PostgreSQL 16 to 18](https://bookorbit.app/installation/#updating)。
 
 ### 容器内升级（不重建容器）
 
@@ -177,12 +226,23 @@ BookOrbit v2.10+ 支持 Kokoro FastAPI TTS。上游提供 opt-in `tts` profile�
 ## 故障排查
 
 - **首次启动后浏览器一直转圈 / 503**：等 `start_period: 60s`，再访问；上游 Node 服务首次启动要跑数据库迁移 + 准备 `.env`，耗时较长
+- **数据库连接失败 / `ECONNREFUSED 1Panel-postgresql-ZU4y:5432`**：
+  1. 确认 1Panel-postgresql 容器已运行（`docker ps | grep 1Panel-postgresql`）
+  2. 确认 BookOrbit 表单中 `POSTGRES_HOST` 填的是**容器名**（不是 LAN IP；不是 `localhost`；不是 `postgres`）
+  3. 确认两个容器都在同一 `1panel-network` 外部网络上（1Panel 应用默认都会自动接入，无需手动配置）
+  4. 在 BookOrbit 容器内手动验证：
+     ```bash
+     docker exec -it <bookorbit-container> sh -c 'getent hosts 1Panel-postgresql-ZU4y'
+     # 应返回 1Panel-postgresql-ZU4y 在 1panel-network 上的内网 IP
+     docker exec -it <bookorbit-container> sh -c 'nc -zv 1Panel-postgresql-ZU4y 5432'
+     # 应返回 succeeded
+     ```
+- **`extension "vector" is not available` / `extension "uuid-ossp" is not available`**：上游强制 4 个 PG 扩展。请确认 1Panel-postgresql 应用是基于 `pgvector/pgvector` 镜像（[本仓 `pgvector/0.8.7-pg18-trixie/`](../../pgvector/0.8.7-pg18-trixie/) 已含），不要换成裸 `postgres` 镜像
 - **扫描完成但找不到书**：
   1. 检查 `PUID`/`PGID` 是否与 `./data/books` 属主一致（`ls -ldn ./data/books`）
   2. 不一致就 `chown -R <uid>:<gid> ./data/books`
 - **登录页提示「Invalid setup token」**：1Panel 表单中 `SETUP_BOOTSTRAP_TOKEN` 被 trim（含空格/换行），重新填一次
-- **`POSTGRES_PASSWORD is required` / `JWT_SECRET is required` / `SETUP_BOOTSTRAP_TOKEN is required`**：compose 强校验未读到值，重新填表单调起
-- **POSTGRES 健康检查失败 / 数据目录残留**：v2.2.0 起上游将 bundled PostgreSQL 从 `pg16` 升级到 `pg18`；从老版本跨版本升级会报 `database files are incompatible with server`，详见上游 [Moving from PostgreSQL 16 to 18](https://bookorbit.app/installation/#updating)
+- **`POSTGRES_* is required` / `JWT_SECRET is required` / `SETUP_BOOTSTRAP_TOKEN is required`**：compose 强校验未读到值，重新填表单调起
 - **`EACCES` / `permission denied`**：见上文「挂载目录属主」
 - **iOS / Apple Watch App 连不上自托管服务器**：检查反代后 `APP_URL` 是否已更新为公网域名，且 iOS 设备能访问该域名（HTTPS + 受信证书）
 
@@ -190,6 +250,7 @@ BookOrbit v2.10+ 支持 Kokoro FastAPI TTS。上游提供 opt-in `tts` profile�
 
 - [上游 BookOrbit README](https://github.com/bookorbit/bookorbit/blob/main/README.md)
 - [上游 BookOrbit 安装指南](https://bookorbit.app/installation)
+- [本仓 1Panel-postgresql 应用 (pgvector)](../../pgvector/0.8.7-pg18-trixie/)
 - [iOS / Apple Watch App](https://apps.apple.com/us/app/bookorbit-the-official-app/id6811807346)（v3.0.0+ / iOS 26+ / watchOS 26+）
 - [KOReader 插件](https://bookorbit.app/koreader-plugin)
 - [演示站](https://demo.bookorbit.app)（无需账号，含公版书样本库；部分管理功能受限）
