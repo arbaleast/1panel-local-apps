@@ -16,7 +16,7 @@
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 | 1.11.2-ls41 |
 | hindsight | AI 记忆系统 | 0.10.2 |
-| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.14 |
+| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.15 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 2026091410-arm64 |
@@ -26,21 +26,21 @@
 | llamacpp | 高性能本地 LLM 推理引擎 | server-vulkan-v0.4.7 |
 | llamaindex | LLM 数据框架 | v0.9.2 |
 | llmwiki | LLM Wiki 知识库（占位应用，详见 README 风险说明） | latest |
-| marginalia | 本地优先的私人知识库 + LLM 研究代理 | 0.3.7 |
+| marginalia | 本地优先的私人知识库 + LLM 研究代理 | v0.3.8 |
 | mediago | 媒体嗅探与下载 | 3.5.0 |
 | mihomo | 代理工具 | v1.19.18 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
 | misaka | 御坂网络弹幕服务 | v2.8.9 |
-| moviepilot | 影视自动化 | 3.0.10 |
+| moviepilot | 影视自动化 | 3.1.0 |
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.7.7 |
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
-| pgvector | 向量数据库 | 0.8.6-pg18-trixie |
+| pgvector | 向量数据库 | 0.8.7-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
 | qdrant | 向量搜索引擎 | v1.19.1-unprivileged |
-| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.22.0 |
-| searxng | 隐私搜索引擎 | 2026.9.29-f5035873a |
+| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.23.0 |
+| searxng | 隐私搜索引擎 | 2026.9.30-a9d990033 |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | syncthing | 文件同步 | 2.1.5 |
 | traefik | 反向代理 | v3.6.6 |
