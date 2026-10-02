@@ -41,7 +41,7 @@ additionalProperties:
       required: true
       rule: paramImageTag
       type: text
-    - default: v1.2.0
+    - default: 1.2.0
       edit: true
       envKey: APP_VERSION
       labelEn: Version

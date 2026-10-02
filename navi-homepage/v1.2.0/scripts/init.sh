@@ -54,7 +54,7 @@ fi
 
 # 兜底默认值
 IMAGE="${IMAGE:-ghcr.io/damisunshine/navi-homepage}"
-APP_VERSION="${APP_VERSION:-v1.2.0}"
+APP_VERSION="${APP_VERSION:-1.2.0}"
 
 # 解析 DATA_PATH（compose 里的 ./data；相对路径相对 WORKDIR）
 DATA_PATH="${DATA_PATH:-./data}"
@@ -82,6 +82,21 @@ else
     echo "[navi-init] Extracting default config.json from ${IMAGE}:${APP_VERSION}..."
     if ! docker pull "${IMAGE}:${APP_VERSION}" >/dev/null 2>&1; then
         echo "[navi-init] WARNING: docker pull failed, will try to use local image if present"
+    fi
+    # 显式预检：若镜像（含 tag）不存在，给出 1Panel 用户能看懂的诊断，
+    # 而不是 "manifest unknown" 这种 docker run 内部错误。常见根因：
+    #   - tag 写错（如上游用 1.2.0 不是 v1.2.0）
+    #   - 镜像还没被推上去（CI 失败 / 包可见性 = private）
+    #   - 网络问题拉不到
+    if ! docker image inspect "${IMAGE}:${APP_VERSION}" >/dev/null 2>&1; then
+        echo "[navi-init] FATAL: ${IMAGE}:${APP_VERSION} is not available locally." >&2
+        echo "[navi-init] Hints:" >&2
+        echo "[navi-init]   1. 上游镜像 tag 不要带 v 前缀 —— damisunshine/navi-homepage 用 '1.2.0' 不是 'v1.2.0'" >&2
+        echo "[navi-init]   2. 镜像仓库 visible 性需是 public（首次发布后需手动改）" >&2
+        echo "[navi-init]   3. 国内服务器可能需要配置 Docker Hub / GHCR 镜像加速器" >&2
+        echo "[navi-init] 当前可用的上游 tag (在能联网的机器执行 docker run --rm mplatform/curl curl -sL 'https://ghcr.io/token?scope=repository:damisunshine/navi-homepage:pull' ...):" >&2
+        echo "[navi-init]   1.2.0  1.2  1.1.1  1.1  latest  edge" >&2
+        exit 1
     fi
     # 上游镜像里 /app/public/config.example.json 是示例配置。
     # 注意：./data 是空目录，**不会**遮住 /app/public/，所以可以直接拷。

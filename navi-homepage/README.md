@@ -5,7 +5,7 @@
 - **GitHub**: <https://github.com/DamiSunshine/navi-homepage>
 - **License**: MIT
 - **上游镜像**: `ghcr.io/damisunshine/navi-homepage`（GHCR，多架构 `linux/amd64` + `linux/arm64`）
-- **目录结构**: `v1.2.0/` 版本目录（与上游 tag `v1.2.0` 对齐）
+- **目录结构**: `v1.2.0/` 版本目录（注意：**镜像 tag 不带 `v` 前缀**，1Panel 表单中版本字段默认 `1.2.0`）
 
 ## 功能要点
 
@@ -77,7 +77,7 @@ navi-homepage/
 | 字段 | 默认值 | 必填 | 说明 |
 |------|--------|------|------|
 | 镜像 | `ghcr.io/damisunshine/navi-homepage` | 是 | 1Panel 自动按 `linux/amd64` 或 `linux/arm64` 拉取多架构镜像 |
-| 版本 | `v1.2.0` | 是 | 上游 GitHub tag，建议跟随上游稳定版 |
+| 版本 | `1.2.0` | 是 | 上游 GHCR tag（**注意不带 `v` 前缀**，镜像工作流 type=semver 不会自动加 v）；如未来要跟随上游 `v1.3.0` release，请先确认 GHCR 是否真的推了 `1.3.0` tag |
 | HTTP 端口 | `48090` | 是 | 主机侧端口，映射到容器内 `80` |
 | 访问密码 | `navi-homepage` | 是 | **首次安装后立即改！** 默认值仅供首次登录，**暴露公网前必须设强密码** |
 | 登录用户名 | _空_ | 否 | 留空则仅用密码；填了则用户名 + 密码同时校验 |
@@ -158,7 +158,7 @@ cp -a /backup/navi-homepage-20260101/* /opt/1panel/apps/navi-homepage/v1.2.0/dat
 手动拉取最新镜像：
 
 ```bash
-docker pull ghcr.io/damisunshine/navi-homepage:v1.2.0
+docker pull ghcr.io/damisunshine/navi-homepage:1.2.0
 # 1Panel UI → 应用 → navi-homepage → 重启
 ```
 
