@@ -35,6 +35,7 @@
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.7.7 |
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
+| onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.2.4 |
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
 | pgvector | 向量数据库 | 0.8.7-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |

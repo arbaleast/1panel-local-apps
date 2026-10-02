@@ -1,0 +1,28 @@
+additionalProperties:
+  key: onenav
+  name: OneNav
+  tags:
+    - Bookmark
+    - Navigation
+    - PHP
+    - SQLite
+  shortDescZh: 使用 PHP + SQLite 3 开发的开源书签 / 导航管理器
+  shortDescEn: Open-source bookmark/navigation manager built with PHP + SQLite 3
+  description:
+    zh: 'OneNav 是 xiaoz 使用 PHP + SQLite 3 开发的开源免费书签（导航）管理程序：浏览器书签集中式管理，跨设备 / 跨平台 / 跨浏览器一键同步，做到一处部署、随处访问。支持私有链接、链接信息自动识别、多种主题风格（默认内置 default / default2 / minima / universal 等主题）、批量检测死链、链接拖拽排序、Chrome / Firefox / Edge 书签批量导入、二级分类管理、AI 检索、底部工具栏、PWA 应用、手机版后台、内置 RESTful API、浏览器扩展配套、后台一键在线升级等。官方 Docker 镜像基于 Alpine 3.12 + PHP 7 + Nginx，单文件 SQLite 数据库，开箱即用。'
+    en: 'OneNav is a free, open-source bookmark/navigation manager built with xiaoz using PHP + SQLite 3: centrally manage browser bookmarks across devices, platforms, and browsers. Deploy once, access anywhere. It supports private links, automatic link info recognition, multiple theme styles (default includes default / default2 / minima / universal themes), batch dead-link detection, drag-and-drop ordering, batch import from Chrome / Firefox / Edge bookmarks, secondary category management, AI search, bottom toolbar, PWA support, mobile admin, built-in RESTful API, companion browser extensions, and one-click online upgrades. The official Docker image is based on Alpine 3.12 + PHP 7 + Nginx, with a single-file SQLite database — zero-config deployment.'
+    zh-Hant: 'OneNav 是 xiaoz 使用 PHP + SQLite 3 開發的開源免費書籤（導航）管理程式：瀏覽器書籤集中式管理，跨裝置 / 跨平台 / 跨瀏覽器一鍵同步，做到一處部署、隨處訪問。支援私有連結、連結資訊自動辨識、多種主題風格（預設內建 default / default2 / minima / universal 等主題）、批次檢測死鏈、連結拖曳排序、Chrome / Firefox / Edge 書籤批次匯入、二級分類管理、AI 檢索、底部工具列、PWA 應用、手機版後台、內建 RESTful API、瀏覽器擴充套件配套、後台一鍵線上升級等。官方 Docker 映像基於 Alpine 3.12 + PHP 7 + Nginx，單檔 SQLite 資料庫，開箱即用。'
+    ja: 'OneNav は xiaoz が PHP + SQLite 3 で開発したオープンソースの無料ブックマーク／ナビゲーション管理プログラムです。ブラウザのブックマークを一元管理し、デバイス／プラットフォーム／ブラウザを横断して同期。「一箇所にデプロイして、どこからでもアクセス」を実現します。プライベートリンク、自動リンク情報認識、複数テーマスタイル（デフォルトで default / default2 / minima / universal などのテーマ内蔵）、バッチデッドリンク検出、ドラッグ＆ドロップ並び替え、Chrome / Firefox / Edge ブックマーク一括インポート、二階層カテゴリ管理、AI 検索、ボトムツールバー、PWA 対応、モバイル管理画面、内蔵 RESTful API、ブラウザ拡張機能連携、ワンクリックオンラインアップグレードをサポート。公式 Docker イメージは Alpine 3.12 + PHP 7 + Nginx ベース、単一ファイル SQLite データベース、ゼロコンフィグデプロイ。'
+    ko: 'OneNav은 xiaoz이 PHP + SQLite 3로 개발한 오픈 소스 무료 북마크/내비게이션 관리 프로그램입니다. 브라우저 북마크를 중앙 집중식으로 관리하고 장치/플랫폼/브라우저 간 동기화를 제공합니다. 한 번 배포하고 어디서나 접근하세요. 비공개 링크, 자동 링크 정보 인식, 다중 테마 스타일(기본 내장 default/default2/minima/universal 테마), 일괄 죽은 링크 감지, 드래그 앤 드롭 정렬, Chrome/Firefox/Edge 북마크 일괄 가져오기, 2차 카테고리 관리, AI 검색, 하단 도구 모음, PWA 지원, 모바일 관리 화면, 내장 RESTful API, 브라우저 확장 프로그램 연동, 원클릭 온라인 업그레이드를 지원합니다. 공식 Docker 이미지는 Alpine 3.12 + PHP 7 + Nginx 기반, 단일 파일 SQLite 데이터베이스, 즉시 사용 가능.'
+    ru: 'OneNav — бесплатная open-source программа управления закладками / навигацией от xiaoz, написанная на PHP + SQLite 3: централизованное управление закладками браузера на разных устройствах, платформах и браузерах, «разверни один раз — получай доступ отовсюду». Поддерживает приватные ссылки, автоматическое распознавание информации о ссылках, несколько стилей тем (по умолчанию включены default / default2 / minima / universal), пакетную проверку битых ссылок, сортировку перетаскиванием, пакетный импорт закладок Chrome / Firefox / Edge, двухуровневую категоризацию, AI-поиск, нижнюю панель инструментов, PWA, мобильную админку, встроенный RESTful API, сопутствующие расширения браузера и онлайн-обновление в один клик. Официальный Docker-образ основан на Alpine 3.12 + PHP 7 + Nginx, однофайловая база SQLite, развертывание без настройки.'
+    ms: 'OneNav ialah program pengurusan penanda halaman / navigasi sumber terbuka percuma yang dibangunkan oleh xiaoz menggunakan PHP + SQLite 3: pengurusan penanda halaman penyemak imbas secara berpusat merentas peranti, platform dan pelayar, capai "sekali部署, akses di mana-mana". Menyokong pautan peribadi, pengecaman automatik maklumat pautan, pelbagai gaya tema (lalai termasuk tema default / default2 / minima / universal), pengesanan pautan mati secara kelompok, susunan seret dan lepas, import penanda halaman kelompok Chrome / Firefox / Edge, pengurusan kategori dua peringkat, carian AI, bar alat bawah, sokongan PWA, panel admin mudah alih, RESTful API terbina dalam, penyepaduan sambungan pelayar, naik taraf satu klik dalam talian. Imej Docker rasmi berdasarkan Alpine 3.12 + PHP 7 + Nginx, pangkalan data SQLite satu fail, sedia untuk digunakan.'
+    pt-br: 'OneNav é um programa gratuito e de código aberto de gerenciamento de favoritos / navegação criado por xiaoz usando PHP + SQLite 3: gerencia centralizadamente os favoritos do navegador em diferentes dispositivos, plataformas e navegadores. "Implante uma vez, acesse de qualquer lugar". Suporta links privados, reconhecimento automático de informações de links, múltiplos estilos de temas (padrão inclui temas default / default2 / minima / universal), detecção em lote de links mortos, ordenação por arrastar e soltar, importação em lote de favoritos do Chrome / Firefox / Edge, gerenciamento de categorias secundárias, busca por IA, barra de ferramentas inferior, suporte a PWA, painel admin mobile, API RESTful embutida, extensões de navegador e atualização online com um clique. A imagem Docker oficial é baseada em Alpine 3.12 + PHP 7 + Nginx, banco de dados SQLite em arquivo único, deploy sem configuração.'
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://www.onenav.top
+  github: https://github.com/helloxz/onenav

@@ -26,6 +26,8 @@ aliases:
   newapi:
     dir: newapi
     desc: AI/LLM API 聚合网关
+  onenav:
+    desc: PHP + SQLite 3 开发的开源书签 / 导航管理器
   hindsight:
     dir: hindsight
     desc: AI 记忆系统

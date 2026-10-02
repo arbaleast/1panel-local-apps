@@ -1,0 +1,73 @@
+networks:
+  1panel-network:
+    external: true
+
+# ============================================================
+# OneNav (v1.2.4) — PHP + SQLite 3 开发的开源书签 / 导航管理器
+#   上游项目: <https://github.com/helloxz/onenav>
+#   上游 Docker 镜像: <https://github.com/helloxz/docker-onenav>
+#   官方 Docker Hub 镜像: helloz/onenav
+#   基础镜像: alpine:3.12 + PHP 7 + Nginx（GitHub Actions 构建）
+#   容器入口: /usr/sbin/run.sh —— 启动 php-fpm7 与 nginx，
+#            主进程 tail -f /var/log/nginx/error.log
+#   站点根目录: /data/wwwroot/default （容器内）
+#   数据目录: /data/wwwroot/default/data （含 config.php / *.db3 / 上传 / 缓存）
+#
+# 数据流:
+#   主机侧 ./data/config.php  → 容器 /data/wwwroot/default/data/config.php
+#   主机侧 ./data/*.db3       → 容器 /data/wwwroot/default/data/*.db3
+#   主机侧 ./data/uploads/    → 容器 /data/wwwroot/default/data/uploads/
+#   主机侧 ./data/templates/  → 容器 /data/wwwroot/default/data/templates/
+#
+# 关键设计点:
+#   1. 整目录挂载 ./data → /data/wwwroot/default/data
+#      上游 install.sh 会把 helloxz/onenav 源码 git clone 到容器内
+#      /data/wwwroot/default/（父目录），而 data/ 子目录由我们的 bind mount
+#      接管。容器首次启动会拉取最新 OneNav 源码到镜像层；./data 目录是
+#      持久化层（含 config.php / *.db3 / uploads / templates）。
+#      —— init.sh 负责首次启动前从镜像源码根
+#      /data/wwwroot/default/config.simple.php 提取示例 config.php 到
+#      主机 ./data/config.php（若尚不存在），并写入 ONENAV_USER /
+#      ONENAV_PASSWORD 对应的 ENCRYPTED_PASSWORD（md5(USER.PASSWORD)）。
+#   2. USER / PASSWORD 注入到容器环境变量。
+#      —— 上游镜像并未直接读取 USER / PASSWORD 写入 config.php，本仓
+#      通过 init.sh 在 1Panel 调起 docker compose up -d 之前完成配置写入，
+#      故 container 端 USER / PASSWORD 透传给上游是 no-op（保留字段以便
+#      用户自配镜像仓库不破坏）。
+#   3. ${ONENAV_USER:?...} / ${ONENAV_PASSWORD:?...} 强制校验
+#      —— 1Panel formFields 中 required: true + rule: paramComplexity，
+#      不会让用户提交空值；留空直接拒绝启动。
+#   4. nginx 监听容器内 80 端口（与 ports 映射对齐）。
+#   5. 上游镜像 install.sh 默认时区为 Asia/Shanghai，TZ 环境变量
+#      让 PHP date() 也跟随用户设置的时区。
+# ============================================================
+
+services:
+  onenav:
+    container_name: ${CONTAINER_NAME}
+    image: ${IMAGE}:${APP_VERSION}
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:80
+    environment:
+      # 管理员账号（必填）
+      USER: ${ONENAV_USER:?ONENAV_USER is required, please set it in 1Panel app form}
+      # 管理员密码（必填）
+      PASSWORD: ${ONENAV_PASSWORD:?ONENAV_PASSWORD is required, please set it in 1Panel app form}
+      # 时区
+      TZ: ${TZ}
+    volumes:
+      # 整目录挂载 —— 容器内 /data/wwwroot/default/data 由整目录 bind 接管
+      # （install.sh 不会写入这里，因为 data 是子目录而非根目录占位）。
+      - ./data:/data/wwwroot/default/data
+    healthcheck:
+      # nginx 监听 80；首页 index.php 返回 200（已初始化）或 302（引导页）
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:80/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

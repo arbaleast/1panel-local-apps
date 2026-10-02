@@ -1,0 +1,163 @@
+additionalProperties:
+  key: onenav
+  name: onenav 1.2.4
+  tags:
+    - Bookmark
+    - Navigation
+    - PHP
+    - SQLite
+  shortDescZh: 使用 PHP + SQLite 3 开发的开源书签 / 导航管理器
+  shortDescEn: Open-source bookmark/navigation manager built with PHP + SQLite 3
+  description:
+    zh: OneNav v1.2.4 — 新增支持导出为 JSON。上游 [helloxz/onenav](https://github.com/helloxz/onenav) 1.2.4 release。官方 Docker 镜像 helloz/onenav，基于 Alpine 3.12 + PHP 7 + Nginx。
+    en: OneNav v1.2.4 — adds JSON export. Upstream [helloxz/onenav](https://github.com/helloxz/onenav) 1.2.4 release. Official Docker image helloz/onenav, based on Alpine 3.12 + PHP 7 + Nginx.
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://www.onenav.top
+  github: https://github.com/helloxz/onenav
+  formFields:
+    # ----------------------------------------------------------------------------
+    # 镜像源（Docker Hub 官方 helloz/onenav 多架构镜像）
+    # ----------------------------------------------------------------------------
+    - default: helloz/onenav
+      edit: true
+      envKey: IMAGE
+      labelEn: Image
+      labelZh: 镜像
+      label:
+        en: Image
+        zh: 镜像
+        zh-Hant: 映像
+        ja: イメージ
+        ko: 이미지
+        ru: Образ
+        ms: Imej
+        pt-br: Imagem
+      required: true
+      rule: paramImageTag
+      type: text
+    # ----------------------------------------------------------------------------
+    # 上游版本号（Docker tag 与 OneNav GitHub release tag 一致，如 1.2.4）
+    # ----------------------------------------------------------------------------
+    - default: 1.2.4
+      edit: true
+      envKey: APP_VERSION
+      labelEn: Version
+      labelZh: 版本
+      label:
+        en: Version
+        zh: 版本
+        zh-Hant: 版本
+        ja: バージョン
+        ko: 버전
+        ru: Версия
+        ms: Versi
+        pt-br: Versão
+      required: true
+      rule: paramImageTag
+      type: text
+    # ----------------------------------------------------------------------------
+    # HTTP 端口：主机侧端口 → 容器 80
+    # ----------------------------------------------------------------------------
+    - default: 48080
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ----------------------------------------------------------------------------
+    # 初始化用户名（必填，首次启动写入 config.php）
+    # ----------------------------------------------------------------------------
+    - default: admin
+      edit: true
+      envKey: ONENAV_USER
+      labelEn: Admin Username
+      labelZh: 管理员用户名
+      label:
+        en: Admin Username
+        zh: 管理员用户名
+        zh-Hant: 管理員使用者名稱
+        ja: 管理者ユーザー名
+        ko: 관리자 사용자 이름
+        ru: Имя администратора
+        ms: Nama Pengguna Pentadbir
+        pt-br: Usuário admin
+      required: true
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 初始化密码（必填，复杂度校验）
+    # ----------------------------------------------------------------------------
+    - default: onenav123
+      edit: true
+      envKey: ONENAV_PASSWORD
+      labelEn: Admin Password
+      labelZh: 管理员密码
+      label:
+        en: Admin Password
+        zh: 管理员密码
+        zh-Hant: 管理員密碼
+        ja: 管理者パスワード
+        ko: 관리자 비밀번호
+        ru: Пароль администратора
+        ms: Kata Laluan Pentadbir
+        pt-br: Senha admin
+      required: true
+      rule: paramComplexity
+      type: password
+    # ----------------------------------------------------------------------------
+    # 站点标题（仅展示，写入 config.php）
+    # ----------------------------------------------------------------------------
+    - default: OneNav
+      edit: true
+      envKey: ONENAV_SITE_TITLE
+      labelEn: Site Title
+      labelZh: 站点标题
+      label:
+        en: Site Title
+        zh: 站点标题
+        zh-Hant: 站點標題
+        ja: サイトタイトル
+        ko: 사이트 제목
+        ru: Название сайта
+        ms: Tajuk Laman
+        pt-br: Título do site
+      required: false
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 时区（默认 Asia/Shanghai，与镜像内 install.sh 一致）
+    # ----------------------------------------------------------------------------
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: false
+      rule: paramCommon
+      type: text
