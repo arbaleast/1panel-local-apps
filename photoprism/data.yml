@@ -1,0 +1,29 @@
+additionalProperties:
+  key: photoprism
+  name: PhotoPrism
+  tags:
+    - Photo
+    - Gallery
+    - AI
+    - Self-hosted
+  shortDescZh: PhotoPrism 自托管 AI 照片管理（人脸/场景识别）
+  shortDescEn: PhotoPrism self-hosted AI photo management (face/scene recognition)
+  description:
+    en: Self-hosted AI-powered photo management app with face recognition, scene detection, maps, and WebDAV — a Google Photos alternative you fully own.
+    zh: 自托管的 AI 照片管理应用,支持人脸识别、场景识别、地图、WebDAV 等,Google Photos 的完全私有替代品。
+    zh-Hant: 自託管的 AI 照片管理應用,支援人臉識別、場景識別、地圖、WebDAV 等,Google Photos 的完全私有替代品。
+    ja: セルフホスト型の AI 写真管理アプリ。顔認識、シーン認識、地図、WebDAV をサポートし、Google Photos の完全プライベート代替。
+    ko: 셀프 호스팅 AI 사진 관리 앱. 얼굴 인식, 장면 인식, 지도, WebDAV 지원, Google Photos의 완전한 프라이빗 대안.
+    ru: "Самохостинговое приложение для AI-управления фото: распознавание лиц, сцен, карты, WebDAV — полностью ваша альтернатива Google Photos."
+    ms: "Aplikasi pengurusan foto AI hos sendiri dengan pengecaman muka, pengesanan adegan, peta dan WebDAV — alternatif Google Photos yang milik anda sepenuhnya."
+    pt-br: "App de gestão de fotos auto-hospedado com IA: reconhecimento facial, detecção de cenas, mapas e WebDAV — uma alternativa ao Google Photos totalmente sua."
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://www.photoprism.app/
+  github: https://github.com/photoprism/photoprism
+  document: https://docs.photoprism.app/
+name: PhotoPrism
+title: PhotoPrism 自托管 AI 照片管理
+description: 自托管的 AI 照片管理应用,支持人脸识别、场景识别、地图、WebDAV 等,Google Photos 的完全私有替代品。

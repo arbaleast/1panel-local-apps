@@ -1,0 +1,101 @@
+# ============================================================
+# PhotoPrism (260919-28c46a116) — Self-hosted AI photo manager
+#   上游项目: <https://github.com/photoprism/photoprism>
+#   上游 Docker 镜像: photoprism/photoprism (多架构 linux/amd64 + linux/arm64)
+#   上游 docker-compose 模板: <https://github.com/photoprism/photoprism/blob/release/docker-compose.yml>
+#   上游安装文档: <https://docs.photoprism.app/getting-started/docker-compose/>
+#
+# 数据流（与上游 docker-compose.yml 等价，外部 MariaDB 模式）：
+#   主机侧 ./data/photoprism/originals  → 容器 /photoprism/originals  （原始照片/视频库）
+#   主机侧 ./data/photoprism/storage   → 容器 /photoprism/storage    （缩略图/缓存/数据库索引）
+#   主机侧 ./data/photoprism/import    → 容器 /photoprism/import     （上传/导入暂存区）
+#   MariaDB: 不在本 compose 中，由 1Panel 应用商店的 MariaDB/MySQL/PostgreSQL 独立提供，
+#            通过 1panel-network 容器名互通。
+#
+# 关键设计点：
+#   1. 仅一个服务 photoprism（变量型 APP_IMAGE / APP_VERSION）。
+#      上游 compose 中 mariadb 服务与 photoprism depends_on mariadb 已移除；
+#      对应 PHOTOPRISM_DATABASE_DRIVER=mysql 时通过容器名连接外部 DB。
+#   2. PHOTOPRISM_DATABASE_DRIVER 默认 sqlite（零外部依赖即可启动）；
+#      用户可在表单切换为 mysql / mariadb 走 1Panel 外部数据库。
+#   3. PHOTOPRISM_ADMIN_PASSWORD 上游强制 required；
+#      compose 端用 ${VAR:?msg} 强校验，1Panel 表单用 rule: paramComplexity 强制非空。
+#   4. PHOTOPRISM_SITE_URL 影响 OAuth 回调、分享链接与 WebDAV 端点基址；
+#      反向代理后必须填 https://your-domain。
+#   5. UID/GID 默认 1000/1000。上游会自动修复 storage 目录的属主。
+#      若宿主机 ./data/photoprism/originals 已有大量照片且属于其他用户，
+#      请在主机侧手动 chown -R <uid>:<gid> ./data/photoprism/originals 后再启动。
+#   6. 持久化：./data/photoprism/{originals,storage,import} 均为相对路径 bind mount，
+#      不引入顶层 volumes: 块（符合本仓规约 + 1Panel schema）。
+# ============================================================
+
+networks:
+  1panel-network:
+    external: true
+
+services:
+  # 主应用：PhotoPrism Web (Go + TensorFlow 推理),监听容器内 2342
+  photoprism:
+    container_name: ${CONTAINER_NAME}
+    image: ${APP_IMAGE}:${APP_VERSION}
+    restart: always
+    init: true
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:2342
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    # PhotoPrism 启动健康检查 (官方 /api/v1/status 端点)
+    healthcheck:
+      test: ["CMD", "photoprism", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    environment:
+      # 站点基础信息
+      PHOTOPRISM_SITE_URL: ${PHOTOPRISM_SITE_URL?PHOTOPRISM_SITE_URL is unset; required for OAuth, sharing and WebDAV endpoints. Format: https://your-domain (no trailing slash) or http://<your-IP>:<port> for local-only access}
+      PHOTOPRISM_SITE_TITLE: ${PHOTOPRISM_SITE_TITLE}
+      PHOTOPRISM_SITE_CAPTION: ${PHOTOPRISM_SITE_CAPTION}
+      PHOTOPRISM_TIMEZONE: ${TZ}
+
+      # 管理员账号（必填；PHOTOPRISM_ADMIN_PASSWORD 由 1Panel 表单 paramComplexity 强校验）
+      PHOTOPRISM_ADMIN_USER: ${PHOTOPRISM_ADMIN_USER}
+      PHOTOPRISM_ADMIN_PASSWORD: ${PHOTOPRISM_ADMIN_PASSWORD:?PHOTOPRISM_ADMIN_PASSWORD is required}
+      PHOTOPRISM_ADMIN_EMAIL: ${PHOTOPRISM_ADMIN_EMAIL}
+
+      # 数据库：默认 sqlite 零依赖；切 mysql/mariadb 后填下方 1Panel 外部库连接信息
+      PHOTOPRISM_DATABASE_DRIVER: ${PHOTOPRISM_DATABASE_DRIVER}
+      PHOTOPRISM_DATABASE_SERVER: ${PHOTOPRISM_DATABASE_SERVER}
+      PHOTOPRISM_DATABASE_PORT: ${PHOTOPRISM_DATABASE_PORT}
+      PHOTOPRISM_DATABASE_NAME: ${PHOTOPRISM_DATABASE_NAME}
+      PHOTOPRISM_DATABASE_USER: ${PHOTOPRISM_DATABASE_USER}
+      PHOTOPRISM_DATABASE_PASSWORD: ${PHOTOPRISM_DATABASE_PASSWORD}
+
+      # 容器进程 UID/GID（NAS 套件常需对齐宿主机 originals 目录属主）
+      PHOTOPRISM_UID: ${PHOTOPRISM_UID}
+      PHOTOPRISM_GID: ${PHOTOPRISM_GID}
+
+      # 公开注册开关
+      PHOTOPRISM_DISABLE_REGISTRATION: ${PHOTOPRISM_DISABLE_REGISTRATION}
+      PHOTOPRISM_PUBLIC: ${PHOTOPRISM_PUBLIC}
+
+      # 内容策略
+      PHOTOPRISM_UPLOAD_NSFW: ${PHOTOPRISM_UPLOAD_NSFW}
+      PHOTOPRISM_READONLY: ${PHOTOPRISM_READONLY}
+      PHOTOPRISM_ORIGINALS_LIMIT: ${PHOTOPRISM_ORIGINALS_LIMIT}
+
+    volumes:
+      # 原始照片/视频库（宿主 → 容器 originals）
+      - ./data/photoprism/originals:/photoprism/originals
+      # 缩略图 / 缓存 / SQLite 索引（宿主 → 容器 storage）
+      - ./data/photoprism/storage:/photoprism/storage
+      # 上传/导入暂存（宿主 → 容器 import；通过 Web 上传或 WebDAV 同步）
+      - ./data/photoprism/import:/photoprism/import

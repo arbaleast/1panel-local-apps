@@ -56,6 +56,8 @@ aliases:
     desc: 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库）
   pgvector:
     desc: 向量数据库
+  photoprism:
+    desc: 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV）
   qdrant:
     desc: 向量搜索引擎
   searxng:

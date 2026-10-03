@@ -1,0 +1,496 @@
+additionalProperties:
+  key: photoprism
+  name: photoprism 260919-28c46a116
+  tags:
+    - Photo
+    - Gallery
+    - AI
+    - Self-hosted
+  shortDescZh: PhotoPrism 自托管 AI 照片管理（人脸/场景识别）
+  shortDescEn: PhotoPrism self-hosted AI photo management (face/scene recognition)
+  description:
+    zh: 'PhotoPrism 260919-28c46a116（2026-09-19 release）— 上游 [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker 镜像，多架构 linux/amd64 + linux/arm64。本应用不捆绑数据库；默认 sqlite 零依赖启动，可选切到 1Panel 应用商店已部署的 MariaDB / MySQL / PostgreSQL 走外部库（按容器名互通）。支持人脸识别、场景识别、地图、WebDAV、移动端 PWA 等。'
+    en: 'PhotoPrism 260919-28c46a116 (2026-09-19 release) — upstream [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker image (multi-arch linux/amd64 + linux/arm64). This app bundles no database; defaults to SQLite for zero-dep start, with an option to switch to 1Panel app-store MariaDB / MySQL / PostgreSQL via container name. Includes face recognition, scene detection, maps, WebDAV and mobile PWA.'
+  type: media
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://www.photoprism.app/
+  github: https://github.com/photoprism/photoprism
+  document: https://docs.photoprism.app/
+  formFields:
+    # ----------------------------------------------------------------------------
+    # 镜像源（DockerHub 官方多架构镜像）
+    # ----------------------------------------------------------------------------
+    - default: photoprism/photoprism
+      edit: true
+      envKey: APP_IMAGE
+      labelEn: App Image
+      labelZh: 应用镜像
+      label:
+        en: App Image
+        zh: 应用镜像
+        zh-Hant: 應用映像
+        ja: アプリイメージ
+        ko: 앱 이미지
+        ru: Образ приложения
+        ms: Imej Aplikasi
+        pt-br: Imagem do app
+      required: true
+      rule: paramImageTag
+      type: text
+    # ----------------------------------------------------------------------------
+    # 上游版本号（DockerHub tag，与上游 GitHub release tag 一致，日期+短 SHA 格式）
+    # ----------------------------------------------------------------------------
+    - default: 260919-28c46a116
+      edit: true
+      envKey: APP_VERSION
+      labelEn: App Version
+      labelZh: 应用版本
+      label:
+        en: App Version
+        zh: 应用版本
+        zh-Hant: 應用版本
+        ja: アプリバージョン
+        ko: 앱 버전
+        ru: Версия приложения
+        ms: Versi Aplikasi
+        pt-br: Versão do app
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: 260919-28c46a116 (2026-09-19, latest)
+          value: 260919-28c46a116
+        - label: 260728-bbde8f452 (2026-07-28)
+          value: 260728-bbde8f452
+        - label: 260523-0544f71c1 (2026-05-23)
+          value: 260523-0544f71c1
+    # ----------------------------------------------------------------------------
+    # HTTP 端口：主机侧端口 → 容器 2342 (PhotoPrism Web 默认端口)
+    # ----------------------------------------------------------------------------
+    - default: 2342
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ----------------------------------------------------------------------------
+    # 站点 URL（必填；影响 OAuth 回调、分享链接与 WebDAV 端点基址）
+    #
+    # 为什么不用 paramCommon:
+    #   URL 形如 https://photos.example.com 含 `:` `/`，而 checkParamCommon 正则
+    #   `[a-zA-Z0-9._-]` 不含 `:/-` → 必被前端拒掉。paramHttp 不在白名单。
+    #   故不设 rule，任意 URL 均可提交。本地访问可填 http://<your-IP>:<port>。
+    # ----------------------------------------------------------------------------
+    - default: http://localhost:2342
+      edit: true
+      envKey: PHOTOPRISM_SITE_URL
+      labelEn: Site URL
+      labelZh: 站点 URL
+      label:
+        en: Site URL (required - affects OAuth, sharing, WebDAV callbacks)
+        zh: 站点 URL（必填 — 影响 OAuth、分享、WebDAV 回调）
+        zh-Hant: 站點 URL（必填 — 影響 OAuth、分享、WebDAV 回呼）
+        ja: サイト URL（必須 — OAuth、共有、WebDAV コールバックに影響）
+        ko: 사이트 URL (필수 — OAuth, 공유, WebDAV 콜백에 영향)
+        ru: URL сайта (обязательно — влияет на OAuth, шеры, WebDAV обратные вызовы)
+        ms: URL Tapak (wajib - menjejaskan OAuth, perkongsian, panggilan balik WebDAV)
+        pt-br: URL do site (obrigatório — afeta callbacks de OAuth, compartilhamento, WebDAV)
+      required: true
+      type: text
+    # ----------------------------------------------------------------------------
+    # 站点标题/副标题（可空）
+    # ----------------------------------------------------------------------------
+    - default: ""
+      edit: true
+      envKey: PHOTOPRISM_SITE_TITLE
+      labelEn: Site Title (optional)
+      labelZh: 站点标题（可空）
+      label:
+        en: Site Title (optional)
+        zh: 站点标题（可空）
+        zh-Hant: 站點標題（可空）
+        ja: サイトタイトル（任意）
+        ko: 사이트 제목 (선택)
+        ru: Заголовок сайта (необязательно)
+        ms: Tajuk Tapak (pilihan)
+        pt-br: Título do site (opcional)
+      required: false
+      type: text
+    - default: ""
+      edit: true
+      envKey: PHOTOPRISM_SITE_CAPTION
+      labelEn: Site Caption (optional)
+      labelZh: 站点副标题（可空）
+      label:
+        en: Site Caption (optional)
+        zh: 站点副标题（可空）
+        zh-Hant: 站點副標題（可空）
+        ja: サイトキャプション（任意）
+        ko: 사이트 부제 (선택)
+        ru: Подпись сайта (необязательно)
+        ms: Kapsyen Tapak (pilihan)
+        pt-br: Legenda do site (opcional)
+      required: false
+      type: text
+    # ----------------------------------------------------------------------------
+    # 时区（IANA 名称，如 Asia/Shanghai / America/New_York / UTC）
+    #
+    # 为什么不用 paramCommon:
+    #   IANA 时区名 `区域/城市` 含 `/`，而 checkParamCommon 不接受 `/`。
+    #   paramSelect 需要枚举数百个时区，成本过高。故不设 rule。
+    # ----------------------------------------------------------------------------
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone (IANA name)
+      labelZh: 时区（IANA 名称）
+      label:
+        en: Timezone (IANA name, e.g. Asia/Shanghai or UTC)
+        zh: 时区（IANA 名称，如 Asia/Shanghai 或 UTC）
+        zh-Hant: 時區（IANA 名稱，如 Asia/Shanghai 或 UTC）
+        ja: "タイムゾーン（IANA 名、例: Asia/Shanghai / UTC）"
+        ko: "시간대 (IANA 이름, 예: Asia/Shanghai 또는 UTC)"
+        ru: Часовой пояс (имя IANA, напр. Asia/Shanghai или UTC)
+        ms: Zon masa (nama IANA, cth. Asia/Shanghai atau UTC)
+        pt-br: "Fuso horário (nome IANA, ex: Asia/Shanghai ou UTC)"
+      required: false
+      type: text
+    # ----------------------------------------------------------------------------
+    # 管理员账号
+    # ----------------------------------------------------------------------------
+    - default: admin
+      edit: true
+      envKey: PHOTOPRISM_ADMIN_USER
+      labelEn: Admin Username
+      labelZh: 管理员用户名
+      label:
+        en: Admin Username
+        zh: 管理员用户名
+        zh-Hant: 管理員使用者名稱
+        ja: 管理者ユーザー名
+        ko: 관리자 사용자 이름
+        ru: Имя администратора
+        ms: Nama Pengguna Admin
+        pt-br: Nome de usuário admin
+      required: true
+      rule: paramCommon
+      type: text
+    - default: ""
+      edit: true
+      envKey: PHOTOPRISM_ADMIN_PASSWORD
+      labelEn: Admin Password
+      labelZh: 管理员密码
+      label:
+        en: Admin Password (8-72 chars, required)
+        zh: 管理员密码（8-72 字符，必填）
+        zh-Hant: 管理員密碼（8-72 字元，必填）
+        ja: 管理者パスワード（8-72 文字、必須）
+        ko: 관리자 비밀번호 (8-72자, 필수)
+        ru: Пароль администратора (8-72 символа, обязательно)
+        ms: Kata Laluan Admin (8-72 aksara, wajib)
+        pt-br: Senha admin (8-72 caracteres, obrigatória)
+      required: true
+      rule: paramComplexity
+      type: password
+    - default: ""
+      edit: true
+      envKey: PHOTOPRISM_ADMIN_EMAIL
+      labelEn: Admin Email (optional)
+      labelZh: 管理员邮箱（可空）
+      label:
+        en: Admin Email (optional)
+        zh: 管理员邮箱（可空）
+        zh-Hant: 管理員郵箱（可空）
+        ja: 管理者メール（任意）
+        ko: 관리자 이메일 (선택)
+        ru: Email администратора (необязательно)
+        ms: E-mel Admin (pilihan)
+        pt-br: E-mail admin (opcional)
+      required: false
+      type: text
+    # ----------------------------------------------------------------------------
+    # 数据库驱动：默认 sqlite 零依赖；切 mysql/mariadb 后填下方连接信息
+    # ----------------------------------------------------------------------------
+    - default: sqlite
+      edit: true
+      envKey: PHOTOPRISM_DATABASE_DRIVER
+      labelEn: Database Driver
+      labelZh: 数据库驱动
+      label:
+        en: Database Driver
+        zh: 数据库驱动
+        zh-Hant: 資料庫驅動
+        ja: データベースドライバ
+        ko: 데이터베이스 드라이버
+        ru: Драйвер БД
+        ms: Pemandu Pangkalan Data
+        pt-br: Driver de banco
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: SQLite (内置,零依赖)
+          value: sqlite
+        - label: MySQL / MariaDB (外部 1Panel 数据库)
+          value: mysql
+    # ----------------------------------------------------------------------------
+    # 数据库连接（仅当 PHOTOPRISM_DATABASE_DRIVER=mysql 时生效）
+    #
+    # 为什么 server 不用 paramCommon:
+    #   容器名 1Panel-mariadb-XXXX 含数字与短横线，checkParamCommon 正则虽然支持 `-`，
+    #   但 1Panel 自动生成的容器名形如 1Panel-mariadb-ABCDEFZ 整体仍为合法
+    #   [a-zA-Z0-9._-]+ 形式；本字段在这里仅作为示例值可改。
+    #   用户填入的容器名应严格匹配 1Panel 应用商店详情页的容器名（Base32 后缀）。
+    # ----------------------------------------------------------------------------
+    - default: 1Panel-mariadb-XXXXX
+      edit: true
+      envKey: PHOTOPRISM_DATABASE_SERVER
+      labelEn: DB Host (mysql only)
+      labelZh: 数据库主机（仅 mysql）
+      label:
+        en: DB Host (only when driver=mysql - 1Panel-mariadb container name)
+        zh: 数据库主机（仅 driver=mysql 时生效 — 1Panel-mariadb 容器名）
+        zh-Hant: 資料庫主機（僅 driver=mysql 時生效 — 1Panel-mariadb 容器名）
+        ja: DB ホスト（driver=mysql 時のみ — 1Panel-mariadb コンテナ名）
+        ko: DB 호스트 (driver=mysql 일 때만 — 1Panel-mariadb 컨테이너 이름)
+        ru: Хост БД (только при driver=mysql — имя контейнера 1Panel-mariadb)
+        ms: Hos DB (hanya apabila driver=mysql — nama bekas 1Panel-mariadb)
+        pt-br: Host DB (somente quando driver=mysql — nome do contêiner 1Panel-mariadb)
+      required: false
+      type: text
+    - default: "3306"
+      edit: true
+      envKey: PHOTOPRISM_DATABASE_PORT
+      labelEn: DB Port (mysql only)
+      labelZh: 数据库端口（仅 mysql）
+      label:
+        en: DB Port (default 3306 for MySQL/MariaDB)
+        zh: 数据库端口（MySQL/MariaDB 默认 3306）
+        zh-Hant: 資料庫埠（MySQL/MariaDB 預設 3306）
+        ja: DB ポート（MySQL/MariaDB はデフォルト 3306）
+        ko: DB 포트 (MySQL/MariaDB 기본 3306)
+        ru: Порт БД (по умолчанию 3306 для MySQL/MariaDB)
+        ms: Port DB (lalai 3306 untuk MySQL/MariaDB)
+        pt-br: Porta DB (padrão 3306 para MySQL/MariaDB)
+      required: false
+      rule: paramPort
+      type: number
+    - default: photoprism
+      edit: true
+      envKey: PHOTOPRISM_DATABASE_NAME
+      labelEn: DB Name (mysql only)
+      labelZh: 数据库名（仅 mysql）
+      label:
+        en: DB Name (only when driver=mysql - create via Navicat/psql first)
+        zh: 数据库名（仅 driver=mysql 时生效 — 先用 Navicat/psql 创建专用库）
+        zh-Hant: 資料庫名（僅 driver=mysql 時生效 — 先用 Navicat/psql 建立專用庫）
+        ja: DB 名（driver=mysql 時のみ — 先に Navicat/psql で専用 DB を作成）
+        ko: DB 이름 (driver=mysql 일 때만 — 먼저 Navicat/psql 로 전용 DB 생성)
+        ru: Имя БД (только при driver=mysql — сначала создайте БД через Navicat/psql)
+        ms: Nama DB (hanya apabila driver=mysql — buat melalui Navicat/psql dahulu)
+        pt-br: Nome DB (somente quando driver=mysql — crie via Navicat/psql primeiro)
+      required: false
+      type: text
+    - default: photoprism
+      edit: true
+      envKey: PHOTOPRISM_DATABASE_USER
+      labelEn: DB User (mysql only)
+      labelZh: 数据库用户（仅 mysql）
+      label:
+        en: DB User (1Panel-mariadb random user)
+        zh: 数据库用户（1Panel-mariadb 随机用户）
+        zh-Hant: 資料庫使用者（1Panel-mariadb 隨機使用者）
+        ja: DB ユーザー（1Panel-mariadb ランダムユーザー）
+        ko: DB 사용자 (1Panel-mariadb 임의 사용자)
+        ru: Пользователь БД (случайный пользователь 1Panel-mariadb)
+        ms: Pengguna DB (pengguna rawak 1Panel-mariadb)
+        pt-br: Usuário DB (usuário aleatório 1Panel-mariadb)
+      required: false
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 数据库密码（**不加 rule**）
+    #   1Panel 自动生成的形如 password_tyrcEJ（纯字母 + 下划线，无数字）会被
+    #   paramComplexity 正则拒掉。同本仓 bookorbit/marginalia 做法：不施加强度策略，
+    #   只靠 type: password 掩码 + required: true 强制非空。
+    # ----------------------------------------------------------------------------
+    - default: ""
+      edit: true
+      envKey: PHOTOPRISM_DATABASE_PASSWORD
+      labelEn: DB Password (mysql only)
+      labelZh: 数据库密码（仅 mysql）
+      label:
+        en: DB Password (1Panel-mariadb random password)
+        zh: 数据库密码（1Panel-mariadb 随机密码）
+        zh-Hant: 資料庫密碼（1Panel-mariadb 隨機密碼）
+        ja: DB パスワード（1Panel-mariadb ランダムパスワード）
+        ko: DB 비밀번호 (1Panel-mariadb 임의 비밀번호)
+        ru: Пароль БД (случайный пароль 1Panel-mariadb)
+        ms: Kata Laluan DB (kata laluan rawak 1Panel-mariadb)
+        pt-br: Senha DB (senha aleatória 1Panel-mariadb)
+      required: false
+      type: password
+    # ----------------------------------------------------------------------------
+    # 容器进程 UID/GID（与宿主机挂载目录属主一致，常见 NAS 用户为 1000）
+    # ----------------------------------------------------------------------------
+    - default: "1000"
+      edit: true
+      envKey: PHOTOPRISM_UID
+      labelEn: Process UID
+      labelZh: 容器进程 UID
+      label:
+        en: Process UID
+        zh: 容器进程 UID
+        zh-Hant: 容器行程 UID
+        ja: コンテナプロセス UID
+        ko: 컨테이너 프로세스 UID
+        ru: UID процесса
+        ms: UID Proses
+        pt-br: UID do processo
+      required: false
+      rule: paramCommon
+      type: text
+    - default: "1000"
+      edit: true
+      envKey: PHOTOPRISM_GID
+      labelEn: Process GID
+      labelZh: 容器进程 GID
+      label:
+        en: Process GID
+        zh: 容器进程 GID
+        zh-Hant: 容器行程 GID
+        ja: コンテナプロセス GID
+        ko: 컨테이너 프로세스 GID
+        ru: GID процесса
+        ms: GID Proses
+        pt-br: GID do processo
+      required: false
+      rule: paramCommon
+      type: text
+    # ----------------------------------------------------------------------------
+    # 公开注册 / 访客模式（布尔 → select 模拟）
+    # ----------------------------------------------------------------------------
+    - default: "true"
+      edit: true
+      envKey: PHOTOPRISM_DISABLE_REGISTRATION
+      labelEn: Disable Registration
+      labelZh: 禁用注册
+      label:
+        en: Disable Registration
+        zh: 禁用注册
+        zh-Hant: 停用註冊
+        ja: 登録を無効化
+        ko: 등록 비활성화
+        ru: Отключить регистрацию
+        ms: Lumpuhkan Pendaftaran
+        pt-br: Desabilitar registro
+      required: false
+      rule: paramSelect
+      type: select
+      values:
+        - label: "true (禁用注册)"
+          value: "true"
+        - label: "false (允许新用户注册)"
+          value: "false"
+    - default: "false"
+      edit: true
+      envKey: PHOTOPRISM_PUBLIC
+      labelEn: Public Mode
+      labelZh: 公开模式
+      label:
+        en: Public Mode (true = no login required for viewing)
+        zh: 公开模式（true = 无需登录即可浏览）
+        zh-Hant: 公開模式（true = 無需登入即可瀏覽）
+        ja: パブリックモード（true = ログイン不要で閲覧可）
+        ko: 공개 모드 (true = 로그인 없이 열람 가능)
+        ru: Публичный режим (true = просмотр без входа)
+        ms: Mod Awam (true = lihat tanpa log masuk)
+        pt-br: Modo público (true = visualizar sem login)
+      required: false
+      rule: paramSelect
+      type: select
+      values:
+        - label: "true (公开浏览,无需登录)"
+          value: "true"
+        - label: "false (强制登录,推荐)"
+          value: "false"
+    # ----------------------------------------------------------------------------
+    # 内容策略（NSFW 检测 / 只读模式 / 原始文件数量上限）
+    # ----------------------------------------------------------------------------
+    - default: "true"
+      edit: true
+      envKey: PHOTOPRISM_UPLOAD_NSFW
+      labelEn: Detect NSFW
+      labelZh: NSFW 检测
+      label:
+        en: Detect NSFW (mark explicit content, hidden by default)
+        zh: NSFW 检测（标记成人内容，默认隐藏）
+        zh-Hant: NSFW 偵測（標記成人內容，預設隱藏）
+        ja: NSFW 検出（成人コンテンツをマーク、デフォルト非表示）
+        ko: NSFW 감지 (성인 콘텐츠 표시, 기본 숨김)
+        ru: Детектировать NSFW (помечать контент 18+, скрыт по умолчанию)
+        ms: Kesan NSFW (tanda kandungan eksplisit, tersembunyi secara lalai)
+        pt-br: Detectar NSFW (marcar conteúdo explícito, oculto por padrão)
+      required: false
+      rule: paramSelect
+      type: select
+      values:
+        - label: "true (启用 NSFW 检测,推荐)"
+          value: "true"
+        - label: "false (关闭 NSFW 检测)"
+          value: "false"
+    - default: "false"
+      edit: true
+      envKey: PHOTOPRISM_READONLY
+      labelEn: Read-only Mode
+      labelZh: 只读模式
+      label:
+        en: Read-only Mode (no upload, no index changes)
+        zh: 只读模式（禁止上传与索引变更）
+        zh-Hant: 唯讀模式（禁止上傳與索引變更）
+        ja: 読み取り専用モード（アップロード・インデックス変更禁止）
+        ko: 읽기 전용 모드 (업로드 및 인덱스 변경 금지)
+        ru: Режим только-чтение (загрузка и изменения индекса запрещены)
+        ms: Mod Baca Sahaja (muat naik dan perubahan indeks dilarang)
+        pt-br: Modo somente leitura (sem upload, sem mudanças no índice)
+      required: false
+      rule: paramSelect
+      type: select
+      values:
+        - label: "false (正常,允许上传)"
+          value: "false"
+        - label: "true (只读,只读浏览库)"
+          value: "true"
+    - default: "5000"
+      edit: true
+      envKey: PHOTOPRISM_ORIGINALS_LIMIT
+      labelEn: Originals Limit
+      labelZh: 原图数量上限
+      label:
+        en: Maximum number of original files (0 = unlimited)
+        zh: 原图数量上限（0 = 无限制）
+        zh-Hant: 原圖數量上限（0 = 無限制）
+        ja: 原図ファイル数の上限（0 = 無制限）
+        ko: 원본 파일 수 한도 (0 = 무제한)
+        ru: Лимит исходных файлов (0 = без лимита)
+        ms: Had fail asal (0 = tanpa had)
+        pt-br: Limite de arquivos originais (0 = sem limite)
+      required: false
+      rule: paramCommon
+      type: text
