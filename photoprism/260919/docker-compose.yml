@@ -39,7 +39,11 @@ services:
     container_name: ${CONTAINER_NAME}
     image: ${APP_IMAGE}:${APP_VERSION}
     restart: always
-    init: true
+    # 注意：不要加 init: true。
+    # 镜像内置 s6-overlay 作为 init 系统，要求自身就是容器的 PID 1；
+    # 而 init: true 会让 Docker 注入 tini 抢占 PID 1，导致启动即失败：
+    #   s6-overlay-suexec: fatal: can only run as pid 1
+    # PhotoPrism 用 s6-overlay 做进程管理/reaping，不需要额外的 init。
     networks:
       - 1panel-network
     labels:

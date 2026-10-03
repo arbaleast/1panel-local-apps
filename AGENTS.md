@@ -125,6 +125,7 @@ git push origin main
 
 ## Common Pitfalls
 
+- **使用 s6-overlay 的镜像不能加 `init: true`**：s6-overlay 要求自身就是容器的 **PID 1**（`s6-overlay-suexec: fatal: can only run as pid 1` 是它的守卫检查），而 `init: true` 会让 Docker 注入 `tini` 抢占 PID 1，二者冲突导致容器启动即失败并被 `restart: always` 反复重拉（日志刷屏同一行）。**复盘（photoprism，2026-10-03）**：`photoprism/260919/docker-compose.yml` 误加 `init: true` 导致无法启动。**解决方式**：删掉 `init: true`。**判定方法**：镜像基线用 s6-overlay（`linuxserver/*`、`hotio/*`、PhotoPrism、部分 Go 自建镜像）或从日志出现 `s6-overlay-suexec` / `s6-rc` 判断。**全仓自查**：`grep -rn --include="docker-compose.yml" -E "^\s*init:\s*true" .`（注意 [bookorbit/3.2.0](bookorbit/3.2.0/docker-compose.yml:47) 也有 `init: true`，改动前需确认其镜像是否用 s6-overlay）。**同源禁忌**：也不要给这类镜像加 `user:`（会让 s6 无 root 无法降权启动）或 `pid:`（直接改写 PID 1）。
 - **禁止使用 `latest` 作为版本目录名或镜像 tag**：`latest` 会导致版本漂移，1Panel UI 中该目录名即为版本参数。应使用具体 semver / date-based / functional tag（如 `v1.2.3`、`2024.08`、`pg` 等）。仅当上游镜像完全无版本化 tag 时方可例外保留 `latest`（需在 PR 描述中注明根因）。
 - 版本目录名就是版本参数，改目录名即改版本选项
 - SQLite key 有 `local` 前缀: `jellyfin` → `localjellyfin`
