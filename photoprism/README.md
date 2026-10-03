@@ -29,7 +29,7 @@
 ### 安装步骤
 
 1. 在 1Panel 应用商店搜索 `photoprism`
-2. 选择版本(默认 `260919-28c46a116`)
+2. 选择版本(默认 `260919`)
 3. 填写必要参数:
    - **HTTP 端口**:默认 `2342`
    - **站点 URL**(`PHOTOPRISM_SITE_URL`):必填,例如 `http://192.168.1.100:2342` 或 `https://photos.your-domain.com`

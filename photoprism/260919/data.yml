@@ -1,6 +1,6 @@
 additionalProperties:
   key: photoprism
-  name: photoprism 260919-28c46a116
+  name: photoprism 260919
   tags:
     - Photo
     - Gallery
@@ -9,8 +9,8 @@ additionalProperties:
   shortDescZh: PhotoPrism 自托管 AI 照片管理（人脸/场景识别）
   shortDescEn: PhotoPrism self-hosted AI photo management (face/scene recognition)
   description:
-    zh: 'PhotoPrism 260919-28c46a116（2026-09-19 release）— 上游 [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker 镜像，多架构 linux/amd64 + linux/arm64。本应用不捆绑数据库；默认 sqlite 零依赖启动，可选切到 1Panel 应用商店已部署的 MariaDB / MySQL / PostgreSQL 走外部库（按容器名互通）。支持人脸识别、场景识别、地图、WebDAV、移动端 PWA 等。'
-    en: 'PhotoPrism 260919-28c46a116 (2026-09-19 release) — upstream [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker image (multi-arch linux/amd64 + linux/arm64). This app bundles no database; defaults to SQLite for zero-dep start, with an option to switch to 1Panel app-store MariaDB / MySQL / PostgreSQL via container name. Includes face recognition, scene detection, maps, WebDAV and mobile PWA.'
+    zh: 'PhotoPrism 260919（2026-09-19 release）— 上游 [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker 镜像，多架构 linux/amd64 + linux/arm64。本应用不捆绑数据库；默认 sqlite 零依赖启动，可选切到 1Panel 应用商店已部署的 MariaDB / MySQL / PostgreSQL 走外部库（按容器名互通）。支持人脸识别、场景识别、地图、WebDAV、移动端 PWA 等。'
+    en: 'PhotoPrism 260919 (2026-09-19 release) — upstream [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker image (multi-arch linux/amd64 + linux/arm64). This app bundles no database; defaults to SQLite for zero-dep start, with an option to switch to 1Panel app-store MariaDB / MySQL / PostgreSQL via container name. Includes face recognition, scene detection, maps, WebDAV and mobile PWA.'
   type: media
   architectures:
     - amd64
@@ -43,9 +43,13 @@ additionalProperties:
       rule: paramImageTag
       type: text
     # ----------------------------------------------------------------------------
-    # 上游版本号（DockerHub tag，与上游 GitHub release tag 一致，日期+短 SHA 格式）
+    # 上游版本号（DockerHub tag，Yymmdd 纯日期格式，不含 GitHub tag 的短 SHA）
+    #   注意：GitHub release tag 形如 260919-28c46a116，但 DockerHub 镜像 tag 去掉
+    #   短 SHA 只保留日期 260919。按带 SHA 的 tag 拉镜像会得到 manifest unknown。
+    #   已对 docker.m.daocloud.io registry 实测核对：260919/260728/260601 均存在，
+    #   且同时提供 linux/amd64 + linux/arm64。
     # ----------------------------------------------------------------------------
-    - default: 260919-28c46a116
+    - default: 260919
       edit: true
       envKey: APP_VERSION
       labelEn: App Version
@@ -63,12 +67,12 @@ additionalProperties:
       rule: paramSelect
       type: select
       values:
-        - label: 260919-28c46a116 (2026-09-19, latest)
-          value: 260919-28c46a116
-        - label: 260728-bbde8f452 (2026-07-28)
-          value: 260728-bbde8f452
-        - label: 260523-0544f71c1 (2026-05-23)
-          value: 260523-0544f71c1
+        - label: 260919 (2026-09-19, latest)
+          value: 260919
+        - label: 260728 (2026-07-28)
+          value: 260728
+        - label: 260601 (2026-06-01)
+          value: 260601
     # ----------------------------------------------------------------------------
     # HTTP 端口：主机侧端口 → 容器 2342 (PhotoPrism Web 默认端口)
     # ----------------------------------------------------------------------------

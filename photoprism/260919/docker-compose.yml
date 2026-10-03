@@ -1,5 +1,5 @@
 # ============================================================
-# PhotoPrism (260919-28c46a116) — Self-hosted AI photo manager
+# PhotoPrism (260919) — Self-hosted AI photo manager
 #   上游项目: <https://github.com/photoprism/photoprism>
 #   上游 Docker 镜像: photoprism/photoprism (多架构 linux/amd64 + linux/arm64)
 #   上游 docker-compose 模板: <https://github.com/photoprism/photoprism/blob/release/docker-compose.yml>

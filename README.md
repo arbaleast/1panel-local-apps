@@ -40,7 +40,7 @@
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
 | pgvector | 向量数据库 | 0.8.7-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
-| photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 260919-28c46a116 |
+| photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 260919 |
 | qdrant | 向量搜索引擎 | v1.19.1-unprivileged |
 | scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.23.0 |
 | searxng | 隐私搜索引擎 | 2026.10.2-a5659a536 |
