@@ -1,6 +1,6 @@
 additionalProperties:
   key: photoprism
-  name: photoprism 260919
+  name: "photoprism 260919"
   tags:
     - Photo
     - Gallery
@@ -49,7 +49,7 @@ additionalProperties:
     #   已对 docker.m.daocloud.io registry 实测核对：260919/260728/260601 均存在，
     #   且同时提供 linux/amd64 + linux/arm64。
     # ----------------------------------------------------------------------------
-    - default: 260919
+    - default: "260919"
       edit: true
       envKey: APP_VERSION
       labelEn: App Version
@@ -67,12 +67,16 @@ additionalProperties:
       rule: paramSelect
       type: select
       values:
-        - label: 260919 (2026-09-19, latest)
-          value: 260919
-        - label: 260728 (2026-07-28)
-          value: 260728
-        - label: 260601 (2026-06-01)
-          value: 260601
+        # 注意：纯日期 tag 形如 260919，YAML 会解析成 number，
+        # 而 1Panel 后端 AppFormValue.formFields.values.value 字段类型是 string，
+        # 反序列化会报 "cannot unmarshal number into Go struct field"，
+        # 因此 value 与 default 必须显式加双引号。
+        - label: "260919 (2026-09-19, latest)"
+          value: "260919"
+        - label: "260728 (2026-07-28)"
+          value: "260728"
+        - label: "260601 (2026-06-01)"
+          value: "260601"
     # ----------------------------------------------------------------------------
     # HTTP 端口：主机侧端口 → 容器 2342 (PhotoPrism Web 默认端口)
     # ----------------------------------------------------------------------------
