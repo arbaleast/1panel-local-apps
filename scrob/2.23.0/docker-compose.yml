@@ -33,7 +33,7 @@ services:
     volumes:
       - ./data/scrob_app:/app/backend/data
 
-  # PostgreSQL 16（持久化主数据，postgres:16-alpine 多架构清单原生支持 arm64）
+  # PostgreSQL 16（持久化主数据）
   scrob-db:
     image: postgres:16-alpine
     restart: always
