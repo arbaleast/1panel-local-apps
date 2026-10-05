@@ -17,7 +17,7 @@
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 | 1.11.2-ls41 |
 | hindsight | AI 记忆系统 | 0.10.2 |
-| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.15 |
+| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.16 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 2026091410-arm64 |
@@ -42,7 +42,7 @@
 | photopea | 在线图像编辑器 | 2.2 |
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 260919 |
 | qdrant | 向量搜索引擎 | v1.19.1-unprivileged |
-| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.23.0 |
+| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.24.0 |
 | searxng | 隐私搜索引擎 | 2026.10.2-a5659a536 |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | syncthing | 文件同步 | 2.1.5 |
