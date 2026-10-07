@@ -1,0 +1,226 @@
+additionalProperties:
+  key: cfui
+  name: cfui 0.7.1
+  tags:
+    - Cloudflare
+    - Tunnel
+    - DDNS
+    - Tool
+  shortDescZh: cloudflared WebUI 管理面板
+  shortDescEn: cloudflared WebUI management panel
+  description:
+    en: cfui is a web control panel for Cloudflare Tunnel (cloudflared). It runs the local tunnel process, manages Cloudflare Tunnel ingress rules through the Cloudflare API, updates DNS records for DDNS use cases, exposes S3-compatible storage through WebDAV, and provides an MCP endpoint for AI clients.
+    zh: cfui 是一个用于 Cloudflare Tunnel (cloudflared) 的 Web 控制面板。可在本地运行隧道进程，通过 Cloudflare API 管理 Cloudflare Tunnel 入口规则，为 DDNS 场景更新 DNS 记录，通过 WebDAV 暴露 S3 兼容存储，并提供面向 AI 客户端的 MCP 端点。
+    zh-Hant: cfui 是一個用於 Cloudflare Tunnel (cloudflared) 的 Web 控制面板。可在本機執行通道進程，透過 Cloudflare API 管理 Cloudflare Tunnel 入口規則，為 DDNS 場景更新 DNS 記錄，透過 WebDAV 暴露 S3 相容儲存，並提供面向 AI 用戶端的 MCP 端點。
+    ja: cfui は Cloudflare Tunnel (cloudflared) 用の Web コントロールパネルです。ローカルでトンネルプロセスを実行し、Cloudflare API 経由で Cloudflare Tunnel のイングレスルールを管理し、DDNS のために DNS レコードを更新し、S3 互換ストレージを WebDAV で公開し、AI クライアント向けに MCP エンドポイントを提供します。
+    ko: cfui는 Cloudflare Tunnel(cloudflared)용 웹 제어판입니다. 로컬에서 터널 프로세스를 실행하고, Cloudflare API를 통해 Cloudflare Tunnel 인그레스 규칙을 관리하며, DDNS를 위해 DNS 레코드를 업데이트하고, S3 호환 스토리지를 WebDAV로 노출하며, AI 클라이언트를 위한 MCP 엔드포인트를 제공합니다.
+    ru: cfui — это веб-панель управления Cloudflare Tunnel (cloudflared). Она запускает локальный процесс туннеля, управляет правилами входящего трафика Cloudflare Tunnel через Cloudflare API, обновляет DNS-записи для сценариев DDNS, предоставляет S3-совместимое хранилище через WebDAV и предоставляет конечную точку MCP для клиентов ИИ.
+    ms: cfui ialah panel kawalan web untuk Cloudflare Tunnel (cloudflared). Ia menjalankan proses terowong tempatan, mengurus peraturan ingress Cloudflare Tunnel melalui API Cloudflare, mengemas kini rekod DNS untuk senario DDNS, mendedahkan storan serasi S3 melalui WebDAV, dan menyediakan titik akhir MCP untuk pelanggan AI.
+    pt-br: cfui é um painel de controle web para o Cloudflare Tunnel (cloudflared). Ele executa o processo de túnel local, gerencia as regras de ingress do Cloudflare Tunnel pela API da Cloudflare, atualiza registros DNS para cenários de DDNS, expõe armazenamento compatível com S3 via WebDAV e fornece um endpoint MCP para clientes de IA.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/dockers-x/cfui
+  github: https://github.com/dockers-x/cfui
+  formFields:
+    # ---- HTTP 端口: 主机侧端口映射到容器内 14333(cfui 默认端口)----
+    - default: 14333
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 容器内 HTTP 监听端口(cfui 默认 14333; 一般无需修改)----
+    - default: "14333"
+      edit: true
+      envKey: PORT
+      labelEn: Container Port
+      labelZh: 容器内端口
+      label:
+        en: Container Port
+        zh: 容器内端口
+        zh-Hant: 容器內連接埠
+        ja: コンテナ内ポート
+        ko: 컨테이너 내부 포트
+        ru: Порт внутри контейнера
+        ms: Port dalam bekas
+        pt-br: Porta interna do contêiner
+      required: true
+      rule: paramPort
+      type: number
+    # ---- HTTP 绑定地址; 0.0.0.0 监听所有接口; 如启用网络隔离可改为 127.0.0.1----
+    - default: 0.0.0.0
+      edit: true
+      envKey: BIND_HOST
+      labelEn: Bind Host
+      labelZh: 绑定地址
+      label:
+        en: Bind Host
+        zh: 绑定地址
+        zh-Hant: 綁定位址
+        ja: バインドアドレス
+        ko: 바인드 호스트
+        ru: Адрес привязки
+        ms: Hos ikatan
+        pt-br: Host de ligação
+      required: true
+      type: text
+    # ---- 时区(影响日志 / 计划任务时间戳)----
+    # ⚠️ 不带 rule: paramCommon 正则不允许 /, default "Asia/Shanghai" 会被前端拒。
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: false
+      type: text
+    # ---- 日志级别; cfui 支持 debug/info/warn/error----
+    - default: info
+      edit: true
+      envKey: LOG_LEVEL
+      labelEn: Log Level
+      labelZh: 日志级别
+      label:
+        en: Log Level
+        zh: 日志级别
+        zh-Hant: 日誌級別
+        ja: ログレベル
+        ko: 로그 레벨
+        ru: Уровень журнала
+        ms: Tahap log
+        pt-br: Nível de log
+      required: false
+      type: select
+      values:
+        - label: debug
+          value: debug
+        - label: info
+          value: info
+        - label: warn
+          value: warn
+        - label: error
+          value: error
+    # ---- 运行模式; classic: 本地隧道工作区; oauth: Cloudflare OAuth 工作区;
+    #      both: 同时暴露两个工作区(路由隔离)----
+    - default: classic
+      edit: true
+      envKey: CFUI_RUN_MODE
+      labelEn: Run Mode
+      labelZh: 运行模式
+      label:
+        en: Run Mode
+        zh: 运行模式
+        zh-Hant: 執行模式
+        ja: 実行モード
+        ko: 실행 모드
+        ru: Режим работы
+        ms: Mod jalankan
+        pt-br: Modo de execução
+      required: false
+      type: select
+      values:
+        - label: classic
+          value: classic
+        - label: oauth
+          value: oauth
+        - label: both
+          value: both
+    # ---- Remote Tunnel Manager 开关; 启用后才能使用 Remote Tunnel / DDNS / R2
+    #      bucket list 等需要 Cloudflare API Token 的功能. AGENTS.md 警示:
+    #      1Panel formField 不支持 boolean type, 必须用 select 模拟 true/false----
+    - default: "false"
+      edit: true
+      envKey: CFUI_TUNNEL_MGMT_ENABLED
+      labelEn: Tunnel Mgmt
+      labelZh: 远程隧道管理
+      label:
+        en: Remote Tunnel Mgmt
+        zh: 远程隧道管理
+        zh-Hant: 遠端通道管理
+        ja: リモートトンネル管理
+        ko: 원격 터널 관리
+        ru: Удалённое управление туннелем
+        ms: Pengurusan Terowong Jauh
+        pt-br: Gerenciamento de Túnel Remoto
+      required: false
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    # ---- Cloudflare Account ID(可选; 启用 Remote Tunnel Manager 时建议填写;
+    #      也可留空, 由 cfui 尝试从 Tunnel token 解码)----
+    - default: ""
+      edit: true
+      envKey: CLOUDFLARE_ACCOUNT_ID
+      labelEn: CF Account ID
+      labelZh: Cloudflare 账户 ID
+      label:
+        en: Cloudflare Account ID
+        zh: Cloudflare 账户 ID
+        zh-Hant: Cloudflare 帳戶 ID
+        ja: Cloudflare アカウント ID
+        ko: Cloudflare 계정 ID
+        ru: Cloudflare Account ID
+        ms: ID Akaun Cloudflare
+        pt-br: ID da conta Cloudflare
+      required: false
+      type: text
+    # ---- Cloudflare Tunnel ID(可选; 同上)----
+    - default: ""
+      edit: true
+      envKey: CLOUDFLARE_TUNNEL_ID
+      labelEn: CF Tunnel ID
+      labelZh: Cloudflare 隧道 ID
+      label:
+        en: Cloudflare Tunnel ID
+        zh: Cloudflare 隧道 ID
+        zh-Hant: Cloudflare 通道 ID
+        ja: Cloudflare トンネル ID
+        ko: Cloudflare 터널 ID
+        ru: Cloudflare Tunnel ID
+        ms: ID Terowong Cloudflare
+        pt-br: ID do Túnel Cloudflare
+      required: false
+      type: text
+    # ---- Cloudflare API Token; 用于 Remote Tunnel Manager / DDNS / R2 等.
+    #      建议使用范围受限的 Token (Account -> Cloudflare Tunnel -> Edit,
+    #      Zone -> Zone -> Read, Zone -> DNS -> Edit)----
+    - default: ""
+      edit: true
+      envKey: CLOUDFLARE_API_TOKEN
+      labelEn: CF API Token
+      labelZh: Cloudflare API Token
+      label:
+        en: Cloudflare API Token
+        zh: Cloudflare API Token
+        zh-Hant: Cloudflare API Token
+        ja: Cloudflare API トークン
+        ko: Cloudflare API 토큰
+        ru: Cloudflare API Token
+        ms: Token API Cloudflare
+        pt-br: Token de API Cloudflare
+      required: false
+      type: password

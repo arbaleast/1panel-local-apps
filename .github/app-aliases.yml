@@ -36,6 +36,8 @@ aliases:
     desc: 动漫 RSS
   bookorbit:
     desc: 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO）
+  cfui:
+    desc: cloudflared WebUI 管理面板
   cinny:
     desc: Matrix 聊天客户端
   firecrawl:

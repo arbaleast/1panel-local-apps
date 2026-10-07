@@ -1,0 +1,25 @@
+additionalProperties:
+  key: cfui
+  name: cfui
+  tags:
+    - Cloudflare
+    - Tunnel
+    - DDNS
+    - Tool
+  shortDescZh: cloudflared WebUI 管理面板
+  shortDescEn: cloudflared WebUI management panel
+  description:
+    en: cfui is a web control panel for Cloudflare Tunnel (cloudflared). It runs the local tunnel process, manages Cloudflare Tunnel ingress rules through the Cloudflare API, updates DNS records for DDNS use cases, exposes S3-compatible storage through WebDAV, and provides an MCP endpoint for AI clients.
+    zh: cfui 是一个用于 Cloudflare Tunnel (cloudflared) 的 Web 控制面板。可在本地运行隧道进程，通过 Cloudflare API 管理 Cloudflare Tunnel 入口规则，为 DDNS 场景更新 DNS 记录，通过 WebDAV 暴露 S3 兼容存储，并提供面向 AI 客户端的 MCP 端点。
+    zh-Hant: cfui 是一個用於 Cloudflare Tunnel (cloudflared) 的 Web 控制面板。可在本機執行通道進程，透過 Cloudflare API 管理 Cloudflare Tunnel 入口規則，為 DDNS 場景更新 DNS 記錄，透過 WebDAV 暴露 S3 相容儲存，並提供面向 AI 用戶端的 MCP 端點。
+    ja: cfui は Cloudflare Tunnel (cloudflared) 用の Web コントロールパネルです。ローカルでトンネルプロセスを実行し、Cloudflare API 経由で Cloudflare Tunnel のイングレスルールを管理し、DDNS のために DNS レコードを更新し、S3 互換ストレージを WebDAV で公開し、AI クライアント向けに MCP エンドポイントを提供します。
+    ko: cfui는 Cloudflare Tunnel(cloudflared)용 웹 제어판입니다. 로컬에서 터널 프로세스를 실행하고, Cloudflare API를 통해 Cloudflare Tunnel 인그레스 규칙을 관리하며, DDNS를 위해 DNS 레코드를 업데이트하고, S3 호환 스토리지를 WebDAV로 노출하며, AI 클라이언트를 위한 MCP 엔드포인트를 제공합니다.
+    ru: cfui — это веб-панель управления Cloudflare Tunnel (cloudflared). Она запускает локальный процесс туннеля, управляет правилами входящего трафика Cloudflare Tunnel через Cloudflare API, обновляет DNS-записи для сценариев DDNS, предоставляет S3-совместимое хранилище через WebDAV и предоставляет конечную точку MCP для клиентов ИИ.
+    ms: cfui ialah panel kawalan web untuk Cloudflare Tunnel (cloudflared). Ia menjalankan proses terowong tempatan, mengurus peraturan ingress Cloudflare Tunnel melalui API Cloudflare, mengemas kini rekod DNS untuk senario DDNS, mendedahkan storan serasi S3 melalui WebDAV, dan menyediakan titik akhir MCP untuk pelanggan AI.
+    pt-br: cfui é um painel de controle web para o Cloudflare Tunnel (cloudflared). Ele executa o processo de túnel local, gerencia as regras de ingress do Cloudflare Tunnel pela API da Cloudflare, atualiza registros DNS para cenários de DDNS, expõe armazenamento compatível com S3 via WebDAV e fornece um endpoint MCP para clientes de IA.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/dockers-x/cfui
+  github: https://github.com/dockers-x/cfui
