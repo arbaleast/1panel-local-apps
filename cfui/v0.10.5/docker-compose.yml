@@ -1,0 +1,54 @@
+networks:
+  1panel-network:
+    external: true
+
+# cfui 0.7.1 — cloudflared WebUI 管理面板
+# 镜像源:
+#   - ghcr.io/dockers-x/cfui:v0.10.5  (主源)
+#   - czyt/cfui:0.7.1              (DockerHub 镜像)
+# 多架构: linux/amd64, linux/arm64, linux/arm/v7 (上游 Dockerfile 为 golang:1.26-alpine
+# 静态构建 + alpine:latest 运行, 不使用 s6-overlay, init: true 与之不冲突但
+# 上游默认无 PID 1 注入需求, 故本 compose 省略 init: 字段)
+# 容器内 cfui 进程以非 root 用户 (UID 1000) 运行, 因此:
+#   - bind mount 主机目录建议保持 1Panel 主机用户可写 (避免下载 ZIM 等场景失败)
+#   - healthcheck 内 wget 由 alpine 自带 busybox 提供, 镜像已含 ca-certificates
+
+services:
+  cfui:
+    container_name: ${CONTAINER_NAME}
+    image: ghcr.io/dockers-x/cfui:v0.10.5
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      # 主机端口 ${PANEL_APP_PORT_HTTP} -> 容器内 ${PORT} (默认 14333)
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:${PORT}
+    environment:
+      # HTTP 监听
+      BIND_HOST: ${BIND_HOST}
+      PORT: ${PORT}
+      # 时区与日志
+      TZ: ${TZ}
+      LOG_LEVEL: ${LOG_LEVEL}
+      # 运行模式 (classic | oauth | both)
+      CFUI_RUN_MODE: ${CFUI_RUN_MODE}
+      # Remote Tunnel Manager / DDNS / R2 (可选, 通过 UI 启用更直观;
+      # 留空则完全依赖 UI 内 Cloudflare API Token)
+      CFUI_TUNNEL_MGMT_ENABLED: ${CFUI_TUNNEL_MGMT_ENABLED}
+      CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID}
+      CLOUDFLARE_TUNNEL_ID: ${CLOUDFLARE_TUNNEL_ID}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    volumes:
+      # SQLite 数据持久化 (Tunnel profile / DDNS / WebDAV mount / OAuth session)
+      - ./data:/app/data
+      # 日志目录持久化 (可选; 若挂载到主机便于日志归档, 留空则随容器销毁)
+      - ./logs:/app/logs
+    healthcheck:
+      # 上游镜像默认 wget healthcheck: GET / 期望 200
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:${PORT}/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
