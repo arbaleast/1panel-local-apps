@@ -1,0 +1,25 @@
+additionalProperties:
+  key: personal-todo-vault
+  name: Personal Todo Vault
+  tags:
+    - Todo
+    - Notes
+    - Markdown
+    - Reminder
+  shortDescZh: 自托管待办与 Markdown 笔记库（SQLite + 邮件提醒 + WebDAV 备份）
+  shortDescEn: Self-hosted personal todo + Markdown notes vault with reminders and WebDAV backup
+  description:
+    en: Personal Todo Vault is a self-hosted todo app for personal and home-server use. It keeps todo lists, completion progress, expected times, email reminders and Markdown notes in a single interface, with run data saved as a local SQLite database and Markdown files; remote backup uses an optional Nutstore (JianGuoYun) WebDAV folder. Built on Node.js 24 Bookworm Slim with multi-arch images (amd64 / arm64).
+    zh: Personal Todo Vault 是一个面向个人与家庭服务器的自托管待办应用。它把待办清单、完成进度、预期完成时间、邮件提醒和 Markdown 笔记放在同一个界面里，运行数据保存为本机 SQLite 数据库和 Markdown 文件；需要异地备份时，可选配坚果云 WebDAV 目录。基于 Node.js 24 Bookworm Slim，多架构镜像（amd64 / arm64）。
+    zh-Hant: Personal Todo Vault 是面向個人與家庭伺服器的自架待辦應用。它把待辦清單、完成進度、預期完成時間、郵件提醒與 Markdown 筆記放在同一個介面，執行資料儲存為本機 SQLite 資料庫與 Markdown 檔案；如需異地備份，可選配堅果雲 WebDAV 目錄。基於 Node.js 24 Bookworm Slim，多架構映像（amd64 / arm64）。
+    ja: Personal Todo Vault は、個人・ホームサーバー向けのセルフホスト型 ToDo アプリです。ToDo リスト、進捗、予定時刻、メールリマインダー、Markdown ノートを 1 つの画面でまとめ、実行データはローカルの SQLite データベースと Markdown ファイルに保存されます。リモートバックアップには任意の Nutstore (JianGuoYun) WebDAV フォルダを使用できます。Node.js 24 Bookworm Slim ベース、マルチアーキテクチャ (amd64 / arm64) イメージ。
+    ko: Personal Todo Vault는 개인/홈 서버용 자가 호스팅 ToDo 앱입니다. 할 일 목록, 진행률, 예상 시각, 이메일 알림, Markdown 메모를 한 화면에 담고, 실행 데이터는 로컬 SQLite 데이터베이스와 Markdown 파일로 저장합니다. 원격 백업은 선택적으로 NuStore(건국운) WebDAV 폴더를 사용합니다. Node.js 24 Bookworm Slim 기반, 멀티 아키텍처(amd64 / arm64) 이미지.
+    ru: Personal Todo Vault — self-hosted приложение для личных и домашних серверов. Объединяет списки задач, прогресс, плановое время, email-напоминания и Markdown-заметки в одном интерфейсе, сохраняя данные в локальную SQLite базу и Markdown-файлы; удалённое резервное копирование — опционально через WebDAV-каталог Nutstore (JianGuoYun). Базируется на Node.js 24 Bookworm Slim, мульти-архитектурный образ (amd64 / arm64).
+    ms: Personal Todo Vault ialah aplikasi todo kendiri sendiri untuk kegunaan peribadi dan pelayan rumah. Ia menggabungkan senarai todo, kemajuan, jangkaan masa, peringatan e-mel dan nota Markdown dalam satu antara muka; data disimpan sebagai pangkalan data SQLite tempatan dan fail Markdown; sandaran jauh menggunakan folder WebDAV Nutstore (JianGuoYun) pilihan. Berasaskan Node.js 24 Bookworm Slim, imej pelbagai seni bina (amd64 / arm64).
+    pt-br: Personal Todo Vault é um aplicativo de tarefas auto-hospedado para uso pessoal e em servidores domésticos. Ele reúne listas de tarefas, progresso, prazos, lembretes por e-mail e notas Markdown em uma única interface, salvando os dados em um banco SQLite local e arquivos Markdown; o backup remoto é opcional via pasta WebDAV do Nutstore (JianGuoYun). Baseado em Node.js 24 Bookworm Slim, imagem multiarquitetura (amd64 / arm64).
+  type: tool
+  crossVersionUpdate: false
+  limit: 0
+  recommend: 0
+  website: https://github.com/nerkeler/personal-todo-vault
+  github: https://github.com/nerkeler/personal-todo-vault

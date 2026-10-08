@@ -39,6 +39,7 @@
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
 | onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.2.4 |
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
+| personal-todo-vault | 自托管待办与 Markdown 笔记库（SQLite + 邮件提醒 + WebDAV 备份） | latest |
 | pgvector | 向量数据库 | 0.8.7-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 260919 |

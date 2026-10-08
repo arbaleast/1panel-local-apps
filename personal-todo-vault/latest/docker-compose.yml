@@ -1,0 +1,61 @@
+networks:
+  1panel-network:
+    external: true
+
+# personal-todo-vault (latest) — nerkeler/todo-app:latest
+# 镜像源: hub.docker.com/r/nerkeler/todo-app:latest
+#   - 多架构: linux/amd64, linux/arm64
+#   - 父镜像: Node.js 24 Bookworm Slim
+# 入口脚本: 上游镜像 ENTRYPOINT → node server.js
+#   - 容器内监听 0.0.0.0:${PORT} (默认 8238)
+#   - 数据落地: /data/todo.db, /data/notes/*.md, /data/backups/*.db.gz
+#   - 加密配置: /config/config.local.json (AES-256-GCM) + /config/config.local.key
+# 健康检查: 容器内 node 进程拉 /api/todos(同上游 Dockerfile healthcheck)
+# 安全提示: 上游 README WARNING: 应用无登录鉴权，请勿直接暴露 8238 到公网，
+#   建议仅本机/可信局域网/VPN/带身份验证的 HTTPS 反向代理使用。
+#
+# 数据流:
+#   主机侧 ./data    → 容器 /data    # SQLite、Markdown 笔记、滚动备份
+#   主机侧 ./config  → 容器 /config  # 加密配置与本机密钥
+#
+# 安装后设置: 首次启动后访问 http://<IP>:<PANEL_APP_PORT_HTTP/>，
+#   打开 配置中心 设置 SMTP(邮件提醒) 与 坚果云 WebDAV(异地备份)，
+#   这两类配置在容器内 /config 中加密保存，**不需要** 在 1Panel 表单暴露。
+
+services:
+  personal-todo-vault:
+    container_name: ${CONTAINER_NAME}
+    image: nerkeler/todo-app:latest
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:${PORT}
+    environment:
+      # 监听地址 (容器内) — 0.0.0.0 才能被端口映射访问
+      HOST: 0.0.0.0
+      # 容器内监听端口
+      PORT: ${PORT}
+      # 时区 (影响日志与提醒)
+      TZ: ${TZ}
+      # 数据/笔记/备份/加密配置目录 — 与下方 volumes 一一对应
+      TODO_DATA_DIR: /data
+      TODO_NOTES_DIR: /data/notes
+      TODO_BACKUP_DIR: /data/backups
+      TODO_CONFIG_DIR: /config
+      # 反向代理 Origin 白名单 (留空 = 仅 HTTP 直访)
+      TODO_ALLOWED_ORIGINS: ${TODO_ALLOWED_ORIGINS}
+    volumes:
+      # SQLite + Markdown 笔记 + 本地滚动备份
+      - ./data:/data
+      # 加密的应用配置 (SMTP/WebDAV 凭据)
+      - ./config:/config
+    healthcheck:
+      # 与上游 Dockerfile healthcheck 等价: GET /api/todos
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:${PORT}/api/todos').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
