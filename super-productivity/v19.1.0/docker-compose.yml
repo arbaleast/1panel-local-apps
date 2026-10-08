@@ -1,0 +1,54 @@
+networks:
+  1panel-network:
+    external: true
+
+# super-productivity v19.1.0 — 高级待办事项应用（时间盒 + 时间追踪）
+# 镜像: johannesjo/super-productivity:<version>
+#   - 多架构: linux/amd64, linux/arm64
+#   - 基于 nginx:1 (alpine) + Node.js 构建产物
+#   - 容器入口: docker-entrypoint.sh → 生成 sync-config 覆盖文件（若配置了 WebDAV）
+#     → 执行 nginx
+# 端口: nginx 监听 ${APP_PORT} (默认 80), 主机侧映射到 ${PANEL_APP_PORT_HTTP}
+# 数据: 浏览器端应用，数据由用户浏览器 localStorage/IndexedDB 管理
+#   若配置了 WebDAV 同步，sync-config 覆盖文件写入 ./assets/
+#   （./data/assets 挂载用于接收 docker-entrypoint.sh 写入的配置）
+#
+# 注意事项:
+#   - 本应用为纯前端 SPA，数据主要存储在浏览器 localStorage/IndexedDB
+#   - WebDAV 同步功能通过 docker-entrypoint.sh 在启动时写入配置实现
+#   - 容器内 nginx 以 root 用户运行（nginx 子进程以 nginx 用户）
+#   - 未使用 s6-overlay 或其他 PID 1 管理器
+#
+# 环境变量说明:
+#   TZ                  - 容器时区，影响日志时间戳
+#   APP_PORT            - 容器内 nginx 监听端口（默认 80）
+#   WEBDAV_BASE_URL     - WebDAV 服务器地址（留空则不启用 WebDAV 同步）
+#   WEBDAV_USERNAME     - WebDAV 用户名
+#   WEBDAV_SYNC_FOLDER_PATH - WebDAV 同步文件夹路径
+#   SYNC_INTERVAL       - 同步间隔（分钟）
+#   IS_COMPRESSION_ENABLED - 启用压缩（true/false）
+#   IS_ENCRYPTION_ENABLED  - 启用加密（true/false）
+
+services:
+  super-productivity:
+    container_name: ${CONTAINER_NAME}
+    image: johannesjo/super-productivity:v19.1.0
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:${APP_PORT}
+    environment:
+      APP_PORT: ${APP_PORT}
+      TZ: ${TZ}
+      WEBDAV_BASE_URL: ${WEBDAV_BASE_URL}
+      WEBDAV_USERNAME: ${WEBDAV_USERNAME}
+      WEBDAV_SYNC_FOLDER_PATH: ${WEBDAV_SYNC_FOLDER_PATH}
+      SYNC_INTERVAL: ${SYNC_INTERVAL}
+      IS_COMPRESSION_ENABLED: ${IS_COMPRESSION_ENABLED}
+      IS_ENCRYPTION_ENABLED: ${IS_ENCRYPTION_ENABLED}
+    volumes:
+      # docker-entrypoint.sh 会在 ./assets/ 下写入 sync-config 覆盖文件（若配置了 WebDAV）
+      - ./data/assets:/usr/share/nginx/html/assets

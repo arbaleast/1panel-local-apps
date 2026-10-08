@@ -1,0 +1,32 @@
+additionalProperties:
+  key: super-productivity
+  name: Super Productivity
+  tags:
+    - Productivity
+    - Task
+    - Time-tracking
+    - Todo
+  shortDescZh: 高级待办事项应用，支持时间盒与时间追踪
+  shortDescEn: Advanced todo list app with timeboxing and time tracking
+  description:
+    en: Super Productivity is an advanced todo list application with timeboxing and time tracking capabilities. It supports importing tasks from calendars, Jira, GitHub, and more. Features include Pomodoro, Flowtime, and countdown focus sessions, break reminders, anti-procrastination tools, personal metrics, and integrations with Jira, Trello, GitHub, GitLab, and other platforms. Data syncs via SuperSync, Dropbox, or WebDAV. No account required — you decide where your data is stored.
+    zh: Super Productivity 是一款高级待办事项应用，支持时间盒与时间追踪。可从日历、Jira、GitHub 等导入任务。功能包括番茄钟、Flowtime 和倒计时专注模式，休息提醒、反拖延工具、个人数据统计，以及 Jira、Trello、GitHub、GitLab 等集成。数据通过 SuperSync、Dropbox 或 WebDAV 同步。无需注册账号——数据存储位置由你决定。
+    zh-Hant: Super Productivity 是一款進階待辦事項應用，支援時間盒與時間追蹤。可從行事曆、Jira、GitHub 等匯入任務。功能包括番茄鐘、Flowtime 和倒計時專注模式，休息提醒、反拖延工具、個人資料統計，以及 Jira、Trello、GitHub、GitLab 等整合。資料透過 SuperSync、Dropbox 或 WebDAV 同步。無需註冊帳號——資料儲存位置由你決定。
+    ja: Super Productivityは時間ボックスと時間追跡機能を備えた高度なタスク管理アプリです。カレンダー、Jira、GitHubなどからのタスクインポートに対応しています。ポモドーロ、フロタイム、カウントダウン专注セッション、休憩リマインダー、反先延ばしツール、個人メトリクス、Jira、Trello、GitHub、GitLabその他の統合を備えています。SuperSync、Dropbox、WebDAVでデータを同期できます。アカウント不要——データの保存場所はあなたが決めます。
+    ko: Super Productivity는 시간 박싱과 시간 추적 기능을 갖춘 고급 할 일 목록 앱입니다. 캘린더, Jira, GitHub 등에서 태스크를 가져올 수 있습니다. 포모도로, 플로우타임, 카운트다운 집중 세션, 휴식 알림, 반 procrastination 도구, 개인 메트릭, Jira, Trello, GitHub, GitLab 및 기타 플랫폼 통합을 제공합니다. SuperSync, Dropbox 또는 WebDAV를 통해 데이터를 동기화할 수 있습니다. 계정 불필요 — 데이터 저장 위치는 당신이 결정합니다.
+    ru: Super Productivity — передовое приложение-список дел с таймбоксингом и отслеживанием времени. Поддерживает импорт задач из календаря, Jira, GitHub и других источников. Функции включают Помодоро, Flowtime, обратный отсчёт, напоминания о перерывах, инструменты против прокрастинации, личную статистику и интеграции с Jira, Trello, GitHub, GitLab и другими платформами. Данные синхронизируются через SuperSync, Dropbox или WebDAV. Аккаунт не требуется — вы решаете, где хранятся ваши данные.
+    ms: Super Productivity ialah aplikasi senarai tugas lanjutan dengan kemasukan masa dan penjejakan masa. Menyokong pengimportan tugas dari kalendar, Jira, GitHub dan banyak lagi. Ciri-ciri termasuk sesi fokus Pomodoro, Flowtime dan countdown, peringatan rehat, alat anti-prokrastinasi, metrik peribadi, dan integrasi dengan Jira, Trello, GitHub, GitLab dan platform lain. Data disegerakkan melalui SuperSync, Dropbox atau WebDAV. Tiada akaun diperlukan — anda memutuskan tempat data anda disimpan.
+    pt-br: Super Productivity é um aplicativo avançado de lista de tarefas com tempo boxing e rastreamento de tempo. Suporta importação de tarefas de calendários, Jira, GitHub e mais. Recursos incluem sessões de foco Pomodoro, Flowtime e contagem regressiva, lembretes de pausa, ferramentas anti-procrastinação, métricas pessoais e integrações com Jira, Trello, GitHub, GitLab e outras plataformas. Dados sincronizam via SuperSync, Dropbox ou WebDAV. Sem conta necessária — você decide onde seus dados ficam.
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://super-productivity.com
+  github: https://github.com/super-productivity/super-productivity
+  # 镜像: johannesjo/super-productivity:<tag>
+  # 上游 Docker Hub 发布 workflow: .github/workflows/publish-to-hub-docker.yml
+  # 触发条件: GitHub release publish
+  # GitHub release tag 即 Docker 镜像 tag（如 v19.1.0）

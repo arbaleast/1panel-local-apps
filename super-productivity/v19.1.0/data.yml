@@ -1,0 +1,170 @@
+additionalProperties:
+  key: super-productivity
+  name: super-productivity v19.1.0
+  formFields:
+    # ---- HTTP 端口: 主机侧端口映射到容器内 80 (nginx 默认)----
+    - default: 48080
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 容器内端口(nginx 监听端口, 默认 80, 一般不需要改)----
+    - default: "80"
+      edit: true
+      envKey: APP_PORT
+      labelEn: Container Port
+      labelZh: 容器内端口
+      label:
+        en: Container Port
+        zh: 容器内端口
+        zh-Hant: 容器內連接埠
+        ja: コンテナ内ポート
+        ko: 컨테이너 내부 포트
+        ru: Порт внутри контейнера
+        ms: Port dalam bekas
+        pt-br: Porta interna do contêiner
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 时区(影响日志时间戳等)----
+    - default: UTC
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: false
+      type: text
+    # ---- WebDAV 同步服务器地址(可选)----
+    # 支持 https:// 或 webdav:// 协议, 留空则不启用 WebDAV 同步
+    - default: ""
+      edit: true
+      envKey: WEBDAV_BASE_URL
+      labelEn: WebDAV URL
+      labelZh: WebDAV 地址
+      label:
+        en: WebDAV URL
+        zh: WebDAV 地址
+        zh-Hant: WebDAV 位址
+        ja: WebDAV URL
+        ko: WebDAV URL
+        ru: URL WebDAV
+        ms: URL WebDAV
+        pt-br: URL do WebDAV
+      required: false
+      type: text
+    # ---- WebDAV 用户名(可选)----
+    - default: ""
+      edit: true
+      envKey: WEBDAV_USERNAME
+      labelEn: WebDAV User
+      labelZh: WebDAV 用户名
+      label:
+        en: WebDAV User
+        zh: WebDAV 用户名
+        zh-Hant: WebDAV 使用者名稱
+        ja: WebDAV ユーザー
+        ko: WebDAV 사용자
+        ru: Пользователь WebDAV
+        ms: Pengguna WebDAV
+        pt-br: Usuário WebDAV
+      required: false
+      type: text
+    # ---- WebDAV 同步文件夹路径(可选)----
+    - default: ""
+      edit: true
+      envKey: WEBDAV_SYNC_FOLDER_PATH
+      labelEn: WebDAV Path
+      labelZh: WebDAV 路径
+      label:
+        en: WebDAV Path
+        zh: WebDAV 路径
+        zh-Hant: WebDAV 路徑
+        ja: WebDAV パス
+        ko: WebDAV 경로
+        ru: Путь WebDAV
+        ms: Laluan WebDAV
+        pt-br: Caminho do WebDAV
+      required: false
+      type: text
+    # ---- 同步间隔(分钟, 可选)----
+    - default: ""
+      edit: true
+      envKey: SYNC_INTERVAL
+      labelEn: Sync Interval (min)
+      labelZh: 同步间隔(分钟)
+      label:
+        en: Sync Interval (min)
+        zh: 同步间隔(分钟)
+        zh-Hant: 同步間隔(分鐘)
+        ja:  同期間隔(分)
+        ko: 동기화 간격(분)
+        ru: Интервал синхр. (мин)
+        ms: Selang penyegerakan (min)
+        pt-br: Intervalo de sincronização (min)
+      required: false
+      type: number
+    # ---- 启用压缩(可选)----
+    - default: "false"
+      edit: true
+      envKey: IS_COMPRESSION_ENABLED
+      labelEn: Enable Compression
+      labelZh: 启用压缩
+      label:
+        en: Enable Compression
+        zh: 启用压缩
+        zh-Hant: 啟用壓縮
+        ja: 圧縮を有効化
+        ko: 압축 활성화
+        ru: Включить сжатие
+        ms: Aktifkan mampatan
+        pt-br: Ativar compressão
+      required: false
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    # ---- 启用加密(可选)----
+    - default: "false"
+      edit: true
+      envKey: IS_ENCRYPTION_ENABLED
+      labelEn: Enable Encryption
+      labelZh: 启用加密
+      label:
+        en: Enable Encryption
+        zh: 启用加密
+        zh-Hant: 啟用加密
+        ja: 暗号化を有効化
+        ko: 암호화 활성화
+        ru: Включить шифрование
+        ms: Aktifkan penyulitan
+        pt-br: Ativar criptografia
+      required: false
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
