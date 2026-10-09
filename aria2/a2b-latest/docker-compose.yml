@@ -15,8 +15,8 @@ services:
       - QUIET=${QUIET}
       - PORT=6800
       - WEBUI=${WEBUI}
-      - WEBUI_PORT=${WEBUI_PORT}
-      - BTPORT=${BTPORT}
+      - WEBUI_PORT=8080
+      - BTPORT=32516
       - UT=true
       - SMD=true
       - A2B=${A2B}
@@ -31,9 +31,9 @@ services:
           - ${CONTAINER_NAME}
     ports:
       - "${PANEL_APP_PORT_RPC}:6800"
-      - "${PANEL_APP_PORT_WEBUI}:${WEBUI_PORT}"
-      - "${PANEL_APP_PORT_BT}:${BTPORT}"
-      - "${PANEL_APP_PORT_BT}:${BTPORT}/udp"
+      - "${PANEL_APP_PORT_WEBUI}:8080"
+      - "${PANEL_APP_PORT_BT}:32516"
+      - "${PANEL_APP_PORT_BT}:32516/udp"
     restart: always
     volumes:
       - ${CONFIG_PATH}:/config
