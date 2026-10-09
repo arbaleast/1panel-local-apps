@@ -1,0 +1,263 @@
+additionalProperties:
+  key: aria2
+  name: aria2 a2b-latest
+  tags:
+    - Download
+    - BT
+    - Tool
+  shortDescZh: 支持屏蔽迅雷等吸血客户端
+  shortDescEn: Supports blocking leech clients like Xunlei
+  description:
+    zh: 集成 aria2b 可屏蔽迅雷、qq旋风、影音先锋、百度网盘等吸血客户端。内置 AriaNg WebUI，支持回收站、任务自动转移、种子备份重命名等功能。
+    en: Integrates aria2b to block leech clients like Xunlei. Built-in AriaNg WebUI, supports recycle bin, task transfer, torrent backup and rename.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/SuperNG6/docker-aria2
+  github: https://github.com/SuperNG6/docker-aria2
+  formFields:
+    - default: aria2-a2b
+      edit: true
+      envKey: CONTAINER_NAME
+      labelEn: Container Name
+      labelZh: 容器名称
+      label:
+        en: Container Name
+        zh: 容器名称
+        zh-Hant: 容器名稱
+        ja: コンテナ名
+        ko: 컨테이너 이름
+        ru: Имя контейнера
+        ms: Nama bekas
+        pt-br: Nome do contêiner
+      required: true
+      type: text
+    - default: "1026"
+      edit: true
+      envKey: PUID
+      labelEn: PUID (User ID)
+      labelZh: PUID（用户ID）
+      label:
+        en: PUID (User ID)
+        zh: PUID（用户ID）
+        zh-Hant: PUID（用戶ID）
+        ja: PUID（ユーザーID）
+        ko: PUID（사용자 ID）
+        ru: PUID (ID пользователя)
+        ms: PUID (ID Pengguna)
+        pt-br: PUID (ID do Usuário)
+      required: true
+      type: text
+    - default: "100"
+      edit: true
+      envKey: PGID
+      labelEn: PGID (Group ID)
+      labelZh: PGID（用户组ID）
+      label:
+        en: PGID (Group ID)
+        zh: PGID（用户组ID）
+        zh-Hant: PGID（用戶組ID）
+        ja: PGID（グループID）
+        ko: PGID（그룹 ID）
+        ru: PGID (ID группы)
+        ms: PGID (ID Kumpulan)
+        pt-br: PGID (ID do Grupo)
+      required: true
+      type: text
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    - default: yourtoken
+      edit: true
+      envKey: SECRET
+      labelEn: RPC Secret Token
+      labelZh: RPC 密钥
+      label:
+        en: RPC Secret Token
+        zh: RPC 密钥
+        zh-Hant: RPC 密鑰
+        ja: RPC シークレットトークン
+        ko: RPC 시크릿 토큰
+        ru: RPC токен
+        ms: Token RPC
+        pt-br: Token RPC
+      required: true
+      type: text
+    - default: "512M"
+      edit: true
+      envKey: CACHE
+      labelEn: Disk Cache
+      labelZh: 磁盘缓存
+      label:
+        en: Disk Cache
+        zh: 磁盘缓存
+        zh-Hant: 磁盤緩存
+        ja: ディスクキャッシュ
+        ko: 디스크 캐시
+        ru: Дисковый кэш
+        ms: Cache cakera
+        pt-br: Cache de disco
+      required: true
+      type: text
+    - default: "true"
+      edit: true
+      envKey: QUIET
+      labelEn: Quiet Mode
+      labelZh: 静默模式
+      label:
+        en: Quiet Mode
+        zh: 静默模式
+        zh-Hant: 靜默模式
+        ja: クワイエットモード
+        ko:静音 모드
+        ru: Тихий режим
+        ms: Mod senyap
+        pt-br: Modo silencioso
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: "true"
+      edit: true
+      envKey: WEBUI
+      labelEn: Enable WebUI
+      labelZh: 启用 WebUI
+      label:
+        en: Enable WebUI
+        zh: 启用 WebUI
+        zh-Hant: 啟用 WebUI
+        ja: WebUI を有効化
+        ko: WebUI 활성화
+        ru: Включить WebUI
+        ms: Dayakan WebUI
+        pt-br: Habilitar WebUI
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: "8080"
+      edit: true
+      envKey: PANEL_APP_PORT_WEBUI
+      labelEn: WebUI Host Port
+      labelZh: WebUI 宿主机端口
+      label:
+        en: WebUI Host Port
+        zh: WebUI 宿主机端口
+        zh-Hant: WebUI 主機埠
+        ja: WebUI ホストポート
+        ko: WebUI 호스트 포트
+        ru: Порт WebUI на хосте
+        ms: Port hos WebUI
+        pt-br: Porta host WebUI
+      required: true
+      type: number
+    - default: "true"
+      edit: true
+      envKey: A2B
+      labelEn: Enable aria2b (Block Leeches)
+      labelZh: 启用 aria2b（屏蔽吸血客户端）
+      label:
+        en: Enable aria2b (Block Leeches)
+        zh: 启用 aria2b（屏蔽吸血客户端）
+        zh-Hant: 啟用 aria2b（屏蔽吸血客戶端）
+        ja: aria2b を有効化（吸血クライアントをブロック）
+        ko: aria2b 활성화 (리치 클라이언트 차단)
+        ru: Включить aria2b (блокировка пиявок)
+        ms: Dayakan aria2b (sekat clients penyedut)
+        pt-br: Habilitar aria2b (bloquear吸血客户端)
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: "false"
+      edit: true
+      envKey: A2B_DISABLE_LOG
+      labelEn: Disable aria2b Log
+      labelZh: 禁用 aria2b 日志
+      label:
+        en: Disable aria2b Log
+        zh: 禁用 aria2b 日志
+        zh-Hant: 禁用 aria2b 日誌
+        ja: aria2b ログを無効化
+        ko: aria2b 로그 비활성화
+        ru: Отключить логи aria2b
+        ms: Matikan log aria2b
+        pt-br: Desativar log aria2b
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: 2h
+      edit: true
+      envKey: CRA2B
+      labelEn: aria2b Restart Interval
+      labelZh: aria2b 重启间隔
+      label:
+        en: aria2b Restart Interval
+        zh: aria2b 重启间隔
+        zh-Hant: aria2b 重啟間隔
+        ja: aria2b 再起動間隔
+        ko: aria2b 재시작 간격
+        ru: Интервал перезапуска aria2b
+        ms: Selang hidup semula aria2b
+        pt-br: Intervalo de reinício do aria2b
+      required: true
+      type: text
+    - default: ./data/config
+      edit: true
+      envKey: CONFIG_PATH
+      labelEn: Config Path (Host)
+      labelZh: 配置路径（宿主机）
+      label:
+        en: Config Path (Host)
+        zh: 配置路径（宿主机）
+        zh-Hant: 設定路徑（主機）
+        ja: 設定パス（ホスト）
+        ko: 설정 경로 (호스트)
+        ru: Путь к конфигу (хост)
+        ms: Laluan konfigurasi (hos)
+        pt-br: Caminho de configuração (host)
+      required: true
+      type: text
+    - default: ./data/downloads
+      edit: true
+      envKey: DOWNLOADS_PATH
+      labelEn: Downloads Path (Host)
+      labelZh: 下载路径（宿主机）
+      label:
+        en: Downloads Path (Host)
+        zh: 下载路径（宿主机）
+        zh-Hant: 下載路徑（主機）
+        ja: ダウンロードパス（ホスト）
+        ko: 다운로드 경로 (호스트)
+        ru: Путь к загрузкам (хост)
+        ms: Laluan muat turun (hos)
+        pt-br: Caminho de downloads (host)
+      required: true
+      type: text

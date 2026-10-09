@@ -1,0 +1,24 @@
+services:
+  aria2:
+    container_name: ${CONTAINER_NAME}
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - SECRET=${SECRET}
+      - CACHE=${CACHE}
+      - QUIET=${QUIET}
+      - PORT=6800
+      - WEBUI=${WEBUI}
+      - WEBUI_PORT=8080
+      - BTPORT=32516
+      - UT=true
+      - SMD=true
+    image: superng6/aria2:latest
+    labels:
+      createdBy: Apps
+    network_mode: host
+    restart: always
+    volumes:
+      - ${CONFIG_PATH}:/config
+      - ${DOWNLOADS_PATH}:/downloads

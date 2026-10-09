@@ -1,0 +1,30 @@
+services:
+  aria2:
+    cap_add:
+      - NET_ADMIN
+    container_name: ${CONTAINER_NAME}
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - SECRET=${SECRET}
+      - CACHE=${CACHE}
+      - QUIET=${QUIET}
+      - PORT=6800
+      - WEBUI=${WEBUI}
+      - WEBUI_PORT=8080
+      - BTPORT=32516
+      - UT=true
+      - SMD=true
+      - A2B=${A2B}
+      - A2B_DISABLE_LOG=${A2B_DISABLE_LOG}
+      - CRA2B=${CRA2B}
+    image: superng6/aria2:a2b-latest
+    labels:
+      createdBy: Apps
+    network_mode: host
+    restart: always
+    volumes:
+      - ${CONFIG_PATH}:/config
+      - ${DOWNLOADS_PATH}:/downloads
+      - /lib/modules:/lib/modules:ro
