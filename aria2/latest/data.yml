@@ -171,6 +171,39 @@ additionalProperties:
         pt-br: Porta host WebUI
       required: true
       type: number
+
+    - default: "6800"
+      edit: true
+      envKey: PANEL_APP_PORT_RPC
+      labelEn: RPC Host Port
+      labelZh: RPC 宿主机端口
+      label:
+        en: RPC Host Port
+        zh: RPC 宿主机端口
+        zh-Hant: RPC 主機埠
+        ja: RPC ホストポート
+        ko: RPC 호스트 포트
+        ru: Порт RPC на хосте
+        ms: Port hos RPC
+        pt-br: Porta host RPC
+      required: true
+      type: number
+    - default: "32516"
+      edit: true
+      envKey: PANEL_APP_PORT_BT
+      labelEn: BT/DHT Host Port
+      labelZh: BT/DHT 宿主机端口
+      label:
+        en: BT/DHT Host Port
+        zh: BT/DHT 宿主机端口
+        zh-Hant: BT/DHT 主機埠
+        ja: BT/DHT ホストポート
+        ko: BT/DHT 호스트 포트
+        ru: Порт BT/DHT на хосте
+        ms: Port hos BT/DHT
+        pt-br: Porta host BT/DHT
+      required: true
+      type: number
     - default: ./data/config
       edit: true
       envKey: CONFIG_PATH
