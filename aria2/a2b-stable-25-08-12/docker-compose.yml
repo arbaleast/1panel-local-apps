@@ -1,0 +1,41 @@
+networks:
+  1panel-network:
+    external: true
+services:
+  aria2:
+    cap_add:
+      - NET_ADMIN
+    container_name: ${CONTAINER_NAME}
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - SECRET=${SECRET}
+      - CACHE=${CACHE}
+      - QUIET=${QUIET}
+      - PORT=6800
+      - WEBUI=${WEBUI}
+      - WEBUI_PORT=8080
+      - BTPORT=32516
+      - UT=true
+      - SMD=true
+      - A2B=${A2B}
+      - A2B_DISABLE_LOG=${A2B_DISABLE_LOG}
+      - CRA2B=${CRA2B}
+    image: superng6/aria2:a2b-stable-25-08-12
+    labels:
+      createdBy: Apps
+    networks:
+      1panel-network:
+        aliases:
+          - ${CONTAINER_NAME}
+    ports:
+      - "${PANEL_APP_PORT_RPC}:6800"
+      - "${PANEL_APP_PORT_WEBUI}:8080"
+      - "${PANEL_APP_PORT_BT}:32516"
+      - "${PANEL_APP_PORT_BT}:32516/udp"
+    restart: always
+    volumes:
+      - ${CONFIG_PATH}:/config
+      - ${DOWNLOADS_PATH}:/downloads
+      - /lib/modules:/lib/modules:ro
