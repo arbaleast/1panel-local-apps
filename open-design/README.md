@@ -48,10 +48,14 @@
 
 ## 持久化数据
 
-`./data/` 绑定挂载到容器内 `/app/.od`，存放 daemon 运行期数据（项目、缓存、用户态）。容器以非 root 用户 `open-design` (uid 1001) 运行；如曾用旧版以 `node` 用户 (uid 1000) 运行过 `ghcr.io/nexu-io/od` 容器并迁移到本仓，请先 chown：
+Docker 命名卷 `open_design_data` 挂载到容器内 `/app/.od`，由 Docker 自动以镜像内文件系统的 owner（uid 1001 / 用户 `open-design`）初始化——**首次部署即获得正确权限，daemon 启动时无 EACCES**。
+
+如需从其它途径迁入数据（备份恢复、跨机器迁移），可在 1Panel 「容器」面板对该命名卷执行「导入」：
 
 ```bash
-sudo chown -R 1001:1001 ./data
+# 主机上导入备份到命名卷
+docker run --rm -v open_design_data:/data -v $PWD/backup:/backup \
+  alpine sh -c 'rm -rf /data/* && tar xzf /backup/od-backup.tgz -C /data'
 ```
 
 ---
@@ -61,14 +65,14 @@ sudo chown -R 1001:1001 ./data
 | 项 | 上游 base compose | 1Panel 适配 | 原因 |
 |---|---|---|---|
 | 端口绑定 | `127.0.0.1:${PORT}:7456` | `${HOST_IP}:${PANEL_APP_PORT_HTTP}:7456` | 1Panel 反代必须监听全接口 |
-| 持久化 | named volume `open_design_data` | bind mount `./data:/app/.od` | 1Panel 拒绝顶层 volumes 块用 `${...}` 插值命名卷（AGENTS.md 强制） |
+| 持久化 | named volume `open_design_data` | **同名** named volume `open_design_data` + 顶层 `volumes:` 字面量声明 | 与上游一致；1Panel 仅禁止 `${...}` 变量插值命名卷，**字面量**（如 `open_design_data: null`）允许，参考 `pgvector/0.8.7-pg18-trixie/` |
 | 镜像来源 | `${OPEN_DESIGN_IMAGE:-ghcr.io/nexu-io/od:latest}` | `${IMAGE}` | 与 mihomo/handbrake/hindsight 风格一致；default 由 formField 注入 |
 | 网络 | 默认 bridge | `1panel-network: external: true` | AGENTS.md 强制 |
 | `OD_BIND_HOST` | `0.0.0.0`（base）/ `127.0.0.1`（Linux override） | `0.0.0.0` | 1Panel 反代必须 0.0.0.0；host 装了 agent CLI 的高级场景不在本仓覆盖范围 |
 | `host agent CLI 挂载` | linux override 提供 | 不提供 | 1Panel 场景下用户主机 agent CLI 不在容器内；如需自己挂，可手工改 compose |
 | `healthcheck` | 已有 | 保留 | `GET /api/health` |
-| `mem_limit` | `${OPEN_DESIGN_MEM_LIMIT:-384m}` | 改用 `deploy.resources.limits.memory: ${MEMORY_LIMIT}` | 与 handbrake/hindsight 风格一致；1Panel UI「限制」面板会同步 |
-| `restart: always`, `read_only: true`, `tmpfs: [/tmp]`, `security_opt: no-new-privileges`, `pids_limit: 256`, 非 root user (uid 1001) | 全部保留 | — | 上游安全模型保持完整 |
+| 资源限制 | `mem_limit: 384m` + `pids_limit: 256`（两个 legacy 顶层字段） | `deploy.resources.limits.{cpus,memory}`（仅 memory + cpus） | Compose v2 + Swarm schema 下 `mem_limit` / `pids_limit` 与 `deploy.resources.limits.{memory,pids}` 是同字段两个写法，**同时存在冲突**；open-design 是单 Node daemon（tini PID 1），不涉及 s6-overlay 那种需要 pids 限制的场景，删 `pids_limit` 不损安全 |
+| `restart: always`, `read_only: true`, `tmpfs: [/tmp]`, `security_opt: no-new-privileges`, 非 root user (uid 1001) | 全部保留 | — | 上游安全模型保持完整 |
 
 ---
 
@@ -85,4 +89,4 @@ sudo chown -R 1001:1001 ./data
 - **`/api/health` 不返回 200** → 容器首次启动需 20-60s（`start_period: 20s`），稍等。
 - **容器反复重启** → 多半是 `OD_API_TOKEN` 未填或端口冲突；查看 `docker logs <container>`。
 - **Web UI 打开空白** → 浏览器缓存；或 daemon 启动后 `/apps/web/out` 静态资源未生成（极少见，重启容器）。
-- **`Permission denied` 写 `/app/.od`** → 旧版容器用 `node` (uid 1000)，本仓用 `open-design` (uid 1001)；按上文「持久化数据」chown 修复。
+- **`Permission denied` 写 `/app/.od`** → 命名卷 `open_design_data` 的 owner 应是 `1001:1001`（容器内 `open-design`）。1Panel 「容器」面板 → 该容器 → 「存储」检查挂载点对应卷的权限；如 owner 不对，手动 `docker run --rm -v open_design_data:/data alpine chown -R 1001:1001 /data` 修复一次即可。

@@ -27,7 +27,7 @@ services:
       - OD_API_TOKEN=${OD_API_TOKEN}
       - OD_DISABLE_API_AUTH=${OD_DISABLE_API_AUTH}
     volumes:
-      - ./data:/app/.od
+      - open_design_data:/app/.od
     read_only: true
     tmpfs:
       - /tmp
@@ -48,3 +48,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+
+volumes:
+  open_design_data:
