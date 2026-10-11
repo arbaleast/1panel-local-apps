@@ -1,0 +1,43 @@
+name: Open Design
+title: Open Design — Claude Design 开源替代品（Agent 驱动的设计 daemon）
+description:
+  zh: Apache-2.0 开源设计工具，定位为 Claude Design 的替代品。容器内运行 daemon + Next.js 静态 Web UI，单一 Alpine 镜像（ghcr.io/nexu-io/od）监听 7456 端口，浏览器访问即用。基于 agent CLI 驱动，把设计稿、原型、Landing Page、Dashboard、PPT、图片和视频一次性生成，并支持 HTML/PDF/PPTX/MP4 导出。25+ Agent CLI 兼容（Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode 等），BYOK。
+  en: Apache-2.0 open-source alternative to Claude Design. Runs the daemon plus the built Next.js web UI from a single Alpine image (ghcr.io/nexu-io/od) on port 7456. Driven by agent CLIs (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, 25+ supported, BYOK), it generates prototypes, landing pages, dashboards, slides, images and videos and exports to HTML / PDF / PPTX / MP4.
+  ja: Claude Design のオープンソース代替 (Apache-2.0)。daemon + Next.js Web UI を単一の Alpine イメージ (ghcr.io/nexu-io/od) で 7456 ポートに提供。Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode など 25 以上の Agent CLI 互換、BYOK。
+  ko: Claude Design의 오픈소스 대체 (Apache-2.0). daemon + Next.js Web UI를 단일 Alpine 이미지 (ghcr.io/nexu-io/od)로 7456 포트에 제공. Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode 등 25+ Agent CLI 호환, BYOK.
+  ru: Открытая альтернатива Claude Design (Apache-2.0). Daemon и Next.js Web UI запускаются из одного Alpine-образа (ghcr.io/nexu-io/od) на порту 7456. Совместим с 25+ Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK).
+  ms: Alternatif sumber terbuka untuk Claude Design (Apache-2.0). Daemon + Web UI Next.js daripada satu imej Alpine (ghcr.io/nexu-io/od) pada port 7456. Serasi 25+ Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK).
+  pt-br: Alternativa open-source ao Claude Design (Apache-2.0). Daemon + Web UI Next.js em uma única imagem Alpine (ghcr.io/nexu-io/od) na porta 7456. Compatível com 25+ Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK).
+  es-es: Alternativa de código abierto a Claude Design (Apache-2.0). Daemon + UI web Next.js en una sola imagen Alpine (ghcr.io/nexu-io/od) en el puerto 7456. Compatible con más de 25 Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK).
+  tr: Claude Design için açık kaynak alternatif (Apache-2.0). Daemon + Next.js Web UI, tek bir Alpine imajı (ghcr.io/nexu-io/od) üzerinde 7456 portunda. Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode dahil 25+ Agent CLI ile uyumlu, BYOK.
+  zh-Hant: Claude Design 開源替代方案 (Apache-2.0)。daemon + Next.js Web UI 由單一 Alpine 映像 (ghcr.io/nexu-io/od) 於 7456 連接埠提供。相容 25+ Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK)。
+additionalProperties:
+  key: open-design
+  name: Open Design
+  tags:
+  - Design
+  - Agent
+  - BYOK
+  description:
+    zh: Apache-2.0 开源设计工具，定位为 Claude Design 的替代品。容器内运行 daemon + Next.js 静态 Web UI，单一 Alpine 镜像（ghcr.io/nexu-io/od）监听 7456 端口，浏览器访问即用。基于 agent CLI 驱动，把设计稿、原型、Landing Page、Dashboard、PPT、图片和视频一次性生成，并支持 HTML/PDF/PPTX/MP4 导出。25+ Agent CLI 兼容（Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode 等），BYOK。
+    en: Apache-2.0 open-source alternative to Claude Design. Runs the daemon plus the built Next.js web UI from a single Alpine image (ghcr.io/nexu-io/od) on port 7456. Driven by agent CLIs (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, 25+ supported, BYOK), it generates prototypes, landing pages, dashboards, slides, images and videos and exports to HTML / PDF / PPTX / MP4.
+    ja: Claude Design のオープンソース代替 (Apache-2.0)。daemon + Next.js Web UI を単一の Alpine イメージ (ghcr.io/nexu-io/od) で 7456 ポートに提供。Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode など 25 以上の Agent CLI 互換、BYOK。
+    ko: Claude Design의 오픈소스 대체 (Apache-2.0). daemon + Next.js Web UI를 단일 Alpine 이미지 (ghcr.io/nexu-io/od)로 7456 포트에 제공. Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode 등 25+ Agent CLI 호환, BYOK.
+    ru: Открытая альтернатива Claude Design (Apache-2.0). Daemon и Next.js Web UI запускаются из одного Alpine-образа (ghcr.io/nexu-io/od) на порту 7456. Совместим с 25+ Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK).
+    ms: Alternatif sumber terbuka untuk Claude Design (Apache-2.0). Daemon + Web UI Next.js daripada satu imej Alpine (ghcr.io/nexu-io/od) pada port 7456. Serasi 25+ Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK).
+    pt-br: Alternativa open-source ao Claude Design (Apache-2.0). Daemon + Web UI Next.js em uma única imagem Alpine (ghcr.io/nexu-io/od) na porta 7456. Compatível com 25+ Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK).
+    es-es: Alternativa de código abierto a Claude Design (Apache-2.0). Daemon + UI web Next.js en una sola imagen Alpine (ghcr.io/nexu-io/od) en el puerto 7456. Compatible con más de 25 Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK).
+    tr: Claude Design için açık kaynak alternatif (Apache-2.0). Daemon + Next.js Web UI, tek bir Alpine imajı (ghcr.io/nexu-io/od) üzerinde 7456 portunda. Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode dahil 25+ Agent CLI ile uyumlu, BYOK.
+    zh-Hant: Claude Design 開源替代方案 (Apache-2.0)。daemon + Next.js Web UI 由單一 Alpine 映像 (ghcr.io/nexu-io/od) 於 7456 連接埠提供。相容 25+ Agent CLI (Claude Code / Codex / DeepSeek Harness / Cursor / OpenCode, BYOK)。
+  shortDescZh: Claude Design 开源替代，agent CLI 驱动
+  shortDescEn: Open-source Claude Design alternative, agent-driven
+  type: tool
+  architectures:
+  - amd64
+  - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://open-design.ai
+  github: https://github.com/nexu-io/open-design
+  document: https://github.com/nexu-io/open-design/blob/main/deploy/README.md

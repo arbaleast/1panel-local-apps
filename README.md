@@ -8,6 +8,7 @@
 |------|------|----------|
 | anirss | 动漫 RSS | v3.2.43 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
+| aria2 | 轻量级多协议下载工具 | a2b-latest |
 | bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.2.0 |
 | cfui | cloudflared WebUI 管理面板 | v0.10.5 |
 | cinny | Matrix 聊天客户端 | v4.12.6 |
@@ -38,6 +39,7 @@
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
 | onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.2.4 |
+| open-design | Claude Design 开源替代，agent CLI 驱动 | 0.24.1 |
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
 | personal-todo-vault | 自托管待办与 Markdown 笔记库（SQLite + 邮件提醒 + WebDAV 备份） | latest |
 | pgvector | 向量数据库 | 0.8.7-pg18-trixie |
@@ -47,6 +49,7 @@
 | scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.24.0 |
 | searxng | 隐私搜索引擎 | 2026.10.2-a5659a536 |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
+| super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.1.0 |
 | syncthing | 文件同步 | 2.1.5 |
 | traefik | 反向代理 | v3.6.6 |
 | xunlei | cnk3x 维护的迅雷远程下载服务（群晖提取版） | beta |
