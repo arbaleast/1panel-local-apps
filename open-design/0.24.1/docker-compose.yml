@@ -33,7 +33,6 @@ services:
       - /tmp
     security_opt:
       - no-new-privileges:true
-    pids_limit: 256
     deploy:
       resources:
         limits:
