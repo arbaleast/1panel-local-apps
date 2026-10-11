@@ -6,9 +6,9 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.43 |
+| anirss | 动漫 RSS | v3.2.46 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
-| aria2 | 轻量级多协议下载工具 | a2b-latest |
+| aria2 | 轻量级多协议下载工具 | a2b-stable-25-08-12 |
 | bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.2.0 |
 | cfui | cloudflared WebUI 管理面板 | v0.10.5 |
 | cinny | Matrix 聊天客户端 | v4.12.6 |
@@ -18,8 +18,8 @@
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 | 1.11.2-ls41 |
-| hindsight | AI 记忆系统 | 0.10.2 |
-| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.16 |
+| hindsight | AI 记忆系统 | 0.10.3 |
+| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.17 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 2026091410-arm64 |
@@ -34,7 +34,7 @@
 | mihomo | 代理工具 | v1.19.18 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
 | misaka | 御坂网络弹幕服务 | v2.8.9 |
-| moviepilot | 影视自动化 | 3.1.1 |
+| moviepilot | 影视自动化 | 3.1.4 |
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.7.7 |
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
@@ -47,7 +47,7 @@
 | photopea | 在线图像编辑器 | 2.2 |
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 260919 |
 | qdrant | 向量搜索引擎 | v1.19.2-unprivileged |
-| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.24.0 |
+| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.25.0 |
 | searxng | 隐私搜索引擎 | 2026.10.2-a5659a536 |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.1.0 |
