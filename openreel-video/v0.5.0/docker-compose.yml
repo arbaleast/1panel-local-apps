@@ -1,0 +1,49 @@
+networks:
+  1panel-network:
+    external: true
+
+# openreel-video (v0.5.0) — HelmForge 维护的镜像
+# 镜像源: docker.io/helmforge/openreel-video:v0.5.0
+#   - 多架构: linux/amd64, linux/arm64
+#   - 父镜像: nginx:1.29.8-alpine (User UID=101, GID=101, 非 root 运行)
+#   - 与上游 https://openreel.video 站点代码一致 (HelmForge 从 Augani/openreel-video
+#     release 同步构建:Vite 静态产物 + nginx 默认 SPA fallback)
+# 入口: ENTRYPOINT → /docker-entrypoint.sh (官方 nginx-alpine 入口)
+# CMD: nginx -g 'daemon off;'
+# 容器内: 监听 $PORT (默认 8080), 服务 /usr/share/nginx/html
+# 健康检查: GET /healthz → {"status":"ok"}
+#
+# 浏览器需求(用于 WebCodecs / WebGPU):
+#   - Chrome 94+ / Edge 94+ / Firefox 130+ / Safari 16.4+
+#   - 反向代理 / 网关 / CDN / WAF 必须透传 COOP/COEP 头(nginx 已内置)
+#   - 反向代理透传 Cross-Origin-Opener-Policy: same-origin
+#                  Cross-Origin-Embedder-Policy: require-corp
+#     才能启用 SharedArrayBuffer / WebCodecs 硬件加速
+#
+# 数据流:
+#   OpenReel Video 是纯静态 SPA,所有视频/音频/图片处理完全在浏览器端完成,
+#   不会上传到服务器。容器只提供 HTML/JS/CSS 静态资源。无持久化数据。
+
+services:
+  openreel-video:
+    container_name: ${CONTAINER_NAME}
+    image: docker.io/helmforge/openreel-video:v0.5.0
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:${PORT}
+    environment:
+      # nginx 监听端口(容器内)
+      PORT: ${PORT}
+      # 时区
+      TZ: ${TZ}
+    healthcheck:
+      # /healthz 返回 {"status":"ok"}, 镜像内置
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:${PORT}/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

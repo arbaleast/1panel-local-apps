@@ -40,6 +40,7 @@
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
 | onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.2.4 |
 | open-design | Claude Design 开源替代，agent CLI 驱动 | 0.24.1 |
+| openreel-video | 浏览器端开源视频剪辑工具 | v0.5.0 |
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
 | personal-todo-vault | 自托管待办与 Markdown 笔记库（SQLite + 邮件提醒 + WebDAV 备份） | latest |
 | pgvector | 向量数据库 | 0.8.7-pg18-trixie |

@@ -1,0 +1,26 @@
+additionalProperties:
+  key: openreel-video
+  name: OpenReel Video
+  tags:
+    - Video
+    - Editor
+    - WebCodecs
+    - WebGPU
+    - Self-hosted
+  shortDescZh: 浏览器端开源视频剪辑工具
+  shortDescEn: Browser-based open-source video editor
+  description:
+    en: OpenReel Video is a fully-featured browser-based video editor that runs entirely client-side. Built with React, TypeScript, WebCodecs, and WebGPU for professional-grade multi-track timeline editing, color grading, audio mixing, keyframe animations, and 4K export — no uploads, no installs, no watermarks, MIT licensed.
+    zh: OpenReel Video 是一款完全运行在浏览器中的开源专业视频剪辑工具。基于 React、TypeScript、WebCodecs 与 WebGPU 构建，提供多轨时间线剪辑、调色、音频混音、关键帧动画、4K 导出等专业功能——无需上传、无需安装、无水印，MIT 开源许可。
+    zh-Hant: OpenReel Video 是一款完全執行於瀏覽器的開源專業影片剪輯工具。基於 React、TypeScript、WebCodecs 與 WebGPU 構建，提供多軌時間線剪輯、調色、音訊混音、關鍵幀動畫、4K 匯出等專業功能——無需上傳、無需安裝、無浮水印，MIT 開源授權。
+    ja: OpenReel Video は、完全にブラウザで動作するオープンソースの動画編集ツールです。React、TypeScript、WebCodecs、WebGPU ベースで、マルチトラックタイムライン編集、カラコレ、オーディオミキシング、キーフレームアニメーション、4K 書き出しなど本格的な機能を搭載。アップロード不要、インストール不要、ウォーターマークなし、MIT ライセンス。
+    ko: OpenReel Video는 브라우저에서 완전히 동작하는 오픈소스 비디오 편집기입니다. React, TypeScript, WebCodecs, WebGPU 기반으로 멀티트랙 타임라인 편집, 컬러 그레이딩, 오디오 믹싱, 키프레임 애니메이션, 4K 내보내기 등 전문 기능을 제공하며 업로드, 설치, 워터마크 없이 MIT 라이선스로 제공됩니다.
+    ru: OpenReel Video — полнофункциональный браузерный видеоредактор с открытым исходным кодом, работающий целиком на стороне клиента. React, TypeScript, WebCodecs и WebGPU обеспечивают профессиональный многотрековый монтаж, цветокоррекцию, сведение звука, анимацию по ключевым кадрам и экспорт в 4K — без загрузок, без установки, без водяных знаков, лицензия MIT.
+    ms: OpenReel Video ialah editor video sumber terbuka yang berjalan sepenuhnya dalam pelayar. Dibina dengan React, TypeScript, WebCodecs dan WebGPU untuk penyuntingan berbilang trek, gred warna, campuran audio, animasi keyframe dan eksport 4K — tanpa muat naik, tanpa pasang, tanpa tera air, lesen MIT.
+    pt-br: OpenReel Video é um editor de vídeo de código aberto que roda inteiramente no navegador. Construído com React, TypeScript, WebCodecs e WebGPU para edição multi-trilha, color grading, mixagem de áudio, animações por keyframe e exportação em 4K — sem uploads, sem instalações, sem marcas d'água, licença MIT.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://openreel.video
+  github: https://github.com/Augani/openreel-video
