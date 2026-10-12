@@ -1,0 +1,58 @@
+networks:
+  1panel-network:
+    external: true
+services:
+  tdarr:
+    container_name: ${CONTAINER_NAME}
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    volumes:
+      # Tdarr 持久化目录
+      - ${SERVER_PATH}:/app/server
+      - ${CONFIGS_PATH}:/app/configs
+      - ${LOGS_PATH}:/app/logs
+      - ${TRANSCODE_CACHE_PATH}:/temp
+      # 媒体库: 通过 bind mount 让 Tdarr 能直接读写
+      # ${MEDIA_PATH} 留空时不会挂载,默认走应用内 Library 配置
+      - ${MEDIA_PATH}:/media
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK_SET=${UMASK_SET}
+      # Server / WebUI 端口
+      - serverIP=${TDARR_SERVER_IP}
+      - serverPort=8266
+      - webUIPort=8265
+      # 内置 Node 开关
+      - internalNode=${TDARR_INTERNAL_NODE}
+      - inContainer=true
+      - ffmpegVersion=${TDARR_FFMPEG_VERSION}
+      - nodeName=${TDARR_NODE_NAME}
+      - nodeType=mapped
+      - priority=10
+      - apiKey=
+      - auth=${TDARR_AUTH}
+      - authType=local
+      - openBrowser=false
+      - startPaused=false
+      - transcodegpuWorkers=${TDARR_GPU_WORKERS}
+      - transcodecpuWorkers=${TDARR_CPU_WORKERS}
+      - healthcheckgpuWorkers=0
+      - healthcheckcpuWorkers=1
+      - maxLogSizeMB=${TDARR_MAX_LOG_SIZE_MB}
+      - cronPluginUpdate=${TDARR_CRON_PLUGIN_UPDATE}
+    image: ghcr.io/haveagitgat/tdarr:3.00.00
+    labels:
+      createdBy: Apps
+    networks:
+      - 1panel-network
+    ports:
+      # WebUI
+      - ${HOST_IP}:${PANEL_APP_PORT_WEBUI}:8265
+      # Server (供其它 Tdarr Node 连接; 单容器部署时也可只用于同主机 Node 复用)
+      - ${HOST_IP}:${PANEL_APP_PORT_SERVER}:8266
+    restart: always
