@@ -1,0 +1,313 @@
+additionalProperties:
+  key: tdarr
+  name: tdarr 2.91.01
+  tags:
+    - Local
+  shortDescZh: Tdarr 媒体库自动转码 (Server + 内置 Node)
+  shortDescEn: Tdarr media library auto-transcoding (Server + built-in Node)
+  description:
+    zh: 基于 haveagitgat/tdarr 的媒体库自动转码与健康检查调度系统。本应用以单容器方式同时运行 Tdarr Server 与内置 Node，通过 bind mount 共享宿主 HandBrakeCLI 二进制，可与本仓库 `handbrake` 应用配合，将外部 HandBrake 作为 Tdarr 转码后端。
+    en: Distributed media-library transcoding & health-check scheduler based on haveagitgat/tdarr. This app runs both the Tdarr Server and a built-in Node in a single container and shares the host HandBrakeCLI binary via bind mount, so it can pair with the sibling `handbrake` app and use the external HandBrake as the Tdarr transcode backend.
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://tdarr.io
+  github: https://github.com/HaveAGitGat/Tdarr
+  document: https://docs.tdarr.io
+  formFields:
+    - default: 8265
+      edit: true
+      envKey: PANEL_APP_PORT_WEBUI
+      label:
+        en: WebUI Port
+        zh: WebUI 端口
+        zh-Hant: WebUI 連接埠
+        ja: WebUI ポート
+        ko: WebUI 포트
+        ru: Порт WebUI
+        ms: Port WebUI
+        pt-br: Porta WebUI
+      required: true
+      type: number
+      rule: paramPort
+    - default: 8266
+      edit: true
+      envKey: PANEL_APP_PORT_SERVER
+      label:
+        en: Server Port
+        zh: Server 端口
+        zh-Hant: Server 連接埠
+        ja: Server ポート
+        ko: Server 포트
+        ru: Порт Server
+        ms: Port Server
+        pt-br: Porta Server
+      required: true
+      type: number
+      rule: paramPort
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      label:
+        en: Time zone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    - default: 0
+      edit: true
+      envKey: PUID
+      label:
+        en: Run as UID
+        zh: 运行用户 UID
+        zh-Hant: 執行使用者 UID
+        ja: 実行 UID
+        ko: 실행 UID
+        ru: UID пользователя
+        ms: UID pengguna
+        pt-br: UID do usuário
+      required: true
+      type: number
+    - default: 0
+      edit: true
+      envKey: PGID
+      label:
+        en: Run as GID
+        zh: 运行用户 GID
+        zh-Hant: 執行群組 GID
+        ja: 実行 GID
+        ko: 실행 GID
+        ru: GID пользователя
+        ms: GID pengguna
+        pt-br: GID do usuário
+      required: true
+      type: number
+    - default: ./data/server
+      edit: true
+      envKey: SERVER_PATH
+      label:
+        en: Server data path
+        zh: Server 数据路径
+        zh-Hant: Server 資料路徑
+        ja: Server データパス
+        ko: Server 데이터 경로
+        ru: Путь данных Server
+        ms: Laluan data Server
+        pt-br: Caminho de dados do Server
+      required: true
+      type: text
+    - default: ./data/configs
+      edit: true
+      envKey: CONFIGS_PATH
+      label:
+        en: Configs path
+        zh: Configs 路径
+        zh-Hant: Configs 路徑
+        ja: Configs パス
+        ko: Configs 경로
+        ru: Путь Configs
+        ms: Laluan Configs
+        pt-br: Caminho Configs
+      required: true
+      type: text
+    - default: ./data/logs
+      edit: true
+      envKey: LOGS_PATH
+      label:
+        en: Logs path
+        zh: Logs 路径
+        zh-Hant: Logs 路徑
+        ja: Logs パス
+        ko: Logs 경로
+        ru: Путь Logs
+        ms: Laluan Logs
+        pt-br: Caminho Logs
+      required: true
+      type: text
+    - default: ./data/transcode_cache
+      edit: true
+      envKey: TRANSCODE_CACHE_PATH
+      label:
+        en: Transcode cache path
+        zh: 转码缓存路径
+        zh-Hant: 轉碼快取路徑
+        ja: トランスコードキャッシュパス
+        ko: 트랜스코드 캐시 경로
+        ru: Путь кэша транскодирования
+        ms: Laluan cache transcode
+        pt-br: Caminho do cache de transcodificação
+      required: true
+      type: text
+    - default: ""
+      edit: true
+      envKey: MEDIA_PATH
+      label:
+        en: Media library path
+        zh: 媒体库路径
+        zh-Hant: 媒體庫路徑
+        ja: メディアライブラリパス
+        ko: 미디어 라이브러리 경로
+        ru: Путь медиатеки
+        ms: Laluan perpustakaan media
+        pt-br: Caminho da biblioteca de mídia
+      required: false
+      type: text
+    - default: 7
+      edit: true
+      envKey: TDARR_FFMPEG_VERSION
+      label:
+        en: Bundled FFmpeg version
+        zh: 内置 FFmpeg 版本
+        zh-Hant: 內建 FFmpeg 版本
+        ja: 内蔵 FFmpeg バージョン
+        ko: 내장 FFmpeg 버전
+        ru: Версия встроенного FFmpeg
+        ms: Versi FFmpeg terbina dalam
+        pt-br: Versão do FFmpeg integrado
+      required: true
+      type: number
+    - default: "true"
+      edit: true
+      envKey: TDARR_INTERNAL_NODE
+      label:
+        en: Run built-in Node inside the same container
+        zh: 在同一容器内运行内置 Node
+        zh-Hant: 在同一容器內執行內建 Node
+        ja: 同じコンテナ内で内蔵 Node を実行
+        ko: 같은 컨테이너에서 내장 Node 실행
+        ru: Запустить встроенный Node в том же контейнере
+        ms: Jalankan Node terbina dalam dalam bekas yang sama
+        pt-br: Executar Node integrado no mesmo contêiner
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: tdarr-main
+      edit: true
+      envKey: TDARR_NODE_NAME
+      label:
+        en: Built-in Node name
+        zh: 内置 Node 名称
+        zh-Hant: 內建 Node 名稱
+        ja: 内蔵 Node 名
+        ko: 내장 Node 이름
+        ru: Имя встроенного Node
+        ms: Nama Node terbina dalam
+        pt-br: Nome do Node integrado
+      required: true
+      type: text
+    - default: 0.0.0.0
+      edit: true
+      envKey: TDARR_SERVER_IP
+      label:
+        en: Server bind IP
+        zh: Server 绑定 IP
+        zh-Hant: Server 綁定 IP
+        ja: Server バインド IP
+        ko: Server 바인딩 IP
+        ru: IP привязки Server
+        ms: IP ikatan Server
+        pt-br: IP de ligação do Server
+      required: true
+      type: text
+    - default: "1"
+      edit: true
+      envKey: TDARR_CPU_WORKERS
+      label:
+        en: CPU workers
+        zh: CPU 工作线程
+        zh-Hant: CPU 工作執行緒
+        ja: CPU ワーカー数
+        ko: CPU 워커 수
+        ru: Число CPU-воркеров
+        ms: Bilangan pekerja CPU
+        pt-br: Número de workers de CPU
+      required: true
+      type: number
+    - default: "0"
+      edit: true
+      envKey: TDARR_GPU_WORKERS
+      label:
+        en: GPU workers
+        zh: GPU 工作线程
+        zh-Hant: GPU 工作執行緒
+        ja: GPU ワーカー数
+        ko: GPU 워커 수
+        ru: Число GPU-воркеров
+        ms: Bilangan pekerja GPU
+        pt-br: Número de workers de GPU
+      required: true
+      type: number
+    - default: "false"
+      edit: true
+      envKey: TDARR_AUTH
+      label:
+        en: Enable web UI auth
+        zh: 启用 Web UI 鉴权
+        zh-Hant: 啟用 Web UI 鑑權
+        ja: Web UI 認証を有効化
+        ko: Web UI 인증 사용
+        ru: Включить аутентификацию Web UI
+        ms: Dayakan pengesahan Web UI
+        pt-br: Habilitar autenticação do Web UI
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: 10
+      edit: true
+      envKey: TDARR_MAX_LOG_SIZE_MB
+      label:
+        en: Max log size (MB)
+        zh: 最大日志大小 (MB)
+        zh-Hant: 最大日誌大小 (MB)
+        ja: 最大ログサイズ (MB)
+        ko: 최대 로그 크기 (MB)
+        ru: Максимальный размер лога (МБ)
+        ms: Saiz log maksimum (MB)
+        pt-br: Tamanho máximo do log (MB)
+      required: true
+      type: number
+    - default: 0 6 * * *
+      edit: true
+      envKey: TDARR_CRON_PLUGIN_UPDATE
+      label:
+        en: Plugin update cron
+        zh: 插件更新定时
+        zh-Hant: 插件更新排程
+        ja: プラグイン更新 cron
+        ko: 플러그인 업데이트 cron
+        ru: Cron обновления плагинов
+        ms: Cron kemas kini pemalam
+        pt-br: Cron de atualização de plugins
+      required: true
+      type: text
+    - default: 2
+      edit: true
+      envKey: UMASK_SET
+      label:
+        en: UMASK for new files
+        zh: 新建文件 UMASK
+        zh-Hant: 新建檔案 UMASK
+        ja: 新規ファイルの UMASK
+        ko: 새 파일 UMASK
+        ru: UMASK для новых файлов
+        ms: UMASK untuk fail baru
+        pt-br: UMASK para novos arquivos
+      required: true
+      type: text
+name: tdarr 2.91.01
+title: Tdarr 媒体自动转码 2.91.01
+description: Tdarr Server + 内置 Node，共享 HandBrakeCLI 二进制。

@@ -6,7 +6,7 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.47 |
+| anirss | 动漫 RSS | v3.2.48 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
 | aria2 | 轻量级多协议下载工具 | a2b-stable-25-08-12 |
 | bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.2.0 |
@@ -52,7 +52,7 @@
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.1.0 |
 | syncthing | 文件同步 | 2.1.5 |
-| tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 2.91.01 |
+| tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.00.00 |
 | traefik | 反向代理 | v3.6.6 |
 | unmanic | 媒体库自动转码 (josh5 镜像, NVIDIA Pascal/P620 NVENC 加速) | 0.4.1 |
 | xunlei | cnk3x 维护的迅雷远程下载服务（群晖提取版） | beta |
