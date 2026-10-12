@@ -1,0 +1,20 @@
+additionalProperties:
+  key: tdarr
+  name: tdarr
+  tags:
+    - Local
+  shortDescZh: Tdarr 媒体库自动转码 (Server + 内置 Node)
+  shortDescEn: Tdarr media library auto-transcoding (Server + built-in Node)
+  description:
+    zh: 基于 haveagitgat/tdarr 的媒体库自动转码与健康检查调度系统。本应用以单容器方式同时运行 Tdarr Server 与内置 Node；Tdarr 镜像内置 FFmpeg 与 HandBrakeCLI（位于 `/usr/local/bin/HandBrakeCLI`），开箱即用，无需任何外部转码后端。
+    en: Distributed media-library transcoding & health-check scheduler based on haveagitgat/tdarr. This app runs both the Tdarr Server and a built-in Node in a single container. The Tdarr image ships bundled FFmpeg and HandBrakeCLI (built-in at `/usr/local/bin/HandBrakeCLI`), so no external transcoder is required.
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://tdarr.io
+  github: https://github.com/HaveAGitGat/Tdarr
+  document: https://docs.tdarr.io
+name: tdarr
+title: Tdarr 媒体自动转码
+description: Tdarr 媒体库自动转码 / 健康检查，Server + 内置 Node，内置 FFmpeg/HandBrakeCLI。

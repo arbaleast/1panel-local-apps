@@ -52,6 +52,7 @@
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.1.0 |
 | syncthing | 文件同步 | 2.1.5 |
+| tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 2.91.01 |
 | traefik | 反向代理 | v3.6.6 |
 | xunlei | cnk3x 维护的迅雷远程下载服务（群晖提取版） | beta |
 | zashboard | Mihomo 面板 | latest |
