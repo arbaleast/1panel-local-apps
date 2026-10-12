@@ -24,11 +24,12 @@ services:
             - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
             - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
             - NVIDIA_ENABLE=${NVIDIA_ENABLE}
-        # NVIDIA GPU 设备 cgroup 规则(主设备号 195),容器内可访问 /dev/nvidia*
-        # 195 = nvidia0/ctl/uvm 等所有 NVIDIA 字符设备
-        # NVIDIA_ENABLE=true 时配合 NVIDIA Container Toolkit 方可真正使用 GPU
+        # NVIDIA GPU 设备 cgroup 规则(主设备号 195): 即使没有 runtime: nvidia 也能让容器内的 cgroup 允许访问 195 号字符设备
+        # 真正把宿主 /dev/nvidia* 与 NVIDIA 库注入容器的是 nvidia-container-runtime,通过 runtime: nvidia 触发
+        # NVIDIA_ENABLE=true 时该 runtime 方会拉起 nvidia-container-cli; 留 false 也不影响 s6 启动
         device_cgroup_rules:
             - 'c 195:* rw'
+        runtime: nvidia
         image: linuxserver/handbrake:1.11.2-ls41
         labels:
             createdBy: Apps
