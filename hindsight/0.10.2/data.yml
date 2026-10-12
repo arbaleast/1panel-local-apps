@@ -140,7 +140,7 @@ additionalProperties:
           value: local
         - label: tei (HuggingFace TEI)
           value: tei
-        - label: siliconflow (硅基流动, 走 Cohere 协议)
+        - label: siliconflow
           value: siliconflow
     - default: ""
       edit: true
