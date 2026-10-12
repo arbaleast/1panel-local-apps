@@ -1,0 +1,20 @@
+additionalProperties:
+  key: unmanic
+  name: unmanic
+  tags:
+    - Local
+  shortDescZh: Unmanic 媒体库自动转码
+  shortDescEn: Unmanic media library auto-transcoding
+  description:
+    zh: 基于 josh5/unmanic 的媒体库自动转码调度系统, 通过插件驱动 FFmpeg 任务流水线; 内置 web UI 配置 worker/库/插件, 支持 NVENC/NVDEC 硬件加速 (NVIDIA Pascal 架构卡, 如 P620)。
+    en: Auto-transcoding scheduler for media libraries based on josh5/unmanic, plugin-driven FFmpeg pipeline with built-in web UI for workers / libraries / plugins. NVENC/NVDEC hardware acceleration is supported (NVIDIA Pascal architecture cards, e.g. P620).
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://unmanic.app
+  github: https://github.com/Unmanic/unmanic
+  document: https://docs.unmanic.app/docs/installation/docker
+name: unmanic
+title: Unmanic 媒体库自动转码
+description: Unmanic 媒体库自动转码 / 健康检查，josh5 镜像，Pascal/NVENC 硬件加速。

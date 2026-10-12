@@ -1,0 +1,243 @@
+additionalProperties:
+  formFields:
+    - default: 8888
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      label:
+        en: WebUI Port
+        zh: WebUI 端口
+        zh-Hant: WebUI 連接埠
+        ja: WebUI ポート
+        ko: WebUI 포트
+        ru: Порт WebUI
+        ms: Port WebUI
+        pt-br: Porta WebUI
+      required: true
+      type: number
+      rule: paramPort
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      label:
+        en: Time zone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    - default: 99
+      edit: true
+      envKey: PUID
+      label:
+        en: Run as UID (PUID)
+        zh: 运行用户 UID (PUID)
+        zh-Hant: 執行使用者 UID (PUID)
+        ja: 実行 UID (PUID)
+        ko: 실행 UID (PUID)
+        ru: UID пользователя (PUID)
+        ms: UID pengguna (PUID)
+        pt-br: UID do usuário (PUID)
+      required: true
+      type: number
+    - default: 100
+      edit: true
+      envKey: PGID
+      label:
+        en: Run as GID (PGID)
+        zh: 运行用户组 GID (PGID)
+        zh-Hant: 執行群組 GID (PGID)
+        ja: 実行 GID (PGID)
+        ko: 실행 GID (PGID)
+        ru: GID группы (PGID)
+        ms: GID kumpulan (PGID)
+        pt-br: GID do grupo (PGID)
+      required: true
+      type: number
+    - default: 002
+      edit: true
+      envKey: UMASK_SET
+      label:
+        en: UMASK for new files
+        zh: 新建文件 UMASK
+        zh-Hant: 新建檔案 UMASK
+        ja: 新規ファイルの UMASK
+        ko: 새 파일 UMASK
+        ru: UMASK для новых файлов
+        ms: UMASK untuk fail baru
+        pt-br: UMASK para novos arquivos
+      required: true
+      type: text
+    - default: ./data/config
+      edit: true
+      envKey: CONFIG_PATH
+      label:
+        en: Config path (persists Unmanic settings & DB)
+        zh: 配置路径（持久化 Unmanic 设置 & 数据库）
+        zh-Hant: 設定路徑（持久化 Unmanic 設定 & 資料庫）
+        ja: 設定パス (Unmanic 設定 & DB を永続化)
+        ko: 설정 경로 (Unmanic 설정 & DB 영구 저장)
+        ru: Путь настроек (настройки & БД Unmanic)
+        ms: Laluan konfigurasi (simpan tetapan & DB Unmanic)
+        pt-br: Caminho de configuração (mantém configurações & DB do Unmanic)
+      required: true
+      type: text
+      rule: paramPath
+    - default: ./data/cache
+      edit: true
+      envKey: CACHE_PATH
+      label:
+        en: Cache path (tmp workspace for in-flight transcode)
+        zh: 缓存路径（转码临时工作目录）
+        zh-Hant: 快取路徑（轉碼臨時工作目錄）
+        ja: キャッシュパス (転码中の一時作業ディレクトリ)
+        ko: 캐시 경로 (인-플라이트 트랜스코드 임시 작업장)
+        ru: Путь кэша (временная рабочая папка для транскодирования)
+        ms: Laluan cache (workspace tmp untuk transcode dalam penerbangan)
+        pt-br: Caminho do cache (workspace tmp para transcodificação em curso)
+      required: true
+      type: text
+      rule: paramPath
+    - default: ""
+      edit: true
+      envKey: LIBRARY_MOVIES
+      label:
+        en: Library — Movies (absolute host path; leave empty to skip)
+        zh: 库 — 电影 (宿主机绝对路径, 留空=不挂载)
+        zh-Hant: 庫 — 電影 (主機絕對路徑, 留空=不掛載)
+        ja: ライブラリ — 映画 (ホスト絶対パス, 空欄=マウントしない)
+        ko: 라이브러리 — 영화 (호스트 절대 경로, 비워두기=마운트 안 함)
+        ru: Библиотека — Фильмы (абсолютный путь хоста, пусто = не монтировать)
+        ms: Perpustakaan — Filem (laluan mutlak hos, kosong = jangan pasang)
+        pt-br: Biblioteca — Filmes (caminho absoluto do host; vazio = não montar)
+      required: false
+      type: text
+      rule: paramPath
+    - default: ""
+      edit: true
+      envKey: LIBRARY_TV
+      label:
+        en: Library — TV (absolute host path; leave empty to skip)
+        zh: 库 — 电视剧 (宿主机绝对路径, 留空=不挂载)
+        zh-Hant: 庫 — 電視劇 (主機絕對路徑, 留空=不掛載)
+        ja: ライブラリ — テレビ (ホスト絶対パス, 空欄=マウントしない)
+        ko: 라이브러리 — TV (호스트 절대 경로, 비워두기=마운트 안 함)
+        ru: Библиотека — Сериалы (абсолютный путь хоста, пусто = не монтировать)
+        ms: Perpustakaan — TV (laluan mutlak hos, kosong = jangan pasang)
+        pt-br: Biblioteca — Séries (caminho absoluto do host; vazio = não montar)
+      required: false
+      type: text
+      rule: paramPath
+    - default: ""
+      edit: true
+      envKey: LIBRARY_MUSIC
+      label:
+        en: Library — Music (absolute host path; leave empty to skip)
+        zh: 库 — 音乐 (宿主机绝对路径, 留空=不挂载)
+        zh-Hant: 庫 — 音樂 (主機絕對路徑, 留空=不掛載)
+        ja: ライブラリ — 音楽 (ホスト絶対パス, 空欄=マウントしない)
+        ko: 라이브러리 — 음악 (호스트 절대 경로, 비워두기=마운트 안 함)
+        ru: Библиотека — Музыка (абсолютный путь хоста, пусто = не монтировать)
+        ms: Perpustakaan — Muzik (laluan mutlak hos, kosong = jangan pasang)
+        pt-br: Biblioteca — Músicas (caminho absoluto do host; vazio = não montar)
+      required: false
+      type: text
+      rule: paramPath
+    - default: ""
+      edit: true
+      envKey: LIBRARY_PICTURES
+      label:
+        en: Library — Pictures (absolute host path; leave empty to skip)
+        zh: 库 — 图片 (宿主机绝对路径, 留空=不挂载)
+        zh-Hant: 庫 — 圖片 (主機絕對路徑, 留空=不掛載)
+        ja: ライブラリ — 画像 (ホスト絶対パス, 空欄=マウントしない)
+        ko: 라이브러리 — 사진 (호스트 절대 경로, 비워두기=마운트 안 함)
+        ru: Библиотека — Изображения (абсолютный путь хоста, пусто = не монтировать)
+        ms: Perpustakaan — Gambar (laluan mutlak hos, kosong = jangan pasang)
+        pt-br: Biblioteca — Imagens (caminho absoluto do host; vazio = não montar)
+      required: false
+      type: text
+      rule: paramPath
+    - default: "false"
+      edit: true
+      envKey: NVIDIA_ENABLE
+      label:
+        en: Enable NVIDIA GPU (requires host NVIDIA driver + nvidia-container-toolkit)
+        zh: 启用 NVIDIA GPU (需宿主机装 NVIDIA 驱动 + nvidia-container-toolkit)
+        zh-Hant: 啟用 NVIDIA GPU (需主機裝 NVIDIA 驅動 + nvidia-container-toolkit)
+        ja: NVIDIA GPU を有効化 (ホストに NVIDIA ドライバ + nvidia-container-toolkit が必要)
+        ko: NVIDIA GPU 사용 (호스트 NVIDIA 드라이버 + nvidia-container-toolkit 필요)
+        ru: Включить NVIDIA GPU (требуется драйвер NVIDIA + nvidia-container-toolkit на хосте)
+        ms: Dayakan NVIDIA GPU (perlu pemacu NVIDIA + nvidia-container-toolkit pada hos)
+        pt-br: Habilitar NVIDIA GPU (requer driver NVIDIA + nvidia-container-toolkit no host)
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: all
+      edit: true
+      envKey: NVIDIA_VISIBLE_DEVICES
+      label:
+        en: "NVIDIA_VISIBLE_DEVICES (GPU UUID/index; effective only when GPU enabled; e.g. all / GPU-xxx / 0)"
+        zh: "NVIDIA_VISIBLE_DEVICES (GPU UUID/编号; 仅在启用 GPU 时生效, 例: all / GPU-xxx / 0)"
+        zh-Hant: "NVIDIA_VISIBLE_DEVICES (GPU UUID/編號; 僅在啟用 GPU 時生效, 例: all / GPU-xxx / 0)"
+        ja: "NVIDIA_VISIBLE_DEVICES (GPU UUID/番号; GPU 有効時のみ, 例: all / GPU-xxx / 0)"
+        ko: "NVIDIA_VISIBLE_DEVICES (GPU UUID/번호; GPU 활성화 시에만 적용, 예: all / GPU-xxx / 0)"
+        ru: "NVIDIA_VISIBLE_DEVICES (UUID/индекс GPU; действует только при включённом GPU, напр. all / GPU-xxx / 0)"
+        ms: "NVIDIA_VISIBLE_DEVICES (UUID/indeks GPU; hanya berkesan apabila GPU didayakan, cth: all / GPU-xxx / 0)"
+        pt-br: "NVIDIA_VISIBLE_DEVICES (UUID/índice da GPU; só efetivo com GPU habilitada, ex: all / GPU-xxx / 0)"
+      required: true
+      type: text
+    - default: compute,video,utility
+      edit: true
+      envKey: NVIDIA_DRIVER_CAPABILITIES
+      label:
+        en: "NVIDIA_DRIVER_CAPABILITIES (must include 'video' to expose NVDEC+NVENC for FFmpeg h264_nvenc/hevc_nvenc)"
+        zh: "NVIDIA_DRIVER_CAPABILITIES (必须包含 'video' 才能为 FFmpeg 暴露 NVDEC+NVENC, 启用 h264_nvenc/hevc_nvenc)"
+        zh-Hant: "NVIDIA_DRIVER_CAPABILITIES (必須包含 'video' 才能為 FFmpeg 暴露 NVDEC+NVENC, 啟用 h264_nvenc/hevc_nvenc)"
+        ja: "NVIDIA_DRIVER_CAPABILITIES ('video' を含めると FFmpeg へ NVDEC+NVENC を公開, h264_nvenc/hevc_nvenc を有効化)"
+        ko: "NVIDIA_DRIVER_CAPABILITIES ('video' 포함 시 FFmpeg에 NVDEC+NVENC 노출, h264_nvenc/hevc_nvenc 활성화)"
+        ru: "NVIDIA_DRIVER_CAPABILITIES (включите 'video' для NVDEC+NVENC в FFmpeg, h264_nvenc/hevc_nvenc)"
+        ms: "NVIDIA_DRIVER_CAPABILITIES (mesti ada 'video' untuk dedahkan NVDEC+NVENC kepada FFmpeg, h264_nvenc/hevc_nvenc)"
+        pt-br: "NVIDIA_DRIVER_CAPABILITIES (deve incluir 'video' para expor NVDEC+NVENC ao FFmpeg, h264_nvenc/hevc_nvenc)"
+      required: true
+      type: text
+    - default: ""
+      edit: true
+      envKey: NVIDIA_PATCH_VERSION
+      label:
+        en: "NVIDIA_PATCH_VERSION (optional; e.g. 535.183.06 for legacy Pascal drivers; leave empty for auto)"
+        zh: "NVIDIA_PATCH_VERSION (可选; 老 Pascal 驱动可填 535.183.06 之类; 留空=自动)"
+        zh-Hant: "NVIDIA_PATCH_VERSION (可選; 舊 Pascal 驅動可填 535.183.06 之類; 留空=自動)"
+        ja: "NVIDIA_PATCH_VERSION (任意; 旧 Pascal ドライバは例 535.183.06; 空欄=自動)"
+        ko: "NVIDIA_PATCH_VERSION (선택; 구 Pascal 드라이버는 예 535.183.06; 비움=자동)"
+        ru: "NVIDIA_PATCH_VERSION (опц.; для устаревших драйверов Pascal, напр. 535.183.06; пусто=авто)"
+        ms: "NVIDIA_PATCH_VERSION (pilihan; untuk pemacu Pascal lama, cth 535.183.06; kosong=auto)"
+        pt-br: "NVIDIA_PATCH_VERSION (opcional; para drivers Pascal legados, ex. 535.183.06; vazio=auto)"
+      required: false
+      type: text
+  key: unmanic
+  name: unmanic 0.4.1
+  tags:
+    - Local
+  shortDescZh: Unmanic 媒体库自动转码 (josh5 镜像, 支持 NVENC/Pascal)
+  shortDescEn: Unmanic media library auto-transcoding (josh5 image, NVENC/Pascal support)
+  description:
+    zh: 基于 josh5/unmanic 的媒体库自动转码调度系统, 通过插件驱动 FFmpeg 任务流水线。镜像内置 FFmpeg + Python 3, 内置 web UI 配置 worker/库/插件, 支持 NVENC/NVDEC 硬件加速 (Pascal 架构卡, 如 NVIDIA P620)。
+    en: Auto-transcoding scheduler for media libraries based on josh5/unmanic, plugin-driven FFmpeg pipeline. Image bundles FFmpeg + Python 3 with built-in web UI to configure workers / libraries / plugins. NVENC/NVDEC hardware acceleration is supported (Pascal architecture cards, e.g. NVIDIA P620).
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://unmanic.app
+  github: https://github.com/Unmanic/unmanic
+  document: https://docs.unmanic.app/docs/installation/docker
+name: unmanic 0.4.1
+title: Unmanic 媒体库自动转码 0.4.1
+description: Unmanic 媒体库自动转码 / 健康检查，josh5 镜像，Pascal/NVENC 硬件加速。

@@ -1,0 +1,69 @@
+networks:
+  1panel-network:
+    external: true
+services:
+  unmanic:
+    container_name: ${CONTAINER_NAME}
+    # ----------------------------------------------------------------------
+    # NVIDIA GPU 硬件加速
+    # ----------------------------------------------------------------------
+    # 目标卡参考: NVIDIA P620 (Pascal 架构, GP107GL 核心, 4× Mini-DP 1.4).
+    # - Pascal 架构 min driver = R495 (官方文档), 实际需 NVIDIA 驱动 >= 470
+    #   (驱动 R470 是 Pascal 最后主流分支) + NVIDIA Container Toolkit
+    # - NVENC (Kepler 起) 支持 H.264/H.265 硬件编码, P620 配 4× NVENC 单元
+    #   适合多 worker 并发硬件转码
+    # - runtime: nvidia: 触发 nvidia-container-runtime 把宿主 /dev/nvidia*
+    #   + NVIDIA 用户态库注入容器
+    # - device_cgroup_rules 'c 195:* rw': 即便 nvidia runtime 不可用
+    #   也能让 cgroup 放行 NVIDIA 字符设备 (主设备号 195) 读写
+    # - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility:
+    #     - compute: 暴露 CUDA runtime + libcuda.so
+    #     - video: 暴露 NVDEC + NVENC (FFmpeg h264_nvenc/hevc_nvenc 关键)
+    #     - utility: 暴露 nvidia-smi + nvidia-cuda-mps-control 等工具
+    # - NVIDIA_PATCH_VERSION: 留空 = 容器内使用 NVIDIA 容器自带的 libnvidia
+    #   (libnvidia-container-tools). 官方上游在 jammy 起已开放 5 层 4K@60
+    #   NVENC 限制; 但 **Pascal 还有 h264 Level 5.2 限制 (4K 超分)**,
+    #   P620 用户如跑 4K 视频需额外注入 github.com/keylase/nvidia-patch
+    #   (见 README.md 末尾说明). 默认留空, README 引导手动注入.
+    # - NVIDIA_ENABLE 主开关: false 时 runtime 不挂载 GPU, 容器可在无
+    #   GPU 宿主机直接启动; true 时启动 NVENC 注入.
+    # ----------------------------------------------------------------------
+    device_cgroup_rules:
+      - 'c 195:* rw'
+    runtime: nvidia
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    volumes:
+      # 持久化配置 + 缓存
+      - ${CONFIG_PATH}:/config
+      - ${CACHE_PATH}:/tmp/unmanic
+      # 4 个媒体库 bind mount (与 Unraid 社区模板对齐, 留空则不挂载)
+      # 注意: 必须全部填写绝对宿主机路径, 例如 /data/media/movies
+      # 不要填相对路径 ./data/...; Unmanic 进程要直接读写这些目录
+      - ${LIBRARY_MOVIES}:/library/movies
+      - ${LIBRARY_TV}:/library/tv
+      - ${LIBRARY_MUSIC}:/library/music
+      - ${LIBRARY_PICTURES}:/library/pictures
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK_SET=${UMASK_SET}
+      # NVIDIA 加速相关 (见上方注释)
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
+      - NVIDIA_PATCH_VERSION=${NVIDIA_PATCH_VERSION}
+      - NVIDIA_ENABLE=${NVIDIA_ENABLE}
+    # 上游 josh5/unmanic 在 DockerHub 发布版本化 tag (0.2.4, 0.2.5 ... 0.4.0, 0.4.1)
+    # 而不仅 latest. 本目录名即镜像 tag, 与上游 v0.4.1 (2026-08-14) 严格对齐.
+    image: josh5/unmanic:0.4.1
+    labels:
+      createdBy: Apps
+    networks:
+      - 1panel-network
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8888
+    restart: always

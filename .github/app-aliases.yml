@@ -70,6 +70,9 @@ aliases:
     desc: 文件同步
   traefik:
     desc: 反向代理
+  unmanic:
+    dir: unmanic
+    desc: 媒体库自动转码 (josh5 镜像, NVIDIA Pascal/P620 NVENC 加速)
   photopea:
     dir: ramuses/photopea
     desc: 在线图像编辑器
