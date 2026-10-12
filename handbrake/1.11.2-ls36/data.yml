@@ -224,6 +224,27 @@ additionalProperties:
       value: 'true'
     - label: 'false'
       value: 'false'
+  - default: 'false'
+    edit: true
+    envKey: PIXELFLUX_WAYLAND
+    labelEn: Force X11/Xvfb mode (must be false, otherwise Selkies shows black screen)
+    labelZh: 强制 X11/Xvfb 模式（必须为 false，否则 Selkies 黑屏）
+    label:
+      en: Force X11/Xvfb mode (must be false, otherwise Selkies shows black screen)
+      zh: 强制 X11/Xvfb 模式（必须为 false，否则 Selkies 黑屏）
+      zh-Hant: 強制 X11/Xvfb 模式（必須為 false，否則 Selkies 黑屏）
+      ja: X11/Xvfb モードを強制（false 必須、true にすると Selkies が黒画面になる）
+      ko: X11/Xvfb 모드 강제 (false 필수, true면 Selkies 검은 화면)
+      ru: Принудительный режим X11/Xvfb (должно быть false, иначе чёрный экран Selkies)
+      ms: Mod X11/Xvfb paksa (mestilah false, jika tidak Selkies skrin hitam)
+      pt-br: Forçar modo X11/Xvfb (deve ser false, caso contrário Selkies tela preta)
+    required: true
+    type: select
+    values:
+    - label: 'false'
+      value: 'false'
+    - label: 'true'
+      value: 'true'
   key: handbrake
   name: handbrake
   tags:
