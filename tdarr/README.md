@@ -103,6 +103,92 @@ cp -r tdarr/2.91.01 tdarr/2.92.01
 # git commit && git push
 ```
 
+## 快速上手（首次使用流程）
+
+下面以"把 h264 老片批量转成 h265/HEVC 节省 40%-50% 空间"为典型场景，走通 Tdarr 完整流程。
+
+### 第 1 步 — 1Panel 部署
+
+1. 1Panel UI → 应用商店 → Tdarr → 选 `2.91.01` → 填写表单：
+   - `WebUI 端口` 填一个空闲端口（如 `8265`）
+   - `Server 端口` 填一个空闲端口（如 `8266`）
+   - `Media library path` 填宿主上的媒体根目录（如 `/data/media` 或 `/volume1/media`）
+   - 其他字段保持默认即可
+2. 部署完成后，浏览器访问 `http://<host>:<WebUI 端口>` 进入 Tdarr WebUI
+3. 首次打开会初始化 MongoDB（Tdarr 内部数据库），等 30-60 秒
+
+### 第 2 步 — 配置 Library（媒体库）
+
+1. WebUI 顶栏 → **Libraries** → **+ New Library**
+2. 关键字段：
+   - **Name**: 起个名字，如 `movies`
+   - **Source**: 选择 `Folder` → `/media`（这就是 1Panel 表单 `Media library path` 在容器内的路径）
+   - **Folder watch**: 启用，新文件自动入队
+   - **Cache directory**: 留空（用默认 `/temp` 转码缓存）
+   - **Output directory**: 与 Source 同目录（覆盖原文件）；如想保留原件，可填另一个目录
+3. **Save**
+
+### 第 3 步 — 配置 Flow（新版）或 Plugin Stack（经典版）
+
+Tdarr 2.x 引入新版 **Flow**（节点图），向下兼容 **Stacks**（经典插件栈）。推荐新手先用 Stacks，预设模板多。
+
+#### 3a. 经典 Stacks（最快上手）
+
+1. WebUI 顶栏 → **Stacks** → **+ New Stack**
+2. **Stacks** 区域会出现一些**社区预设**（如 `Tdarr_Plugin_rrs_HEVC`），点开就能看到插件列表
+3. 推荐选 `Tdarr_Plugin_rrs_HEVC`（H.264 → H.265 批量转码），它是社区最主流的入门预设
+4. 也可以从空白 Stack 开始，依次添加社区插件：
+   - `Tdarr_Plugin_rrs_FFmpegCPU` 或 `Tdarr_Plugin_rrs_HandBrake`（二选一，决定用 ffmpeg 还是 handbrake 转码）
+   - `Tdarr_Plugin_rrs_FileFlow_Audio`（处理音轨）
+   - `Tdarr_Plugin_rrs_FileFlow_Subtitles`（处理字幕）
+5. **Save**
+
+#### 3b. Flow（节点图，进阶）
+
+1. WebUI 顶栏 → **Flows** → **+ New Flow**
+2. 从社区导入：`Tdarr_Plugin_rrs_HEVC` 等插件都有 Flow 形式
+3. 自己拖拽节点：Input → Plugin → Output
+
+### 第 4 步 — 关联 Stack 到 Library
+
+1. 回到 **Libraries** → 打开刚才创建的 library → **Transcode Profile / Stack / Flow** 区域
+2. 选择你在第 3 步保存的 Stack 或 Flow
+3. **Save**
+
+### 第 5 步 — 启动扫描
+
+1. **Libraries** → 点 library 旁的 **Search** / **Scan** 按钮
+2. Tdarr 会扫描 `/media` 下所有视频文件，做 health check（健康检查）并把符合 Stack 条件的文件加入转码队列
+3. 在 **Search** 标签可看到所有被识别的文件；点开某个文件可看 ffprobe 流详情
+
+### 第 6 步 — 启动 Node 干活
+
+1. WebUI 顶栏 → **Nodes**
+2. 内置 Node（`Built-in Node name` 字段设置的名字，默认 `tdarr-main`）应自动出现在列表，状态 `Idle` / `Paused`
+3. 点 Node 旁的 **Resume** 按钮 → 状态变 `Active`
+4. Node 开始按 `CPU workers` / `GPU workers` 数量从队列拉任务
+
+### 第 7 步 — 监控进度
+
+- **Workers** 标签：实时显示每个 worker 在处理哪个文件、当前码率、ETA
+- **Stats** 标签：累计转码数、节省空间、健康率
+- **Logs** 标签：节点日志，转码失败原因在这里
+- **Job Reports** 标签：每个文件转码前后的体积、码率对比
+
+### 典型操作清单
+
+| 想做什么 | 在 Tdarr WebUI 里怎么操作 |
+|---|---|
+| 全库扫描 | Libraries → 点 library → Search 按钮 |
+| 立即转码某文件 | Search → 找到文件 → Transcode to → 选 Stack |
+| 跳过某文件 | Search → 找到文件 → 右键 → Exempt |
+| 查看转码失败原因 | Logs / Job Reports → 找对应文件 → 看 errorMessage |
+| 改转码目标 | Stack 中修改 ffmpeg/handbrake 节点参数（crf、preset、codec） |
+| 启用硬件加速 | `GPU workers` 字段 > 0；docker compose 加 `runtime: nvidia` |
+| 让 Tdarr 只看不动 | Library → 关掉 `Transcode after scan` |
+
+> 第一次大规模转码前，**强烈建议**先挑 1-2 个文件手动跑一遍 Stack，确认参数、输出体积、字幕处理都符合预期再放开全库。
+
 ## 故障排查
 
 - **容器启动后 WebUI 502**：等待约 30-60 秒，Tdarr Server 首次启动会初始化数据库。
