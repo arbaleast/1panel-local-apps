@@ -140,6 +140,29 @@ additionalProperties:
           value: local
         - label: tei (HuggingFace TEI)
           value: tei
+        - label: siliconflow (硅基流动, 走 Cohere 协议)
+          value: siliconflow
+    - default: ""
+      edit: true
+      envKey: HINDSIGHT_API_RERANKER_SILICONFLOW_API_KEY
+      labelEn: SiliconFlow API Key (Reranker)
+      labelZh: 硅基流动 API Key (Reranker)
+      required: false
+      type: password
+    - default: BAAI/bge-reranker-v2-m3
+      edit: true
+      envKey: HINDSIGHT_API_RERANKER_SILICONFLOW_MODEL
+      labelEn: SiliconFlow Rerank Model
+      labelZh: 硅基流动 Rerank 模型
+      required: false
+      type: text
+    - default: https://api.siliconflow.cn/v1
+      edit: true
+      envKey: HINDSIGHT_API_RERANKER_SILICONFLOW_BASE_URL
+      labelEn: SiliconFlow Base URL
+      labelZh: 硅基流动 Base URL
+      required: false
+      type: text
     - default: 0.0.0.0
       edit: true
       envKey: HINDSIGHT_API_HOST
