@@ -6,7 +6,7 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.46 |
+| anirss | 动漫 RSS | v3.2.47 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
 | aria2 | 轻量级多协议下载工具 | a2b-stable-25-08-12 |
 | bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.2.0 |
@@ -47,7 +47,7 @@
 | photopea | 在线图像编辑器 | 2.2 |
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 260919 |
 | qdrant | 向量搜索引擎 | v1.19.2-unprivileged |
-| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.25.0 |
+| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.25.1 |
 | searxng | 隐私搜索引擎 | 2026.10.2-a5659a536 |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.1.0 |
