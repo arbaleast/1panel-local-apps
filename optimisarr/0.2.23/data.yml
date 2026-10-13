@@ -1,0 +1,125 @@
+additionalProperties:
+  formFields:
+    - default: 8787
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      label:
+        en: Web UI Port
+        zh: Web UI 端口
+        zh-Hant: Web UI 連接埠
+        ja: Web UI ポート
+        ko: Web UI 포트
+        ru: Порт веб-интерфейса
+        ms: Port UI Web
+        pt-br: Porta da interface web
+      required: true
+      rule: paramPort
+      type: number
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    - default: 1000
+      edit: true
+      envKey: PUID
+      label:
+        en: Run as UID
+        zh: 运行用户 UID
+        zh-Hant: 執行使用者 UID
+        ja: 実行 UID
+        ko: 실행 UID
+        ru: UID пользователя
+        ms: UID pengguna
+        pt-br: UID do usuário
+      required: true
+      type: number
+    - default: 1000
+      edit: true
+      envKey: PGID
+      label:
+        en: Run as GID
+        zh: 运行用户 GID
+        zh-Hant: 執行群組 GID
+        ja: 実行 GID
+        ko: 실행 GID
+        ru: GID пользователя
+        ms: GID pengguna
+        pt-br: GID do usuário
+      required: true
+      type: number
+    - default: Information
+      edit: true
+      envKey: OPTIMISARR_LOG_LEVEL
+      label:
+        en: Log Level
+        zh: 日志级别
+        zh-Hant: 日誌層級
+        ja: ログレベル
+        ko: 로그 레벨
+        ru: Уровень журнала
+        ms: Tahap Log
+        pt-br: Nível de Log
+      required: true
+      type: select
+      values:
+        - label: Information
+          value: Information
+        - label: Warning
+          value: Warning
+        - label: Debug
+          value: Debug
+        - label: Error
+          value: Error
+    - default: "107"
+      edit: true
+      envKey: RENDER_GID
+      label:
+        en: Render GID (Intel/AMD GPU)
+        zh: Render 组 GID (Intel/AMD GPU)
+        zh-Hant: Render 群組 GID (Intel/AMD GPU)
+        ja: Render GID (Intel/AMD GPU)
+        ko: Render GID (Intel/AMD GPU)
+        ru: GID Render (Intel/AMD GPU)
+        ms: Render GID (Intel/AMD GPU)
+        pt-br: GID Render (Intel/AMD GPU)
+      required: false
+      type: number
+  key: optimisarr
+  name: optimisarr 0.2.22
+  tags:
+    - Media
+    - Transcoding
+    - FFmpeg
+  shortDescZh: 自托管 FFmpeg 媒体库优化器（带验证回滚的 Plex/Jellyfin/Emby 转码）
+  shortDescEn: Self-hosted FFmpeg media-library optimiser with verified transcoding & rollback
+  description:
+    zh: 基于 Jellman86/optimisarr 的安全优先自托管 FFmpeg 媒体库优化器。验证通过后才替换原文件，原文件进入隔离区可回滚。支持 CPU、Intel QSV、VA-API、NVIDIA NVENC；可在 Plex/Jellyfin/Emby 正在串流时自动暂停处理。仅支持 linux/amd64（上游镜像仅发布 amd64 架构）。
+    en: Safety-first, self-hosted FFmpeg media-library optimiser based on Jellman86/optimisarr. Verifies stream retention / duration / bitrate savings before replacing files; quarantines the original for rollback. Supports CPU, Intel QSV, VA-API and NVIDIA NVENC; automatically pauses while Plex / Jellyfin / Emby is streaming. linux/amd64 only (upstream image is amd64-only).
+    ja: Jellman86/optimisarr をベースにした安全性を最優先にしたセルフホスト型 FFmpeg メディアライブラリ最適化ツール。ストリーム保持・再生時間・ビットレート削減を検証してからファイルを置き換え、原本は隔離してロールバック可能。CPU、Intel QSV、VA-API、NVIDIA NVENC に対応し、Plex / Jellyfin / Emby のストリーミング中は自動的に処理を一時停止。linux/amd64 のみ対応（アップストリームイメージは amd64 専用）。
+    ko: Jellman86/optimisarr 기반의 안전 우선 자체 호스팅 FFmpeg 미디어 라이브러리 최적화 도구. 스트림 보존, 재생 시간, 비트레이트 절감을 검증한 후 파일을 교체하고 원본은 격리하여 롤백할 수 있습니다. CPU, Intel QSV, VA-API, NVIDIA NVENC를 지원하며 Plex / Jellyfin / Emby 스트리밍 중에는 자동으로 처리를 일시 중지합니다. linux/amd64만 지원(업스트림 이미지는 amd64 전용).
+    ru: Безопасный самохостируемый оптимизатор медиатеки FFmpeg на базе Jellman86/optimisarr. Перед заменой файлов проверяет сохранение потоков, длительность и экономию битрейта; оригинал помещается в карантин для отката. Поддерживает CPU, Intel QSV, VA-API и NVIDIA NVENC; автоматически приостанавливает работу при стриминге Plex / Jellyfin / Emby. Только linux/amd64 (исходный образ только amd64).
+    ms: Pengoptimum perpustakaan media FFmpeg kendiri-sendiri yang mengutamakan keselamatan berdasarkan Jellman86/optimisarr. Mengesahkan pengekalan strim, tempoh dan penjimatan bitrate sebelum menggantikan fail; mengasingkan asal untuk rollback. Menyokong CPU, Intel QSV, VA-API dan NVIDIA NVENC; menjeda secara automatik semasa Plex / Jellyfin / Emby menstrim. linux/amd64 sahaja (imej upstream hanya amd64).
+    pt-br: Otimizador de biblioteca de mídia FFmpeg auto-hospedado com foco em segurança baseado em Jellman86/optimisarr. Verifica a retenção de fluxos, duração e economia de bitrate antes de substituir arquivos; coloca o original em quarentena para rollback. Suporta CPU, Intel QSV, VA-API e NVIDIA NVENC; pausa automaticamente durante streaming de Plex / Jellyfin / Emby. Apenas linux/amd64 (a imagem upstream é apenas amd64).
+    zh-Hant: 基於 Jellman86/optimisarr 的安全優先自架 FFmpeg 媒體庫優化器。驗證通過後才替換原檔，原檔進入隔離區可回滾。支援 CPU、Intel QSV、VA-API、NVIDIA NVENC；當 Plex / Jellyfin / Emby 正在串流時會自動暫停處理。僅支援 linux/amd64（上游映像檔僅發佈 amd64 架構）。
+  type: tool
+  architectures:
+    - amd64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/Jellman86/optimisarr
+  github: https://github.com/Jellman86/optimisarr
+  document: https://github.com/Jellman86/optimisarr#readme
+name: Optimisarr 0.2.22
+title: Optimisarr 0.2.22
+description: Optimisarr 0.2.22 安全优先的 FFmpeg 媒体库优化器 — Plex / Jellyfin / Emby
