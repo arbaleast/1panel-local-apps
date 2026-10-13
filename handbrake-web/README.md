@@ -42,6 +42,12 @@ handbrake-web **不内置**转码预设. 必须从 [HandBrake Desktop 应用](ht
 
 UI 上传视频文件 + 选择 preset + 选 worker + Start. worker 容器内 HandBrakeCLI 跑转码.
 
+### 5. 媒体目录 (MEDIA_PATH) 在哪里
+
+formField `MEDIA_PATH` 控制 server 和 worker 容器里 `/video` 路径**实际**对应的主机目录. 默认 `./data/media`, 1Panel 解析为 `/opt/1panel/apps/handbrake-web/latest/data/media`. **用户需自己** cp/scp 视频到那个目录 (或安装 1Panel 文件管理应用, 或 ssh 进 1Panel 主机手动操作).
+
+**多机部署**: 把 `MEDIA_PATH` 改成**所有**机器都能访问的共享路径 (NFS 挂载点 / 共享 NAS 路径 / 分布式存储), 例如 `/mnt/nas/videos`. **单卡单主机自用**: 留默认 `MEDIA_PATH=./data/media`, cp 视频到 `/opt/1panel/apps/handbrake-web/latest/data/media` 即可. **注意**: server 和 worker 的 `MEDIA_PATH` 必须是**同一**主机路径 (上游硬要求, worker 要读 server 落盘的源文件).
+
 ## 验证 NVIDIA 注入是否生效
 
 worker 是 distroless 镜像, 容器内**没有** `nvidia-smi` 也没有 `bash`. 验证方式:
