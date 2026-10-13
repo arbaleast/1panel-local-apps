@@ -41,12 +41,19 @@
 - 设为 `true` 时启用 HTTPS，证书默认自签（首次访问需浏览器信任）
 - 也可把自签证书放入 `./data/config/certs/` 目录使用自己的证书
 
-### 中文字体 (ENABLE_CJK_FONT)
-- **默认 `false`（已禁用）** — 容器不会去下载字体包
-- ⚠️ **为什么会默认关**：jlesage baseimage-gui 启动时若 `ENABLE_CJK_FONT=1`，会执行 `apt-get install fonts-wqy-zenhei` 从 `deb.debian.org` 下载文泉驿正黑字体包。在国内/防火墙/网络受限服务器上 `deb.debian.org` 经常连不上（DNS 被污染 / TCP 阻断 / HTTPS 中间证书问题），导致 s6 init 脚本退出非 0 → 服务启动失败 → `restart: always` 把容器拉入**启动→秒退→再启动**的死亡循环。
-- **如何开启**：先确认宿主机到 `deb.debian.org` 443 端口畅通（`curl -v https://deb.debian.org/`），再在 1Panel 表单把 `ENABLE_CJK_FONT` 切到 `true`。
-- **LosslessCut UI 没中文字体的影响**：英文界面照常使用（LosslessCut 默认就是英文 UI），仅 Web noVNC 顶栏的窗口标题 / 错误信息 / 系统弹窗里的中文字符会显示为方框。剪辑功能不受影响。
-- **彻底解决方案（推荐）**：派生一个自定义镜像，预先 `apt-get install fonts-wqy-zenhei && apt-get clean` 后 commit，避免每次启动重新下载。
+### 中文字体 (FONT_PATH 宿主机挂载)
+- 1Panel 表单字段 `FONT_PATH`（默认 `/usr/share/fonts/truetype/wqy`），**该路径是宿主机绝对路径**，会 bind-mount 到容器内同路径。挂上后 init 阶段由 `./scripts/00-host-fonts.sh` 跑 `fc-cache -fv` 注册到 fontconfig 缓存。
+- 留空 = 不挂载 = 容器内 `/usr/share/fonts/truetype/wqy` 不存在。LosslessCut 仍能起（英文 UI 不受影响），只是 noVNC 顶栏 / 系统弹窗里的中文字符会显示为方框。
+- 容器内 `jlesage ENABLE_CJK_FONT` **强制为 0**（compose 硬编码，不可由用户表单改）— 绕开 jlesage 10-cjk-font.sh 走 `apt-get install fonts-wqy-zenhei` 拉 `deb.debian.org` 的链路。`deb.debian.org` 在国内服务器上经常被 TCP 阻断 / DNS 污染，会触发 s6 init 失败 → restart: always 进入"启动→秒退"循环。
+
+**典型填法**：
+
+| 场景 | 1Panel 表单 `FONT_PATH` |
+|---|---|
+| 宿主机 Debian/Ubuntu 已 `apt install fonts-wqy-zenhei` | `/usr/share/fonts/truetype/wqy`（默认） |
+| 宿主机装了 `fonts-noto-cjk` / `fonts-arphic-uming` 等其它 CJK 包 | `/usr/share/fonts/opentype/noto`（视实际路径） |
+| 自己下载 `.ttc`/`.otf` 到某目录 | `/data/fonts`（任意绝对路径） |
+| 只需要英文 UI | 留空 |
 
 ### VNC 密码 (VNC_PASSWORD)
 - 留空 = 无密码直连 VNC（容器内网暴露，生产环境建议填）

@@ -27,6 +27,16 @@ networks:
 #   6. **jlesage env 名称**: USER_ID / GROUP_ID / TZ / DARK_MODE /
 #      SECURE_CONNECTION / VNC_PASSWORD / ENABLE_CJK_FONT
 #      (与 docker-baseimage-gui README 一致; 不要改名)
+#   7. **CJK 字体走宿主机挂载 (修复 deb.debian.org 卡死)**:
+#      jlesage baseimage-gui 10-cjk-font.sh 走 apt-get install fonts-wqy-zenhei
+#      直接拉 deb.debian.org。国内/受限网络下该域名常被 TCP 阻断或 DNS 污染,
+#      init 步骤失败 → s6 服务退出非 0 → restart: always 启动-秒退 死亡循环。
+#      解决: compose 强制 ENABLE_CJK_FONT=0 关掉 jlesage 的下载路径,
+#      ./scripts/00-host-fonts.sh 挂到容器 /etc/cont-init.d/00-host-fonts.sh,
+#      数字 00 < 10-cjk-font.sh 的 10 — 在 jlesage 早退(no-op)之后跑 fc-cache
+#      注册 ${FONT_PATH} 挂进来的宿主机字体。FONT_PATH 默认
+#      /usr/share/fonts/truetype/wqy (Debian/Ubuntu 装 fonts-wqy-zenhei 后的
+#      位置; 留空则不挂载, 容器用回退字体, CJK 显示异常但容器能正常起)。
 # ============================================================
 
 services:
@@ -44,6 +54,11 @@ services:
       # 用户可在 LosslessCut Web UI 「File → Open」直接拖入视频,
       # 或在 1Panel 表单 MEDIA_PATH 字段填好批量处理的目录
       - ${MEDIA_PATH}:/storage
+      # 宿主机 CJK 字体目录 (绝对路径, 留空=不挂载, 见 00-host-fonts.sh 注释)
+      # 必须以 ro 挂载, 否则容器内 fc-cache 写不进去
+      - ${FONT_PATH}:/usr/share/fonts/truetype/wqy:ro
+      # CJK 字体注册: 00 在 10-cjk-font.sh 之前, 用 fc-cache 注册挂入的字体
+      - ./scripts/00-host-fonts.sh:/etc/cont-init.d/00-host-fonts.sh:ro
     environment:
       # 基础设置
       - USER_ID=${USER_ID}
@@ -53,8 +68,10 @@ services:
       - DARK_MODE=${DARK_MODE}
       - SECURE_CONNECTION=${SECURE_CONNECTION}
       - VNC_PASSWORD=${VNC_PASSWORD}
-      # 中文字体 (LosslessCut UI 含 CJK 时需要)
-      - ENABLE_CJK_FONT=${ENABLE_CJK_FONT}
+      # 中文字体安装: 强制 0, 禁用 jlesage 走 deb.debian.org 的下载路径
+      # CJK 字体改由挂载的 ${FONT_PATH} 提供, 00-host-fonts.sh 跑 fc-cache 注册
+      - ENABLE_CJK_FONT=0
+      - FONT_PATH=${FONT_PATH}
     # 上游 outlyernet/losslesscut 发布版本化 tag (3.62.0-v1, 3.63.0-v2, 3.64.0-v1)。
     # 本目录名 = 镜像 tag, 与上游 2024-11-09 发布的 v3.64.0-v1 严格对齐。
     image: outlyernet/losslesscut:3.64.0
