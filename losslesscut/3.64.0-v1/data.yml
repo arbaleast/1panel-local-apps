@@ -149,7 +149,12 @@ additionalProperties:
         - label: "true"
           value: "1"
     # ---- 中文字体支持（jlesage ENABLE_CJK_FONT）----
-    - default: "1"
+    # ⚠️ 默认 false: jlesage ENABLE_CJK_FONT=1 会在容器启动时从 deb.debian.org
+    # apt-get install fonts-wqy-zenhei。在镜像源被防火墙拦 / DNS 不可达 / 网络受限
+    # 的国内服务器上, init 脚本会下载失败, 触发 s6 服务启动失败, restart: always
+    # 让容器进入 启动→秒退→再启动 循环。需要 CJK 字体请在镜像预装或手动挂载
+    # 字体目录; 1Panel 表单保持 false, 默认状态容器一定能起来。
+    - default: "0"
       edit: true
       envKey: ENABLE_CJK_FONT
       labelEn: Install CJK font (WenQuanYi Zen Hei)
@@ -166,10 +171,10 @@ additionalProperties:
       required: true
       type: select
       values:
-        - label: "true"
-          value: "1"
         - label: "false"
           value: "0"
+        - label: "true"
+          value: "1"
     # ---- VNC 密码（jlesage VNC_PASSWORD；留空=无密码；上限 8 字符）----
     - default: ""
       edit: true

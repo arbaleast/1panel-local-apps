@@ -42,8 +42,11 @@
 - 也可把自签证书放入 `./data/config/certs/` 目录使用自己的证书
 
 ### 中文字体 (ENABLE_CJK_FONT)
-- 默认 `true`，安装文泉驿正黑字体（`WenQuanYi Zen Hei`）
-- LosslessCut UI 含 CJK 翻译时需要
+- **默认 `false`（已禁用）** — 容器不会去下载字体包
+- ⚠️ **为什么会默认关**：jlesage baseimage-gui 启动时若 `ENABLE_CJK_FONT=1`，会执行 `apt-get install fonts-wqy-zenhei` 从 `deb.debian.org` 下载文泉驿正黑字体包。在国内/防火墙/网络受限服务器上 `deb.debian.org` 经常连不上（DNS 被污染 / TCP 阻断 / HTTPS 中间证书问题），导致 s6 init 脚本退出非 0 → 服务启动失败 → `restart: always` 把容器拉入**启动→秒退→再启动**的死亡循环。
+- **如何开启**：先确认宿主机到 `deb.debian.org` 443 端口畅通（`curl -v https://deb.debian.org/`），再在 1Panel 表单把 `ENABLE_CJK_FONT` 切到 `true`。
+- **LosslessCut UI 没中文字体的影响**：英文界面照常使用（LosslessCut 默认就是英文 UI），仅 Web noVNC 顶栏的窗口标题 / 错误信息 / 系统弹窗里的中文字符会显示为方框。剪辑功能不受影响。
+- **彻底解决方案（推荐）**：派生一个自定义镜像，预先 `apt-get install fonts-wqy-zenhei && apt-get clean` 后 commit，避免每次启动重新下载。
 
 ### VNC 密码 (VNC_PASSWORD)
 - 留空 = 无密码直连 VNC（容器内网暴露，生产环境建议填）
