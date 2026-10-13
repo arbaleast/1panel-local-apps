@@ -1,0 +1,70 @@
+networks:
+  1panel-network:
+    external: true
+
+# ============================================================
+# LosslessCut 3.64.0-v1 — 浏览器内视频/音频无损剪辑
+#   上游: https://github.com/mifi/lossless-cut
+#   Docker 镜像: outlyernet/losslesscut:3.64.0
+#     基础镜像: jlesage/docker-baseimage-gui (Debian, s6-overlay)
+#     GUI 协议: noVNC (HTTP 5800) + VNC (5900) + xvfb + openbox
+#     内置 ffmpeg (PATH /usr/local/bin/ffmpeg); Xvfb 提供虚拟显示
+#
+# 关键设计点:
+#   1. **s6-overlay 镜像 — 禁止 init: true**:
+#      baseimage-gui 的 CMD 是 ["/init"] (s6-overlay suexec),
+#      init: true 会让 docker 注入 tini 抢占 PID 1, 触发
+#      `s6-overlay-suexec: fatal: can only run as pid 1` 早退。
+#      也禁止 user: (s6 需要 root 降权); 禁止 pid: (改写 PID 1)。
+#   2. **持久化**: ./data/config → /config (LosslessCut 设置 + VNC 证书 + s6 状态)
+#   3. **媒体库**: ${MEDIA_PATH} → /storage (jlesage 约定; UI 文件浏览器可见)
+#      留空 = 容器内 /storage 为空目录, 用户可通过 LosslessCut 内置
+#      「Open File」或「Open URL」喂入视频, 或另开 mount 挂入。
+#   4. **端口**: 5800 (noVNC Web 必需); 5900 (VNC 直连, 1Panel 表单可选填)
+#      HTTP 5800 始终暴露; VNC 5900 容器侧始终监听 (s6 baseimage 默认),
+#      用户可填 5900 直连 VNC 客户端 (RealVNC/TigerVNC/noVNC 自带 bridge)
+#   5. **多架构**: upstream Dockerfile 支持 linux/amd64 + linux/arm/v7 + linux/arm64
+#   6. **jlesage env 名称**: USER_ID / GROUP_ID / TZ / DARK_MODE /
+#      SECURE_CONNECTION / VNC_PASSWORD / ENABLE_CJK_FONT
+#      (与 docker-baseimage-gui README 一致; 不要改名)
+# ============================================================
+
+services:
+  losslesscut:
+    container_name: ${CONTAINER_NAME}
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    volumes:
+      # 持久化配置 + VNC 证书 + s6 服务状态
+      - ./data/config:/config
+      # 媒体库 (宿主机绝对路径); 留空 = 容器内 /storage 为空
+      # 用户可在 LosslessCut Web UI 「File → Open」直接拖入视频,
+      # 或在 1Panel 表单 MEDIA_PATH 字段填好批量处理的目录
+      - ${MEDIA_PATH}:/storage
+    environment:
+      # 基础设置
+      - USER_ID=${USER_ID}
+      - GROUP_ID=${GROUP_ID}
+      - TZ=${TZ}
+      # 主题与安全
+      - DARK_MODE=${DARK_MODE}
+      - SECURE_CONNECTION=${SECURE_CONNECTION}
+      - VNC_PASSWORD=${VNC_PASSWORD}
+      # 中文字体 (LosslessCut UI 含 CJK 时需要)
+      - ENABLE_CJK_FONT=${ENABLE_CJK_FONT}
+    # 上游 outlyernet/losslesscut 发布版本化 tag (3.62.0-v1, 3.63.0-v2, 3.64.0-v1)。
+    # 本目录名 = 镜像 tag, 与上游 2024-11-09 发布的 v3.64.0-v1 严格对齐。
+    image: outlyernet/losslesscut:3.64.0
+    labels:
+      createdBy: Apps
+    networks:
+      - 1panel-network
+    ports:
+      # noVNC Web UI (必需, jlesage 容器内 WEB_LISTENING_PORT=5800)
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:5800
+      # VNC 直连 (jlesage 容器内 VNC_LISTENING_PORT=5900) — 可选
+      - ${HOST_IP}:${PANEL_APP_PORT_VNC}:5900
+    restart: always

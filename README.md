@@ -35,7 +35,7 @@
 | mihomo | 代理工具 | v1.19.18 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
 | misaka | 御坂网络弹幕服务 | v2.8.9 |
-| moviepilot | 影视自动化 | 3.1.4 |
+| moviepilot | 影视自动化 | 3.1.5 |
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.7.7 |
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
