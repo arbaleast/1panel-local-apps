@@ -2,18 +2,36 @@
 
 基于 [outlyernet/losslesscut](https://github.com/outlyer-net/docker-losslesscut) 容器的浏览器内无损视频/音频剪辑工具，基于 FFmpeg **直接流复制**（不重新编码），处理 1 小时 1080p 视频通常 < 10 秒。
 
-## 访问（默认 Web UI，**不需要 VNC 客户端**）
+## 重要：LosslessCut **没有原生 web 版**
 
-应用基于 jlesage/docker-baseimage-gui，**同时**提供两种 GUI 通道：
+LosslessCut 本身就是 **Electron 桌面应用**（mifi/lossless-cut 是 `electron-builder` 打包的桌面程序），容器化的本质是 **Xvfb + x11vnc + noVNC** —— 浏览器只是在远程操控一个跑在容器里的桌面程序，**不是网页版**。所以：
 
-| 通道 | 端口 | 用途 | 性能 |
+- ❌ **不能**像普通 web 应用那样：上传文件、拖时间轴、点击按钮直接处理
+- ✅ **实际行为**：浏览器打开 5800 → 看到的是**整个 Electron 桌面窗口**（Xvfb 虚拟显示的截屏），你在浏览器里**点击/拖拽/按键**都在远程操控那个 Electron 进程
+- 网络流量：鼠标坐标 + 键盘事件 + Electron 窗口画面（H.264 编码）= **轻量级远程桌面**
+- **视频数据本身不经过网络**：FFmpeg 跑在容器内本地，直接读 `${MEDIA_PATH}` 挂进来的文件
+
+这就是你直觉里"noVNC ≠ 原生 web"的核心原因——**它本质上就是远程桌面**，只是 VNC 协议被包到 WebSocket 里让浏览器能看。
+
+## 访问（两个通道都是远程桌面）
+
+| 通道 | 端口 | 用途 | 体验 |
 |---|---|---|---|
-| **Web UI (noVNC)** ← 推荐 | 5800 | 浏览器直接打开 http://&lt;host&gt;:5800，HTML5 Canvas 渲染，键盘 / 鼠标 / 剪贴板全支持 | VNC over WebSocket，CPU 开销 1-3% |
-| VNC 直连（可选） | 5900 | RealVNC / TigerVNC / Remmina 等原生 VNC 客户端 | RFB 协议，省 WebSocket 封装 |
+| **Web UI (noVNC)** ← 推荐 | 5800 | 浏览器直接打开 `http://<host>:5800`，HTML5 Canvas 渲染，鼠标 / 键盘 / 剪贴板全支持 | 远程桌面（Web 协议版） |
+| VNC 直连（可选） | 5900 | RealVNC / TigerVNC / Remmina 等原生 VNC 客户端 | 远程桌面（原生 VNC 协议） |
 
-**默认走 Web**。jlesage noVNC 用 H.264 / JPEG / WebP 编码，比早期 noVNC 的纯 RAW 帧快很多，浏览器剪片 1080p 时 CPU 占用在 1-3%，**不比本地 Electron 慢多少**。1 小时 1080p 视频几秒切完，是 LosslessCut 后端 FFmpeg `-c copy` 流复制在干活，**网络传输只负责鼠标键盘和画面**，不传视频数据本身。
+两个通道显示的**都是同一个 Electron 桌面程序**。noVNC 多的 WebSocket 封装增加 5-10ms 延迟、CPU 多 1-2%，对 LosslessCut（"几秒剪一刀"的轻交互）几乎无感。**绝大多数情况浏览器就够了**。
 
-**何时才需要 VNC 客户端**：只在 noVNC 浏览器兼容性有问题时（极少数旧浏览器 / 移动端）。**绝大多数情况**浏览器就够了。
+## 真·原生 web 体验：LosslessCut 的 HTTP API（仅供自动化）
+
+上游 CLI 模式启动时 `losslesscut --http-api` 会在 `localhost:8080` 暴露一个 Express HTTP API：
+
+- `POST /api/action/:action` — 触发一个键盘动作（"open file"、"export"、"goToTimecodeDirect" 等）
+- `POST /api/await-event/:eventName` — 长轮询等待事件（"export-complete" 等）
+
+⚠️ **这不是"网页版 UI"**，是给脚本 / CI / 自动化触发用的——你**不能用它**在浏览器里拖时间轴。自动化批量处理场景才用得上。
+
+**outlyernet 容器** 默认启动的是 GUI 模式（带 noVNC），**没有** `--http-api` flag。要跑 HTTP API 自动化，得另开一个 `--http-api` 模式的容器并挂同一份 `/storage` —— 当前 1Panel 应用没暴露这个模式，需要自定义 compose。
 
 ## 上游
 - 应用: [mifi/lossless-cut](https://github.com/mifi/lossless-cut) (LosslessCut 3.64.0)
@@ -25,7 +43,8 @@
 - 提取片段、合并多段、重新混流 (remux) 到不同容器
 - 提取单帧快照、提取所有音轨/字幕轨
 - 视频元数据查看/编辑、章节标记、旋转方向元数据
-- 批量处理（手动，不支持 CLI 调度）
+- **手动**批量处理：一次导入多个文件，逐个切好后一起导出
+- **脚本**批量处理：上游 `losslesscut --http-api` + `POST /api/action/*`（**outlyernet 镜像默认未启用此模式**，需要自定义 compose 才能跑）
 
 ## 工作原理
 - LosslessCut 本身是 Electron 桌面应用，封装进容器后通过 noVNC（HTML5 VNC 客户端）将 GUI 暴露在浏览器中
