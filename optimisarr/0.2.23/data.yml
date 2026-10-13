@@ -95,6 +95,7 @@ additionalProperties:
       required: false
       type: number
   key: optimisarr
+
   name: optimisarr 0.2.22
   tags:
     - Media
@@ -120,6 +121,7 @@ additionalProperties:
   website: https://github.com/Jellman86/optimisarr
   github: https://github.com/Jellman86/optimisarr
   document: https://github.com/Jellman86/optimisarr#readme
-name: Optimisarr 0.2.22
-title: Optimisarr 0.2.22
-description: Optimisarr 0.2.22 安全优先的 FFmpeg 媒体库优化器 — Plex / Jellyfin / Emby
+
+  name: Optimisarr
+  title: Optimisarr 媒体库优化器
+  description: Optimisarr 安全优先的 FFmpeg 媒体库优化器（验证 + 回滚）— Plex / Jellyfin / Emby
