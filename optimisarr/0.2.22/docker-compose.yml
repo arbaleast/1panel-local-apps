@@ -1,0 +1,42 @@
+networks:
+  1panel-network:
+    external: true
+services:
+  optimisarr:
+    container_name: ${CONTAINER_NAME}
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    volumes:
+      # 持久化配置 + SQLite 数据库
+      - ./data/config:/config
+      # 媒体库根: 在此目录下放你的视频文件,Optimisarr 会扫描/转码/隔离
+      # WORK_DIR / TRASH_DIR 默认位于 /data/.optimisarr/ 下,随此挂载一起持久化
+      - ./data/media:/data
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=002
+      - ASPNETCORE_URLS=http://0.0.0.0:8787
+      - OPTIMISARR_CONFIG_DIR=/config
+      - OPTIMISARR_WORK_DIR=/data/.optimisarr/work
+      - OPTIMISARR_TRASH_DIR=/data/.optimisarr/trash
+      - Logging__LogLevel__Default=${OPTIMISARR_LOG_LEVEL}
+    image: ghcr.io/jellman86/optimisarr:0.2.22
+    labels:
+      createdBy: Apps
+    networks:
+      - 1panel-network
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8787
+    # 允许 2 小时 5 分钟优雅停机（上游 compose 推荐值,保证长任务 FFmpeg 转码能完整结束）
+    stop_grace_period: 2h5m
+    # 硬件加速: Intel QSV / VA-API / AMD GPU 用户取消下面三行注释
+    # devices:
+    #   - /dev/dri:/dev/dri
+    # group_add:
+    #   - ${RENDER_GID}
+    restart: always

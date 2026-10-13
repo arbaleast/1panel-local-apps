@@ -62,6 +62,8 @@ aliases:
     desc: 浏览器内视频/音频无损剪辑
   openreel-video:
     desc: 浏览器端开源视频剪辑工具
+  optimisarr:
+    desc: 媒体库自动转码 (FFmpeg 验证 + 回滚, Plex/Jellyfin/Emby, 仅 amd64)
   pgvector:
     desc: 向量数据库
   photoprism:

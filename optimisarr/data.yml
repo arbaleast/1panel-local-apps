@@ -1,0 +1,32 @@
+additionalProperties:
+  key: optimisarr
+  name: Optimisarr
+  tags:
+    - Media
+    - Transcoding
+    - FFmpeg
+    - Jellyfin
+    - Plex
+  shortDescZh: 自托管 FFmpeg 媒体库优化器（带验证回滚的 Plex/Jellyfin/Emby 转码）
+  shortDescEn: Self-hosted FFmpeg media-library optimiser with verified transcoding & rollback
+  description:
+    zh: Optimisarr 是一款安全优先的自托管 FFmpeg 媒体库优化器，专为 Plex / Jellyfin / Emby 设计。在替换原文件前会通过保留流数、时长、码率等多重验证，且原文件进入隔离区可回滚。支持 CPU、Intel QSV、VA-API、NVIDIA NVENC 等硬件加速；可在 Plex/Jellyfin/Emby 正在串流时自动暂停处理。提供 macOS/Windows/Linux 端侧 worker sidecar 配对使用。
+    en: Optimisarr is a safety-first, self-hosted FFmpeg media-library optimiser for Plex, Jellyfin, and Emby. It verifies stream retention, duration, and bitrate savings before replacing any file, and quarantines the original for rollback. Supports CPU, Intel QSV, VA-API, and NVIDIA NVENC hardware acceleration. Automatically pauses processing while Plex / Jellyfin / Emby is streaming. Ships optional macOS / Windows / Linux worker sidecars for distributed encoding.
+    ja: Optimisarr は Plex / Jellyfin / Emby 向けの安全性を最優先にしたセルフホスト型 FFmpeg メディアライブラリ最適化ツールです。ストリーム保持・再生時間・ビットレート削減を検証したうえでファイルを置き換え、原本は隔離ディレクトリに保存してロールバック可能にします。CPU、Intel QSV、VA-API、NVIDIA NVENC などのハードウェアアクセラレーションに対応し、Plex / Jellyfin / Emby のストリーミング中は自動で処理を停止します。macOS / Windows / Linux のワーカーサイドカーも利用可能です。
+    ko: Optimisarr는 Plex / Jellyfin / Emby를 위한 안전 우선의 자체 호스팅 FFmpeg 미디어 라이브러리 최적화 도구입니다. 스트림 보존, 재생 시간, 비트레이트 절감을 검증한 후 파일을 교체하고 원본은 격리 디렉터리에 보관하여 롤백할 수 있습니다. CPU, Intel QSV, VA-API, NVIDIA NVENC 하드웨어 가속을 지원하며 Plex / Jellyfin / Emby 스트리밍 중에는 자동으로 처리를 일시 중지합니다. macOS / Windows / Linux 워커 사이드카도 함께 제공됩니다.
+    ru: Optimisarr — это безопасный самохостируемый оптимизатор медиатеки FFmpeg для Plex, Jellyfin и Emby. Перед заменой файла проверяется сохранение потоков, длительность и экономия битрейта, а оригинал помещается в карантин для отката. Поддерживает аппаратное ускорение CPU, Intel QSV, VA-API и NVIDIA NVENC. Автоматически приостанавливает обработку во время стриминга Plex / Jellyfin / Emby. Доступны macOS / Windows / Linux sidecar-воркеры.
+    ms: Optimisarr ialah pengoptimum perpustakaan media FFmpeg kendiri-sendiri yang mengutamakan keselamatan untuk Plex / Jellyfin / Emby. Ia mengesahkan pengekalan strim, tempoh dan penjimatan bitrate sebelum menggantikan fail, dan mengasingkan asal untuk rollback. Menyokong pecutan perkakasan CPU, Intel QSV, VA-API dan NVIDIA NVENC. Menjeda pemprosesan secara automatik semasa Plex / Jellyfin / Emby menstrim. Sidecar pekerja macOS / Windows / Linux turut tersedia.
+    pt-br: Optimisarr é um otimizador de biblioteca de mídia FFmpeg auto-hospedado com foco em segurança para Plex / Jellyfin / Emby. Ele verifica a retenção de fluxos, duração e economia de bitrate antes de substituir qualquer arquivo, e coloca o original em quarentena para rollback. Suporta aceleração de hardware por CPU, Intel QSV, VA-API e NVIDIA NVENC. Pausa o processamento automaticamente enquanto Plex / Jellyfin / Emby está transmitindo. Há sidecars opcionais para macOS / Windows / Linux.
+    zh-Hant: Optimisarr 是一款安全優先的自架 FFmpeg 媒體庫優化器，專為 Plex / Jellyfin / Emby 設計。在替換原檔前會通過保留流數、時長、位元率等多重驗證，且原檔會進入隔離區以便回滾。支援 CPU、Intel QSV、VA-API、NVIDIA NVENC 等硬體加速；當 Plex / Jellyfin / Emby 正在串流時會自動暫停處理。提供 macOS / Windows / Linux 端側 worker sidecar 配對使用。
+  type: tool
+  architectures:
+    - amd64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/Jellman86/optimisarr
+  github: https://github.com/Jellman86/optimisarr
+  document: https://github.com/Jellman86/optimisarr#readme
+name: Optimisarr
+title: Optimisarr 媒体库优化器
+description: Optimisarr 安全优先的 FFmpeg 媒体库优化器（验证 + 回滚）— Plex / Jellyfin / Emby
