@@ -2,9 +2,18 @@
 
 基于 [outlyernet/losslesscut](https://github.com/outlyer-net/docker-losslesscut) 容器的浏览器内无损视频/音频剪辑工具，基于 FFmpeg **直接流复制**（不重新编码），处理 1 小时 1080p 视频通常 < 10 秒。
 
-## 访问
-- Web UI (noVNC): http://192.168.98.246:5800
-- VNC 直连 (可选): `192.168.98.246:5900` (RealVNC / TigerVNC / 内置 noVNC 桥)
+## 访问（默认 Web UI，**不需要 VNC 客户端**）
+
+应用基于 jlesage/docker-baseimage-gui，**同时**提供两种 GUI 通道：
+
+| 通道 | 端口 | 用途 | 性能 |
+|---|---|---|---|
+| **Web UI (noVNC)** ← 推荐 | 5800 | 浏览器直接打开 http://&lt;host&gt;:5800，HTML5 Canvas 渲染，键盘 / 鼠标 / 剪贴板全支持 | VNC over WebSocket，CPU 开销 1-3% |
+| VNC 直连（可选） | 5900 | RealVNC / TigerVNC / Remmina 等原生 VNC 客户端 | RFB 协议，省 WebSocket 封装 |
+
+**默认走 Web**。jlesage noVNC 用 H.264 / JPEG / WebP 编码，比早期 noVNC 的纯 RAW 帧快很多，浏览器剪片 1080p 时 CPU 占用在 1-3%，**不比本地 Electron 慢多少**。1 小时 1080p 视频几秒切完，是 LosslessCut 后端 FFmpeg `-c copy` 流复制在干活，**网络传输只负责鼠标键盘和画面**，不传视频数据本身。
+
+**何时才需要 VNC 客户端**：只在 noVNC 浏览器兼容性有问题时（极少数旧浏览器 / 移动端）。**绝大多数情况**浏览器就够了。
 
 ## 上游
 - 应用: [mifi/lossless-cut](https://github.com/mifi/lossless-cut) (LosslessCut 3.64.0)
