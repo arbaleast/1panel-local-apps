@@ -56,6 +56,8 @@ aliases:
   grimmory:
     dir: grimmory
     desc: 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库）
+  losslesscut:
+    desc: 浏览器内视频/音频无损剪辑
   openreel-video:
     desc: 浏览器端开源视频剪辑工具
   pgvector:

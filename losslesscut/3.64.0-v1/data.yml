@@ -1,0 +1,212 @@
+additionalProperties:
+  formFields:
+    # ---- 端口（jlesage baseimage-gui 容器内 Web 监听 5800）----
+    - default: 5800
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Web UI Port (noVNC)
+      labelZh: Web UI 端口 (noVNC)
+      label:
+        en: Web UI Port (noVNC)
+        zh: Web UI 端口 (noVNC)
+        zh-Hant: Web UI 埠 (noVNC)
+        ja: Web UI ポート (noVNC)
+        ko: Web UI 포트 (noVNC)
+        ru: Порт Web UI (noVNC)
+        ms: Port Web UI (noVNC)
+        pt-br: Porta Web UI (noVNC)
+      required: true
+      type: number
+      rule: paramPort
+    # ---- VNC 直连端口（可选；不勾选则不暴露）----
+    - default: 5900
+      edit: true
+      envKey: PANEL_APP_PORT_VNC
+      labelEn: VNC Port (optional, leave empty to disable direct VNC)
+      labelZh: VNC 端口（可选，留空=不暴露直连 VNC）
+      label:
+        en: VNC Port (optional, leave empty to disable direct VNC)
+        zh: VNC 端口（可选，留空=不暴露直连 VNC）
+        zh-Hant: VNC 連接埠（可選，留空=不暴露直連 VNC）
+        ja: VNC ポート（任意、空欄=直接 VNC を公開しない）
+        ko: VNC 포트(선택, 비워두기=직접 VNC 비공개)
+        ru: Порт VNC (опц., пусто = не открывать прямой VNC)
+        ms: Port VNC (pilihan, kosong = jangan dedahkan VNC langsung)
+        pt-br: Porta VNC (opcional, vazio = não expor VNC direto)
+      required: false
+      type: number
+      rule: paramPort
+    # ---- 时区 ----
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Time zone
+      labelZh: 时区
+      label:
+        en: Time zone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    # ---- 运行用户（jlesage USER_ID / GROUP_ID）----
+    - default: 1000
+      edit: true
+      envKey: USER_ID
+      labelEn: User ID inside container (USER_ID)
+      labelZh: 容器内运行用户 UID (USER_ID)
+      label:
+        en: User ID inside container (USER_ID)
+        zh: 容器内运行用户 UID (USER_ID)
+        zh-Hant: 容器內執行使用者 UID (USER_ID)
+        ja: コンテナ内ユーザー UID (USER_ID)
+        ko: 컨테이너 내부 사용자 UID (USER_ID)
+        ru: UID пользователя в контейнере (USER_ID)
+        ms: UID pengguna dalam kontena (USER_ID)
+        pt-br: UID do usuário no contêiner (USER_ID)
+      required: true
+      type: number
+    - default: 1000
+      edit: true
+      envKey: GROUP_ID
+      labelEn: Group ID inside container (GROUP_ID)
+      labelZh: 容器内运行用户组 GID (GROUP_ID)
+      label:
+        en: Group ID inside container (GROUP_ID)
+        zh: 容器内运行用户组 GID (GROUP_ID)
+        zh-Hant: 容器內執行群組 GID (GROUP_ID)
+        ja: コンテナ内グループ GID (GROUP_ID)
+        ko: 컨테이너 내부 그룹 GID (GROUP_ID)
+        ru: GID группы в контейнере (GROUP_ID)
+        ms: GID kumpulan dalam kontena (GROUP_ID)
+        pt-br: GID do grupo no contêiner (GROUP_ID)
+      required: true
+      type: number
+    # ---- 媒体库宿主机绝对路径（jlesage /storage，LosslessCut 浏览器内可见）----
+    - default: ""
+      edit: true
+      envKey: MEDIA_PATH
+      labelEn: Media library path (absolute host path; leave empty to skip)
+      labelZh: 媒体库路径（宿主机绝对路径；留空=不挂载，LosslessCut 看不到任何文件）
+      label:
+        en: Media library path (absolute host path; leave empty to skip)
+        zh: 媒体库路径（宿主机绝对路径；留空=不挂载，LosslessCut 看不到任何文件）
+        zh-Hant: 媒體庫路徑（主機絕對路徑；留空=不掛載，LosslessCut 看不到任何檔案）
+        ja: メディアライブラリ パス（ホスト絶対パス；空欄=マウントしない、LosslessCut にファイルが見えない）
+        ko: 미디어 라이브러리 경로 (호스트 절대 경로, 비워두기=마운트 안 함, LosslessCut이 파일을 보지 못함)
+        ru: Путь к медиа-библиотеке (абсолютный путь хоста, пусто = не монтировать, LosslessCut не увидит файлы)
+        ms: Laluan perpustakaan media (laluan mutlak hos; kosong = jangan pasang, LosslessCut tidak nampak fail)
+        pt-br: Caminho da biblioteca de mídia (caminho absoluto do host; vazio = não montar, LosslessCut não verá arquivos)
+      required: false
+      type: text
+      rule: paramPath
+    # ---- Dark mode (jlesage DARK_MODE) ----
+    - default: "0"
+      edit: true
+      envKey: DARK_MODE
+      labelEn: Dark mode
+      labelZh: 暗色模式
+      label:
+        en: Dark mode
+        zh: 暗色模式
+        zh-Hant: 深色模式
+        ja: ダークモード
+        ko: 다크 모드
+        ru: Тёмная тема
+        ms: Mod gelap
+        pt-br: Modo escuro
+      required: true
+      type: select
+      values:
+        - label: "false"
+          value: "0"
+        - label: "true"
+          value: "1"
+    # ---- Secure connection (HTTPS) ----
+    - default: "0"
+      edit: true
+      envKey: SECURE_CONNECTION
+      labelEn: HTTPS (self-signed cert by default)
+      labelZh: HTTPS（默认自签证书）
+      label:
+        en: HTTPS (self-signed cert by default)
+        zh: HTTPS（默认自签证书）
+        zh-Hant: HTTPS（預設自簽憑證）
+        ja: HTTPS（デフォルトは自己署名証明書）
+        ko: HTTPS (기본 자체 서명 인증서)
+        ru: HTTPS (самоподписанный сертификат по умолчанию)
+        ms: HTTPS (sijil tandatangan sendiri secara lalai)
+        pt-br: HTTPS (certificado autoassinado por padrão)
+      required: true
+      type: select
+      values:
+        - label: "false"
+          value: "0"
+        - label: "true"
+          value: "1"
+    # ---- 中文字体支持（jlesage ENABLE_CJK_FONT）----
+    - default: "1"
+      edit: true
+      envKey: ENABLE_CJK_FONT
+      labelEn: Install CJK font (WenQuanYi Zen Hei)
+      labelZh: 安装中文字体 (文泉驿正黑)
+      label:
+        en: Install CJK font (WenQuanYi Zen Hei)
+        zh: 安装中文字体 (文泉驿正黑)
+        zh-Hant: 安裝中文字型 (文泉驛正黑)
+        ja: CJK フォントをインストール (WenQuanYi Zen Hei)
+        ko: CJK 글꼴 설치 (WenQuanYi Zen Hei)
+        ru: Установить CJK-шрифт (WenQuanYi Zen Hei)
+        ms: Pasang fon CJK (WenQuanYi Zen Hei)
+        pt-br: Instalar fonte CJK (WenQuanYi Zen Hei)
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "1"
+        - label: "false"
+          value: "0"
+    # ---- VNC 密码（jlesage VNC_PASSWORD；留空=无密码；上限 8 字符）----
+    - default: ""
+      edit: true
+      envKey: VNC_PASSWORD
+      labelEn: VNC password (≤ 8 chars, leave empty for no password)
+      labelZh: VNC 密码（≤ 8 字符，留空=无密码）
+      label:
+        en: VNC password (≤ 8 chars, leave empty for no password)
+        zh: VNC 密码（≤ 8 字符，留空=无密码）
+        zh-Hant: VNC 密碼（≤ 8 字元，留空=無密碼）
+        ja: VNC パスワード (≤ 8 文字、空欄=パスワードなし)
+        ko: VNC 비밀번호 (≤ 8자, 비워두기=비밀번호 없음)
+        ru: Пароль VNC (≤ 8 символов, пусто = без пароля)
+        ms: Kata laluan VNC (≤ 8 aksara, kosong = tanpa kata laluan)
+        pt-br: Senha VNC (≤ 8 caracteres, vazio = sem senha)
+      required: false
+      type: password
+      rule: paramComplexity
+  key: losslesscut
+  name: losslesscut 3.64.0-v1
+  tags:
+    - Local
+    - Video
+    - Audio
+    - FFmpeg
+  shortDescZh: LosslessCut 视频/音频无损剪辑 3.64.0-v1
+  shortDescEn: LosslessCut lossless video/audio cutter 3.64.0-v1
+  description:
+    zh: 基于 outlyernet/losslesscut 容器的浏览器内视频/音频无损剪辑工具，基于 FFmpeg 直接流复制不重新编码。GUI 通过 noVNC 在浏览器中访问（http://host:5800），无需安装客户端。LosslessCut 3.64.0 是 2024-11 上游 outlyer-net/docker-losslesscut 发布的稳定版本。
+    en: Browser-based lossless video/audio cutter powered by outlyernet/losslesscut container, using FFmpeg stream copy without re-encoding. GUI served via noVNC at http://host:5800, no client install required. LosslessCut 3.64.0-v1 is the stable release published by outlyer-net/docker-losslesscut in 2024-11.
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://mifi.github.io/lossless-cut/
+  github: https://github.com/mifi/lossless-cut
+  document: https://github.com/outlyer-net/docker-losslesscut
+name: losslesscut 3.64.0-v1
+title: LosslessCut 无损视频剪辑 3.64.0-v1
+description: 基于 outlyernet/losslesscut 容器的浏览器内视频/音频无损剪辑工具，FFmpeg 流复制不重编码。

@@ -1,0 +1,20 @@
+additionalProperties:
+  key: losslesscut
+  name: losslesscut
+  tags:
+    - Local
+  shortDescZh: LosslessCut 视频/音频无损剪辑
+  shortDescEn: LosslessCut lossless video/audio cutter
+  description:
+    zh: 基于 outlyernet/losslesscut 的浏览器内视频/音频无损剪辑工具，基于 FFmpeg 直接流复制，不重新编码。GUI 通过 noVNC 在浏览器中访问，无需安装客户端。
+    en: Browser-based lossless video/audio cutter powered by outlyernet/losslesscut. Cuts and trims via FFmpeg stream copy without re-encoding, runs entirely in a noVNC web UI (no client install needed).
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://mifi.github.io/lossless-cut/
+  github: https://github.com/mifi/lossless-cut
+  document: https://github.com/outlyer-net/docker-losslesscut
+name: losslesscut
+title: LosslessCut 无损视频剪辑
+description: 基于 outlyernet/losslesscut 容器的浏览器内视频/音频无损剪辑工具，FFmpeg 流复制不重编码。

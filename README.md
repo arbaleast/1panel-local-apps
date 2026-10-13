@@ -29,6 +29,7 @@
 | llamacpp | 高性能本地 LLM 推理引擎 | server-vulkan-v0.4.7 |
 | llamaindex | LLM 数据框架 | v0.9.2 |
 | llmwiki | LLM Wiki 知识库（占位应用，详见 README 风险说明） | latest |
+| losslesscut | 浏览器内视频/音频无损剪辑 | 3.64.0-v1 |
 | marginalia | 本地优先的私人知识库 + LLM 研究代理 | v0.3.8 |
 | mediago | 媒体嗅探与下载 | 3.5.0 |
 | mihomo | 代理工具 | v1.19.18 |
