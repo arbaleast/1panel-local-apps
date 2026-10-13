@@ -1,0 +1,92 @@
+# AGENTS.md 规约:
+# - 主服务 container_name: ${CONTAINER_NAME}; 双 service 这里用 ${CONTAINER_NAME}-server / ${CONTAINER_NAME}-worker
+# - restart: always; networks: [1panel-network] (external); labels: {createdBy: Apps}
+# - 公开端口用 PANEL_APP_PORT_*; 卷用 ./data/... 相对路径
+# - "禁止 init: true" 对 distroless 不触发 (s6-overlay 禁忌)
+# - 镜像用 GHCR latest (上游无 semver tag; 符合 AGENTS.md "latest 例外条款", 需在 commit message 注明)
+#
+# ⚠️ upstream 风险:
+# - TheNickOfTime/handbrake-web issue #88 自述 "under heavy development"
+# - 测试硬件: RTX 3070 (Turing CC 7.5); P620 (Pascal CC 6.1) 官方未验证
+# - worker 镜像是 gcr.io/distroless/nodejs24-debian13:debug-nonroot (无 shell, debug 必须看 docker logs)
+# - build.Dockerfile 自带 HandBrakeCLI 1.10.2 (比 linuxserver 主线 1.11.2 略旧; --enable-nvenc 已确认)
+#
+# ⚠️ NVIDIA 注入方式:
+# - 官方 compose.nvidia.yaml 用 deploy.resources.reservations.devices (Docker Compose 23.0+ 标准)
+# - 不用 runtime: nvidia (那是 linuxserver s6 模型的写法, 不适用 distroless)
+# - NVIDIA_VISIBLE_DEVICES / NVIDIA_DRIVER_CAPABILITIES 是 *外加* env, 与 deploy 块协同
+# - P620 (2GB Pascal) 建议 NVIDIA_VISIBLE_DEVICES=0 (单卡)
+
+networks:
+  1panel-network:
+    external: true
+
+services:
+  handbrake-web-server:
+    image: ghcr.io/thenickoftime/handbrake-web-server:latest
+    container_name: ${CONTAINER_NAME}-server
+    user: "1000:1000" # 跟随官方 compose.nvidia.yaml; host 无 uid=1000 时改为 0:0 (官方不推荐) 或用 ${PUID}:${PGID} formField
+    restart: always
+    environment:
+      - TZ=${TIME_ZONE}
+      - NODE_ENV=production
+      - HANDBRAKE_MODE=server # 跟随 server Dockerfile 行 49
+      - DATA_PATH=/data
+      - VIDEO_PATH=/video
+    # AGENTS.md "持久化挂载优先 ./data/... 相对路径" 规约.
+    # server /data 用 ./data/server; server /video 和 worker /video 共享, 必须指向同一 host 目录.
+    # 双 service 共享: 用 ./data/media (host 相对路径), 1Panel 部署时统一解析到 /opt/1panel/apps/<app>/<ver>/data/media.
+    volumes:
+      - ./data/server:/data
+      - ./data/media:/video # 跟 worker 共用同一 host 路径
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: Apps
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:9999
+    # server 不读 NVIDIA_* (server 是 Node 协调器, 不跑 HandBrakeCLI)
+
+  handbrake-web-worker:
+    image: ghcr.io/thenickoftime/handbrake-web-worker:latest
+    container_name: ${CONTAINER_NAME}-worker
+    user: "1000:1000" # 跟随官方; 跟 server 保持一致, 让 /video 写入权限匹配
+    restart: always
+    environment:
+      - TZ=${TIME_ZONE}
+      - NODE_ENV=production
+      - HANDBRAKE_MODE=worker # 跟随 worker Dockerfile 行 34
+      - DATA_PATH=/tmp/handbrake-web # 跟随 worker Dockerfile 行 35
+      - VIDEO_PATH=/video
+      - WORKER_ID=${WORKER_ID}
+      - SERVER_URL=${SERVER_URL}
+      - SERVER_PORT=${SERVER_PORT}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES} # 'all' / '0' / '0,1'
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES} # 'compute,utility' 标准
+    volumes:
+      - ./data/media:/video # 跟 server 同一 host 路径, 1Panel 部署时 server 和 worker 的 ./data/media 解析到同一个目录
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: Apps
+    depends_on:
+      - handbrake-web-server
+    # NVIDIA 设备注入: docker compose 23.0+ 标准. 1Panel 主机 Docker 版本需 >= 19.03.
+    # 官方 compose.nvidia.yaml 行 31-36 完整保留. capabilities: [gpu, compute, video] 含 video (NVENC 编码器).
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+                - compute
+                - video
+    # 条件性启用 NVIDIA:
+    # 上游 worker Dockerfile 硬要求 worker.js 跑 (nvidia-container-cli 注入设备 + 库).
+    # NVIDIA_ENABLE=false 时仍会注入 GPU 设备, 但 P620 上没人调用 NVENC → 等同 CPU 模式.
+    # 真正的"纯 CPU 模式"需要重写 compose (本仓只收录 NVIDIA 默认版; 想要纯 CPU 走 handbrake/ linuxserver 主线).
+    # ⚠️ 顶层 volumes 块: AGENTS.md 明确禁止 ${...} 插值命名卷, 且优先 ./data/... 相对路径.
+    # 本应用 server+worker 共享 /video 通过 ./data/media 相对路径实现 (两 service 都在同一 compose 解析到同 host 目录).
+    # 故不需要任何顶层 named volume 块, 删空.

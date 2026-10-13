@@ -1,0 +1,136 @@
+additionalProperties:
+  key: handbrake-web
+  name: HandBrake Web latest
+  type: tool
+  description:
+    en: "Dual-service deploy: handbrake-server (coordinator + Web UI) + handbrake-worker (HandBrakeCLI + NVENC). Image ghcr.io/thenickoftime/handbrake-web-{server,worker}:latest, upstream publishes only `latest` tag. ⚠️ P620 NVENC not officially validated."
+    zh: "双 service 部署: handbrake-server (协调+Web UI) + handbrake-worker (HandBrakeCLI + NVENC). 镜像 ghcr.io/thenickoftime/handbrake-web-{server,worker}:latest, upstream 仅发布 latest tag. ⚠️ P620 NVENC 未官方验证."
+  formFields:
+    # 1Panel 内部自动变量: CONTAINER_NAME HOST_IP CPUS MEMORY_LIMIT TIME_ZONE 不需要声明
+    # AGENTS.md 端口变量命名规约: PANEL_APP_PORT_*
+    # AGENTS.md "descriptionZh/descriptionEn 不渲染" 规约: 详细说明全部塞 README.md, 表单只留 label
+
+    - envKey: PANEL_APP_PORT_HTTP
+      type: number
+      default: 9999
+      required: true
+      rule: paramPort
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 端口
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+
+    - envKey: TIME_ZONE
+      type: text
+      default: Asia/Shanghai
+      required: true
+      rule: paramCommon
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+
+    - envKey: SERVER_URL
+      type: text
+      default: handbrake-server
+      required: true
+      rule: paramCommon
+      label:
+        en: Server URL (worker -> server)
+        zh: server 地址
+        zh-Hant: server 位址
+        ja: サーバー URL
+        ko: 서버 URL
+        ru: URL сервера
+        ms: URL Pelayan
+        pt-br: URL do servidor
+
+    - envKey: SERVER_PORT
+      type: number
+      default: 9999
+      required: true
+      rule: paramPort
+      label:
+        en: Server Port
+        zh: server 端口
+        zh-Hant: server 連接埠
+        ja: サーバーポート
+        ko: 서버 포트
+        ru: Порт сервера
+        ms: Port Pelayan
+        pt-br: Porta do servidor
+
+    - envKey: WORKER_ID
+      type: text
+      default: handbrake-worker-1
+      required: true
+      rule: paramCommon
+      label:
+        en: Worker ID
+        zh: worker 标识
+        zh-Hant: worker 識別
+        ja: worker ID
+        ko: worker ID
+        ru: Worker ID
+        ms: ID Worker
+        pt-br: ID do Worker
+
+    - envKey: NVIDIA_ENABLE
+      type: select
+      default: 'true'
+      required: true
+      rule: paramSelect
+      label:
+        en: Enable NVIDIA NVENC
+        zh: 启用 NVIDIA NVENC
+        zh-Hant: 啟用 NVIDIA NVENC
+        ja: NVIDIA NVENC を有効化
+        ko: NVIDIA NVENC 사용
+        ru: Включить NVIDIA NVENC
+        ms: Dayakan NVIDIA NVENC
+        pt-br: Habilitar NVIDIA NVENC
+      values:
+        - label: 'true'
+          value: 'true'
+        - label: 'false'
+          value: 'false'
+
+    - envKey: NVIDIA_VISIBLE_DEVICES
+      type: text
+      default: all
+      required: false
+      rule: paramCommon
+      label:
+        en: GPU devices to expose
+        zh: 暴露哪些 GPU
+        zh-Hant: 暴露哪些 GPU
+        ja: 公開する GPU
+        ko: 노출할 GPU
+        ru: Какие GPU открыть
+        ms: GPU yang didedahkan
+        pt-br: GPUs a expor
+
+    - envKey: NVIDIA_DRIVER_CAPABILITIES
+      type: text
+      default: compute,utility
+      required: false
+      rule: paramCommon
+      label:
+        en: NVIDIA driver capabilities
+        zh: NVIDIA 驱动能力
+        zh-Hant: NVIDIA 驅動能力
+        ja: NVIDIA ドライバー機能
+        ko: NVIDIA 드라이버 기능
+        ru: Возможности драйвера NVIDIA
+        ms: Keupayaan Pemandu NVIDIA
+        pt-br: Capacidades do driver NVIDIA

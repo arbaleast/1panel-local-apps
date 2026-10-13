@@ -1,0 +1,16 @@
+additionalProperties:
+  key: handbrake-web
+  name: HandBrake Web
+  type: tool
+  description:
+    en: TheNickOfTime/handbrake-web is a distributed HandBrake transcoding queue. Differs from handbrake/ (linuxserver single-container GUI). ⚠️ upstream is under heavy development. ⚠️ P620 NVENC not officially validated.
+    zh: TheNickOfTime/handbrake-web 是一个分布式 HandBrake 转码队列, 跟 handbrake/ (linuxserver 单 GUI) 是不同项目. ⚠️ upstream 注明 heavy development. ⚠️ P620 NVENC 官方未验证.
+  shortDescZh: HandBrake 分布式转码队列 (⚠️ heavy development)
+  shortDescEn: HandBrake distributed transcoding queue (⚠️ heavy dev)
+  website: https://github.com/TheNickOfTime/handbrake-web
+  github: https://github.com/TheNickOfTime/handbrake-web
+  tags:
+    - media
+    - transcoding
+    - handbrake
+    - distributed

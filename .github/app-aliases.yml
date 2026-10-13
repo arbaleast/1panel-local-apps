@@ -7,7 +7,9 @@
 
 aliases:
   handbrake:
-    desc: 视频转码
+    desc: 视频转码 (linuxserver, 单 GUI, P620 NVENC 已验证)
+  handbrake-web:
+    desc: 分布式 HandBrake 转码队列 (TheNickOfTime, ⚠️ heavy dev)
   jellyfin:
     dir: jellyfin
     desc: 媒体服务器

@@ -17,7 +17,8 @@
 | firecrawl | 网页爬虫 | 2.11.209 |
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
-| handbrake | 视频转码 | 1.11.2-ls41 |
+| handbrake | 视频转码 (linuxserver, 单 GUI, P620 NVENC 已验证) | 1.11.2-ls41 |
+| handbrake-web | 分布式 HandBrake 转码队列 (TheNickOfTime, ⚠️ heavy dev) | latest |
 | hindsight | AI 记忆系统 | 0.10.3 |
 | ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.17 |
 | immich | 照片管理 | v3.0.3 |
