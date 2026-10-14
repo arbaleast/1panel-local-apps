@@ -19,10 +19,83 @@ const REPO_ROOT = path.resolve(__dirname, '..', '..');
 // 应用目录直接在仓库根，不在 apps/ 子目录下
 const APPS_DIR = REPO_ROOT;
 
-const APPS_FILTER = (process.env.APPS_FILTER || '')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
+const APPS_FILTER = []; // 由 parseCliArgs 调用前填充（env + 位置参数），main 入口消费
+function initAppsFilter() {
+  if (APPS_FILTER.length > 0) return; // 幂等
+  const fromEnv = (process.env.APPS_FILTER || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  APPS_FILTER.push(...fromEnv);
+}
+
+// 进程级运行选项（由 parseCliArgs 填充，main 入口消费）
+// DRY_RUN:  true 时只输出 diff，不写盘、不创建新版本目录、不写 updates.json
+//          （dry-run 模式，commit 前自查用；fix(anirss PR #14) 与 bookorbit 倒退回退
+//           3.2.0 复盘教训：任何本地试运行都应该是只读）
+// HELP:     true 时打印 usage 并退出 0
+// VERBOSE:  true 时输出每个 formField 字段对比（dry-run 默认 false，正式模式有效）
+const processOptions = { DRY_RUN: false, HELP: false, VERBOSE: false };
+
+/**
+ * 打印 usage（--help / -h）到 stdout
+ */
+function printHelp() {
+  console.log(`detect-updates.mjs — 检测 hardcode 类应用镜像更新
+
+用法:
+  node .github/scripts/detect-updates.mjs [选项] [APPS_FILTER ...]
+
+选项:
+  --dry-run, -n       只检测与输出 diff，不写盘、不创建新版本目录、不写 updates.json
+                       （CRITICAL: 任何本地试运行都应加此标志，否则会真实修改仓库
+                        —— 审查 2026-10-14 复盘：bookorbit 3.4.0 被倒退回 3.2.0）
+  --verbose, -v       输出每个 formField 字段对比（默认仅在 dry-run 下隐式启用）
+  --help, -h          显示本帮助并退出
+
+环境变量:
+  APPS_FILTER         逗号分隔的应用短名 / 目录名列表（与命令行参数等价）
+  DETECT_DRY_RUN=1    等价于 --dry-run（与 flag 互斥时以 flag 为准）
+
+退出码:
+  0  完成（无更新 / 有更新 / dry-run 均视为正常）
+  1  脚本异常（依赖缺失 / 配置错误 / 内部异常）
+
+与 PR/push 流程配合:
+  本脚本只检测 + 写盘。'开 PR + 合并' 由 .github/bin/open-update-pr.mjs 在 CI 步骤调用。
+  本地试运行请用 --dry-run 避免污染工作树；CI 走的是正式模式（无 --dry-run）。
+`);
+}
+
+/**
+ * 解析命令行参数 + 环境变量，写入 processOptions
+ * 重复 flag 取最后一次；未知 flag 抛错（不静默）
+ * @param {string[]} argv - process.argv.slice(2)
+ * @returns {{positional: string[]}}
+ */
+export function parseCliArgs(argv) {
+  const positional = [];
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--dry-run' || a === '-n') {
+      processOptions.DRY_RUN = true;
+    } else if (a === '--verbose' || a === '-v') {
+      processOptions.VERBOSE = true;
+    } else if (a === '--help' || a === '-h') {
+      processOptions.HELP = true;
+    } else if (a.startsWith('--')) {
+      throw new Error(`未知参数: ${a}（查看用法：node detect-updates.mjs --help）`);
+    } else {
+      positional.push(a);
+    }
+  }
+  if (process.env.DETECT_DRY_RUN === '1' && !processOptions.DRY_RUN) {
+    processOptions.DRY_RUN = true;
+  }
+  // dry-run 默认隐式 verbose（让用户看清每个 formField 改动）
+  if (processOptions.DRY_RUN) processOptions.VERBOSE = true;
+  return { positional };
+}
 
 // 应用级白名单：detect 跳过这些应用, 保留手维护状态。
 // 原因:
@@ -164,12 +237,51 @@ function getAllVersionDirs(root, appDir) {
     const subPath = path.join(fullPath, sub.name);
     const hasDataYml = fs.existsSync(path.join(subPath, 'data.yml'));
     const hasCompose = fs.existsSync(path.join(subPath, 'docker-compose.yml'));
-
     if (hasDataYml || hasCompose) {
       candidates.push(sub.name);
     }
   }
   return candidates;
+}
+
+/**
+ * 写盘函数（DRY_RUN 时只 log，不真写）
+ * 统一处理两种写盘需求：单文件 + 新建目录
+ * 注意：DRY_RUN 下不再 cpSync 新版本目录（避免 dry-run 误污染），只输出 diff
+ *
+ * @param {string} appName - 应用名（仅 log 用）
+ * @param {{path: string, content: string}[]} changes - 待写盘的文件列表
+ * @param {{appName: string, fromDir: string, toDir: string}} [versionCopy] - 跨版本 cpSync
+ * @returns {boolean} true=已真写，false=dry-run 跳过
+ */
+function applyChanges(appName, changes, versionCopy) {
+  if (processOptions.DRY_RUN) {
+    if (changes.length > 0) {
+      log(appName, `[DRY-RUN] 跳过 ${changes.length} 个文件写盘`);
+    }
+    if (versionCopy) {
+      const overwriteNote = versionCopy.overwrite ? '（会覆盖现有目录）' : '';
+      log(appName, `[DRY-RUN] 跳过 cpSync: ${versionCopy.fromDir}/ -> ${versionCopy.toDir}/${overwriteNote}`);
+    }
+    return false;
+  }
+  if (versionCopy) {
+    const src = path.join(APPS_DIR, versionCopy.appName, versionCopy.fromDir);
+    const dst = path.join(APPS_DIR, versionCopy.appName, versionCopy.toDir);
+    if (fs.existsSync(dst)) {
+      log(appName, `⚠ 目标目录 ${versionCopy.toDir}/ 已存在，将覆盖`);
+      fs.rmSync(dst, { recursive: true, force: true });
+    }
+    fs.cpSync(src, dst, { recursive: true });
+    log(appName, `cpSync: ${versionCopy.fromDir}/ -> ${versionCopy.toDir}/`);
+  }
+  for (const change of changes) {
+    const filePath = path.join(REPO_ROOT, change.path);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, change.content, 'utf8');
+    log(appName, `写入 ${change.path}`);
+  }
+  return true;
 }
 
 async function processApp(appName) {
@@ -188,9 +300,37 @@ async function processApp(appName) {
     return null;
   }
 
+  // ── 跨版本保护：找出"已知最高版本"作为防倒退基准 ──────────────────
+  // 复盘（2026-10-14 审查）：bookorbit/3.4.0 与 3.2.0 同属变量型应用（共享 APP_VERSION envKey），
+  // detect 把两个 versionDir 都用同一份"最新 tag"覆盖，3.4.0 反而被 3.2.0 倒退回更低 tag。
+  // 解决：detect 只处理 maxKnown（最新已知 versionDir）这一个；其它 versionDir 是历史归档
+  // 保留在仓库供 1Panel UI 旧版本回滚用，**不应该**被 detect 覆盖。这与"cpSync 新版本目录
+  // 保留旧版"的设计哲学一致——只是把"不更新历史版本"提前到 detect 阶段。
+  // parse() 期望 string（v.replace），与现有 compare() 签名一致。
+  let maxKnown = null;
+  for (const vd of versionDirs) {
+    if (!parse(vd)) continue;
+    if (!maxKnown || compare(vd, maxKnown) > 0) maxKnown = vd;
+  }
+  if (maxKnown) {
+    log(appName, `跨版本保护: maxKnown=${maxKnown}（仅处理此 versionDir，历史归档保留）`);
+  } else {
+    // 所有 versionDir 都无法 semver 解析（如都是日期格式 2024.08.01）
+    // 此时回退到原行为：所有 versionDir 都处理（保兼容）
+    log(appName, '跨版本保护: 无可解析的 semver versionDir，回退到全量 detect');
+  }
+
   // 对每个版本目录分别处理
   const allUpdates = [];
   for (const versionDir of versionDirs) {
+    // 跨版本保护：只处理 maxKnown versionDir，历史归档保留
+    // 复盘（2026-10-14）：bookorbit/3.2.0 与 3.4.0 共用 APP_VERSION envKey，
+    // detect 把 3.2.0/default 改写为 3.4.0 后 cpSync 覆盖了 3.4.0/default 刚改写的 3.4.0，
+    // 互相"竞争"造成跨版本倒退。正确做法：每个 versionDir 单独维护，互不干扰。
+    if (maxKnown && versionDir !== maxKnown) {
+      log(appName, `跨版本保护: ${versionDir} 非 maxKnown=${maxKnown}，跳过（历史归档保留）`);
+      continue;
+    }
     const composePath = path.join(appDir, versionDir, 'docker-compose.yml');
     const dataPath = path.join(appDir, versionDir, 'data.yml');
 
@@ -344,17 +484,28 @@ async function processApp(appName) {
     const oldVersionDir = versionDir;
     const newVersionDir = maxTo;
 
+    // 不在这里真做 cpSync / rmSync ——
+    // 把"是否要 cpSync 新版本目录"记到 update.versionCopy 字段，由 main 末尾 applyChanges
+    // 统一在 DRY_RUN 判定后再做（DRY_RUN 模式下只 log 不真复制，避免污染工作树）
+    let versionCopy = null;
     if (oldVersionDir === newVersionDir) {
       log(appName, `${versionDir} 目标版本与当前一致 (${newVersionDir})，跳过目录操作`);
     } else {
       const newDir = path.join(appDir, newVersionDir);
-      if (fs.existsSync(newDir)) {
+      const newDirExists = fs.existsSync(newDir);
+      if (newDirExists) {
         log(appName, `⚠ 目标目录 ${newVersionDir}/ 已存在，将覆盖`);
-        fs.rmSync(newDir, { recursive: true, force: true });
       }
-      // 复制当前版本目录的全部内容到新版本目录
-      fs.cpSync(path.join(appDir, oldVersionDir), newDir, { recursive: true });
-      log(appName, `新建版本目录: ${oldVersionDir}/ -> ${newVersionDir}/（旧版保留）`);
+      // 注意：先于 cpSync 读一次源目录的 compose/data.yml 用于新版本改写
+      // （在 cpSync 之前，避免源被覆盖；这里只在内存操作，不写盘）
+      versionCopy = {
+        appName,
+        fromDir: oldVersionDir,
+        toDir: newVersionDir,
+        // exists 标记让 applyChanges 在 DRY_RUN log 时一并说明
+        overwrite: newDirExists,
+      };
+      log(appName, `[pending] cpSync: ${oldVersionDir}/ -> ${newVersionDir}/（DRY_RUN 不真做）`);
     }
 
     // 内存中替换 compose / data.yml
@@ -393,11 +544,20 @@ async function processApp(appName) {
     }
     newData = serializeYaml(dataObj);
 
+    // 幂等保护：newData 与 dataContent 完全相同 → 跳过整个 app
+    // 防"已最新"被误判为有更新（理论上 getLatestTag 已过滤 latest===currentTag，
+    // 但 formField.default 字符串化时若带尾随空白或 yaml 顺序不同仍可能差 1 字节），
+    // 此处双保险：序列化后整文对比。
+    if (newData === dataContent && newCompose === composeContent) {
+      log(appName, `${versionDir} 幂等: 写入内容与现有完全一致，跳过`);
+      continue;
+    }
+
     // 写入新版本目录
     changes.push({ path: `${appName}/${newVersionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
     changes.push({ path: `${appName}/${newVersionDir}/data.yml`, content: newData, to: maxTo });
 
-    allUpdates.push({ app: appName, from: minFrom, to: maxTo, services: serviceChanges, changes, versionDir });
+    allUpdates.push({ app: appName, from: minFrom, to: maxTo, services: serviceChanges, changes, versionDir, versionCopy });
   }
 
   if (allUpdates.length === 0) return null;
@@ -428,17 +588,26 @@ async function main() {
       const r = await processApp(app);
       if (r) updates.push(...r); // processApp 现在返回数组
     } catch (e) {
-      log(app, '处理失败:', e.message);
+      if (processOptions.VERBOSE) {
+        log(app, '处理失败:', e.stack || e);
+      } else {
+        log(app, '处理失败:', e.message);
+      }
     }
   }
 
   // 将检测到的变更写入磁盘（供后续 git add 提交）
+  // DRY_RUN 模式下只输出 diff，不真写（applyChanges 内部判定）
+  // 注意：必须先做 versionCopy（cpSync + rmSync）再做 changes（覆盖 compose/data.yml），
+  // 否则覆盖会写到一个不存在的目录中。
   for (const update of updates) {
-    for (const change of update.changes) {
-      const filePath = path.join(REPO_ROOT, change.path);
-      fs.mkdirSync(path.dirname(filePath), { recursive: true });
-      fs.writeFileSync(filePath, change.content, 'utf8');
-      log(update.app, `写入 ${change.path}`);
+    if (update.versionCopy) {
+      applyChanges(update.app, [], update.versionCopy);
+    }
+  }
+  for (const update of updates) {
+    if (update.changes.length > 0) {
+      applyChanges(update.app, update.changes);
     }
   }
 
@@ -447,9 +616,16 @@ async function main() {
   //   - 无更新: updates.json 写空数组, has-updates=false, job success
   //   - 有更新: updates.json 写非空数组, has-updates=true, 开 PR 步骤跑
   // 真正异常（脚本崩溃 / 依赖缺失）由 main().catch 兜底 process.exit(1)。
+  // DRY_RUN 模式下 updates.json 也只输出到 stdout，不写盘（避免污染工作树）
   const out = { updates, scanned: targetApps.length, timestamp: new Date().toISOString() };
-  fs.writeFileSync('updates.json', JSON.stringify(out, null, 2));
-  log(`完成: ${updates.length} 个版本有更新`);
+  if (processOptions.DRY_RUN) {
+    log(`[DRY-RUN] 完成: ${updates.length} 个版本有更新（不写 updates.json）`);
+    log(`[DRY-RUN] updates.json preview:`);
+    console.log(JSON.stringify(out, null, 2));
+  } else {
+    fs.writeFileSync('updates.json', JSON.stringify(out, null, 2));
+    log(`完成: ${updates.length} 个版本有更新`);
+  }
 }
 
 // 仅当作为 CLI 直接执行（而非被 import）时才跑 main()。
@@ -462,8 +638,27 @@ const isCliInvocation =
   import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
 
 if (isCliInvocation) {
+  // 1. 先从 env 读取 APPS_FILTER
+  initAppsFilter();
+  // 2. 解析 CLI 参数（含 --dry-run / --help / --verbose / 位置参数）
+  //    注：必须在 main 之前调用，因为 processOptions 影响 main 内部的写盘行为
+  let cliPositional;
+  try {
+    cliPositional = parseCliArgs(process.argv.slice(2)).positional;
+  } catch (e) {
+    console.error('[detect]', e.message);
+    process.exit(1);
+  }
+  // 3. 把位置参数合并到 APPS_FILTER（与 GITHUB ENV 等价）
+  if (cliPositional.length > 0) {
+    APPS_FILTER.push(...cliPositional.filter(Boolean));
+  }
+  if (processOptions.HELP) {
+    printHelp();
+    process.exit(0);
+  }
   main().catch((e) => {
-    console.error(e);
+    console.error(e.stack || e);
     process.exit(1);
   });
 }
