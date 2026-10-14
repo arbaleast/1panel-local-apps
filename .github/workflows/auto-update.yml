@@ -97,10 +97,20 @@ jobs:
         run: |
           echo "## 检测结果" >> $GITHUB_STEP_SUMMARY
           if [[ -f updates.json ]]; then
-            echo '```json' >> $GITHUB_STEP_SUMMARY
-            cat updates.json >> $GITHUB_STEP_SUMMARY
-            echo '' >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            # 不直接 cat updates.json —— 单次 run 命中 30+ 应用时 changes[].content
+            # 内嵌完整 data.yml 会让 step summary 超过 GitHub 1 MiB 硬限制。
+            # 改为输出 app/version 摘要表（<2 KiB），完整 diff 由 PR 视图承载。
+            node -e "
+              const d = require('./updates.json');
+              const s = d.scanned;
+              const n = d.updates.length;
+              let md = '\n扫描: ' + s + ' 个应用\n命中: ' + n + ' 个更新\n\n| App | From | To | Services |\n|---|---|---|---|\n';
+              d.updates.forEach(u => {
+                const svc = u.services.map(x => x.name).join(', ');
+                md += '| ' + u.app + ' | ' + (u.from || '(new)') + ' | ' + u.to + ' | ' + svc + ' |\n';
+              });
+              process.stdout.write(md);
+            " >> $GITHUB_STEP_SUMMARY
           else
             echo "无 updates.json 生成" >> $GITHUB_STEP_SUMMARY
           fi
