@@ -13,6 +13,9 @@ aliases:
   jellyfin:
     dir: jellyfin
     desc: 媒体服务器
+  kdenlive:
+    dir: kdenlive
+    desc: 视频剪辑器 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速)
   kiwix-serve:
     desc: 离线维基百科与 ZIM 内容服务器
   immich:

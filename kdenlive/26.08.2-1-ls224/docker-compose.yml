@@ -1,0 +1,101 @@
+networks:
+    1panel-network:
+        external: true
+
+# ============================================================
+# Kdenlive 26.08.2-1-ls224 — KDE 专业视频剪辑器 (浏览器 GUI)
+#   上游:   https://github.com/linuxserver/docker-kdenlive
+#   镜像:   linuxserver/kdenlive:26.08.2-1-ls224
+#     基础镜像: lsiobase/selkies (Debian, s6-overlay + Selkies WebRTC)
+#     GUI 协议: Selkies (HTTP 3000 / HTTPS 3001 / WS 8082)
+#     入口: ENTRYPOINT ["/init"] (s6-overlay suexec)
+#     VOLUME: /config    EXPOSE: 3000 3001
+#
+# 关键设计点:
+#   1. **s6-overlay 镜像 — 禁止 init: true**:
+#      linuxserver/* 全系用 s6-overlay, CMD 是 ["/init"]。init: true 会让
+#      docker 注入 tini 抢占 PID 1, 触发 `s6-overlay-suexec: fatal: can only
+#      run as pid 1` 早退 → restart: always 反复重拉。
+#      同源禁忌: 也不要加 user: (s6 需 root 降权) 或 pid: (改写 PID 1)。
+#      见 AGENTS.md "使用 s6-overlay 的镜像不能加 init: true"。
+#
+#   2. **媒体目录挂载变量 (${MEDIA_PATH} → /storage)**:
+#      Kdenlive 需要读写宿主机上的素材与导出成片, 所以保留 MEDIA_PATH 变量,
+#      1Panel 表单里填宿主机绝对路径 (如 /data/media/videos)。
+#      - 容器内固定挂到 /storage (Kdenlive 打开对话框可直接看到该目录)
+#      - 留空 = 容器内 /storage 为空目录, 仍可用 Selkies 侧边栏文件管理器上传
+#      - 追加挂载: 1Panel UI 部署后可在"容器 → 存储"里再加目录, 无需改 compose
+#      - /config 持久化 Kdenlive 工程 / 代理 / 插件 / Selkies 证书
+#
+#   3. **NVIDIA P620 (Pascal / GP107GL) 硬件加速**:
+#      - runtime: nvidia  → 触发 nvidia-container-runtime, 把宿主 /dev/nvidia*
+#        + NVIDIA 用户态库注入容器 (这才是 GPU 真正"挂载"的动作)
+#      - device_cgroup_rules 'c 195:* rw' → 即便 nvidia runtime 不可用,
+#        cgroup 仍放行 195 号 NVIDIA 字符设备读写, 避免 EACCES
+#      - NVIDIA_VISIBLE_DEVICES=all → 注入全部可见 GPU (P620 即被识别)
+#      - NVIDIA_DRIVER_CAPABILITIES 必须含:
+#          * compute → CUDA runtime / libcuda.so
+#          * video   → **NVDEC + NVENC**, Kdenlive 的 MLT/FFmpeg 走
+#                      h264_nvenc / hevc_nvenc 硬件编码的关键
+#          * utility → nvidia-smi 等工具
+#          * graphics→ EGL / GLX, 让 Kdenlive 预览窗口走 GPU 渲染 (P620 有 OpenGL 4.6)
+#      - P620 是 GP107GL, NVENC 支持 H.264/H.265 编码, 适合本项目目标负载
+#      - 宿主前置条件 (README 有详述): 驱动 >= 470 (推荐 580 最后一个支持
+#        Pascal 的分支) + nvidia-container-toolkit + 内核参数
+#        nvidia-drm.modeset=1 nvidia_drm.fbdev=1 + 无头机需插 HDMI 欺骗器
+#
+#   4. **PIXELFLUX_WAYLAND 默认 false (X11/Xvfb 路径)**:
+#      镜像默认 PIXELFLUX_WAYLAND=true 会走 Smithay+Labwc 的 Wayland 路径。
+#      纯 X11 (Xvfb) + 软件 OpenGL 路径在无头宿主上更稳定, 且 P620 的
+#      Pascal 驱动在 Smithay/Weston 合成器上偶有黑屏, 因此默认强制 false
+#      走 X11 路径 (与本仓 handbrake 应用保持一致)。想试 Wayland 可在
+#      1Panel 表单把该字段切成 true。
+# ============================================================
+
+services:
+    kdenlive:
+        container_name: ${CONTAINER_NAME}
+        deploy:
+            resources:
+                limits:
+                    cpus: ${CPUS}
+                    memory: ${MEMORY_LIMIT}
+        volumes:
+            # Kdenlive 配置 / 工程 / 代理 / 插件 + Selkies 证书与 s6 状态
+            - ./data/config:/config
+            # 媒体素材库: 1Panel 表单 MEDIA_PATH 填宿主机绝对路径, 容器内固定 /storage
+            # 留空则 /storage 为空目录 (仍可用 Selkies 文件管理器上传素材)
+            - ${MEDIA_PATH}:/storage
+        environment:
+            # 基础设置
+            - PUID=${PUID}
+            - PGID=${PGID}
+            - TZ=${TIME_ZONE}
+            - UMASK_SET=${UMASK_SET}
+            # Selkies 页面标题 / Basic Auth (PASSWORD 留空 = 不启用认证)
+            - TITLE=${TITLE}
+            - CUSTOM_USER=${CUSTOM_USER}
+            - PASSWORD=${PASSWORD}
+            - DASHBOARD=${DASHBOARD}
+            - LC_ALL=${LC_ALL}
+            # NVIDIA GPU (P620 / Pascal) — 详见上方注释
+            - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
+            - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
+            - NVIDIA_ENABLE=${NVIDIA_ENABLE}
+            # 渲染模式: false = X11/Xvfb (默认, 无头宿主更稳); true = Wayland+Labwc
+            - PIXELFLUX_WAYLAND=${PIXELFLUX_WAYLAND:-false}
+        # NVIDIA GPU 设备 cgroup 规则(主设备号 195): 即使没有 runtime: nvidia 也能让容器内的 cgroup 允许访问 195 号字符设备
+        # 真正把宿主 /dev/nvidia* 与 NVIDIA 库注入容器的是 nvidia-container-runtime,通过 runtime: nvidia 触发
+        # NVIDIA_ENABLE=true 时该 runtime 方会拉起 nvidia-container-cli; 留 false 也不影响 s6 启动
+        device_cgroup_rules:
+            - 'c 195:* rw'
+        runtime: nvidia
+        image: linuxserver/kdenlive:26.08.2-1-ls224
+        labels:
+            createdBy: Apps
+        networks:
+            - 1panel-network
+        ports:
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3000
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTPS}:3001
+        restart: always

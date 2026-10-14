@@ -1,0 +1,26 @@
+additionalProperties:
+  key: kdenlive
+  name: Kdenlive
+  tags:
+    - Local
+    - video
+    - editor
+    - GPU
+  shortDescZh: Kdenlive 专业视频剪辑 (浏览器 GUI, 支持 NVIDIA P620 硬件加速)
+  shortDescEn: Kdenlive professional video editor (browser GUI, NVIDIA P620 acceleration)
+  description:
+    zh: 基于 linuxserver.io 官方镜像的 Kdenlive 专业视频剪辑器。通过 Selkies WebRTC 在浏览器中直接使用完整 KDE 桌面版 Kdenlive，无需安装本地客户端。支持保留媒体目录挂载变量（素材库直接以宿主机路径挂入容器），并内置 NVIDIA GPU 硬件加速（NVENC 编码 / OpenGL 渲染），已针对 NVIDIA Quadro P620（Pascal 架构）调优。
+    en: Kdenlive professional video editor based on the official linuxserver.io image. The full KDE desktop edition of Kdenlive runs in the browser through Selkies WebRTC, with no local client installation required. Keeps a media-directory mount variable so footage libraries are mounted straight from the host, and ships NVIDIA GPU hardware acceleration (NVENC encoding / OpenGL rendering) tuned for the NVIDIA Quadro P620 (Pascal architecture).
+    zh-Hant: 基於 linuxserver.io 官方映像的 Kdenlive 專業影片剪輯器。透過 Selkies WebRTC 直接在瀏覽器中使用完整 KDE 桌面版 Kdenlive，無需安裝本機用戶端。支援保留媒體目錄掛載變數（素材庫直接以主機路徑掛入容器），並內建 NVIDIA GPU 硬體加速（NVENC 編碼 / OpenGL 算繪），已針對 NVIDIA Quadro P620（Pascal 架構）調校。
+    ja: linuxserver.io 公式イメージベースの Kdenlive プロフェッショナル動画編集ソフト。Selkies WebRTC 経由でフル KDE デスクトップ版 Kdenlive をブラウザ上で直接使え、ローカルクライアントのインストールは不要。メディアディレクトリのマウント変数を保持し、素材ライブラリをホストパスから直接マウントでき、NVIDIA GPU ハードウェアアクセラレーション（NVENC エンコード / OpenGL レンダリング）を内蔵し、NVIDIA Quadro P620（Pascal アーキテクチャ）向けに調整済み。
+    ko: linuxserver.io 공식 이미지 기반 Kdenlive 전문 비디오 편집기. Selkies WebRTC를 통해 전체 KDE 데스크톱 버전 Kdenlive를 브라우저에서 직접 사용할 수 있어 로컬 클라이언트 설치가 필요 없습니다. 미디어 디렉터리 마운트 변수를 유지해 소재 라이브러리를 호스트 경로에서 직접 마운트하며, NVIDIA GPU 하드웨어 가속(NVENC 인코딩 / OpenGL 렌더링)이 내장되어 NVIDIA Quadro P620(Pascal 아키텍처)에 맞춰 조정되었습니다.
+    ru: Kdenlive — профессиональный видеоредактор на базе официального образа linuxserver.io. Полная настольная версия Kdenlive для KDE запускается прямо в браузере через Selkies WebRTC, локальная установка не требуется. Сохраняет переменную монтирования медиакаталога, так что библиотеки исходников подключаются напрямую с хоста, и включает аппаратное ускорение NVIDIA GPU (кодирование NVENC / рендеринг OpenGL), настроенное под NVIDIA Quadro P620 (архитектура Pascal).
+    ms: Kdenlive — editor video profesional berdasarkan imej rasmi linuxserver.io. Versi desktop KDE penuh Kdenlive berjalan terus dalam pelayar melalui Selkies WebRTC, tanpa perlu pemasangan klien tempatan. Ia mengekalkan pemboleh mount direktori media supaya pustaka bahan mentah dipasang terus daripada hos, dan menyertakan pecutan perkakasan GPU NVIDIA (penyencodingan NVENC / pemaparan OpenGL) yang ditala untuk NVIDIA Quadro P620 (seni bina Pascal).
+    pt-br: Kdenlive — editor de vídeo profissional baseado na imagem oficial do linuxserver.io. A versão desktop completa do KDE do Kdenlive roda direto no navegador via Selkies WebRTC, sem instalação de cliente local. Mantém uma variável de montagem de diretório de mídia para que as bibliotecas de material bruto sejam montadas direto do host, e inclui aceleração de hardware GPU NVIDIA (codificação NVENC / renderização OpenGL) ajustada para a NVIDIA Quadro P620 (arquitetura Pascal).
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://kdenlive.org/
+  github: https://github.com/linuxserver/docker-kdenlive
+  document: https://docs.linuxserver.io/images/docker-kdenlive/
