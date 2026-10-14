@@ -228,7 +228,7 @@ additionalProperties:
         pt-br: UID do processo
       required: false
       rule: paramCommon
-      type: text
+      type: number
     - default: "1000"
       edit: true
       envKey: PGID
@@ -245,7 +245,7 @@ additionalProperties:
         pt-br: GID do processo
       required: false
       rule: paramCommon
-      type: text
+      type: number
     - default: auto
       edit: true
       envKey: NODE_MAX_OLD_SPACE_SIZE

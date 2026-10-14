@@ -301,7 +301,7 @@ additionalProperties:
         pt-br: UID do processo
       required: false
       rule: paramCommon
-      type: text
+      type: number
     # ----------------------------------------------------------------------------
     # 容器进程 GID（与宿主机挂载目录属主一致，常见 NAS 用户为 1000）
     # ----------------------------------------------------------------------------
@@ -321,7 +321,7 @@ additionalProperties:
         pt-br: GID do processo
       required: false
       rule: paramCommon
-      type: text
+      type: number
     # ----------------------------------------------------------------------------
     # Node.js 堆内存上限（MB；auto = 容器自动检测；大库可调高至 4096+）
     # ----------------------------------------------------------------------------

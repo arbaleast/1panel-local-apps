@@ -48,7 +48,7 @@ additionalProperties:
         ms: PUID (ID Pengguna)
         pt-br: PUID (ID do Usuário)
       required: true
-      type: text
+      type: number
     - default: "100"
       edit: true
       envKey: PGID
@@ -64,7 +64,7 @@ additionalProperties:
         ms: PGID (ID Kumpulan)
         pt-br: PGID (ID do Grupo)
       required: true
-      type: text
+      type: number
     - default: Asia/Shanghai
       edit: true
       envKey: TZ
