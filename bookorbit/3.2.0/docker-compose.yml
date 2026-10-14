@@ -44,7 +44,9 @@ services:
     container_name: ${CONTAINER_NAME}
     image: ${APP_IMAGE}:${APP_VERSION}
     restart: always
-    init: true
+    # 不要 init: true —— bookorbit 镜像 Dockerfile 已显式 ENTRYPOINT ["/sbin/tini", "-s", "--"]
+    # 套了 tini 作 PID 1，再加 init: true 会变成 tini → tini → entrypoint.sh 双重 init 套娃
+    # （与 s6-overlay / 自带 init 的镜像同源禁忌，详见 AGENTS.md "Common Pitfalls"）
     networks:
       - 1panel-network
     labels:
