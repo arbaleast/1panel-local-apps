@@ -124,3 +124,70 @@ additionalProperties:
     labelZh: Embeddings 模型
     required: false
     type: text
+  - default: '0.0.0.0'
+    edit: true
+    envKey: HINDSIGHT_API_HOST
+    labelEn: API Bind Host
+    labelZh: API 绑定主机
+    required: false
+    type: text
+  - default: '8888'
+    edit: true
+    envKey: HINDSIGHT_API_PORT
+    labelEn: API Port (in-container)
+    labelZh: API 端口（容器内）
+    required: false
+    type: number
+  - default: 'true'
+    edit: true
+    envKey: HINDSIGHT_ENABLE_CP
+    labelEn: Enable Control Plane (Web UI)
+    labelZh: 启用控制台 (Web UI)
+    required: false
+    type: select
+    values:
+    - label: 'true'
+      value: 'true'
+    - label: 'false'
+      value: 'false'
+  - default: '0.0.0.0'
+    edit: true
+    envKey: HINDSIGHT_CP_HOST
+    labelEn: Control Plane Bind Host
+    labelZh: 控制台绑定主机
+    required: false
+    type: text
+  - default: '9999'
+    edit: true
+    envKey: HINDSIGHT_CP_PORT
+    labelEn: Control Plane Port (in-container)
+    labelZh: 控制台端口（容器内）
+    required: false
+    type: number
+  - default: http://localhost:8888
+    edit: true
+    envKey: HINDSIGHT_CP_DATAPLANE_API_URL
+    labelEn: Control Plane → API URL
+    labelZh: 控制台 → API 地址
+    required: false
+    type: text
+  - default: local
+    edit: true
+    envKey: HINDSIGHT_API_RERANKER_PROVIDER
+    labelEn: Reranker Provider
+    labelZh: Reranker 提供方
+    required: true
+    type: select
+    values:
+    - label: local (内置 cross-encoder)
+      value: local
+    - label: tei (HuggingFace TEI)
+      value: tei
+    - label: cohere
+      value: cohere
+    - label: flashrank
+      value: flashrank
+    - label: rrf (Reciprocal Rank Fusion)
+      value: rrf
+    - label: zeroentropy
+      value: zeroentropy
