@@ -122,6 +122,6 @@ additionalProperties:
   github: https://github.com/Jellman86/optimisarr
   document: https://github.com/Jellman86/optimisarr#readme
 
-  name: Optimisarr
-  title: Optimisarr 媒体库优化器
-  description: Optimisarr 安全优先的 FFmpeg 媒体库优化器（验证 + 回滚）— Plex / Jellyfin / Emby
+name: Optimisarr
+title: Optimisarr 媒体库优化器
+description: Optimisarr 安全优先的 FFmpeg 媒体库优化器（验证 + 回滚）— Plex / Jellyfin / Emby
