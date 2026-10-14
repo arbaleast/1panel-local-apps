@@ -56,7 +56,7 @@
 
 ## lib/ 模块
 
-仓库根 [.github/lib/](.github/lib/) 下三个 ESM 模块为脚本层提供共享能力：
+仓库根 [.github/lib/](.github/lib/) 下五个 ESM 模块为脚本层提供共享能力：
 
 | 文件 | 职责 | 关键导出 |
 |---|---|---|
@@ -64,6 +64,7 @@
 | [`lib/registry.mjs`](.github/lib/registry.mjs:1) | DockerHub / GHCR 适配器、镜像字符串解析 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` |
 | [`lib/apps.mjs`](.github/lib/apps.mjs:1) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` |
 | [`lib/schema.mjs`](.github/lib/schema.mjs:1) | data.yml 结构定义与校验规则（纯 JS，无第三方依赖） | `validateFormField` / `validateKeyMatch` / `validateUrlField` / `normalizeFormField` / `FORMFIELD_TYPE_WHITELIST` |
+| [`lib/compose.mjs`](.github/lib/compose.mjs:1) | compose image 模板解析（单/双 envKey 形态）与 formField 重组 | `resolveImageTemplate` / `rebuildImageDefault` |
 
 ### 本地跑测试
 
@@ -263,3 +264,80 @@ variant 识别扩展为 3 种 currentTag 形态：
 - 测试覆盖不足：原 `registry.test.mjs` 只测了 `pg` / `railway`（anythingllm 业务），没有 `v3.2.X-arm32v7` 这种 semver+suffix 形态。新增 case 14-17 锁死该形态。
 - DEBUG 日志 `[DEBUG-hindsight]` 这种前缀在 PR 合入时**没有清理**——下次类似 PR 应检查 `git grep DEBUG-`。
 - `pickLatest` 的 `PURE_SEMVER_RE` 过滤是双刃剑：把变体 tag 当作"非 semver"丢掉，导致上游有同 suffix 但版本号低时不报错。需要上游**专门**给 suffix 维度筛选（不能完全靠 pickLatest 退路）。
+
+## bookorbit 等 9 个双 envKey 变量型应用不更新根因复盘（2026-10-14）
+
+**症状**：上游 bookorbit 在 2026-10-14 之前已发布 `ghcr.io/bookorbit/bookorbit:3.4.0`，但本仓 `bookorbit/3.2.0/` 仍停留在 3.2.0；其它 8 个用 `image: ${IMAGE}:${APP_VERSION}` 双 envKey 形态的应用（photoprism/mineru/onenav/cinny/music-tag-web/navi-homepage/newapi/xunlei）同样检不出新版本。`detect-updates.mjs` 静默跳过这些应用，cron 不出 PR。
+
+**根因**（[`.github/scripts/detect-updates.mjs`](.github/scripts/detect-updates.mjs) 旧 240-288 行变量型分支）：
+
+变量型分支的设计假设是"image 模板只含 1 个 `${VAR}`，且该 envKey 的 `formField.default` 持有完整镜像字符串"。代码 `defaultVal.split(':')` 拿 `(imageRepo, currentTag)`：
+
+```js
+for (const envKey of varEnvKeys) {
+  // 查 field.default 后 split(':')
+  const [imageRepo, currentTag] = defaultVal.split(':');
+  if (!imageRepo || !currentTag) continue;  // ← 这里静默 continue
+}
+```
+
+但 bookorbit 这 9 个应用把镜像拆成两个 envKey：
+
+- `APP_IMAGE` default = `ghcr.io/bookorbit/bookorbit`（无 tag）→ split 后 `currentTag = undefined` → continue
+- `APP_VERSION` default = `3.2.0` → split 后 `imageRepo = '3.2.0'`、`currentTag = undefined` → continue
+
+两个 envKey 单独都失败，**整个变量型分支对双 envKey 形态输出 0 更新**。
+
+**直接验证**（`.agent_cache/dryrun-bookorbit-variable.mjs`，跑完已清理）：
+
+```
+[APP_IMAGE] defaultVal="ghcr.io/bookorbit/bookorbit"  split → imageRepo="..."  currentTag=undefined  → continue
+[APP_VERSION] defaultVal="3.2.0"  split → imageRepo="3.2.0"  currentTag=undefined  → continue
+```
+
+旁证：`grep "image: \${X}:\${Y}" --include=docker-compose.yml -r .` 命中 9 个应用，全部中招。
+
+**修复**（新增 [`lib/compose.mjs`](.github/lib/compose.mjs)，detect 变量型分支改写）：
+
+把"按 envKey 单独 split"换成 `resolveImageTemplate(image, fields)` 纯函数，**统一处理 2 种变量型形态**：
+
+1. **单 envKey 持有完整字符串**（`image: ghcr.io/foo/bar:${VERSION}` + `VERSION.default = 'ghcr.io/foo/bar:v1.19.18'`）—— 原行为，AGENTS.md 注释的 mihomo 业务
+2. **双 envKey 拆 repo/tag**（`image: ${APP_IMAGE}:${APP_VERSION}` + `APP_IMAGE.default = 'repo'`, `APP_VERSION.default = 'tag'`）—— bookorbit 等 9 个应用，**新增支持**
+
+`resolveImageTemplate` 返回 `{imageRepo, currentTag, envKey, defaultVal, newDefaultVal}`，detect 拿到这个对象后调 `rebuildImageDefault(image, envKey, imageRepo, latest)` 计算写回 formField 的新值：
+
+- 形态 2（单 envKey）：`newDefaultVal = "imageRepo:newTag"`（直接覆盖那个 field）
+- 形态 3（双 envKey）：`newDefaultVal = "newTag"`（只覆盖 tag 那个 field，repo 字段不动）
+
+detect 末尾的写回逻辑（[`.github/scripts/detect-updates.mjs:384-397`](.github/scripts/detect-updates.mjs:384)）**已天然兼容**两种形态，零修改。
+
+**回归测试**（新增 [`lib/compose.test.mjs`](.github/lib/compose.test.mjs)，19 case）：
+
+- 形态 2：`${VERSION}` + field.default 含完整字符串 → 正确拆出 repo/tag
+- 形态 2 边界：default 不含 `:`、envKey 找不到、default 为空 → null
+- 形态 2 边界：registry 端口在 repo 段内（`ghcr.io:443/foo`）→ `lastIndexOf` 仍正确
+- 形态 3 核心：bookorbit `${APP_IMAGE}:${APP_VERSION}` → 正确拆出，envKey 指向 `APP_VERSION`
+- 形态 3 核心：photoprism 复杂 tag `260919-28c46a116` → 正确处理
+- 形态 3 边界：envKey 之一缺失 / 默认值含 `:` / 默认值都为空 / 3+ envKey → 全部 null（保守放弃）
+
+**端到端验证**（`.agent_cache/dryrun-bookorbit-after-fix.mjs`，跑完已清理）：
+
+```
+[app] ✓ resolved: imageRepo=ghcr.io/bookorbit/bookorbit  currentTag=3.2.0  envKey=APP_VERSION
+    ⚠ 3.2.0 -> 3.4.0  |  APP_VERSION.default 改写为 "3.4.0"
+```
+
+旁证 8 个其它应用全部 1+ service 可解析，修复**全部受益**。`npm test` 88/88 通过（原 69 + 新增 19），lint 0 新增错误。
+
+**教训**：
+
+- 变量型 compose 模板有**至少 2 种形态**（单 envKey 持有完整字符串 / 多 envKey 拆 repo 和 tag），原代码只覆盖前者。所有"只假设一种输入形态"的逻辑都应在 `lib/` 层建纯函数 + 配套测试，避免在 detect 入口堆 if-else。
+- "按 envKey 单独循环"是双 envKey 形态的**根本反模式**——`split(':')` 无法在多 envKey 场景工作。修复的本质是把"对 envKey 循环"换成"对 image 整体解析一次"。
+- AGENTS.md 注释里只举了 `mihomo` 一种业务，导致 9 个应用上线时无人发现假设不成立。**新加 formField 类型时必须在 AGENTS.md 列出全部已知的 compose 形态**，否则静默失败。
+- 端到端 dry-run 之前要确认副作用：detect 写盘（`updates.json` + 新版本目录）会真的改仓库。隔离办法是 `.agent_cache/dryrun-*.mjs` + `rmSync` 清理，符合"Trace-less Execution"。
+
+**相关文件**：
+
+- [`lib/compose.mjs`](.github/lib/compose.mjs) — 纯函数实现
+- [`lib/compose.test.mjs`](.github/lib/compose.test.mjs) — 19 case 回归测试
+- [`scripts/detect-updates.mjs`](.github/scripts/detect-updates.mjs) — 变量型分支改用 `resolveImageTemplate`

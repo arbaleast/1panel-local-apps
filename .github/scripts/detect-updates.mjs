@@ -12,6 +12,7 @@ import * as yaml from 'js-yaml';
 import { parse, compare } from '../lib/semver.mjs';
 import { createAdapter } from '../lib/registry.mjs';
 import { listApps } from '../lib/apps.mjs';
+import { resolveImageTemplate, rebuildImageDefault } from '../lib/compose.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -226,65 +227,60 @@ async function processApp(appName) {
     }
 
     // ── 变量型应用处理 ──────────────────────────────────────────────
-    // 变量型 compose 示例：image: ${IMAGE}
-    // 从 formField.default 中取完整镜像字符串（如 ghcr.io/metacubex/mihomo:v1.19.18）
-    // 检测 registry 是否有新 tag → 新建版本目录（以 tag 为目录名）→ 更新 compose 和 formField.default
+    // 变量型 compose 示例（bookorbit/photoprism/mineru/... 等 9 个应用都中这条分支）：
+    //   - 单 envKey: image: ghcr.io/metacubex/mihomo:${VERSION}  field.default = 'ghcr.io/...:v1.19.18'
+    //   - 双 envKey: image: ${APP_IMAGE}:${APP_VERSION}            APP_IMAGE=repo, APP_VERSION=tag
+    // 两种形态都通过 lib/compose.mjs 的 resolveImageTemplate 统一解析为 (imageRepo, currentTag)，
+    // 修复了原"按 envKey 单独 split(':')"对双 envKey 形态静默失败的 bug（2026-10-14 排查）。
     const variableTagChanges = [];
     const dataObj = parseDataYml(dataContent);
+    const formFields = dataObj?.additionalProperties?.formFields || [];
     for (const svc of variable) {
-      const varEnvKeys = [];
-      // 从 image 字符串中提取 ${VAR} 环境变量名
-      const matches = svc.image.matchAll(/\$\{([^}]+)\}/g);
-      for (const m of matches) varEnvKeys.push(m[1]);
-
-      for (const envKey of varEnvKeys) {
-        // 查找对应 formField
-        const fields = dataObj?.additionalProperties?.formFields || [];
-        const fieldIdx = fields.findIndex(f => f.envKey === envKey);
-        if (fieldIdx === -1) continue;
-        const field = fields[fieldIdx];
-        const defaultVal = String(field.default ?? '');
-        if (!defaultVal) continue;
-
-        // 提取镜像 repo 和当前 tag
-        const [imageRepo, currentTag] = defaultVal.split(':');
-        if (!imageRepo || !currentTag) continue;
-
-        // 检查 tag 是否为 latest（跳过）
-        if (currentTag === 'latest') {
-          log(appName, svc.name, `${envKey}=${defaultVal} ⚠ tag=latest，跳过`);
-          continue;
-        }
-
-        // 过滤不稳定关键字
-        const UNSTABLE = /^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/;
-        if (UNSTABLE.test(currentTag)) {
-          log(appName, svc.name, `${envKey}=${defaultVal} ⚠ 包含不稳定关键字 "${currentTag}"，跳过`);
-          continue;
-        }
-
-        // 向 registry 请求最新 tag（传递当前 tag 用于变体匹配）
-        const latest = await getLatestTag(defaultVal, currentTag);
-        if (!latest) {
-          log(appName, svc.name, `${envKey}=${defaultVal} 无法获取最新 tag`);
-          continue;
-        }
-        if (latest === currentTag) {
-          log(appName, svc.name, `${envKey}=${defaultVal} 已是最新`);
-          continue;
-        }
-
-        log(appName, svc.name, `${envKey}=${defaultVal} ⚠ ${currentTag} -> ${latest}`);
-        variableTagChanges.push({
-          svcName: svc.name,
-          envKey,
-          imageRepo,
-          fromTag: currentTag,
-          toTag: latest,
-          defaultVal,
-          newDefaultVal: `${imageRepo}:${latest}`,
-        });
+      const resolved = resolveImageTemplate(svc.image, formFields);
+      if (!resolved) {
+        log(appName, svc.name, `image=${svc.image} 无法解析为 (imageRepo, currentTag)，跳过`);
+        continue;
       }
+      const { imageRepo, currentTag, envKey } = resolved;
+
+      // 检查 tag 是否为 latest（跳过）
+      if (currentTag === 'latest') {
+        log(appName, svc.name, `${envKey}=${currentTag} ⚠ tag=latest，跳过`);
+        continue;
+      }
+
+      // 过滤不稳定关键字
+      const UNSTABLE = /^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/;
+      if (UNSTABLE.test(currentTag)) {
+        log(appName, svc.name, `${envKey}=${currentTag} ⚠ 包含不稳定关键字，跳过`);
+        continue;
+      }
+
+      // 构造完整镜像字符串供 registry 查询
+      const fullImage = `${imageRepo}:${currentTag}`;
+
+      // 向 registry 请求最新 tag（传递当前 tag 用于变体匹配）
+      const latest = await getLatestTag(fullImage, currentTag);
+      if (!latest) {
+        log(appName, svc.name, `${fullImage} 无法获取最新 tag`);
+        continue;
+      }
+      if (latest === currentTag) {
+        log(appName, svc.name, `${fullImage} 已是最新`);
+        continue;
+      }
+
+      log(appName, svc.name, `${fullImage} ⚠ ${currentTag} -> ${latest}`);
+      const newDefaultVal = rebuildImageDefault(svc.image, envKey, imageRepo, latest);
+      variableTagChanges.push({
+        svcName: svc.name,
+        envKey,
+        imageRepo,
+        fromTag: currentTag,
+        toTag: latest,
+        defaultVal: resolved.defaultVal,
+        newDefaultVal,
+      });
     }
 
     if (hardcoded.length === 0 && variableTagChanges.length === 0) {
