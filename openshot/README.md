@@ -116,15 +116,27 @@ OpenShot 的导出对话框（右上角「导出项目」）的 **Target** 下�
 
 选 `MP4 (h.264 nv)` 即可走 NVENC 硬编，速度明显快于 `MP4 (h.264)` 软编且同码率画质接近。若该 Target 没出现，先确认 `NVIDIA_DRIVER_CAPABILITIES` 没丢 `video`。
 
-### H.265 硬件编码（P620 上 OpenShot 给不了）
+### H.265 硬件编码（OpenShot 无预设，但可手动指定）
 
-**结论：OpenShot 没有 NVENC H.265 导出预设。** 上游 `src/presets/` 共 60 个预设，带 NVENC 后缀的只有 `format_mp4_x264_nv.xml` 与 `format_mkv_x264_nv.xml` 两个，且都是 `h264_nvenc`；唯一的硬件 HEVC 预设 `format_mp4_hevc_hw.xml` 内置编码器是 `hevc_vaapi`（Intel/AMD 路线）。
+**结论：OpenShot 没有 NVENC H.265 导出预设。** 上游 `src/presets/` 共 60 个预设，带 NVENC 后缀的只有 `format_mp4_x264_nv.xml` 与 `format_mkv_x264_nv.xml` 两个，且都是 `h264_nvenc`；唯一的硬件 HEVC 预设 `format_mp4_hevc_hw.xml` 内置编码器是 `hevc_vaapi`（Intel/AMD 路线，需要 `/dev/dri` render node，P620 上不可用）。
 
-叠加 OpenShot 会在运行时用 `FFmpegWriter.IsValidCodec()` 过滤预设的逻辑：**没有对应的预设 XML，就永远不会出现在导出下拉框里**，手选也选不到。
+因此在导出的 **Target** 下拉框里找不到 HEVC 硬件选项。这不是 P620 的限制——P620 的 NVENC 支持 H.265（含 10-bit Main10），容器内 FFmpeg 也编得出 `hevc_nvenc`，纯粹是 OpenShot 少写了那个预设 XML。
 
-这不是 P620 的限制——P620 硬件的 NVENC 支持 H.265（含 10-bit Main10），容器内 FFmpeg 也编得出 `hevc_nvenc`，纯粹是 OpenShot 少写了那个预设 XML。
+#### 变通办法 A：在导出对话框里手改编码器（可试，非官方支持）
 
-**变通办法**：在 OpenShot 里用 `MP4 (h.264 nv)` 导出，再在容器内转封装成 H.265。Selkies 桌面自带终端，素材与成片同在 `/storage`：
+`src/windows/export.py:1111` 读取 `self.txtVideoCodec.text()` 作为 `vcodec`——那是一个**可编辑的纯文本框**（不是下拉框），内容原样传给 FFmpegWriter。所以：
+
+1. Target 选 `MP4 (h.264 nv)`（拿 mp4 封装 + AAC 音频）
+2. 「视频」标签页 → 展开 **Advanced** → 把 **Video Codec** 文本框里的 `h264_nvenc` 改成 `hevc_nvenc`
+3. 把 **Bit Rate** 文本框改成 `crf 23`
+
+第 3 步的依据在 `export.py:1229`——质量模式是按**码率文本框里是否含 `crf`/`cqp`/`qp` 关键字**来判断的，与编码器无关。NVENC 预设自带的固定码率档（1/4/10 Mb/s）不适合 H.265，改用 CRF 才合理。
+
+> ⚠️ 这是绕过 UI 校验的野路子：不会有硬件徽标、导出前无校验。若成片打不开或标签不对（部分播放器对 mp4 里的 hevc tag 敏感），改用下面的变通办法 B。
+
+#### 变通办法 B：容器内 ffmpeg 转码（稳妥）
+
+用 `MP4 (h.264 nv)` 导出后，在容器内转封装成 H.265。Selkies 桌面自带终端，素材与成片同在 `/storage`：
 
 ```bash
 # 容器内执行：-cq 恒定质量模式（-b:v 0 必须给，否则码率模式会劣化画质）
@@ -140,6 +152,26 @@ ffmpeg -i /storage/out.mp4 \
 ```bash
 docker exec <容器名> ffmpeg -i /storage/out_h265.mp4 -hide_banner 2>&1 | grep -o 'hevc_nvenc'
 ```
+
+> **别指望 H.265 更快**：P620 是 Pascal（GP107），单流 HEVC NVENC 吞吐本就低于 H.264，且 4GB 显存下 4K 多轨会先撞显存墙。H.265 的价值是**存储体积**（同画质约省 30–50%），不是速度。
+
+### 硬件编码器的 B 帧限制
+
+`export.py:1240` 有一段刻意的分支：
+
+```python
+# Improve compression efficiency for software codecs by using
+# a longer GOP and allowing B-frames.
+# Keep this limited to software encoders to avoid hardware-
+# specific capability mismatches.
+vcodec = (video_settings.get("vcodec") or "").lower()
+if vcodec in {"libx264", "libx265", "libvpx-vp9"}:
+    w.SetOption(openshot.VIDEO_STREAM, "g", "48")
+    w.SetOption(openshot.VIDEO_STREAM, "allow_b_frames", "1")
+    w.SetOption(openshot.VIDEO_STREAM, "max_b_frames", "3")
+```
+
+`g=48` + B 帧只对软编码器生效，硬件编码器一律不设——Pascal 的 NVENC 在 B 帧/GOP 上有硬件能力边界，OpenShot 是刻意规避的。**别把手改编码器理解成"硬件也能吃到软编码那套压缩优化"**，画质/体积预期要按硬件编码器的实际情况来定。
 
 ### 渲染模式 PIXELFLUX_WAYLAND
 
@@ -161,7 +193,7 @@ docker exec <容器名> ffmpeg -i /storage/out_h265.mp4 -hide_banner 2>&1 | grep
 | OpenShot 读不到 `/storage` 素材 | `MEDIA_PATH` 必须是宿主机绝对路径；并确认 `PUID`/`PGID` 与该目录属主一致 |
 | 导出成片失败「无权限」 | 同上，`PUID`/`PGID` 不匹配导致写不进 `/storage` |
 | 导出编码器下拉没有 NVENC | `NVIDIA_DRIVER_CAPABILITIES` 被改动丢了 `video`；恢复为 `compute,video,graphics,utility` |
-| 找不到 NVENC H.265 / HEVC 硬件选项 | **不是配置问题**：OpenShot 上游没有 `hevc_nvenc` 预设，P620 硬件本身支持。改用 `MP4 (h.264 nv)` 导出后容器内 ffmpeg 转码，见「H.265 硬件编码」 |
+| 找不到 NVENC H.265 / HEVC 硬件选项 | **不是配置问题**：OpenShot 上游没有 `hevc_nvenc` 预设，P620 硬件本身支持。Target 下拉找不到 HEVC 属正常，见「H.265 硬件编码」的变通办法 A / B |
 | 预览多轨卡顿 / 渲染报错 | `shm_size` 被删或调小；恢复为 `1gb` |
 
 ## 参考
