@@ -15,9 +15,18 @@ linuxserver.io 官方镜像的 OpenShot，通过 Selkies WebRTC 在浏览器中�
 
 | 版本目录 | 上游 OpenShot | linuxserver 完整 tag |
 |---|---|---|
+| `4.0.1` | 4.0.1 | `4.0.1dfsg21848202609280435ubuntu26.04.1-ls92` |
 | `4.0.0` | 4.0.0 | `4.0.0dfsg21825202608312127ubuntu26.04.1-ls89` |
 
-> compose 中使用短 tag `4.0.0`。它与 `latest`、`-ls89` 指向同一 digest（`c4c8381c5712`），但能被本仓 `detect-updates` 的纯 semver 匹配识别（`4.1.0` 发布后自动开 PR 新增版本目录）；若直接写完整 tag，每次基线重建（`-lsNNN`）都会误报一次「更新」。
+> compose 中使用短 tag（`4.0.1` / `4.0.0`）。它与 `latest`、对应完整 tag 指向同一 digest，但能被本仓 `detect-updates` 的纯 semver 匹配识别（4.1.0 发布后自动开 PR 新增版本目录）；若直接写完整 tag，每次基线重建（`-lsNNN`）都会误报一次「更新」。
+
+> **查 tag 时 Docker Hub API 在部分网络下不可达**：可改用 GHCR 镜像（内容一致）核对：
+>
+> ```bash
+> TOKEN=$(curl -s "https://ghcr.io/token?scope=repository:linuxserver/openshot:pull" | jq -r .token)
+> curl -s -H "Authorization: Bearer $TOKEN" \
+>   "https://ghcr.io/v2/linuxserver/openshot/tags/list?n=1000" | jq -r '.tags[]' | sort -V
+> ```
 
 ## 安装参数
 

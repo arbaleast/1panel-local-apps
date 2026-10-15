@@ -1,0 +1,49 @@
+networks:
+    1panel-network:
+        external: true
+services:
+    openshot:
+        container_name: ${CONTAINER_NAME}
+        deploy:
+            resources:
+                limits:
+                    cpus: ${CPUS}
+                    memory: ${MEMORY_LIMIT}
+        volumes:
+            # 配置与用户数据（OpenShot 工程 / 预设 / 缓存）
+            - ./data/config:/config
+            # 素材目录: MEDIA_PATH 填宿主机绝对路径; 留空则退化为容器内匿名卷 /storage
+            - ${MEDIA_PATH}:/storage
+        # 桌面类镜像建议 1gb 共享内存; OpenShot 预览多轨时不足会渲染失败
+        shm_size: 1gb
+        environment:
+            - PUID=${PUID}
+            - PGID=${PGID}
+            - TZ=${TIME_ZONE}
+            - UMASK_SET=${UMASK_SET}
+            - LC_ALL=${LC_ALL}
+            - TITLE=${TITLE}
+            - CUSTOM_USER=${CUSTOM_USER}
+            - PASSWORD=${PASSWORD}
+            - DASHBOARD=${DASHBOARD}
+            - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
+            - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
+            - NVIDIA_ENABLE=${NVIDIA_ENABLE}
+            # PIXELFLUX_WAYLAND 必须显式 false: 镜像默认 PIXELFLUX_WAYLAND=true 会让 svc-xorg 走 sleep infinity 早退,
+            # 导致 Xvfb 不起 → Selkies WebRTC 推流断流 → 浏览器看到黑屏; OpenShot + Selkies 走 X11/Xvfb 路径, 不要走 Wayland
+            - PIXELFLUX_WAYLAND=${PIXELFLUX_WAYLAND:-false}
+        # NVIDIA GPU 设备 cgroup 规则(主设备号 195): 即使没有 runtime: nvidia 也能让容器内的 cgroup 允许访问 195 号字符设备
+        # 真正把宿主 /dev/nvidia* 与 NVIDIA 库注入容器的是 nvidia-container-runtime,通过 runtime: nvidia 触发
+        # NVIDIA_ENABLE=true 时该 runtime 方会拉起 nvidia-container-cli; 留 false 也不影响 s6 启动
+        device_cgroup_rules:
+            - 'c 195:* rw'
+        runtime: nvidia
+        image: linuxserver/openshot:4.0.1
+        labels:
+            createdBy: Apps
+        networks:
+            - 1panel-network
+        ports:
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3000
+            - ${HOST_IP}:${PANEL_APP_PORT_HTTPS}:3001
+        restart: always
