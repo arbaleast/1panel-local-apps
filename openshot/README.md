@@ -77,7 +77,7 @@ compose 中已配置 `runtime: nvidia` + `device_cgroup_rules: ['c 195:* rw']`�
 
 Quadro P620 是 **Pascal（GP107GL）** 架构工作站卡：
 
-- NVENC 硬件编码：H.264 / H.265，OpenShot 经 MLT/FFmpeg 可走 `h264_nvenc` / `hevc_nvenc`
+- NVENC 硬件编码：H.264 / H.265 **硬件层面都支持**（含 10-bit Main10），但 OpenShot 只提供 H.264 的 NVENC 预设，详见下方「H.265 硬件编码」
 - OpenGL 4.6 + OpenCL：OpenShot 预览窗口可走 GPU 渲染
 - 显存 4GB GDDR5：适合 1080p 剪辑，4K 多轨建议配合代理剪辑
 
@@ -99,16 +99,47 @@ Quadro P620 是 **Pascal（GP107GL）** 架构工作站卡：
 ```bash
 docker exec <容器名> nvidia-smi          # 应列出 Quadro P620
 docker exec <容器名> ffmpeg -hide_banner -encoders 2>/dev/null | grep -i nvenc
-# 期望看到 h264_nvenc / hevc_nvenc
+# 应看到 h264_nvenc / hevc_nvenc —— 两者都在说明 FFmpeg 与 GPU 都就绪
 ```
+
+> **注意**：`hevc_nvenc` 存在 ≠ OpenShot 导出会用它。OpenShot 只会加载 `src/presets/` 下已写死编码器的预设 XML，见下方「H.265 硬件编码」。
 
 ### 在 OpenShot 里启用硬编
 
-OpenShot 的导出设置（右上角「导出项目」→「高级」→「视频 / 编码」）：
+OpenShot 的导出对话框（右上角「导出项目」）的 **Target** 下拉中，带硬件徽标的加速目标有：
 
-- **编码器**从 `H.264 (x264)` 改为 `NVENC H.264`，或选 `NVENC H.265`
-- **质量预设**建议先用 `High Quality`，导出速度明显快于软编且同码率画质接近
-- 若下拉里没有 NVENC 项，先确认 `NVIDIA_DRIVER_CAPABILITIES` 没丢 `video`
+| Target | 编码器 | 说明 |
+|---|---|---|
+| `MP4 (h.264 nv)` / `MKV (h.264 nv)` | `h264_nvenc` | ✅ **本应用的推荐选项**，P620 可用 |
+| `MP4 (h.264 va)` / `MP4 (h.264 qsv)` | `h264_vaapi` / `h264_qsv` | VA-API / QSV，需 Intel/AMD 核显，P620 上不可用 |
+| `MP4 (HEVC va)` | `hevc_vaapi` | 同上，P620 上不可用 |
+
+选 `MP4 (h.264 nv)` 即可走 NVENC 硬编，速度明显快于 `MP4 (h.264)` 软编且同码率画质接近。若该 Target 没出现，先确认 `NVIDIA_DRIVER_CAPABILITIES` 没丢 `video`。
+
+### H.265 硬件编码（P620 上 OpenShot 给不了）
+
+**结论：OpenShot 没有 NVENC H.265 导出预设。** 上游 `src/presets/` 共 60 个预设，带 NVENC 后缀的只有 `format_mp4_x264_nv.xml` 与 `format_mkv_x264_nv.xml` 两个，且都是 `h264_nvenc`；唯一的硬件 HEVC 预设 `format_mp4_hevc_hw.xml` 内置编码器是 `hevc_vaapi`（Intel/AMD 路线）。
+
+叠加 OpenShot 会在运行时用 `FFmpegWriter.IsValidCodec()` 过滤预设的逻辑：**没有对应的预设 XML，就永远不会出现在导出下拉框里**，手选也选不到。
+
+这不是 P620 的限制——P620 硬件的 NVENC 支持 H.265（含 10-bit Main10），容器内 FFmpeg 也编得出 `hevc_nvenc`，纯粹是 OpenShot 少写了那个预设 XML。
+
+**变通办法**：在 OpenShot 里用 `MP4 (h.264 nv)` 导出，再在容器内转封装成 H.265。Selkies 桌面自带终端，素材与成片同在 `/storage`：
+
+```bash
+# 容器内执行：-cq 恒定质量模式（-b:v 0 必须给，否则码率模式会劣化画质）
+#              -preset p4 适合成片；快速试转可用 -preset p1
+ffmpeg -i /storage/out.mp4 \
+  -c:v hevc_nvenc -preset p4 -cq 23 -b:v 0 \
+  -pix_fmt yuv420p -c:a copy \
+  /storage/out_h265.mp4
+```
+
+验证转码确实走了硬件：
+
+```bash
+docker exec <容器名> ffmpeg -i /storage/out_h265.mp4 -hide_banner 2>&1 | grep -o 'hevc_nvenc'
+```
 
 ### 渲染模式 PIXELFLUX_WAYLAND
 
@@ -130,6 +161,7 @@ OpenShot 的导出设置（右上角「导出项目」→「高级」→「视�
 | OpenShot 读不到 `/storage` 素材 | `MEDIA_PATH` 必须是宿主机绝对路径；并确认 `PUID`/`PGID` 与该目录属主一致 |
 | 导出成片失败「无权限」 | 同上，`PUID`/`PGID` 不匹配导致写不进 `/storage` |
 | 导出编码器下拉没有 NVENC | `NVIDIA_DRIVER_CAPABILITIES` 被改动丢了 `video`；恢复为 `compute,video,graphics,utility` |
+| 找不到 NVENC H.265 / HEVC 硬件选项 | **不是配置问题**：OpenShot 上游没有 `hevc_nvenc` 预设，P620 硬件本身支持。改用 `MP4 (h.264 nv)` 导出后容器内 ffmpeg 转码，见「H.265 硬件编码」 |
 | 预览多轨卡顿 / 渲染报错 | `shm_size` 被删或调小；恢复为 `1gb` |
 
 ## 参考
