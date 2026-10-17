@@ -19,7 +19,7 @@
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 (linuxserver, 单 GUI, P620 NVENC 已验证) | 1.11.2-ls41 |
 | handbrake-web | 分布式 HandBrake 转码队列 (TheNickOfTime, ⚠️ heavy dev) | latest |
-| hindsight | AI 记忆系统 | 0.10.3 |
+| hindsight | AI 记忆系统 | 1.0.0 |
 | ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.17 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
