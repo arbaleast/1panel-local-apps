@@ -12,3 +12,11 @@ Postgres 向量相似度搜索扩展。
 
 ## 数据库
 - 见 .env POSTGRES_DB
+
+## 运行用户 UID / GID
+
+本应用**不提供** UID / GID 安装参数：Postgres 首次初始化（initdb）必须以 root 身份
+chown `PGDATA` 后再降权，强制非 root 会导致数据目录初始化失败、容器无法启动。
+
+容器内进程以 root 运行。如需限制运行身份，建议单独用非 root 账号 + ACL 方案部署，
+或改用应用自带的数据库账号体系。

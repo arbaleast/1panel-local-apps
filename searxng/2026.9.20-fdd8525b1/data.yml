@@ -71,6 +71,38 @@ additionalProperties:
         ru: Строка подключения к внешнему Redis (например, redis://:password@host:6379/0). Оставьте пустым, чтобы использовать локальный файловый кэш. При развёртывании в 1Panel добавьте переменную SEARXNG_REDIS_URL в раздел «Дополнительные переменные среды».
         ms: "Rentetan sambungan Redis luaran (cth: redis://:password@host:6379/0). Biarkan kosong untuk menggunakan cache fail lalai. Semasa menyebarkan di 1Panel, tambah juga sebagai pembolehubah persekitaran tambahan bernama SEARXNG_REDIS_URL."
         pt-br: "String de conexão do Redis externo (ex.: redis://:password@host:6379/0). Deixe vazio para usar o cache de arquivo padrão. Ao implantar no 1Panel, adicione também como variável de ambiente extra com o nome SEARXNG_REDIS_URL."
+    - default: 99
+      edit: true
+      envKey: UID
+      labelEn: Run as UID
+      labelZh: 运行用户 UID
+      label:
+        en: Run as UID
+        zh: 运行用户 UID
+        zh-Hant: 執行使用者 UID
+        ja: 実行 UID
+        ko: 실행 UID
+        ru: UID пользователя
+        ms: UID pengguna
+        pt-br: UID do usuário
+      required: true
+      type: number
+    - default: 100
+      edit: true
+      envKey: GID
+      labelEn: Run as GID
+      labelZh: 运行组 GID
+      label:
+        en: Run as GID
+        zh: 运行组 GID
+        zh-Hant: 執行群組 GID
+        ja: 実行 GID
+        ko: 실행 GID
+        ru: GID группы пользователя
+        ms: GID kumpulan pengguna
+        pt-br: GID do grupo
+      required: true
+      type: number
   key: searxng
   name: searxng
   tags:

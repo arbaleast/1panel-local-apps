@@ -33,7 +33,7 @@ additionalProperties:
         pt-br: Nome do contêiner
       required: true
       type: text
-    - default: "1026"
+    - default: "99"
       edit: true
       envKey: PUID
       labelEn: PUID (User ID)

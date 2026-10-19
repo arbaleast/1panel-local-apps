@@ -212,7 +212,7 @@ additionalProperties:
         pt-br: URL externo (opcional — necessário para sincronização Kobo e links de e-mail)
       required: false
       type: text
-    - default: "1000"
+    - default: "99"
       edit: true
       envKey: PUID
       labelEn: Process UID
@@ -229,7 +229,7 @@ additionalProperties:
       required: false
       rule: paramCommon
       type: number
-    - default: "1000"
+    - default: "100"
       edit: true
       envKey: PGID
       labelEn: Process GID

@@ -5,6 +5,8 @@ services:
   # Music Tag Web 主应用(变量型镜像,不在 auto-update 范围)
   music-tag-web:
     container_name: ${CONTAINER_NAME}
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
     image: ${IMAGE}:${APP_VERSION}
     restart: always
     networks:

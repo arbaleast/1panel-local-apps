@@ -37,6 +37,8 @@ services:
   # 主应用：PhotoPrism Web (Go + TensorFlow 推理),监听容器内 2342
   photoprism:
     container_name: ${CONTAINER_NAME}
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
     image: ${APP_IMAGE}:${APP_VERSION}
     restart: always
     # 注意：不要加 init: true。

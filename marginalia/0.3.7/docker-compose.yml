@@ -12,6 +12,8 @@ services:
   # 主服务：Marginalia API（uvicorn + FastAPI）
   api:
     container_name: ${CONTAINER_NAME}
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
     image: ghcr.io/shenmintao/marginalia:v0.3.7
     deploy:
       resources:
@@ -84,6 +86,8 @@ services:
   # 异步 worker：处理 ingest 流水线与周期任务
   worker:
     container_name: ${CONTAINER_NAME}-worker
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
     image: ghcr.io/shenmintao/marginalia:v0.3.7
     environment:
       - TZ=${TZ}

@@ -10,8 +10,8 @@ services:
           cpus: ${CPUS}
           memory: ${MEMORY_LIMIT}
     environment:
-    - PUID=99
-    - PGID=100
+    - PUID=${PUID}
+    - PGID=${PGID}
     - TZ=${TIME_ZONE}
     hostname: syncthing
     image: linuxserver/syncthing:2.1.5

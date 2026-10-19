@@ -257,3 +257,14 @@ BookOrbit v2.10+ 支持 Kokoro FastAPI TTS。上游提供 opt-in `tts` profile�
 - [iOS / Apple Watch App](https://apps.apple.com/us/app/bookorbit-the-official-app/id6811807346)（v3.0.0+ / iOS 26+ / watchOS 26+）
 - [KOReader 插件](https://bookorbit.app/koreader-plugin)
 - [演示站](https://demo.bookorbit.app)（无需账号，含公版书样本库；部分管理功能受限）
+
+## 运行用户 UID / GID
+
+安装参数 `PUID` / `PGID` 指定容器内进程的用户 / 组身份，默认 `99` / `100`。
+
+镜像的启动脚本会以 root 身份先 `chown` 自己的数据目录、再降权运行，
+**不需要手工 chown 宿主机目录**。
+
+- 改这两个值 → 容器内新建文件的属主随之改变（镜像会自动把数据目录 chown 到该 UID/GID）
+- 想以 root 运行：把 `PUID` / `PGID` 都填 `0`
+- 宿主机挂载的外部目录（媒体库等）不在镜像的 chown 范围内，需保证该 UID/GID 可读

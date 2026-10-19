@@ -124,3 +124,14 @@ optimisarr/
 Optimisarr 通过 `auto-update` 工作流每周一自动检测 GHCR 新版本（hardcode 镜像形式）。检测到新 tag 后会自动开 PR 合并。
 
 如需手动升级：把 `optimisarr/<旧版本>/` 整个目录复制为 `optimisarr/<新版本>/`，修改 `docker-compose.yml` 中的 `image: ghcr.io/jellman86/optimisarr:<新版本>`，然后在 1Panel UI 中选择新版本重新部署。
+
+## 运行用户 UID / GID
+
+安装参数 `PUID` / `PGID` 指定容器内进程的用户 / 组身份，默认 `99` / `100`。
+
+镜像的启动脚本会以 root 身份先 `chown` 自己的数据目录、再降权运行，
+**不需要手工 chown 宿主机目录**。
+
+- 改这两个值 → 容器内新建文件的属主随之改变（镜像会自动把数据目录 chown 到该 UID/GID）
+- 想以 root 运行：把 `PUID` / `PGID` 都填 `0`
+- 宿主机挂载的外部目录（媒体库等）不在镜像的 chown 范围内，需保证该 UID/GID 可读

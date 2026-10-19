@@ -90,3 +90,13 @@ docker run --rm -v open_design_data:/data -v $PWD/backup:/backup \
 - **容器反复重启** → 多半是 `OD_API_TOKEN` 未填或端口冲突；查看 `docker logs <container>`。
 - **Web UI 打开空白** → 浏览器缓存；或 daemon 启动后 `/apps/web/out` 静态资源未生成（极少见，重启容器）。
 - **`Permission denied` 写 `/app/.od`** → 命名卷 `open_design_data` 的 owner 应是 `1001:1001`（容器内 `open-design`）。1Panel 「容器」面板 → 该容器 → 「存储」检查挂载点对应卷的权限；如 owner 不对，手动 `docker run --rm -v open_design_data:/data alpine chown -R 1001:1001 /data` 修复一次即可。
+
+## 运行用户 UID / GID
+
+安装参数 `UID` / `GID` 通过 compose 的 `user:` 指定容器内进程身份，默认 `99` / `100`。
+
+本应用没有需要 chown 的持久化数据目录（无宿主机 bind mount），可直接安装。
+
+- 想以 root 运行：把 `UID` / `GID` 都填 `0`
+- 升级到新版本目录后要**重新 chown 一次**（新目录下的 `data` 为空、属主是 root）
+- 容器内所有新文件都以该 UID / GID 创建，宿主机上看到属主是 99:100 属正常现象

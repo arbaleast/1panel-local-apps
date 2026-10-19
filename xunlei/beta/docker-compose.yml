@@ -26,6 +26,8 @@ services:
     ports:
       - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:2345
     environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
       - XL_DASHBOARD_PORT=2345
       - XL_DASHBOARD_IP=

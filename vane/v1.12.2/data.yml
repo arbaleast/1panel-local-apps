@@ -127,6 +127,38 @@ additionalProperties:
         ru: Указывает на сервис SearXNG. По умолчанию подразумевается контейнер 1panel-searxng в сети 1panel-network.
         ms: Tunjuk kepada perkhidmatan SearXNG. Lalai mengandaikan bekas 1panel-searxng pada 1panel-network yang sama.
         pt-br: Aponta para o serviço SearXNG. O padrão assume o contêiner 1panel-searxng na 1panel-network.
+    - default: 99
+      edit: true
+      envKey: UID
+      labelEn: Run as UID
+      labelZh: 运行用户 UID
+      label:
+        en: Run as UID
+        zh: 运行用户 UID
+        zh-Hant: 執行使用者 UID
+        ja: 実行 UID
+        ko: 실행 UID
+        ru: UID пользователя
+        ms: UID pengguna
+        pt-br: UID do usuário
+      required: true
+      type: number
+    - default: 100
+      edit: true
+      envKey: GID
+      labelEn: Run as GID
+      labelZh: 运行组 GID
+      label:
+        en: Run as GID
+        zh: 运行组 GID
+        zh-Hant: 執行群組 GID
+        ja: 実行 GID
+        ko: 실행 GID
+        ru: GID группы пользователя
+        ms: GID kumpulan pengguna
+        pt-br: GID do grupo
+      required: true
+      type: number
   key: vane
   name: vane
   tags:

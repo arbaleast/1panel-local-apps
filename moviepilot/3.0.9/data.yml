@@ -1,6 +1,6 @@
 additionalProperties:
   formFields:
-    - default: "0"
+    - default: "99"
       envKey: PUID
       labelEn: User ID
       labelZh: 用户 ID
@@ -16,7 +16,7 @@ additionalProperties:
       required: true
       type: number
       edit: true
-    - default: "0"
+    - default: "100"
       envKey: PGID
       labelEn: Group ID
       labelZh: 用户组 ID

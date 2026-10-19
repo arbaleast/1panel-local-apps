@@ -12,8 +12,8 @@ services:
         volumes:
             - ${CONFIG_PATH}:/config
         environment:
-            - PUID=99
-            - PGID=100
+            - PUID=${PUID}
+            - PGID=${PGID}
             - TZ=${TIME_ZONE}
             - CUSTOM_USER=${CUSTOM_USER}
             - PASSWORD=${PASSWORD}

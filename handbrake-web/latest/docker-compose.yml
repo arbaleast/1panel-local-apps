@@ -24,6 +24,8 @@ networks:
 services:
   handbrake-web-server:
     image: ghcr.io/thenickoftime/handbrake-web-server:latest
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
     container_name: ${CONTAINER_NAME}-server
     # 不写 user: 让容器以 root (uid 0) 跑.
     # 根因: 1Panel 部署时 ./data/server / ${MEDIA_PATH} 主机目录归 1panel 用户 (uid 非 1000) 拥有,
@@ -59,6 +61,8 @@ services:
 
   handbrake-web-worker:
     image: ghcr.io/thenickoftime/handbrake-web-worker:latest
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
     container_name: ${CONTAINER_NAME}-worker
     # 跟 server 一致, 不写 user: 让容器以 root 跑. 见 server 的 user 注释 (根因/取舍).
     # worker 同样需要写 ${MEDIA_PATH}:/video 主机目录, root 自动可写.

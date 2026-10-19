@@ -29,7 +29,7 @@ additionalProperties:
         pt-br: Fuso horário
       required: true
       type: text
-    - default: 1000
+    - default: 99
       edit: true
       envKey: PUID
       label:
@@ -43,7 +43,7 @@ additionalProperties:
         pt-br: UID do usuário
       required: true
       type: number
-    - default: 1000
+    - default: 100
       edit: true
       envKey: PGID
       label:

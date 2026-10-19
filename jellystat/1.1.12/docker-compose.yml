@@ -1,6 +1,8 @@
 services:
   jellystat:
     container_name: ${CONTAINER_NAME}
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
     image: cyfershepard/jellystat:1.1.12
     restart: always
     ports:

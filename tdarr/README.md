@@ -204,3 +204,14 @@ Tdarr 2.x 引入新版 **Flow**（节点图），向下兼容 **Stacks**（经�
 - [Tdarr 官方文档](https://docs.tdarr.io)
 - [Tdarr 插件社区库](https://github.com/HaveAGitGat/Tdarr_Plugins)
 - [本仓库 handbrake 应用](../handbrake/README.md) — 独立的 Web UI 手动转码应用
+
+## 运行用户 UID / GID
+
+安装参数 `PUID` / `PGID` 指定容器内进程的用户 / 组身份，默认 `99` / `100`。
+
+镜像的启动脚本会以 root 身份先 `chown` 自己的数据目录、再降权运行，
+**不需要手工 chown 宿主机目录**。
+
+- 改这两个值 → 容器内新建文件的属主随之改变（镜像会自动把数据目录 chown 到该 UID/GID）
+- 想以 root 运行：把 `PUID` / `PGID` 都填 `0`
+- 宿主机挂载的外部目录（媒体库等）不在镜像的 chown 范围内，需保证该 UID/GID 可读

@@ -156,6 +156,11 @@ cd 1panel-local-apps
 - **变量引用**: compose 文件中使用 `${IMAGE}` 等变量，通过 `data.yml` 配置默认值
 - **数据持久化**: 应用数据目录使用 `./data/...` 相对路径
 - **网络**: 所有应用默认使用 `1panel-network` 外部网络
+- **运行身份（UID / GID）**: 所有应用都提供运行身份安装参数，默认 `99` / `100`。
+  - 镜像原生支持 `PUID` / `PGID` 的应用（`anirss` `aria2` `bookorbit` `handbrake` `ignis` `kdenlive` `misaka` `moviepilot` `openshot` `optimisarr` `syncthing` `tdarr` `unmanic` `xunlei`）用 `PUID` / `PGID` 环境变量，镜像会自动 chown 数据目录，**无需手工处理**。
+  - 其余应用用 compose 的 `user: "${UID}:${GID}"`，**首次部署前必须** `sudo chown -R 99:100 <应用安装目录>/data`，否则容器无权写入、启动失败。
+  - `pgvector` / `silo` 不提供该参数（Postgres `initdb` 需要 root 初始化 `PGDATA`）。
+  - 每个应用 README 的「运行用户 UID / GID」小节有该应用的具体 chown 路径。
 
 ## License
 

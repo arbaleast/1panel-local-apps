@@ -10,6 +10,8 @@ services:
           cpus: ${CPUS}
           memory: ${MEMORY_LIMIT}
     environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
       - UMASK=${UMASK}
       - TZ=${TZ}
       - SERVER_PORT=${SERVER_PORT}

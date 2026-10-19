@@ -205,3 +205,11 @@ aws --endpoint-url http://<主机IP>:9000 s3 mb s3://my-bucket
 - [MinIO 文档（命令行完全兼容）](https://min.io/docs/minio/linux/index.html)
 - [mc 命令行工具](https://min.io/docs/minio/linux/reference/minio-mc.html)
 - [`marginalia` 应用](../marginalia/README.md) — 演示如何与本应用共享 S3 endpoint
+
+## 运行用户 UID / GID
+
+本应用**不提供** UID / GID 安装参数：Postgres 首次初始化（initdb）必须以 root 身份
+chown `PGDATA` 后再降权，强制非 root 会导致数据目录初始化失败、容器无法启动。
+
+容器内进程以 root 运行。如需限制运行身份，建议单独用非 root 账号 + ACL 方案部署，
+或改用应用自带的数据库账号体系。

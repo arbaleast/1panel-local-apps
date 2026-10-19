@@ -56,7 +56,7 @@ additionalProperties:
         pt-br: Fuso horário
       required: true
       type: text
-    - default: "1000"
+    - default: "99"
       edit: true
       envKey: PUID
       labelEn: Container User UID
@@ -72,7 +72,7 @@ additionalProperties:
         pt-br: UID do processo no contêiner. Recomenda-se alinhar com o UID do dono do diretório no host.
       required: true
       type: number
-    - default: "1000"
+    - default: "100"
       edit: true
       envKey: PGID
       labelEn: Container User GID

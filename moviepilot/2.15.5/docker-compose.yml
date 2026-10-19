@@ -10,6 +10,8 @@ services:
           cpus: ${CPUS}
           memory: ${MEMORY_LIMIT}
     environment:
+    - PUID=${PUID}
+    - PGID=${PGID}
     - UMASK=${UMASK}
     - TZ=${TZ}
     - MOVIEPILOT_AUTO_UPDATE=${MOVIEPILOT_AUTO_UPDATE}

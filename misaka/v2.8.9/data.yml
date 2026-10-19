@@ -12,7 +12,7 @@ additionalProperties:
         ru: ID пользователя
         ms: ID pengguna
         pt-br: ID do usuário
-      default: "1000"
+      default: "99"
       type: number
       required: true
       edit: true
@@ -28,7 +28,7 @@ additionalProperties:
         ru: ID группы
         ms: ID kumpulan
         pt-br: ID do grupo
-      default: "1000"
+      default: "100"
       type: number
       required: true
       edit: true
