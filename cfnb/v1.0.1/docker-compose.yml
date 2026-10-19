@@ -41,3 +41,12 @@ services:
       #   ./data/ip.txt       -> /app/ip.txt       (global.outputfile)
       #   ./data/logs/        -> /app/logs/        (logger.logdir, cfx.info.log / cfx.error.log)
       - ./data:/app
+    healthcheck:
+      # 应用自带一个固定的 /health 路由 (与可配置的订阅路径无关), 恒返回 200 "ok"。
+      # 订阅路径在首次扫描完成前会返回 404, 所以健康检查用 /health 而不是订阅路径。
+      # wget 由 alpine 自带 busybox 提供
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8080/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
