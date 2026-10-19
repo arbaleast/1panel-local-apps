@@ -21,8 +21,32 @@
 | `10.11.11/` | `jellyfin/jellyfin:10.11.11` | amd64 / arm64 (multi-arch) | 当前推荐；Jellyfin 10.11.x 稳定版 |
 | `2026081705-arm64/` | `jellyfin/jellyfin:2026081705-arm64` | arm64 | 历史版本 |
 | `2026090709-arm64/` | `jellyfin/jellyfin:2026090709-arm64` | arm64 | 历史版本；启动检查 `/cache` ≥ 2 GiB |
+| `2026091410-arm64/` | `jellyfin/jellyfin:2026091410-arm64` | arm64 | 历史版本 |
 
 `10.11.11/` 目录使用 `${IMAGE}` 变量，1Panel UI 中可在「参数」中改写为 `nyanmisaka/jellyfin:<tag>-amd64` 等其他镜像。
+
+## 运行用户 UID / GID
+
+安装参数中的「运行用户 UID / 运行组 GID」默认 **99 / 100**，写入 compose 的 `user: "${UID}:${GID}"`（上游官方文档推荐的写法，官方镜像 `ENTRYPOINT ["/jellyfin/jellyfin"]` 无降权逻辑，只能靠 compose 的 `user:` 指定身份）。
+
+镜像默认以 root 运行；指定 UID/GID 后，容器内所有文件都以该身份创建，**宿主机挂载目录必须对同一属主可写**，否则 Jellyfin 启动即失败（典型报错：`Unable to write to config directory` / `Permission denied`）。
+
+部署前先准备宿主机目录属主：
+
+```bash
+# 以应用实际安装目录为准（1Panel → 应用 → Jellyfin → 详情 → 路径）
+APP_DIR=/data/dsh/home/日常/1panel-local-apps/jellyfin/10.11.11
+sudo chown -R 99:100 "$APP_DIR/data/config"        # 配置库（必需）
+sudo chown -R 99:100 /data/dsh/home/日常/1panel-local-apps/jellyfin-cache   # cache 目录
+# 媒体库只需可读；若要在媒体目录写入元数据/字幕，同样 chown 99:100
+```
+
+要点：
+
+- 媒体库只需**可读**即可正常播放；UID/GID 主要影响 `/config`（数据库）与 `/cache`（转码缓存）的写入。
+- 升级或换版本后新目录的 `data/config` 属主会重置为 root，需要重新 `chown -R 99:100`。
+- 想要回退到 root 运行：把参数改成 UID=0、GID=0（等价于不写 `user:`），此时目录属主无关。
+- 存量部署（已以 root 跑过）直接改 UID/GID 前，先 `chown -R 99:100` 再重启，否则容器起不来。
 
 ## 从 2026090709-arm64 切到 10.11.11
 原 `2026090709-arm64` 在 `/dev/shm` 满载时启动失败（`Unhandled exception: The path '/cache' has insufficient free space. Available: 0B, Required: 2GiB`），切换步骤：
@@ -31,7 +55,8 @@
 2. 1Panel → 应用商店 → Jellyfin → 安装 → 版本选 `jellyfin 10.11.11`
 3. 安装参数中的「Cache folder path」保持默认 `/data/dsh/home/日常/1panel-local-apps/jellyfin-cache`（目录已建好，177 GiB 可用）
 4. 启动后用备份的 config 覆盖 `/data/dsh/home/日常/1panel-local-apps/jellyfin/10.11.11/data/config/`
-5. 触发「扫描媒体库」让 Jellyfin 重新识别 `/media/movies/` 下整理好的条目
+5. `chown -R 99:100` 上述 config 目录（UID/GID 默认为 99/100，容器以该身份运行）
+6. 触发「扫描媒体库」让 Jellyfin 重新识别 `/media/movies/` 下整理好的条目
 
 ## Cache 路径说明
 1Panel UI 默认 cache 挂载为 `/dev/shm`，但宿主机 `/dev/shm` 是 tmpfs（默认 7.8 GiB），其他容器吃满后 Jellyfin 启动会因 ≥ 2 GiB 空间检查失败。`10.11.11/` 目录的 default 改为 `/data/dsh/home/日常/1panel-local-apps/jellyfin-cache`（宿主磁盘，171 GiB 可用），新装直接生效；旧版本目录的 default 仍是 `/dev/shm`，需手动在「参数」中改写。

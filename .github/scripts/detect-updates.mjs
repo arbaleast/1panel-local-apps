@@ -102,8 +102,16 @@ export function parseCliArgs(argv) {
 //   - anythingllm: IMAGE 镜像 tag 使用变体前缀 (pg-1.16.0), 1Panel UI 版本参数已锁定到 1.16.0。
 //     DockerHubAdapter 变体匹配会返回 pg-X.Y.Z, 复制出的新目录会与现有 1.16.0 风格不一致。
 //     需手维护, 避免 detect 在 anythingllm/ 下新增 pg-1.17.0/ 等带变体前缀的目录。
+//   - jellyfin: 4 个版本目录混用两种 tag 形态（纯 semver `10.11.11` + 日期型 `2026091410-arm64`），
+//     且每个目录都有手维护内容（name / CACHE_FOLDER_PATH / UID / GID 等安装参数）。
+//     日期型 tag 不被 DockerHubAdapter 变体正则识别（`^([a-zA-Z][a-zA-Z0-9]*)(?:-|$)/` 要求字母开头），
+//     会 fallback 到 pure-semver 选取 → 命中 `10.11.11` → detect 认为"最新版本是 10.11.11"，
+//     随即 cpSync `2026091410-arm64/` → `10.11.11/`，把 10.11.11 目录的手维护内容整体覆盖掉
+//     （2026-09-25 auto-update 已实际发生：name 与 CACHE_FOLDER_PATH 被兄弟目录覆盖回旧值）。
+//     jellyfin 镜像由用户在 1Panel UI 的 IMAGE 参数里手改（可换 nyanmisaka/jellyfin），
+//     故整体跳过 detect，手维护。
 // 任何新加进白名单的应用都需在 AGENTS.md / README.md 中说明 '手维护, 不走 auto-update'。
-const SKIP_AUTO_UPDATE_APPS = new Set(['anythingllm']);
+const SKIP_AUTO_UPDATE_APPS = new Set(['anythingllm', 'jellyfin']);
 
 // 简易日志
 const log = (...a) => console.log('[detect]', ...a);
@@ -116,6 +124,30 @@ const log = (...a) => console.log('[detect]', ...a);
  */
 export function shouldSkipAutoUpdate(appDir) {
   return SKIP_AUTO_UPDATE_APPS.has(appDir);
+}
+
+/**
+ * 判断是否允许把 fromDir 目录复制到 toDir（新建版本目录前的安全闸）
+ *
+ * 背景（2026-09-25 jellyfin 事故）：detect 把"最新 tag"当成目标目录名直接 cpSync，
+ * 当目标目录已存在且与来源目录不同时，这是一次**跨目录覆盖**——目标目录里的
+ * 手维护内容（name / CACHE_FOLDER_PATH / 自定义 formFields）会被来源目录整体顶掉。
+ * 根因是日期型 tag（如 2026091410-arm64）不被变体正则识别，fallback 到 pure-semver
+ * 选取后命中了另一个已存在的版本目录名。
+ *
+ * 规则：
+ *   - 目标目录不存在 → 允许（正常新建版本目录）
+ *   - 来源目录 == 目标目录 → 允许（幂等刷新同一目录）
+ *   - 目标目录已存在且与来源不同 → 拒绝（宁可漏一次更新，也不摧毁目标目录）
+ *
+ * @param {string} fromDir - 来源版本目录名
+ * @param {string} toDir - 目标版本目录名
+ * @param {boolean} targetExists - 目标目录是否已存在
+ * @returns {boolean}
+ */
+export function canCopyVersionDir(fromDir, toDir, targetExists) {
+  if (!targetExists) return true;
+  return fromDir === toDir;
 }
 
 // ---------- 工具：解析 compose 与 data.yml ----------
@@ -493,6 +525,12 @@ async function processApp(appName) {
     } else {
       const newDir = path.join(appDir, newVersionDir);
       const newDirExists = fs.existsSync(newDir);
+      // 安全闸：目标目录已存在且与来源目录不同 → 跨目录覆盖会摧毁目标目录的手维护内容
+      // （2026-09-25 jellyfin 事故：2026091410-arm64/ 覆盖掉 10.11.11/）
+      if (!canCopyVersionDir(oldVersionDir, newVersionDir, newDirExists)) {
+        log(appName, `⚠ 跳过：目标目录 ${newVersionDir}/ 已存在且不同于来源 ${oldVersionDir}/，跨目录覆盖会摧毁目标目录的手维护内容`);
+        continue;
+      }
       if (newDirExists) {
         log(appName, `⚠ 目标目录 ${newVersionDir}/ 已存在，将覆盖`);
       }

@@ -4,6 +4,9 @@ networks:
 services:
     jellyfin:
         container_name: ${CONTAINER_NAME}
+        # 以指定 UID/GID 运行（上游官方文档推荐写法）。
+        # 宿主机挂载目录（config / cache / media）需对同一属主开放读写，否则 Jellyfin 启动即失败。
+        user: "${UID}:${GID}"
         deploy:
             resources:
                 limits:

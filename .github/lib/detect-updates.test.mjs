@@ -9,7 +9,7 @@
 // 跨 case 的状态泄漏由模块本身保证（CLI 入口只调用一次）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { shouldSkipAutoUpdate, parseCliArgs } from '../scripts/detect-updates.mjs';
+import { shouldSkipAutoUpdate, parseCliArgs, canCopyVersionDir } from '../scripts/detect-updates.mjs';
 
 describe('detect-updates 白名单', () => {
   // 1. 白名单内应用 → true（被跳过）
@@ -39,6 +39,33 @@ describe('detect-updates 白名单', () => {
     assert.equal(shouldSkipAutoUpdate(' '), false);
     assert.equal(shouldSkipAutoUpdate('anythingllm-extra'), false);
     assert.equal(shouldSkipAutoUpdate('preanythingllm'), false);
+  });
+
+  // 6. jellyfin 手维护（日期型 tag 会被 fallback 到 pure-semver，跨目录覆盖 10.11.11/）
+  it('shouldSkipAutoUpdate: jellyfin 在白名单中 → true', () => {
+    assert.equal(shouldSkipAutoUpdate('jellyfin'), true);
+  });
+});
+
+describe('canCopyVersionDir（跨目录覆盖安全闸）', () => {
+  // 目标目录不存在 → 允许（正常新建版本目录）
+  it('目标目录不存在 → 允许复制', () => {
+    assert.equal(canCopyVersionDir('10.11.11', '10.12.0', false), true);
+  });
+
+  // 来源 == 目标 → 允许（幂等刷新同一目录）
+  it('来源目录与目标目录相同 → 允许复制', () => {
+    assert.equal(canCopyVersionDir('10.11.11', '10.11.11', true), true);
+  });
+
+  // 目标已存在且与来源不同 → 拒绝（2026-09-25 jellyfin 事故形态）
+  it('目标目录已存在且不同于来源 → 拒绝复制', () => {
+    assert.equal(canCopyVersionDir('2026091410-arm64', '10.11.11', true), false);
+  });
+
+  // 反向形态同样拒绝
+  it('反向跨目录覆盖 → 拒绝复制', () => {
+    assert.equal(canCopyVersionDir('10.11.11', '2026091410-arm64', true), false);
   });
 });
 
