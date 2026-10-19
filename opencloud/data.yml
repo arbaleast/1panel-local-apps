@@ -1,0 +1,44 @@
+name: OpenCloud
+title: OpenCloud — 开源文件管理 / 分享 / 协作平台
+description:
+  zh: OpenCloud 是 opencloud-eu 开发的开源文件管理、分享与协作平台（Apache-2.0），不依赖任何数据库，全部状态都落在本地文件系统上。支持 WebDAV、桌面与移动客户端同步、公开链接分享、团队空间与在线文档协作。官方镜像单容器运行，内置 LDAP 用户目录与 OIDC 身份提供者，容器内固定 9200 端口（默认自带自签证书的 HTTPS）。
+  en: OpenCloud is the open source platform for file management, sharing and collaboration by opencloud-eu (Apache-2.0). It needs no database - all state lives in the local filesystem. It supports WebDAV, desktop and mobile clients, public link sharing, team spaces and collaborative documents. The official image runs as a single container with a built-in LDAP user directory and OIDC identity provider, listening on port 9200 (HTTPS with a self-signed certificate by default).
+  ja: OpenCloud は opencloud-eu が開発するオープンソースのファイル管理・共有・コラボレーションプラットフォーム（Apache-2.0）です。データベース不要で、すべての状態はローカルファイルシステムに保存されます。WebDAV、デスクトップ／モバイルクライアント同期、公開リンク共有、チームスペース、共同編集に対応。公式イメージは単一コンテナで動作し、LDAP ユーザーディレクトリと OIDC _identity プロバイダーを内蔵し、9200 番ポートで待ち受けます（既定は自己署名証明書の HTTPS）。
+  ko: OpenCloud는 opencloud-eu가 개발한 오픈 소스 파일 관리·공유·협업 플랫폼입니다(Apache-2.0). 데이터베이스가 필요 없으며 모든 상태는 로컬 파일 시스템에 저장됩니다. WebDAV, 데스크톱·모바일 클라이언트 동기화, 공개 링크 공유, 팀 스페이스와 공동 편집을 지원합니다. 공식 이미지는 단일 컨테이너로 동작하며 LDAP 사용자 디렉터리와 OIDC 아이덴티티 프로바이더를 내장하고 9200 포트에서 대기합니다(기본은 자체 서명 인증서의 HTTPS).
+  ru: "OpenCloud — открытая платформа для управления файлами, обмена и совместной работы от opencloud-eu (Apache-2.0). База данных не требуется: всё состояние хранится в локальной файловой системе. Поддерживаются WebDAV, десктопные и мобильные клиенты, публичные ссылки, командные пространства и совместное редактирование. Официальный образ работает одним контейнером со встроенным каталогом пользователей LDAP и OIDC-провайдером на порту 9200 (HTTPS с самоподписанным сертификатом по умолчанию)."
+  ms: OpenCloud ialah platform sumber terbuka untuk pengurusan fail, perkongsian dan kolaborasi yang dibina oleh opencloud-eu (Apache-2.0). Ia tidak memerlukan pangkalan data - semua keadaan disimpan dalam sistem fail setempat. Menyokong WebDAV, pelanggan desktop dan mudah alih, perkongsian pautan awam, ruang pasukan dan penyuntingan bersama. Imej rasmi berjalan sebagai satu kontena dengan direktori pengguna LDAP dan pembekal identiti OIDC terbina dalam, mendengar pada port 9200 (HTTPS dengan sijil sendiri secara lalai).
+  pt-br: OpenCloud é a plataforma open source para gerenciamento de arquivos, compartilhamento e colaboração mantida pela opencloud-eu (Apache-2.0). Não precisa de banco de dados - todo o estado fica no sistema de arquivos local. Suporta WebDAV, clientes desktop e mobile, compartilhamento por link público, espaços de equipe e edição colaborativa. A imagem oficial roda em um único contêiner com diretório de usuários LDAP e provedor de identidade OIDC integrados, escutando na porta 9200 (HTTPS com certificado autoassinado por padrão).
+  es-es: "OpenCloud es la plataforma de código abierto para gestión de archivos, uso compartido y colaboración desarrollada por opencloud-eu (Apache-2.0). No necesita base de datos: todo el estado reside en el sistema de archivos local. Admite WebDAV, clientes de escritorio y móvil, enlaces públicos, espacios de equipo y edición colaborativa. La imagen oficial se ejecuta en un único contenedor con el directorio de usuarios LDAP y el proveedor de identidad OIDC integrados, escuchando en el puerto 9200 (HTTPS con certificado autofirmado de forma predeterminada)."
+  tr: OpenCloud, opencloud-eu tarafından geliştirilen açık kaynaklı dosya yönetimi, paylaşım ve işbirliği platformudur (Apache-2.0). Veritabanı gerektirmez; tüm durum yerel dosya sisteminde tutulur. WebDAV, masaüstü ve mobil istemciler, herkese açık bağlantı paylaşımı, ekip alanları ve ortak düzenlemeyi destekler. Resmî imaj, gömülü LDAP kullanıcı dizini ve OIDC kimlik sağlayıcısıyla tek konteyner olarak çalışır ve 9200 portunu dinler (varsayılan olarak kendi imzaladığı sertifika ile HTTPS).
+  zh-Hant: OpenCloud 是 opencloud-eu 開發的開源檔案管理、分享與協作平台（Apache-2.0），不依賴任何資料庫，所有狀態都存放於本機檔案系統。支援 WebDAV、桌面與行動裝置同步、公開連結分享、團隊空間與線上文件協作。官方映像以單一容器執行，內建 LDAP 使用者目錄與 OIDC 身分提供者，容器內固定 9200 連接埠（預設自帶自簽憑證的 HTTPS）。
+additionalProperties:
+  key: opencloud
+  name: OpenCloud
+  tags:
+    - File
+    - Sync
+    - Share
+    - Tool
+  description:
+    zh: OpenCloud 是 opencloud-eu 开发的开源文件管理、分享与协作平台（Apache-2.0），不依赖任何数据库，全部状态都落在本地文件系统上。支持 WebDAV、桌面与移动客户端同步、公开链接分享、团队空间与在线文档协作。官方镜像单容器运行，内置 LDAP 用户目录与 OIDC 身份提供者，容器内固定 9200 端口（默认自带自签证书的 HTTPS）。
+    en: OpenCloud is the open source platform for file management, sharing and collaboration by opencloud-eu (Apache-2.0). It needs no database - all state lives in the local filesystem. It supports WebDAV, desktop and mobile clients, public link sharing, team spaces and collaborative documents. The official image runs as a single container with a built-in LDAP user directory and OIDC identity provider, listening on port 9200 (HTTPS with a self-signed certificate by default).
+    ja: OpenCloud は opencloud-eu が開発するオープンソースのファイル管理・共有・コラボレーションプラットフォーム（Apache-2.0）です。データベース不要で、すべての状態はローカルファイルシステムに保存されます。WebDAV、デスクトップ／モバイルクライアント同期、公開リンク共有、チームスペース、共同編集に対応。公式イメージは単一コンテナで動作し、LDAP ユーザーディレクトリと OIDC アイデンティティプロバイダーを内蔵し、9200 番ポートで待ち受けます（既定は自己署名証明書の HTTPS）。
+    ko: OpenCloud는 opencloud-eu가 개발한 오픈 소스 파일 관리·공유·협업 플랫폼입니다(Apache-2.0). 데이터베이스가 필요 없으며 모든 상태는 로컬 파일 시스템에 저장됩니다. WebDAV, 데스크톱·모바일 클라이언트 동기화, 공개 링크 공유, 팀 스페이스와 공동 편집을 지원합니다. 공식 이미지는 단일 컨테이너로 동작하며 LDAP 사용자 디렉터리와 OIDC 아이덴티티 프로바이더를 내장하고 9200 포트에서 대기합니다(기본은 자체 서명 인증서의 HTTPS).
+    ru: "OpenCloud — открытая платформа для управления файлами, обмена и совместной работы от opencloud-eu (Apache-2.0). База данных не требуется: всё состояние хранится в локальной файловой системе. Поддерживаются WebDAV, десктопные и мобильные клиенты, публичные ссылки, командные пространства и совместное редактирование. Официальный образ работает одним контейнером со встроенным каталогом пользователей LDAP и OIDC-провайдером на порту 9200 (HTTPS с самоподписанным сертификатом по умолчанию)."
+    ms: OpenCloud ialah platform sumber terbuka untuk pengurusan fail, perkongsian dan kolaborasi yang dibina oleh opencloud-eu (Apache-2.0). Ia tidak memerlukan pangkalan data - semua keadaan disimpan dalam sistem fail setempat. Menyokong WebDAV, pelanggan desktop dan mudah alih, perkongsian pautan awam, ruang pasukan dan penyuntingan bersama. Imej rasmi berjalan sebagai satu kontena dengan direktori pengguna LDAP dan pembekal identiti OIDC terbina dalam, mendengar pada port 9200 (HTTPS dengan sijil sendiri secara lalai).
+    pt-br: OpenCloud é a plataforma open source para gerenciamento de arquivos, compartilhamento e colaboração mantida pela opencloud-eu (Apache-2.0). Não precisa de banco de dados - todo o estado fica no sistema de arquivos local. Suporta WebDAV, clientes desktop e mobile, compartilhamento por link público, espaços de equipe e edição colaborativa. A imagem oficial roda em um único contêiner com diretório de usuários LDAP e provedor de identidade OIDC integrados, escutando na porta 9200 (HTTPS com certificado autoassinado por padrão).
+    es-es: "OpenCloud es la plataforma de código abierto para gestión de archivos, uso compartido y colaboración desarrollada por opencloud-eu (Apache-2.0). No necesita base de datos: todo el estado reside en el sistema de archivos local. Admite WebDAV, clientes de escritorio y móvil, enlaces públicos, espacios de equipo y edición colaborativa. La imagen oficial se ejecuta en un único contenedor con el directorio de usuarios LDAP y el proveedor de identidad OIDC integrados, escuchando en el puerto 9200 (HTTPS con certificado autofirmado de forma predeterminada)."
+    tr: OpenCloud, opencloud-eu tarafından geliştirilen açık kaynaklı dosya yönetimi, paylaşım ve işbirliği platformudur (Apache-2.0). Veritabanı gerektirmez; tüm durum yerel dosya sisteminde tutulur. WebDAV, masaüstü ve mobil istemciler, herkese açık bağlantı paylaşımı, ekip alanları ve ortak düzenlemeyi destekler. Resmî imaj, gömülü LDAP kullanıcı dizini ve OIDC kimlik sağlayıcısıyla tek konteyner olarak çalışır ve 9200 portunu dinler (varsayılan olarak kendi imzaladığı sertifika ile HTTPS).
+    zh-Hant: OpenCloud 是 opencloud-eu 開發的開源檔案管理、分享與協作平台（Apache-2.0），不依賴任何資料庫，所有狀態都存放於本機檔案系統。支援 WebDAV、桌面與行動裝置同步、公開連結分享、團隊空間與線上文件協作。官方映像以單一容器執行，內建 LDAP 使用者目錄與 OIDC 身分提供者，容器內固定 9200 連接埠（預設自帶自簽憑證的 HTTPS）。
+  shortDescZh: 开源文件管理 / 分享 / 协作平台
+  shortDescEn: Open-source file management, sharing and collaboration
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://opencloud.eu/
+  github: https://github.com/opencloud-eu/opencloud
+  document: https://docs.opencloud.eu/

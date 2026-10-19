@@ -1,0 +1,84 @@
+networks:
+  1panel-network:
+    external: true
+
+# OpenCloud 8.1.0 — 开源文件管理 / 分享 / 协作平台
+#
+# 镜像: opencloudeu/opencloud-rolling:8.1.0
+#   - DockerHub, 多架构 (linux/amd64 + linux/arm64)
+#   - 镜像内置 USER 1000 (opencloud-user), WORKDIR /var/lib/opencloud, EXPOSE 9200/tcp
+#   - 上游 8.x 走 "rolling release" 线 (opencloudeu/opencloud-rolling);
+#     稳定线镜像为 opencloudeu/opencloud (当前最新 7.2.4), 需要时改这两行即可切换。
+#
+# 启动方式 (与上游官方 opencloud-compose 一致):
+#   entrypoint 换成 /bin/sh, 先跑一次 `opencloud init` 在 /etc/opencloud 生成
+#   opencloud.yaml (内含随机密钥 + 管理员口令哈希 + 各服务证书), 之后启动 server。
+#   配置已存在时 init 会报错退出, 属正常情况, 用 `|| true` 忽略即可。
+#
+# 运行身份:
+#   镜像没有 PUID/PGID 降权支持, 也没有 user-switching entrypoint,
+#   因此运行身份由 compose 的 user: 指定 (默认 1000:1000 = 镜像内置 opencloud-user)。
+#   宿主机 ./data/config 与 ./data/data 必须属于同一 UID/GID, 由 scripts/init.sh 负责 chown;
+#   手工部署时需自行执行: chown -R 1000:1000 ./data
+#   注意: 改成镜像内置用户以外的身份时, 容器内 /etc/passwd 没有对应条目,
+#   部分服务 (os/user 查询用户名) 可能解析失败, 建议保持 1000:1000。
+#
+# 端口:
+#   主机 ${PANEL_APP_PORT_HTTP} -> 容器 9200
+#   PROXY_TLS=true  (默认): 容器用自签证书直接提供 HTTPS, 浏览器会提示证书不受信任
+#   PROXY_TLS=false        : 容器只提供明文 HTTP, 供 1Panel OpenResty 反向代理回源
+#
+# 持久化:
+#   ./data/config -> /etc/opencloud     (opencloud.yaml + 各类密钥, 必须持久化, 丢了实例身份就没了)
+#   ./data/data   -> /var/lib/opencloud (用户文件 / 搜索索引 / 队列 / 代理自签证书等)
+
+services:
+  opencloud:
+    container_name: ${CONTAINER_NAME}
+    image: opencloudeu/opencloud-rolling:8.1.0
+    restart: always
+    labels:
+      createdBy: "Apps"
+    networks:
+      - 1panel-network
+    # 以指定 UID/GID 运行 (宿主机数据目录由 init.sh chown 到同一属主)
+    user: "${UID}:${GID}"
+    # 官方 compose 同样的做法: 每次启动先确保配置已生成
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - "opencloud init || true; opencloud server"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:9200
+    environment:
+      - TZ=${TZ}
+      # 容器内监听地址与端口 (镜像 EXPOSE 9200)
+      - PROXY_HTTP_ADDR=0.0.0.0:9200
+      # 容器是否自己终结 TLS: true = 自签证书 HTTPS; false = 明文 HTTP (反代回源)
+      - PROXY_TLS=${PROXY_TLS}
+      # 对外访问地址, 同时也是内置 IDP 的 OIDC issuer。
+      # 必须与实际访问方式完全一致 (协议 + 主机 + 端口), 否则登录跳转 / 分享链接会失败。
+      - OC_URL=${OC_URL}
+      # 内置 IDP 与内部服务之间使用自签证书, 需要跳过证书校验
+      - OC_INSECURE=true
+      # 管理员初始口令: 只在首次 opencloud init 生效, 之后改这个值无效
+      - IDM_ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - IDM_CREATE_DEMO_USERS=false
+      - PROXY_ENABLE_BASIC_AUTH=false
+      - FRONTEND_CHECK_FOR_UPDATES=true
+      - OC_LOG_LEVEL=${LOG_LEVEL}
+    volumes:
+      # 配置目录: opencloud.yaml + 密钥 (init 生成)
+      - ./data/config:/etc/opencloud
+      # 数据目录: 用户文件 / 搜索索引 / 队列 / 代理自签证书
+      - ./data/data:/var/lib/opencloud
+    healthcheck:
+      # 容器可能跑在 HTTPS (PROXY_TLS=true) 或明文 HTTP (PROXY_TLS=false) 模式,
+      # 两种都探测一次; 只判断端口是否在监听 (curl 对任意 HTTP 状态码都返回 0)。
+      # 镜像自带 curl (alpine apk add curl)。
+      test: ["CMD-SHELL", "curl -sk -o /dev/null https://127.0.0.1:9200/ || curl -s -o /dev/null http://127.0.0.1:9200/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s

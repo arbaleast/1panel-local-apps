@@ -67,6 +67,8 @@ aliases:
     desc: 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库）
   losslesscut:
     desc: 浏览器内视频/音频无损剪辑
+  opencloud:
+    desc: 开源文件管理 / 分享 / 协作平台（无数据库，内置 LDAP + OIDC）
   openreel-video:
     desc: 浏览器端开源视频剪辑工具
   openshot:

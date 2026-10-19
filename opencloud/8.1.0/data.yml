@@ -1,0 +1,182 @@
+additionalProperties:
+  key: opencloud
+  # 不带版本号: 自动更新守护会把本目录整体拷贝到新版本目录, 带版本号会残留旧版本串
+  name: OpenCloud
+  type: tool
+  formFields:
+    # ---- HTTP 端口: 主机侧端口映射到容器内 9200 (镜像固定端口) ----
+    - default: 9200
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+        es-es: Puerto HTTP
+        tr: HTTP bağlantı noktası
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 对外访问地址 (= 内置 IDP 的 OIDC issuer) ----
+    # 必须与实际访问方式完全一致: 直连用 https://<主机>:<端口>;
+    # 反向代理用 https://<你的域名>; 协议要和下面的 PROXY_TLS 保持一致。
+    - default: https://localhost:9200
+      edit: true
+      envKey: OC_URL
+      labelEn: Public URL
+      labelZh: 外部访问地址
+      label:
+        en: Public URL
+        zh: 外部访问地址
+        zh-Hant: 外部存取網址
+        ja: 公開 URL
+        ko: 공개 URL
+        ru: Публичный URL
+        ms: URL awam
+        pt-br: URL público
+        es-es: URL pública
+        tr: Genel URL
+      required: true
+      type: text
+    # ---- 容器是否自己终结 TLS ----
+    # true  = 容器用自签证书提供 HTTPS (浏览器会提示证书不受信任)
+    # false = 容器只提供明文 HTTP, 供 1Panel OpenResty 反向代理回源
+    - default: "true"
+      edit: true
+      envKey: PROXY_TLS
+      labelEn: Container HTTPS
+      labelZh: 容器 HTTPS
+      label:
+        en: Container HTTPS
+        zh: 容器 HTTPS
+        zh-Hant: 容器 HTTPS
+        ja: コンテナ HTTPS
+        ko: 컨테이너 HTTPS
+        ru: HTTPS в контейнере
+        ms: HTTPS dalam kontena
+        pt-br: HTTPS no contêiner
+        es-es: HTTPS en el contenedor
+        tr: Konteyner HTTPS
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    # ---- 管理员初始口令 ----
+    # 只在首次 opencloud init 时写入配置, 之后改这个值不会生效 (请在 Web UI 内修改)。
+    - default: opencloud-admin
+      edit: true
+      envKey: ADMIN_PASSWORD
+      labelEn: Admin Password
+      labelZh: 管理员密码
+      label:
+        en: Admin Password
+        zh: 管理员密码
+        zh-Hant: 管理員密碼
+        ja: 管理者パスワード
+        ko: 관리자 비밀번호
+        ru: Пароль администратора
+        ms: Kata laluan pentadbir
+        pt-br: Senha do admin
+        es-es: Contraseña de administración
+        tr: Yönetici parolası
+      random: true
+      required: true
+      rule: paramComplexity
+      type: password
+    # ---- 运行身份 UID (与镜像内置 opencloud-user 一致) ----
+    - default: 1000
+      edit: true
+      envKey: UID
+      labelEn: Run as UID
+      labelZh: 运行用户 UID
+      label:
+        en: Run as UID
+        zh: 运行用户 UID
+        zh-Hant: 執行使用者 UID
+        ja: 実行 UID
+        ko: 실행 UID
+        ru: UID пользователя
+        ms: UID pengguna
+        pt-br: UID do usuário
+        es-es: UID del usuario
+        tr: Çalıştırma UID
+      required: true
+      type: number
+    # ---- 运行身份 GID ----
+    - default: 1000
+      edit: true
+      envKey: GID
+      labelEn: Run as GID
+      labelZh: 运行用户 GID
+      label:
+        en: Run as GID
+        zh: 运行用户 GID
+        zh-Hant: 執行使用者 GID
+        ja: 実行 GID
+        ko: 실행 GID
+        ru: GID пользователя
+        ms: GID pengguna
+        pt-br: GID do usuário
+        es-es: GID del usuario
+        tr: Çalıştırma GID
+      required: true
+      type: number
+    # ---- 日志级别 ----
+    - default: info
+      edit: true
+      envKey: LOG_LEVEL
+      labelEn: Log Level
+      labelZh: 日志级别
+      label:
+        en: Log Level
+        zh: 日志级别
+        zh-Hant: 日誌等級
+        ja: ログレベル
+        ko: 로그 수준
+        ru: Уровень журнала
+        ms: Tahap log
+        pt-br: Nível de log
+        es-es: Nivel de registro
+        tr: Günlük düzeyi
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: error
+          value: error
+        - label: warn
+          value: warn
+        - label: info
+          value: info
+        - label: debug
+          value: debug
+    # ---- 时区 ----
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+        es-es: Zona horaria
+        tr: Saat dilimi
+      required: true
+      type: text

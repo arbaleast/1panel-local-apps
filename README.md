@@ -45,6 +45,7 @@
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
 | onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.2.4 |
 | open-design | Claude Design 开源替代，agent CLI 驱动 | 0.24.1 |
+| opencloud | 开源文件管理 / 分享 / 协作平台（无数据库，内置 LDAP + OIDC） | 8.1.0 |
 | openreel-video | 浏览器端开源视频剪辑工具 | v0.5.0 |
 | openshot | 开源视频剪辑与动画制作 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速, 仅 amd64) | 4.0.1 |
 | optimisarr | 媒体库自动转码 (FFmpeg 验证 + 回滚, Plex/Jellyfin/Emby, 仅 amd64) | 0.2.23 |
