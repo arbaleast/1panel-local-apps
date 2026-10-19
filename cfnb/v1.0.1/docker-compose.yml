@@ -1,0 +1,43 @@
+networks:
+  1panel-network:
+    external: true
+
+# cfnb v1.0.1 — Cloudflare CDN 节点优选工具
+# 镜像: baizw/cfnb:v1.0.1
+#   - 基础镜像 alpine 3.21.7 + 静态 Go 二进制 /usr/local/bin/cfx
+#   - ENTRYPOINT ["cfx"], WORKDIR /app, 多架构 (linux/amd64 + linux/arm64)
+#   - 无 USER 指令 (默认 root), 因此用 compose 的 user: 指定运行身份,
+#     宿主机数据目录必须 chown 给同一 UID/GID (由 scripts/init.sh 完成)
+#   - 镜像不是 s6-overlay 体系, 不加 init: 字段
+#
+# 配置说明:
+#   该应用没有 Web UI, 也不支持命令行参数 / 环境变量, 唯一配置入口是
+#   工作目录下的 config.yaml。config.yaml 由宿主机上的 scripts/init.sh
+#   根据 1Panel 安装参数生成 (见该脚本内注释), 容器启动时读取。
+#
+# 端口:
+#   主机 ${PANEL_APP_PORT_HTTP} -> 容器 8080
+#   8080 上只有一条路由: ${HTTP_PATH} (默认 /ips), 返回当前优选出的节点列表;
+#   首次扫描完成前该路径返回 404 "文件不存在或无法读取"。
+
+services:
+  cfnb:
+    container_name: ${CONTAINER_NAME}
+    image: baizw/cfnb:v1.0.1
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    # 以指定 UID/GID 运行（宿主机 data 目录由 init.sh chown 到同一属主）
+    user: "${UID}:${GID}"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8080
+    environment:
+      - TZ=${TZ}
+    volumes:
+      # 整个 /app 映射到宿主机 ./data:
+      #   ./data/config.yaml  -> /app/config.yaml  (init.sh 生成, 应用启动时读取)
+      #   ./data/ip.txt       -> /app/ip.txt       (global.outputfile)
+      #   ./data/logs/        -> /app/logs/        (logger.logdir, cfx.info.log / cfx.error.log)
+      - ./data:/app

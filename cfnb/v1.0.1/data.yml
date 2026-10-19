@@ -1,0 +1,405 @@
+additionalProperties:
+  key: cfnb
+  name: cfnb v1.0.1
+  tags:
+    - Cloudflare
+    - CDN
+    - IP
+    - Optimization
+    - Tool
+  shortDescZh: Cloudflare CDN 节点优选工具
+  shortDescEn: Cloudflare CDN node optimizer
+  description:
+    en: cfnb is a fully automated Cloudflare CDN node optimizer. It aggregates candidate nodes from multiple public sources, filters them by TCP latency, IP availability, HTTP jitter and real bandwidth tests, publishes the fastest nodes as a subscription list, and can push the result into your Cloudflare DNS records automatically.
+    zh: cfnb 是一个全自动的 Cloudflare CDN 节点优选工具。它从多个公开数据源聚合候选节点，依次经过 TCP 延迟、IP 可用性、HTTP 抖动与真实带宽测速筛选，输出最优节点订阅列表，并可自动把结果写回 Cloudflare DNS 记录。
+    zh-Hant: cfnb 是一個全自動的 Cloudflare CDN 節點優選工具。它從多個公開資料來源彙整候選節點，依次經過 TCP 延遲、IP 可用性、HTTP 抖動與真實頻寬測速篩選，輸出最優節點訂閱清單，並可自動把結果寫回 Cloudflare DNS 記錄。
+    ja: cfnb は完全自動の Cloudflare CDN ノード最適化ツールです。複数の公開データソースから候補ノードを集約し、TCP 遅延・IP 可用性・HTTP ジッタ・実効帯域のテストで絞り込み、最適なノードを購読リストとして出力します。Cloudflare DNS レコードへの自動反映にも対応しています。
+    ko: cfnb는 완전 자동 Cloudflare CDN 노드 최적화 도구입니다. 여러 공개 데이터 소스에서 후보 노드를 수집한 뒤 TCP 지연, IP 가용성, HTTP 지터, 실제 대역폭 측정으로 걸러내고, 최적 노드를 구독 목록으로 출력하며 Cloudflare DNS 레코드로 자동 반영할 수 있습니다.
+    ru: cfnb — полностью автоматический инструмент оптимизации узлов Cloudflare CDN. Он собирает кандидатов из нескольких открытых источников, фильтрует их по задержке TCP, доступности IP, джиттеру HTTP и реальной пропускной способности, публикует лучшие узлы в виде списка подписки и может автоматически обновлять DNS-записи Cloudflare.
+    ms: cfnb ialah alat pengoptimuman nod CDN Cloudflare yang sepenuhnya automatik. Ia mengumpulkan nod calon daripada pelbagai sumber awam, menapisnya melalui kelewatan TCP, ketersediaan IP, jitter HTTP dan ujian lebar jalur sebenar, kemudian menerbitkan nod terpantas sebagai senarai langganan dan boleh mengemas kini rekod DNS Cloudflare secara automatik.
+    pt-br: O cfnb é uma ferramenta totalmente automatizada de otimização de nós CDN da Cloudflare. Ela agrega nós candidatos de várias fontes públicas, filtra-os por latência TCP, disponibilidade de IP, jitter HTTP e teste real de largura de banda, publica os nós mais rápidos como lista de assinatura e pode atualizar automaticamente os registros DNS da Cloudflare.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://hub.docker.com/r/baizw/cfnb
+  github: https://github.com/xinyitang3/cfnb
+  formFields:
+    - default: 8080
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: false
+      type: text
+    - default: 99
+      edit: true
+      envKey: UID
+      labelEn: Run as UID
+      labelZh: 运行用户 UID
+      label:
+        en: Run as UID
+        zh: 运行用户 UID
+        zh-Hant: 執行使用者 UID
+        ja: 実行 UID
+        ko: 실행 UID
+        ru: UID пользователя
+        ms: UID pengguna
+        pt-br: UID do usuário
+      required: true
+      type: number
+    - default: 100
+      edit: true
+      envKey: GID
+      labelEn: Run as GID
+      labelZh: 运行组 GID
+      label:
+        en: Run as GID
+        zh: 运行组 GID
+        zh-Hant: 執行群組 GID
+        ja: 実行 GID
+        ko: 실행 GID
+        ru: GID группы пользователя
+        ms: GID kumpulan pengguna
+        pt-br: GID do grupo
+      required: true
+      type: number
+    - default: "true"
+      edit: true
+      envKey: SCHEDULE_ENABLED
+      labelEn: Scheduled Run
+      labelZh: 定时运行
+      label:
+        en: Scheduled Run
+        zh: 定时运行
+        zh-Hant: 定時執行
+        ja: 定時実行
+        ko: 예약 실행
+        ru: Запуск по расписанию
+        ms: Jalankan berjadual
+        pt-br: Execução agendada
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: 1h
+      edit: true
+      envKey: SCHEDULE_INTERVAL
+      labelEn: Run Interval
+      labelZh: 运行间隔
+      label:
+        en: Run Interval
+        zh: 运行间隔
+        zh-Hant: 執行間隔
+        ja: 実行間隔
+        ko: 실행 간격
+        ru: Интервал запуска
+        ms: Selang larian
+        pt-br: Intervalo de execução
+      required: true
+      type: text
+    - default: global
+      edit: true
+      envKey: GLOBAL_MODE
+      labelEn: Selection Mode
+      labelZh: 优选模式
+      label:
+        en: Selection Mode
+        zh: 优选模式
+        zh-Hant: 優選模式
+        ja: 最適化モード
+        ko: 선택 모드
+        ru: Режим отбора
+        ms: Mod pilihan
+        pt-br: Modo de seleção
+      required: true
+      type: select
+      values:
+        - label: global
+          value: global
+        - label: country
+          value: country
+    - default: 50
+      edit: true
+      envKey: TOP_N
+      labelEn: Node Count
+      labelZh: 节点数量
+      label:
+        en: Node Count
+        zh: 节点数量
+        zh-Hant: 節點數量
+        ja: ノード数
+        ko: 노드 수
+        ru: Число узлов
+        ms: Bilangan nod
+        pt-br: Quantidade de nós
+      required: true
+      type: number
+    - default: 2
+      edit: true
+      envKey: TCP_PROBES
+      labelEn: TCP Probes
+      labelZh: 探测次数
+      label:
+        en: TCP Probes
+        zh: 探测次数
+        zh-Hant: 探測次數
+        ja: TCP 試行回数
+        ko: TCP 시도 횟수
+        ru: TCP-пробы
+        ms: Bilangan_probe TCP
+        pt-br: Sondas TCP
+      required: true
+      type: number
+    - default: 0.5
+      edit: true
+      envKey: MIN_SUCCESS_RATE
+      labelEn: Min Success Rate
+      labelZh: 最低成功率
+      label:
+        en: Min Success Rate
+        zh: 最低成功率
+        zh-Hant: 最低成功率
+        ja: 最小成功率
+        ko: 최소 성공률
+        ru: Мин. доля успеха
+        ms: Kadar kejayaan minimum
+        pt-br: Taxa de sucesso mínima
+      required: true
+      type: number
+    - default: "true"
+      edit: true
+      envKey: AVAILABILITY_ENABLED
+      labelEn: Availability Check
+      labelZh: 可用性检测
+      label:
+        en: Availability Check
+        zh: 可用性检测
+        zh-Hant: 可用性檢測
+        ja: 利用可否チェック
+        ko: 가용성 검사
+        ru: Проверка доступности
+        ms: Semakan ketersediaan
+        pt-br: Verificação de disponibilidade
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: 50
+      edit: true
+      envKey: BANDWIDTH_SIZE_MB
+      labelEn: Test Size (MB)
+      labelZh: 测速大小
+      label:
+        en: Test Size (MB)
+        zh: 测速大小
+        zh-Hant: 測速大小
+        ja: 速度測定サイズ (MB)
+        ko: 속도 측정 크기 (MB)
+        ru: Размер теста (МБ)
+        ms: Saiz ujian (MB)
+        pt-br: Tamanho do teste (MB)
+      required: true
+      type: number
+    - default: "443"
+      edit: true
+      envKey: PORTS
+      labelEn: Port Filter
+      labelZh: 端口过滤
+      label:
+        en: Port Filter
+        zh: 端口过滤
+        zh-Hant: 連接埠過濾
+        ja: ポートフィルター
+        ko: 포트 필터
+        ru: Фильтр портов
+        ms: Penapis port
+        pt-br: Filtro de portas
+      required: true
+      type: text
+    - default: CN
+      edit: true
+      envKey: BLOCKED_COUNTRIES
+      labelEn: Blocked Countries
+      labelZh: 屏蔽国家
+      label:
+        en: Blocked Countries
+        zh: 屏蔽国家
+        zh-Hant: 封鎖國家
+        ja: ブロック国
+        ko: 차단 국가
+        ru: Заблокированные страны
+        ms: Negara disekat
+        pt-br: Países bloqueados
+      required: false
+      type: text
+    - default: ""
+      edit: true
+      envKey: ALLOWED_COUNTRIES
+      labelEn: Allowed Countries
+      labelZh: 限定国家
+      label:
+        en: Allowed Countries
+        zh: 限定国家
+        zh-Hant: 限定國家
+        ja: 許可国
+        ko: 허용 국가
+        ru: Разрешённые страны
+        ms: Negara dibenarkan
+        pt-br: Países permitidos
+      required: false
+      type: text
+    - default: "false"
+      edit: true
+      envKey: CF_ENABLED
+      labelEn: Auto DNS Update
+      labelZh: DNS 自动更新
+      label:
+        en: Auto DNS Update
+        zh: DNS 自动更新
+        zh-Hant: DNS 自動更新
+        ja: DNS 自動更新
+        ko: DNS 자동 갱신
+        ru: Автообновление DNS
+        ms: Kemas kini DNS automatik
+        pt-br: Atualização automática de DNS
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: ""
+      edit: true
+      envKey: CF_API_TOKEN
+      labelEn: API Token
+      labelZh: API Token
+      label:
+        en: API Token
+        zh: API Token
+        zh-Hant: API Token
+        ja: API トークン
+        ko: API 토큰
+        ru: API Token
+        ms: Token API
+        pt-br: Token de API
+      required: false
+      type: password
+    - default: ""
+      edit: true
+      envKey: CF_ZONE_ID
+      labelEn: Zone ID
+      labelZh: Zone ID
+      label:
+        en: Zone ID
+        zh: Zone ID
+        zh-Hant: Zone ID
+        ja: Zone ID
+        ko: Zone ID
+        ru: Zone ID
+        ms: Zone ID
+        pt-br: Zone ID
+      required: false
+      type: text
+    - default: ""
+      edit: true
+      envKey: CF_DNS_RECORD_NAME
+      labelEn: Record Name
+      labelZh: 记录名称
+      label:
+        en: Record Name
+        zh: 记录名称
+        zh-Hant: 記錄名稱
+        ja: レコード名
+        ko: 레코드 이름
+        ru: Имя записи
+        ms: Nama rekod
+        pt-br: Nome do registro
+      required: false
+      type: text
+    - default: 60
+      edit: true
+      envKey: CF_TTL
+      labelEn: TTL
+      labelZh: TTL
+      label:
+        en: TTL
+        zh: TTL
+        zh-Hant: TTL
+        ja: TTL
+        ko: TTL
+        ru: TTL
+        ms: TTL
+        pt-br: TTL
+      required: true
+      type: number
+    - default: "false"
+      edit: true
+      envKey: CF_PROXIED
+      labelEn: Proxied
+      labelZh: 开启代理
+      label:
+        en: Proxied
+        zh: 开启代理
+        zh-Hant: 開啟代理
+        ja: プロキシ有効
+        ko: 프록시 사용
+        ru: Проксирование
+        ms: Proksi
+        pt-br: Proxiado
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: /ips
+      edit: true
+      envKey: HTTP_PATH
+      labelEn: Subscription Path
+      labelZh: 订阅路径
+      label:
+        en: Subscription Path
+        zh: 订阅路径
+        zh-Hant: 訂閱路徑
+        ja: 購読パス
+        ko: 구독 경로
+        ru: Путь подписки
+        ms: Laluan langganan
+        pt-br: Caminho da assinatura
+      required: true
+      type: text

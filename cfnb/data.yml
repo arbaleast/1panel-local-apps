@@ -1,0 +1,26 @@
+additionalProperties:
+  key: cfnb
+  name: cfnb
+  tags:
+    - Cloudflare
+    - CDN
+    - IP
+    - Optimization
+    - Tool
+  shortDescZh: Cloudflare CDN 节点优选工具
+  shortDescEn: Cloudflare CDN node optimizer
+  description:
+    en: cfnb is a fully automated Cloudflare CDN node optimizer. It aggregates candidate nodes from multiple public sources, filters them by TCP latency, IP availability, HTTP jitter and real bandwidth tests, publishes the fastest nodes as a subscription list, and can push the result into your Cloudflare DNS records automatically.
+    zh: cfnb 是一个全自动的 Cloudflare CDN 节点优选工具。它从多个公开数据源聚合候选节点，依次经过 TCP 延迟、IP 可用性、HTTP 抖动与真实带宽测速筛选，输出最优节点订阅列表，并可自动把结果写回 Cloudflare DNS 记录。
+    zh-Hant: cfnb 是一個全自動的 Cloudflare CDN 節點優選工具。它從多個公開資料來源彙整候選節點，依次經過 TCP 延遲、IP 可用性、HTTP 抖動與真實頻寬測速篩選，輸出最優節點訂閱清單，並可自動把結果寫回 Cloudflare DNS 記錄。
+    ja: cfnb は完全自動の Cloudflare CDN ノード最適化ツールです。複数の公開データソースから候補ノードを集約し、TCP 遅延・IP 可用性・HTTP ジッタ・実効帯域のテストで絞り込み、最適なノードを購読リストとして出力します。Cloudflare DNS レコードへの自動反映にも対応しています。
+    ko: cfnb는 완전 자동 Cloudflare CDN 노드 최적화 도구입니다. 여러 공개 데이터 소스에서 후보 노드를 수집한 뒤 TCP 지연, IP 가용성, HTTP 지터, 실제 대역폭 측정으로 걸러내고, 최적 노드를 구독 목록으로 출력하며 Cloudflare DNS 레코드로 자동 반영할 수 있습니다.
+    ru: cfnb — полностью автоматический инструмент оптимизации узлов Cloudflare CDN. Он собирает кандидатов из нескольких открытых источников, фильтрует их по задержке TCP, доступности IP, джиттеру HTTP и реальной пропускной способности, публикует лучшие узлы в виде списка подписки и может автоматически обновлять DNS-записи Cloudflare.
+    ms: cfnb ialah alat pengoptimuman nod CDN Cloudflare yang sepenuhnya automatik. Ia mengumpulkan nod calon daripada pelbagai sumber awam, menapisnya melalui kelewatan TCP, ketersediaan IP, jitter HTTP dan ujian lebar jalur sebenar, kemudian menerbitkan nod terpantas sebagai senarai langganan dan boleh mengemas kini rekod DNS Cloudflare secara automatik.
+    pt-br: O cfnb é uma ferramenta totalmente automatizada de otimização de nós CDN da Cloudflare. Ela agrega nós candidatos de várias fontes públicas, filtra-os por latência TCP, disponibilidade de IP, jitter HTTP e teste real de largura de banda, publica os nós mais rápidos como lista de assinatura e pode atualizar automaticamente os registros DNS da Cloudflare.
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://hub.docker.com/r/baizw/cfnb
+  github: https://github.com/xinyitang3/cfnb

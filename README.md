@@ -10,6 +10,7 @@
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
 | aria2 | 轻量级多协议下载工具 | a2b-stable-25-08-12 |
 | bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.4.0 |
+| cfnb | Cloudflare CDN 节点优选工具 | v1.0.1 |
 | cfui | cloudflared WebUI 管理面板 | v0.10.5 |
 | cinny | Matrix 聊天客户端 | v4.12.6 |
 | dendrite | Matrix 协议新一代 homeserver | v0.15.2 |

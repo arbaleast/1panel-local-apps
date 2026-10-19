@@ -41,6 +41,8 @@ aliases:
     desc: 动漫 RSS
   bookorbit:
     desc: 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO）
+  cfnb:
+    desc: Cloudflare CDN 节点优选工具
   cfui:
     desc: cloudflared WebUI 管理面板
   cinny:
