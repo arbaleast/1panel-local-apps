@@ -371,4 +371,79 @@ describe('registry', () => {
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:v3.2.18-arm32v7', 'v3.2.18-arm32v7');
     assert.equal(tag, 'v3.2.29-arm32v7');
   });
+
+  // 18. DockerHubAdapter 形态 4：多段数字版本不被历史遗留的 3 段纯 semver 抢占（collabora 回归用例）
+  // collabora/code 同时存在 2017 年的 2.1.2~2.1.5 与当前的 26.04.5.1.1，
+  // pickLatest 的"纯 semver 优先"会选到 2.1.5 → auto-update 会写出错误的版本目录。
+  it('DockerHubAdapter: multi-segment numeric tag ignores legacy 3-segment pure semver', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({
+            results: [
+              { name: 'latest' },
+              { name: '2.1.2' },
+              { name: '2.1.3' },
+              { name: '2.1.4' },
+              { name: '2.1.5' },
+              { name: '25.04.9.2.1' },
+              { name: '26.04.4.2.1' },
+              { name: '26.04.5.1.1' },
+            ],
+          }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('collabora/code:26.04.5.1.1', '26.04.5.1.1');
+    assert.equal(tag, '26.04.5.1.1');
+  });
+
+  // 19. DockerHubAdapter 形态 4：同段数出现更新的 tag 时能正确检出
+  it('DockerHubAdapter: multi-segment numeric tag detects newer same-shape tag', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({
+            results: [
+              { name: 'latest' },
+              { name: '2.1.5' },
+              { name: '26.04.5.1.1' },
+              { name: '26.04.6.1.1' },
+            ],
+          }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('collabora/code:26.04.5.1.1', '26.04.5.1.1');
+    assert.equal(tag, '26.04.6.1.1');
+  });
+
+  // 20. DockerHubAdapter 形态 4：同段数 tag 不存在时走 fallback，不误报、不崩溃
+  it('DockerHubAdapter: multi-segment numeric tag falls back when no same-shape tag exists', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({
+            results: [{ name: 'latest' }, { name: '1.2.3' }, { name: '1.2.4' }],
+          }),
+        }),
+    });
+    const tag = await adapter.getLatestTag('org/repo:1.2.3.4.5', '1.2.3.4.5');
+    assert.equal(tag, '1.2.4');
+  });
+
+  // 21. GhcrAdapter 形态 4：与 DockerHubAdapter 行为一致
+  it('GhcrAdapter: multi-segment numeric tag ignores legacy 3-segment pure semver', async () => {
+    const fetchMock = makeMockFetch([
+      () => ({ ok: true, json: async () => ({ token: 'anon-token' }) }),
+      () => ({
+        ok: true,
+        json: async () => ({ tags: ['2.1.5', '26.04.5.1.1', '26.04.6.1.1'] }),
+      }),
+    ]);
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const tag = await adapter.getLatestTag('ghcr.io/org/repo:26.04.5.1.1', '26.04.5.1.1');
+    assert.equal(tag, '26.04.6.1.1');
+  });
 });

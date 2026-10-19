@@ -1,0 +1,158 @@
+additionalProperties:
+  key: collabora
+  name: Collabora Online 26.04.5.1.1
+  type: tool
+  formFields:
+    # ---- HTTP 端口: 主机侧端口映射到容器内 9980 (镜像固定端口) ----
+    - default: 9980
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+        es-es: Puerto HTTP
+        tr: HTTP bağlantı noktası
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 管理控制台账号 (上游环境变量 username) ----
+    - default: admin
+      edit: true
+      envKey: ADMIN_USER
+      labelEn: Admin User
+      labelZh: 管理控制台账号
+      label:
+        en: Admin User
+        zh: 管理控制台账号
+        zh-Hant: 管理控制台帳號
+        ja: 管理者コンソールユーザー
+        ko: 관리 콘솔 사용자
+        ru: Пользователь консоли администратора
+        ms: Pengguna Konsol Pentadbir
+        pt-br: Usuário do console admin
+        es-es: Usuario de la consola de administración
+        tr: Yönetim konsolu kullanıcısı
+      required: true
+      type: text
+    # ---- 管理控制台密码 (上游环境变量 password) ----
+    - default: dockercollabora
+      edit: true
+      envKey: ADMIN_PASSWORD
+      labelEn: Admin Password
+      labelZh: 管理控制台密码
+      label:
+        en: Admin Password
+        zh: 管理控制台密码
+        zh-Hant: 管理控制台密碼
+        ja: 管理者コンソールパスワード
+        ko: 관리 콘솔 비밀번호
+        ru: Пароль консоли администратора
+        ms: Kata Laluan Konsol Pentadbir
+        pt-br: Senha do console admin
+        es-es: Contraseña de la consola de administración
+        tr: Yönetim konsolu parolası
+      required: true
+      type: password
+    # ---- WOPI 允许域名 (上游环境变量 aliasgroup1) ----
+    - default: https://cloud.example.com:443
+      edit: true
+      envKey: WOPI_ALIAS1
+      labelEn: WOPI Allowed Host
+      labelZh: WOPI 允许域名
+      label:
+        en: WOPI Allowed Host
+        zh: WOPI 允许域名
+        zh-Hant: WOPI 允許網域
+        ja: WOPI 許可ホスト
+        ko: WOPI 허용 호스트
+        ru: Разрешённый хост WOPI
+        ms: Hos WOPI Dibenarkan
+        pt-br: Host WOPI permitido
+        es-es: Host WOPI permitido
+        tr: İzin verilen WOPI ana bilgisayarı
+      required: true
+      type: text
+    # ---- 对外服务名 (上游环境变量 server_name) ----
+    - default: localhost
+      edit: true
+      envKey: SERVER_NAME
+      labelEn: Server Name
+      labelZh: 服务名称
+      label:
+        en: Server Name
+        zh: 服务名称
+        zh-Hant: 服務名稱
+        ja: サーバー名
+        ko: 서버 이름
+        ru: Имя сервера
+        ms: Nama Pelayan
+        pt-br: Nome do servidor
+        es-es: Nombre del servidor
+        tr: Sunucu adı
+      required: true
+      type: text
+    # ---- 拼写检查词典 (上游环境变量 dictionaries → coolwsd 的 allowed_languages) ----
+    - default: en_US
+      edit: true
+      envKey: DICTIONARIES
+      labelEn: Dictionaries
+      labelZh: 拼写检查词典
+      label:
+        en: Dictionaries
+        zh: 拼写检查词典
+        zh-Hant: 拼寫檢查詞典
+        ja: スペルチェック辞書
+        ko: 맞춤법 검사 사전
+        ru: Словари проверки орфографии
+        ms: Kamus Semak Ejaan
+        pt-br: Dicionários de verificação ortográfica
+        es-es: Diccionarios de ortografía
+        tr: Yazım denetimi sözlükleri
+      required: false
+      type: text
+    # ---- 附加 coolwsd 参数 (上游环境变量 extra_params) ----
+    - default: --o:ssl.enable=false
+      edit: true
+      envKey: EXTRA_PARAMS
+      labelEn: Extra Options
+      labelZh: 附加参数
+      label:
+        en: Extra Options
+        zh: 附加参数
+        zh-Hant: 附加參數
+        ja: 追加 coolwsd オプション
+        ko: 추가 coolwsd 옵션
+        ru: Доп. параметры coolwsd
+        ms: Pilihan Tambahan coolwsd
+        pt-br: Opções extras do coolwsd
+        es-es: Opciones adicionales de coolwsd
+        tr: Ek coolwsd seçenekleri
+      required: false
+      type: text
+    # ---- 时区 ----
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon Waktu
+        pt-br: Fuso horário
+        es-es: Zona horaria
+        tr: Saat dilimi
+      required: true
+      type: text

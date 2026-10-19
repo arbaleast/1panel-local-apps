@@ -104,14 +104,32 @@ export class DockerHubAdapter {
     if (stable.length === 0) return null;
 
     // 如果有当前 tag，尝试按"变体维度"匹配同 suffix 的版本化 tag。
-    // 支持 3 种 currentTag 形态：
+    // 支持 4 种 currentTag 形态：
     //   1. 裸变体: 'pg'            → 匹配 'pg-1.16.0'（prefix = 'pg', suffix = undefined）
     //   2. 变体+版本: 'pg-1.16.0'  → 匹配 'pg-1.16.1'（prefix = 'pg', suffix = undefined）
     //   3. semver+后缀: 'v3.2.18-arm32v7' → 匹配 'v3.2.29-arm32v7'（prefix = 'v', suffix = 'arm32v7'）
+    //   4. 多段数字版本: '26.04.5.1.1' → 只在"同段数"的数字 tag 里选最新
     //
     // 形态 1/2 行为不变（AGENTS.md 业务：anythingllm/railway 等需要）；形态 3 修复 anirss/handbrake 类
     // hardcode 应用的"丢后缀"bug（9 个 versionDir 全收敛到 v3.2.29，v3.2.29-arm32v7 永远不生成）。
     if (currentTag) {
+      // 形态 4：4 段及以上的纯数字版本（collabora/code 的 26.04.5.1.1 这类）
+      // 动机: 某些镜像同时存在"历史遗留的 3 段纯 semver"和"当前的多段数字版本"
+      // （collabora/code 有 2017 年的 2.1.2 ~ 2.1.5 与当前的 26.04.5.1.1），
+      // 而 pickLatest 的"纯 semver 优先"策略会让 2.1.5 压过 26.04.5.1.1，
+      // 导致 auto-update 把版本目录写成 2.1.5。按段数收敛候选集即可避免该误报。
+      const multiSegmentMatch = currentTag.match(/^\d+(?:\.\d+){3,}$/);
+      if (multiSegmentMatch) {
+        const segmentCount = currentTag.split('.').length;
+        const sameShape = stable.filter(
+          (t) => /^\d+(?:\.\d+)*$/.test(t.name) && t.name.split('.').length === segmentCount
+        );
+        if (sameShape.length > 0) {
+          return pickLatest(sameShape.map((t) => t.name));
+        }
+        // 同段数的 tag 不存在 → 走 fallback，避免误报
+      }
+
       // 形态 3：vX.Y.Z-suffix（pure semver base + 短横线后缀）
       const semverSuffixMatch = currentTag.match(/^v\d+\.\d+\.\d+-([a-z0-9][a-z0-9-]*)$/i);
       if (semverSuffixMatch) {
@@ -212,11 +230,25 @@ export class GhcrAdapter {
     if (stable.length === 0) return null;
 
     // 如果有当前 tag，尝试按"变体维度"匹配同 suffix 的版本化 tag。
-    // 支持 3 种 currentTag 形态（与 DockerHubAdapter 一致）：
+    // 支持 4 种 currentTag 形态（与 DockerHubAdapter 一致）：
     //   1. 裸变体: 'pg'            → 匹配 'pg-1.16.0'
     //   2. 变体+版本: 'pg-1.16.0'  → 匹配 'pg-1.16.1'
     //   3. semver+后缀: 'v3.2.18-arm32v7' → 匹配 'v3.2.29-arm32v7'
+    //   4. 多段数字版本: '26.04.5.1.1' → 只在"同段数"的数字 tag 里选最新
     if (currentTag) {
+      // 形态 4：4 段及以上的纯数字版本（按段数收敛候选集，避免历史遗留的 3 段纯 semver 抢占）
+      const multiSegmentMatch = currentTag.match(/^\d+(?:\.\d+){3,}$/);
+      if (multiSegmentMatch) {
+        const segmentCount = currentTag.split('.').length;
+        const sameShape = stable.filter(
+          (t) => /^\d+(?:\.\d+)*$/.test(t) && t.split('.').length === segmentCount
+        );
+        if (sameShape.length > 0) {
+          return pickLatest(sameShape);
+        }
+        // 同段数的 tag 不存在 → 走 fallback
+      }
+
       // 形态 3：vX.Y.Z-suffix
       const semverSuffixMatch = currentTag.match(/^v\d+\.\d+\.\d+-([a-z0-9][a-z0-9-]*)$/i);
       if (semverSuffixMatch) {

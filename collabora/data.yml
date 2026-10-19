@@ -1,0 +1,44 @@
+name: Collabora Online
+title: Collabora Online (CODE) — 自托管协作在线 Office 套件
+description:
+  zh: 基于 LibreOffice 技术的自托管协作在线 Office 套件，可在浏览器里实时协同编辑 Word / Excel / PowerPoint / ODF 文档。官方镜像 collabora/code 单容器运行（容器内固定 9980 端口），既可作为 WOPI 服务端接入 Nextcloud / ownCloud 等网盘，也自带管理控制台查看服务器状态与安全设置。
+  en: Self-hosted collaborative online office suite based on LibreOffice technology, offering real-time co-editing of Word / Excel / PowerPoint / ODF documents in the browser. The official collabora/code image runs as a single container on port 9980 and acts as a WOPI server for Nextcloud / ownCloud, with an admin console for server status and security settings.
+  ja: LibreOffice 技術をベースとしたセルフホスト型の共同編集対応オンライン Office スイート。ブラウザー内で Word / Excel / PowerPoint / ODF 文書をリアルタイムに共同編集できます。公式イメージ collabora/code は単一コンテナで 9980 番ポートに動作し、Nextcloud / ownCloud などの WOPI サーバーとして利用できます。管理コンソールからサーバー状態とセキュリティ設定も確認できます。
+  ko: LibreOffice 기술을 기반으로 한 자기 호스팅 협업 온라인 Office 스위트입니다. 브라우저에서 Word / Excel / PowerPoint / ODF 문서를 실시간으로 함께 편집할 수 있습니다. 공식 이미지 collabora/code는 단일 컨테이너로 9980 포트에서 동작하며 Nextcloud / ownCloud 등의 WOPI 서버로 사용할 수 있고, 관리 콘솔에서 서버 상태와 보안 설정을 확인할 수 있습니다.
+  ru: "Самостоятельно размещаемый офисный онлайн-суите с совместным редактированием на базе технологий LibreOffice: редактирование документов Word / Excel / PowerPoint / ODF в браузере в реальном времени. Официальный образ collabora/code запускается одним контейнером на порту 9980 и работает как WOPI-сервер для Nextcloud / ownCloud, а также предоставляет консоль администратора."
+  ms: Perisian rangkaian kerja Pejabat Dalam Taliankolaboratif yang dihos sendiri berdasarkan teknologi LibreOffice, membolehkan penyuntingan bersama dokumen Word / Excel / PowerPoint / ODF secara masa nyata dalam pelayar. Imej rasmi collabora/code berjalan sebagai satu kontena pada port 9980 dan berfungsi sebagai pelayan WOPI untuk Nextcloud / ownCloud, lengkap dengan konsol pentadbir.
+  pt-br: Suíte de escritório online colaborativo auto-hospedado baseado na tecnologia LibreOffice, com edição em tempo real de documentos Word / Excel / PowerPoint / ODF no navegador. A imagem oficial collabora/code roda em um único contêiner na porta 9980 e atua como servidor WOPI para Nextcloud / ownCloud, com console de administração para status e configurações de segurança.
+  es-es: Suite de oficina colaborativa en línea autoalojada basada en la tecnología de LibreOffice, con edición en tiempo real de documentos Word / Excel / PowerPoint / ODF en el navegador. La imagen oficial collabora/code se ejecuta en un único contenedor en el puerto 9980 y actúa como servidor WOPI para Nextcloud / ownCloud, con consola de administración para el estado y la seguridad.
+  tr: LibreOffice teknolojisine dayanan, kendin barındıran, ortak düzenlemeye uygun çevrimiçi ofis paketi. Word / Excel / PowerPoint / ODF belgelerini tarayıcıda gerçek zamanlı olarak birlikte düzenleyebilirsiniz. Resmî collabora/code imajı tek bir konteyner olarak 9980 portunda çalışır ve Nextcloud / ownCloud gibi sistemler için WOPI sunucusu görevi görür; yönetim konsolundan sunucu durumu ve güvenlik ayarları izlenebilir.
+  zh-Hant: 基於 LibreOffice 技術的自託管協作線上 Office 套件，可在瀏覽器中即時協同編輯 Word / Excel / PowerPoint / ODF 文件。官方映像 collabora/code 以單一容器執行（容器內固定 9980 連接埠），既可作為 WOPI 服務端接入 Nextcloud / ownCloud 等網路磁碟，也自帶管理控制台檢視伺服器狀態與安全設定。
+additionalProperties:
+  key: collabora
+  name: Collabora Online
+  tags:
+    - Office
+    - Document
+    - Collaboration
+    - Tool
+  description:
+    zh: 基于 LibreOffice 技术的自托管协作在线 Office 套件，可在浏览器里实时协同编辑 Word / Excel / PowerPoint / ODF 文档。官方镜像 collabora/code 单容器运行（容器内固定 9980 端口），既可作为 WOPI 服务端接入 Nextcloud / ownCloud 等网盘，也自带管理控制台查看服务器状态与安全设置。
+    en: Self-hosted collaborative online office suite based on LibreOffice technology, offering real-time co-editing of Word / Excel / PowerPoint / ODF documents in the browser. The official collabora/code image runs as a single container on port 9980 and acts as a WOPI server for Nextcloud / ownCloud, with an admin console for server status and security settings.
+    ja: LibreOffice 技術をベースとしたセルフホスト型の共同編集対応オンライン Office スイート。ブラウザー内で Word / Excel / PowerPoint / ODF 文書をリアルタイムに共同編集できます。公式イメージ collabora/code は単一コンテナで 9980 番ポートに動作し、Nextcloud / ownCloud などの WOPI サーバーとして利用できます。管理コンソールからサーバー状態とセキュリティ設定も確認できます。
+    ko: LibreOffice 기술을 기반으로 한 자기 호스팅 협업 온라인 Office 스위트입니다. 브라우저에서 Word / Excel / PowerPoint / ODF 문서를 실시간으로 함께 편집할 수 있습니다. 공식 이미지 collabora/code는 단일 컨테이너로 9980 포트에서 동작하며 Nextcloud / ownCloud 등의 WOPI 서버로 사용할 수 있고, 관리 콘솔에서 서버 상태와 보안 설정을 확인할 수 있습니다.
+    ru: "Самостоятельно размещаемый офисный онлайн-суите с совместным редактированием на базе технологий LibreOffice: редактирование документов Word / Excel / PowerPoint / ODF в браузере в реальном времени. Официальный образ collabora/code запускается одним контейнером на порту 9980 и работает как WOPI-сервер для Nextcloud / ownCloud, а также предоставляет консоль администратора."
+    ms: Perisian rangkaian kerja Pejabat Dalam Talian kolaboratif yang dihos sendiri berdasarkan teknologi LibreOffice, membolehkan penyuntingan bersama dokumen Word / Excel / PowerPoint / ODF secara masa nyata dalam pelayar. Imej rasmi collabora/code berjalan sebagai satu kontena pada port 9980 dan berfungsi sebagai pelayan WOPI untuk Nextcloud / ownCloud, lengkap dengan konsol pentadbir.
+    pt-br: Suíte de escritório online colaborativo auto-hospedado baseado na tecnologia LibreOffice, com edição em tempo real de documentos Word / Excel / PowerPoint / ODF no navegador. A imagem oficial collabora/code roda em um único contêiner na porta 9980 e atua como servidor WOPI para Nextcloud / ownCloud, com console de administração para status e configurações de segurança.
+    es-es: Suite de oficina colaborativa en línea autoalojada basada en la tecnología de LibreOffice, con edición en tiempo real de documentos Word / Excel / PowerPoint / ODF en el navegador. La imagen oficial collabora/code se ejecuta en un único contenedor en el puerto 9980 y actúa como servidor WOPI para Nextcloud / ownCloud, con consola de administración para el estado y la seguridad.
+    tr: LibreOffice teknolojisine dayanan, kendin barındıran, ortak düzenlemeye uygun çevrimiçi ofis paketi. Word / Excel / PowerPoint / ODF belgelerini tarayıcıda gerçek zamanlı olarak birlikte düzenleyebilirsiniz. Resmî collabora/code imajı tek bir konteyner olarak 9980 portunda çalışır ve Nextcloud / ownCloud gibi sistemler için WOPI sunucusu görevi görür; yönetim konsolundan sunucu durumu ve güvenlik ayarları izlenebilir.
+    zh-Hant: 基於 LibreOffice 技術的自託管協作線上 Office 套件，可在瀏覽器中即時協同編輯 Word / Excel / PowerPoint / ODF 文件。官方映像 collabora/code 以單一容器執行（容器內固定 9980 連接埠），既可作為 WOPI 服務端接入 Nextcloud / ownCloud 等網路磁碟，也自帶管理控制台檢視伺服器狀態與安全設定。
+  shortDescZh: 自托管协作在线 Office 套件 (CODE)
+  shortDescEn: Self-hosted collaborative online office suite
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://www.collaboraonline.com/
+  github: https://github.com/CollaboraOnline/online
+  document: https://www.collaboraonline.com/code/

@@ -47,6 +47,8 @@ aliases:
     desc: cloudflared WebUI 管理面板
   cinny:
     desc: Matrix 聊天客户端
+  collabora:
+    desc: 自托管协作在线 Office 套件 (CODE, LibreOffice 内核)
   firecrawl:
     desc: 网页爬虫
   llamacpp:

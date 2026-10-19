@@ -13,6 +13,7 @@
 | cfnb | Cloudflare CDN 节点优选工具 | v1.0.1 |
 | cfui | cloudflared WebUI 管理面板 | v0.10.5 |
 | cinny | Matrix 聊天客户端 | v4.12.6 |
+| collabora | 自托管协作在线 Office 套件 (CODE, LibreOffice 内核) | 26.04.5.1.1 |
 | dendrite | Matrix 协议新一代 homeserver | v0.15.2 |
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
 | firecrawl | 网页爬虫 | 2.11.209 |

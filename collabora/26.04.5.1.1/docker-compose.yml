@@ -1,0 +1,57 @@
+networks:
+  1panel-network:
+    external: true
+
+# Collabora Online (CODE) 26.04.5.1.1
+#
+# 镜像: collabora/code:26.04.5.1.1 (DockerHub; 多架构 linux/amd64 + linux/arm64 + linux/ppc64le)
+# 容器内固定端口 9980 (镜像 EXPOSE 9980/tcp, coolwsd 默认监听端口)
+#
+# 运行身份:
+#   官方镜像自带 `USER 1001` (nonroot) 且 /opt/cool、/etc/coolwsd 均由该 UID 持有;
+#   官方镜像没有 PUID/PGID 降权 entrypoint, 覆盖 compose 的 user: 会让 coolwsd
+#   无法在 /opt/cool 下创建 jail / cache 目录, 容器直接启动失败。
+#   因此本 compose 不覆盖 user:, 也不提供 UID/GID 安装参数 (与仓库默认 99/100 的口径不同,
+#   原因见 README「运行身份」一节)。
+#
+# 能力:
+#   cap_add: MKNOD —— 上游官方 compose 同样要求 (coolwsd 需要 mknod 创建设备节点);
+#   该镜像带有 /opt/cool/.caps-verified, 启动时会校验所需能力。
+#
+# 健康检查: 镜像自带 HEALTHCHECK (coolwsd --probe --use-env-vars), 无需重复声明。
+#
+# 持久化: 不做 bind mount。镜像的配置在 /etc/coolwsd/coolwsd.xml, 挂载宿主目录会
+#   把镜像自带的配置整个遮蔽掉 (导致 coolwsd 无配置启动), 且 /opt/collaboraoffice 内含
+#   镜像自带的词典包, 同样不能遮蔽。因此与上游官方 compose 保持一致:
+#   容器内状态随容器重建而重置, 关键配置通过下面的安装参数注入。
+
+services:
+  collabora:
+    container_name: ${CONTAINER_NAME}
+    image: collabora/code:26.04.5.1.1
+    restart: always
+    labels:
+      createdBy: Apps
+    cap_add:
+      - MKNOD
+    networks:
+      - 1panel-network
+    ports:
+      # 主机端口 ${PANEL_APP_PORT_HTTP} -> 容器内 9980
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:9980
+    environment:
+      - TZ=${TZ}
+      # 管理控制台账号 (上游读取 username / password)
+      - username=${ADMIN_USER}
+      - password=${ADMIN_PASSWORD}
+      # 允许发起 WOPI 请求的宿主, 正则; 多个 Nextcloud 用 aliasgroup2 / aliasgroup3 追加
+      - aliasgroup1=${WOPI_ALIAS1}
+      # 对外服务名
+      - server_name=${SERVER_NAME}
+      # 拼写检查词典, 空格分隔; 上游把该变量写入 coolwsd 的 allowed_languages
+      # (值是 locale 码, 不是 2 字母语言码)。镜像内置词典包对应:
+      # ar bg ca cs da de el en eo es fr gl he hr hu id is it ko lo nl no oc pl
+      # pt-BR pt-PT ro ru sk sl sq sv tr uk vi (无中文)
+      - dictionaries=${DICTIONARIES}
+      # 附加 coolwsd 参数, 如 --o:ssl.enable=false / --o:ssl.termination=true
+      - extra_params=${EXTRA_PARAMS}
