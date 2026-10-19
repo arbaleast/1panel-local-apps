@@ -137,6 +137,14 @@ git push origin main
   | s6-overlay（linuxserver/* 等） | 日志出现 `s6-overlay-suexec` | PUID/PGID（**禁止** `user:`） | 不需要 |
   | Postgres 系（pgvector / silo） | `initdb` 需 root chown `PGDATA` | **不提供**该参数 | — |
   **判定方法**：`curl -sS https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<Dockerfile>` 看 `USER` / `PUID` / `PGID` / `chown` / `su-exec` / `gosu` 四个关键词；entrypoint 脚本（`entrypoint.sh` / `exec.sh` / `start.sh`）里出现 `chown -R ${PUID}:${PGID}` + `exec su-exec ${PUID}:${PGID}` 即为 PUID 家族（`anirss` 即此形态：`docker/exec.sh`）。**已知 PUID 家族**：`anirss` `aria2` `bookorbit` `handbrake` `ignis` `kdenlive` `misaka` `moviepilot` `openshot` `optimisarr` `syncthing` `tdarr` `unmanic` `xunlei`。
+- **`init.sh` 里 `source` 1Panel 写出的 `.env` 会撞上 bash 的只读变量 `UID`**：本仓自 2026-11 起给每个应用都提供运行身份参数，1Panel 写出的 `.env` 里必然含 `UID=99` / `GID=100`；而 `UID` 在 bash 里是**只读变量**（`UID=99` → `bash: UID: readonly variable`）。带 `set -e` 的 `init.sh` 会在 source 这一步直接中断，后续配置/权限准备全部不执行，容器随后以缺失或错误配置启动。**解决方式**：source 前先把 `.env` 另存一份并改名再 source——
+  ```sh
+  ENV_TMP="${WORKDIR}/.env.tmp"
+  sed -e 's/^UID=/RUN_UID=/' -e 's/^GID=/RUN_GID=/' "${ENV_FILE}" > "${ENV_TMP}"
+  set -a; . "${ENV_TMP}"; set +a; rm -f "${ENV_TMP}"
+  ```
+  注意 `/bin/sh` 在 CentOS 系上就是 bash（dash 下 `UID` 非只读），两种都要兼容。参考：[`cfnb/v1.0.1/scripts/init.sh`](cfnb/v1.0.1/scripts/init.sh)。
+- **应用只认 `config.yaml` 且上游默认配置不可信时，必须自己生成配置**：静态二进制（Go + viper/mapstructure）用 **Go 字段名**（小写无下划线）匹配配置键，而上游随镜像生成的那份默认 `config.yaml` 往往是 snake_case —— 后者**读不进来且被静默忽略**（不报错、不生效），照抄上游默认配置会得到"参数完全没反应"的诡异现象。**判定方法**：拿镜像里的二进制做差分探测——每次只改一个键跑一遍，用**启动日志里的可观测量**（模式文案 / 成功率百分比 / 并发数 / 监听端口 / 订阅路径）判断该键是否生效；判定要精确解析数字（正则抓具体数值），别用"行里含某数字"这种粗判，会被时间戳骗出假阳性。**实现路径**：宿主机 `scripts/init.sh` 按 1Panel 安装参数生成配置文件并挂进容器（写文件要**原地覆写**，不能用 tempfile + mv，否则 bind mount 换 inode 后容器仍持旧文件；数据目录固定用 compose 同级的 `./data`，不读 `.env` 里可能存在的 `DATA_PATH`，否则配置会写到容器挂载不到的地方）。参考：[`cfnb/v1.0.1/scripts/init.sh`](cfnb/v1.0.1/scripts/init.sh) 与 [`cfnb/README.md`](cfnb/README.md) 的「配置说明」表。
 - **禁止使用 `latest` 作为版本目录名或镜像 tag**：`latest` 会导致版本漂移，1Panel UI 中该目录名即为版本参数。应使用具体 semver / date-based / functional tag（如 `v1.2.3`、`2024.08`、`pg` 等）。仅当上游镜像完全无版本化 tag 时方可例外保留 `latest`（需在 PR 描述中注明根因）。
 - 版本目录名就是版本参数，改目录名即改版本选项
 - SQLite key 有 `local` 前缀: `jellyfin` → `localjellyfin`
