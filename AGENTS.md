@@ -56,7 +56,7 @@
 
 ## lib/ 模块
 
-仓库根 [.github/lib/](.github/lib/) 下五个 ESM 模块为脚本层提供共享能力：
+仓库根 [.github/lib/](.github/lib/) 下六个 ESM 模块为脚本层提供共享能力：
 
 | 文件 | 职责 | 关键导出 |
 |---|---|---|
@@ -65,11 +65,12 @@
 | [`lib/apps.mjs`](.github/lib/apps.mjs:1) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` |
 | [`lib/schema.mjs`](.github/lib/schema.mjs:1) | data.yml 结构定义与校验规则（纯 JS，无第三方依赖） | `validateFormField` / `validateKeyMatch` / `validateUrlField` / `normalizeFormField` / `FORMFIELD_TYPE_WHITELIST` |
 | [`lib/compose.mjs`](.github/lib/compose.mjs:1) | compose image 模板解析（单/双 envKey 形态）与 formField 重组 | `resolveImageTemplate` / `rebuildImageDefault` |
+| [`lib/github.mjs`](.github/lib/github.mjs:1) | GitHub REST 客户端（内置 fetch，不经 shell）+ PR body / commit message 构造 | `createGitHubClient` / `buildPullRequestBody` / `buildCommitMessage` / `GitHubApiError` |
 
 ### 本地跑测试
 
 ```bash
-npm test          # 等价 node --test .github/lib/，38 case（含 schema 校验）
+npm test          # 等价 node --test .github/lib/，124 case（含 schema 校验 + GitHub API 回归）
 npm run lint      # 等价 node .github/bin/lint-apps.mjs，扫描全部 data.yml
 ```
 
@@ -128,6 +129,13 @@ git push origin main
 
 - **日期型 versionDir 会被 auto-update 跨目录覆盖（2026-09-25 jellyfin 事故，已加两道防线）**：本仓 `jellyfin/` 同时存在纯 semver 目录（`10.11.11/`）与日期型目录（`2026091410-arm64/`）。`lib/semver.mjs` 的 `parse('2026091410-arm64')` → `[2026091410]`，数值远大于 `10.11.11`，于是"跨版本保护"选出的 `maxKnown` 是**日期型目录**；而 `lib/registry.mjs` 的变体正则只认 3 种形态（裸变体 / 变体+版本 / `vX.Y.Z-suffix`），**日期型 tag（数字开头）不匹配** → fallback 到 `pickLatest` 的 pure-semver 选取 → 命中 `10.11.11` → detect 判定"最新版本 = 10.11.11" → `cpSync 2026091410-arm64/ → 10.11.11/`（rmSync + cpSync）→ **10.11.11 目录里手维护的 `name` / `CACHE_FOLDER_PATH` / 自定义 formFields 被兄弟目录整体顶掉**（该事故已实际发生：2026-09-25 的 auto-update PR 把 `name` 改回 `jellyfin 2026081705-arm64`、cache default 退回 `/dev/shm`）。**两道防线**：① `.github/scripts/detect-updates.mjs` 的 `SKIP_AUTO_UPDATE_APPS` 加入 `jellyfin`（手维护应用，镜像由用户在 1Panel UI 的 IMAGE 参数里改）；② 新增导出函数 `canCopyVersionDir(fromDir, toDir, targetExists)`——目标目录已存在且与来源目录不同时**拒绝 cpSync**（宁可漏一次更新，也不摧毁目标目录），并在 `processApp` 里 `continue` 跳过该 versionDir。**教训**：新增"日期型 + semver 混排"的应用时，要么统一版本目录形态，要么直接进白名单；只加 `maxKnown` 保护不够（它按数值大小选目录，日期型永远最大）。
 - **多段数字版本 tag 会被历史遗留的 3 段纯 semver 抢占（2026-10-19 collabora 复盘）**：`lib/semver.mjs` 的 `pickLatest` 走"纯 semver 优先"分支（`PURE_SEMVER_RE = /^v?\d+\.\d+\.\d+$/`），只要候选里**存在任意** 3 段纯 semver tag，它们就会盖过所有非纯 semver tag。`collabora/code` 正好踩中：它同时有 2017 年的 `2.1.2`~`2.1.5`（3 段）和当前的 `26.04.5.1.1`（5 段），`pickLatest` 返回 **`2.1.5`** → detect 判定"最新版本 = 2.1.5" → 新建一个 `2.1.5/` 版本目录并把镜像 tag 改写成 `collabora/code:2.1.5`（**2017 年的老镜像，应用直接降级**）。**修复**：[`lib/registry.mjs`](.github/lib/registry.mjs) 的 `DockerHubAdapter.getLatestTag` / `GhcrAdapter.getLatestTag` 新增**形态 4**——当 `currentTag` 匹配 `^\d+(?:\.\d+){3,}$`（4 段及以上纯数字）时，把候选收敛到"**同段数**"的纯数字 tag 再 `pickLatest`；同段数候选不存在时回退原逻辑（宁可不报也不误报）。**判定方法**：`node -e "import('./.github/lib/semver.mjs').then(m=>console.log(m.pickLatest(['2.1.5','26.04.5.1.1'])))"` → 返回 `2.1.5` 即命中该坑。**回归测试**：[`lib/registry.test.mjs`](.github/lib/registry.test.mjs) case 18-21（DockerHub 选型 / 检出更新 / 无同段数回退 / GHCR 对称）。**教训**：`pickLatest` 的"纯 semver 优先"是全局性偏好，对**多段数字版本**（`26.04.5.1.1` 这类 upstream 用 4 段以上的版本号）的镜像一律不适用；接入这类镜像前必须先跑一次 `pickLatest` 验证选出来的是不是想要的 tag。
+- **PR body 拼进 shell 命令 → 反引号被当命令执行 → 批次静默丢失（2026-10-20 auto-update 事故）**：旧版 [`bin/open-update-pr.mjs`](.github/bin/open-update-pr.mjs:1) 用 `execSync(\`curl ... -d ${JSON.stringify(JSON.stringify(payload))} ...\`)` 调 GitHub API。PR body 里的 markdown 反引号（`v3.2.51`、`anirss/v3.2.51/data.yml`）被 POSIX shell 当成**命令替换**执行：
+  ```
+  /bin/sh: 1: 2026-10-20T03:03:25.637Z: not found      ← 检测时间被吃掉
+  /bin/sh: 1: v3.2.49: not found                       ← before/after 列被吃掉
+  /bin/sh: 1: anirss/v3.2.51/data.yml: Permission denied
+  ```
+  后果链：body 被掏空 → GitHub 返回错误对象（无 `number` / `html_url`）→ 旧代码只判 `JSON.parse` 成功就打印 **`[OK] PR 已开: undefined`** → merge 请求打到 `/pulls/undefined/merge` 得到 `Not Found` → **旧代码仍继续执行并删掉了刚推送的远程分支** → 2026-10-20 整批 42 个文件的更新在 GitHub 上凭空消失（事后核对：该分支的 PR 从未创建）。该缺陷不止一次：PR #33（2026-10-13）与 PR #35（2026-10-17）的 body 同样被掏空（表格 before/after 全空、文件列表只剩 `- `、页脚"由  自动生成"）。**修复**：① 新增 [`lib/github.mjs`](.github/lib/github.mjs) —— GitHub 客户端改用 Node 内置 `fetch`（**不经 shell**），`createPullRequest` 必须拿到数字 `number` 才算成功，否则抛 `GitHubApiError`；② `bin/open-update-pr.mjs` 的 git 调用改用 `execFileSync('git', [...])`（参数数组），commit message 拆成两个 `-m`（旧写法把 `\n` 写进 shell 双引号，git 收到的是**字面量** `\n`）；③ 失败一律非零退出并**保留**远程分支，远程分支只在 PR **合并成功后**才删。**回归测试**：[`lib/github.test.mjs`](.github/lib/github.test.mjs) 锁死"反引号原样送达 GitHub"这条不变量（16 case）。**教训**：**永远不要把不可信内容（PR body / issue 标题 / 分支名 / commit message）拼进 shell 命令字符串**——用 `fetch` + `JSON.stringify` 或 `execFileSync` 参数数组；同理，**API 响应必须做形状校验**（"JSON 能 parse" ≠ "业务成功"），失败时**绝不能**执行清理动作（删分支 / 删文件），否则一次静默失败就会把已完成的批次一起毁掉。
 - **使用 s6-overlay 的镜像不能加 `init: true`**：s6-overlay 要求自身就是容器的 **PID 1**（`s6-overlay-suexec: fatal: can only run as pid 1` 是它的守卫检查），而 `init: true` 会让 Docker 注入 `tini` 抢占 PID 1，二者冲突导致容器启动即失败并被 `restart: always` 反复重拉（日志刷屏同一行）。**复盘（photoprism，2026-10-03）**：`photoprism/260919/docker-compose.yml` 误加 `init: true` 导致无法启动。**解决方式**：删掉 `init: true`。**判定方法**：镜像基线用 s6-overlay（`linuxserver/*`、`hotio/*`、PhotoPrism、部分 Go 自建镜像）或从日志出现 `s6-overlay-suexec` / `s6-rc` 判断。**全仓自查**：`grep -rn --include="docker-compose.yml" -E "^\s*init:\s*true" .`（注意 [bookorbit/3.2.0](bookorbit/3.2.0/docker-compose.yml:47) 也有 `init: true`，改动前需确认其镜像是否用 s6-overlay）。**同源禁忌**：也不要给这类镜像加 `user:`（会让 s6 无 root 无法降权启动）或 `pid:`（直接改写 PID 1）。
 - **官方镜像（非 s6）指定运行身份用 compose 的 `user:`，不是 PUID/PGID 环境变量**：`jellyfin/jellyfin` 官方镜像（`jellyfin-packaging/docker/Dockerfile`）是 `ENTRYPOINT ["/jellyfin/jellyfin"]` + **无 `USER` 指令**——没有 entrypoint 脚本做 chown/su 降权，也**不读** `PUID`/`PGID` 环境变量；要换运行身份只能写 compose 的 `user: "${UID}:${GID}"`（上游文档 <https://jellyfin.org/docs/general/installation/container/> 的原话："Replace `uid:gid` if you want to run jellyfin as a specific user/group"）。**代价**：容器内所有文件以该身份创建，宿主机 bind mount 目录（尤其 `/config` 数据库目录）必须 `chown` 到同一 UID/GID，否则启动即失败。**因此**：用 `user:` 的应用要在 README 里写清"先 chown 再启动"，并把 `UID`/`GID` 做成 `type: number` 的 formField（`paramCommon` 前端正则要求 ≥2 字符，单字符 ID 会被拒，见 [xunlei/beta](xunlei/beta/data.yml) 的处理）。
 - **全仓运行身份（UID / GID）统一口径：先判机制，再选参数名**：本仓 2026-11 起给**每个应用**都提供运行身份安装参数，默认 `99` / `100`（与仓库既有 `kdenlive` / `openshot` / `unmanic` 的 `PUID=99` / `PGID=100` 保持一致）。**两套机制互斥，选错会启动失败**：
