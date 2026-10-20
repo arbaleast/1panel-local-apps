@@ -1,0 +1,43 @@
+networks:
+  1panel-network:
+    external: true
+
+# Cinny v4.12.6 — 官方 ghcr.io 镜像，nginx 静态服务
+# 镜像源：ghcr.io/cinnyapp/cinny:v4.12.7（linux/amd64 + linux/arm64 双架构）
+# 容器内：nginx:1.31.5-alpine 监听 :80，服务 /app/ 下 dist/ 静态资源
+# 自托管文档：https://github.com/cinnyapp/cinny#self-hosting
+#
+# 关于默认 homeserver:
+#   Cinny 的 default_hs 在 build 阶段写入 dist/config.json，官方镜像不读
+#   环境变量。本应用通过 bind mount ./data/config.json → /app/config.json:ro
+#   让 1Panel 安装时把用户填的 DEFAULT_HOMESERVER 注入到该文件。
+#   scripts/init.sh 在 1Panel 宿主机跑（首次安装时），负责：
+#     1) 从 cinny 镜像导出默认 config.json 到 host ./data/config.json
+#     2) 用 jq/sed 把 default_hs 字段值替换为用户填的 DEFAULT_HOMESERVER
+#   容器内 nginx 的 rewrite 规则把请求 /config.json 映射到 /app/config.json，
+#   前端 fetch /config.json 即可读到用户配置。
+#
+#   升级/重装时 1Panel 不重跑 init.sh（appspec.md 明示）。如需改默认
+#   homeserver，编辑 host 端 ./data/config.json 后在 1Panel UI 重启容器。
+
+services:
+  cinny:
+    container_name: ${CONTAINER_NAME}
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
+    image: ${IMAGE}:${APP_VERSION}
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:80
+    volumes:
+      - ./data/config.json:/app/config.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

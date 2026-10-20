@@ -1,0 +1,53 @@
+networks:
+  1panel-network:
+    external: true
+
+# New API（QuantumNous/new-api）— AI/LLM API 聚合网关
+# 镜像源：calciumion/new-api（DockerHub，multi-arch manifest: linux/amd64 + linux/arm64）
+# 启动入口：/new-api --log-dir /app/logs（见上游 Dockerfile）
+# 默认 web 端口：3000（容器内固定）
+#
+# 服务编排：仅 new-api 一个服务，依赖外部 1Panel-postgresql-* 与 1Panel-redis-*
+# （容器名由 1Panel 自动生成：[A-Za-z0-9]{4} 后缀，没有下划线/短横线/小写）
+# 上游 DSN 格式（PG 标准 URL，参 AGENTS.md dendrite 复盘拆分方案）：
+#   SQL_DSN=postgresql://<user>:<password>@<host>:<port>/<database>
+# Redis 格式：
+#   REDIS_CONN_STRING=redis://:<password>@<host>:<port>
+#
+# 持久化（全部用相对路径 bind mount，避开 1Panel 拒绝顶层 volumes 变量命名）：
+#   ./data/data  -> new-api /data （应用数据）
+#   ./data/logs  -> new-api /app/logs （日志，--log-dir 指定）
+#
+# 文档：https://github.com/QuantumNous/new-api
+
+services:
+  new-api:
+    container_name: ${CONTAINER_NAME}
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
+    image: ${IMAGE}:${APP_VERSION}
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    command: --log-dir /app/logs
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3000
+    environment:
+      - TZ=${TZ}
+      - SQL_DSN=postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DATABASE}
+      - REDIS_CONN_STRING=redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
+      - ERROR_LOG_ENABLED=${ERROR_LOG_ENABLED}
+      - BATCH_UPDATE_ENABLED=${BATCH_UPDATE_ENABLED}
+      - NODE_NAME=${NODE_NAME}
+      - SESSION_SECRET=${SESSION_SECRET}
+    volumes:
+      - ./data/data:/data
+      - ./data/logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -q '\"success\":true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

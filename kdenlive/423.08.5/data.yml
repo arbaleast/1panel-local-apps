@@ -1,0 +1,262 @@
+additionalProperties:
+  formFields:
+    - default: 3000
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      label:
+        en: HTTP Port (Selkies Web UI)
+        zh: HTTP 端口 (Selkies 网页界面)
+        zh-Hant: HTTP 連接埠 (Selkies 網頁介面)
+        ja: HTTP ポート (Selkies Web UI)
+        ko: HTTP 포트 (Selkies 웹 UI)
+        ru: HTTP-порт (веб-интерфейс Selkies)
+        ms: Port HTTP (Antara Muka Web Selkies)
+        pt-br: Porta HTTP (interface web Selkies)
+      required: true
+      type: number
+      rule: paramPort
+    - default: 3001
+      edit: true
+      envKey: PANEL_APP_PORT_HTTPS
+      label:
+        en: HTTPS Port (Selkies, needed for WebCodecs)
+        zh: HTTPS 端口 (Selkies, 启用 WebCodecs 需走 HTTPS)
+        zh-Hant: HTTPS 連接埠 (Selkies, 啟用 WebCodecs 需走 HTTPS)
+        ja: HTTPS ポート (Selkies、WebCodecs には HTTPS が必要)
+        ko: HTTPS 포트 (Selkies, WebCodecs 에는 HTTPS 필요)
+        ru: HTTPS-порт (Selkies, для WebCodecs нужен HTTPS)
+        ms: Port HTTPS (Selkies, WebCodecs memerlukan HTTPS)
+        pt-br: Porta HTTPS (Selkies, WebCodecs exige HTTPS)
+      required: true
+      type: number
+      rule: paramPort
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TIME_ZONE
+      label:
+        en: Time zone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: true
+      type: text
+    - default: 99
+      edit: true
+      envKey: PUID
+      label:
+        en: Run as UID (PUID)
+        zh: 运行用户 UID (PUID)
+        zh-Hant: 執行使用者 UID (PUID)
+        ja: 実行 UID (PUID)
+        ko: 실행 UID (PUID)
+        ru: UID пользователя (PUID)
+        ms: UID pengguna (PUID)
+        pt-br: UID do usuário (PUID)
+      required: true
+      type: number
+    - default: 100
+      edit: true
+      envKey: PGID
+      label:
+        en: Run as GID (PGID)
+        zh: 运行用户组 GID (PGID)
+        zh-Hant: 執行群組 GID (PGID)
+        ja: 実行 GID (PGID)
+        ko: 실행 GID (PGID)
+        ru: GID группы (PGID)
+        ms: GID kumpulan (PGID)
+        pt-br: GID do grupo (PGID)
+      required: true
+      type: number
+    - default: "002"
+      edit: true
+      envKey: UMASK_SET
+      label:
+        en: UMASK for new files
+        zh: 新建文件 UMASK
+        zh-Hant: 新建檔案 UMASK
+        ja: 新規ファイルの UMASK
+        ko: 새 파일 UMASK
+        ru: UMASK для новых файлов
+        ms: UMASK untuk fail baru
+        pt-br: UMASK para novos arquivos
+      required: true
+      type: text
+    - default: C.UTF-8
+      edit: true
+      envKey: LC_ALL
+      label:
+        en: Container locale
+        zh: 容器语言环境
+        zh-Hant: 容器語言環境
+        ja: コンテナロケール
+        ko: 컨테이너 로케일
+        ru: Локаль контейнера
+        ms: Locale kontena
+        pt-br: Locale do contêiner
+      required: true
+      type: text
+    - default: ""
+      edit: true
+      envKey: MEDIA_PATH
+      label:
+        en: Media folder (absolute host path, e.g. /data/media/videos)
+        zh: 媒体目录 (宿主机绝对路径, 例 /data/media/videos)
+        zh-Hant: 媒體目錄 (主機絕對路徑, 例 /data/media/videos)
+        ja: メディアフォルダ (ホスト絶対パス, 例 /data/media/videos)
+        ko: 미디어 폴더 (호스트 절대 경로, 예 /data/media/videos)
+        ru: Медиапапка (абсолютный путь хоста, напр. /data/media/videos)
+        ms: Folder media (laluan mutlak hos, cth /data/media/videos)
+        pt-br: Pasta de mídia (caminho absoluto do host, ex. /data/media/videos)
+      required: true
+      type: text
+      rule: paramPath
+    - default: Kdenlive
+      edit: true
+      envKey: TITLE
+      label:
+        en: Browser page title
+        zh: 浏览器页面标题
+        zh-Hant: 瀏覽器頁面標題
+        ja: ブラウザーのページタイトル
+        ko: 브라우저 페이지 제목
+        ru: Заголовок страницы браузера
+        ms: Tajuk halaman pelayar
+        pt-br: Título da página do navegador
+      required: false
+      type: text
+    - default: admin
+      edit: true
+      envKey: CUSTOM_USER
+      label:
+        en: Basic Auth Username
+        zh: 访问用户名 (Basic Auth)
+        zh-Hant: 存取使用者名稱 (Basic Auth)
+        ja: クラシック認証ユーザー名
+        ko: 기본 인증 사용자명
+        ru: Имя пользователя (Basic Auth)
+        ms: Nama pengguna (Basic Auth)
+        pt-br: Usuário Basic Auth
+      required: false
+      type: text
+    - default: kdenlive-change-me
+      edit: true
+      envKey: PASSWORD
+      label:
+        en: Basic Auth Password (empty = no auth)
+        zh: 访问密码 (Basic Auth, 留空=不启用认证)
+        zh-Hant: 存取密碼 (Basic Auth, 留空=不啟用認證)
+        ja: クラシック認証パスワード (空欄=認証なし)
+        ko: 기본 인증 비밀번호 (비움=인증 없음)
+        ru: Пароль (Basic Auth, пусто = без авторизации)
+        ms: Kata laluan Basic Auth (kosong = tiada auth)
+        pt-br: Senha Basic Auth (vazio = sem autenticação)
+      random: true
+      required: false
+      rule: paramComplexity
+      type: password
+    - default: selkies-dashboard
+      edit: true
+      envKey: DASHBOARD
+      label:
+        en: Selkies dashboard UI
+        zh: Selkies 仪表盘界面
+        zh-Hant: Selkies 儀表板介面
+        ja: Selkies ダッシュボード UI
+        ko: Selkies 대시보드 UI
+        ru: Панель Selkies
+        ms: Papan Selkies
+        pt-br: Painel Selkies
+      required: false
+      type: text
+    - default: "true"
+      edit: true
+      envKey: NVIDIA_ENABLE
+      label:
+        en: Enable NVIDIA GPU
+        zh: 启用 NVIDIA GPU
+        zh-Hant: 啟用 NVIDIA GPU
+        ja: NVIDIA GPU を有効化
+        ko: NVIDIA GPU 사용
+        ru: Включить GPU NVIDIA
+        ms: Dayakan GPU NVIDIA
+        pt-br: Habilitar GPU NVIDIA
+      required: true
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: all
+      edit: true
+      envKey: NVIDIA_VISIBLE_DEVICES
+      label:
+        en: NVIDIA_VISIBLE_DEVICES (all / GPU-xxx / 0)
+        zh: NVIDIA_VISIBLE_DEVICES (all / GPU-xxx / 0)
+        zh-Hant: NVIDIA_VISIBLE_DEVICES (all / GPU-xxx / 0)
+        ja: NVIDIA_VISIBLE_DEVICES (all / GPU-xxx / 0)
+        ko: NVIDIA_VISIBLE_DEVICES (all / GPU-xxx / 0)
+        ru: NVIDIA_VISIBLE_DEVICES (all / GPU-xxx / 0)
+        ms: NVIDIA_VISIBLE_DEVICES (all / GPU-xxx / 0)
+        pt-br: NVIDIA_VISIBLE_DEVICES (all / GPU-xxx / 0)
+      required: true
+      type: text
+    - default: compute,video,graphics,utility
+      edit: true
+      envKey: NVIDIA_DRIVER_CAPABILITIES
+      label:
+        en: NVIDIA_DRIVER_CAPABILITIES (keep 'video' for NVENC, 'graphics' for GPU preview)
+        zh: NVIDIA_DRIVER_CAPABILITIES (保留 video 启用 NVENC, 保留 graphics 启用 GPU 预览)
+        zh-Hant: NVIDIA_DRIVER_CAPABILITIES (保留 video 啟用 NVENC, 保留 graphics 啟用 GPU 預覽)
+        ja: NVIDIA_DRIVER_CAPABILITIES (NVENC には video, GPU プレビューには graphics を残す)
+        ko: NVIDIA_DRIVER_CAPABILITIES (NVENC 는 video, GPU 미리보기는 graphics 유지)
+        ru: NVIDIA_DRIVER_CAPABILITIES (video — NVENC, graphics — GPU-превью)
+        ms: NVIDIA_DRIVER_CAPABILITIES (video untuk NVENC, graphics untuk pratonton GPU)
+        pt-br: NVIDIA_DRIVER_CAPABILITIES (video para NVENC, graphics para pré-visualização GPU)
+      required: true
+      type: text
+    - default: "false"
+      edit: true
+      envKey: PIXELFLUX_WAYLAND
+      label:
+        en: Render mode (false = X11/Xvfb, recommended)
+        zh: 渲染模式 (false = X11/Xvfb, 推荐)
+        zh-Hant: 算繪模式 (false = X11/Xvfb, 推薦)
+        ja: レンダリングモード (false = X11/Xvfb、推奨)
+        ko: 렌더링 모드 (false = X11/Xvfb, 권장)
+        ru: Режим рендеринга (false = X11/Xvfb, рекомендуется)
+        ms: Mod render (false = X11/Xvfb, disyorkan)
+        pt-br: Modo de renderização (false = X11/Xvfb, recomendado)
+      required: true
+      type: select
+      values:
+        - label: "false"
+          value: "false"
+        - label: "true"
+          value: "true"
+  key: kdenlive
+  name: kdenlive 26.08.2-1-ls224
+  tags:
+    - Local
+    - video
+    - editor
+  shortDescZh: Kdenlive 专业视频剪辑 26.08.2-1-ls224 (NVIDIA P620 加速)
+  shortDescEn: Kdenlive video editor 26.08.2-1-ls224 (NVIDIA P620 accelerated)
+  description:
+    zh: 基于 linuxserver.io 官方镜像的 Kdenlive 专业视频剪辑器，Selkies WebRTC 浏览器内直接使用完整 KDE 桌面版，无需本地客户端。保留媒体目录挂载变量（素材库以宿主机绝对路径挂入容器 /storage），内置 NVIDIA GPU 硬件加速并针对 Quadro P620（Pascal）调优。
+    en: Kdenlive professional video editor from the official linuxserver.io image, running the full KDE desktop edition in the browser via Selkies WebRTC with no local client. Keeps a media-directory mount variable (footage libraries mounted from the host into /storage) and ships NVIDIA GPU acceleration tuned for the Quadro P620 (Pascal).
+  type: media
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://kdenlive.org/
+  github: https://github.com/linuxserver/docker-kdenlive
+  document: https://docs.linuxserver.io/images/docker-kdenlive/
+name: kdenlive 26.08.2-1-ls224
+title: Kdenlive 专业视频剪辑 26.08.2-1-ls224
+description: 基于 linuxserver.io 官方镜像的 Kdenlive 专业视频剪辑器，浏览器内 Selkies GUI，媒体目录挂载 + NVIDIA P620 硬件加速。
