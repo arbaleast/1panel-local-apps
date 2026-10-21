@@ -1,0 +1,109 @@
+# ============================================================
+# BookOrbit (v3.4.0) — Self-hosted library for ebooks / audiobooks / comics / PDFs
+#   上游项目: <https://github.com/bookorbit/bookorbit>
+#   上游 Docker 镜像: ghcr.io/bookorbit/bookorbit (多架构 linux/amd64 + linux/arm64)
+#   上游 .env 模板: <https://github.com/bookorbit/bookorbit/blob/main/.env.example>
+#   上游 docker-compose 模板: <https://github.com/bookorbit/bookorbit/blob/main/docker-compose.yml>
+#   上游安装文档: <https://bookorbit.app/installation>
+#
+# 数据流（与上游 docker-compose.yml 等价，外部 PG 模式）：
+#   主机侧 ./data/books        → 容器 /books          （电子书 / 漫画 / 有声书 / PDF）
+#   主机侧 ./data/app          → 容器 /data           （应用配置 / 缓存 / 上传）
+#   PostgreSQL: 不在本 compose 中，由 1Panel-postgresql (pgvector/pgvector) 应用独立提供，
+#               通过 1panel-network 容器名互通（参考上游「External Database」段）。
+#
+# 关键设计点：
+#   1. 仅一个服务 app。
+#      上游 compose 中 postgres 服务与 app depends_on postgres 已移除，
+#      对应上游 .env.example 中 POSTGRES_HOST 默认从 `postgres` 改为容器名（用户填表）。
+#      1Panel-postgresql (pgvector/pgvector) 镜像已含 uuid-ossp / pg_trgm / unaccent / vector
+#      四个扩展（上游强制要求），无需手动安装。
+#   2. 上游 POSTGRES_PASSWORD / JWT_SECRET / SETUP_BOOTSTRAP_TOKEN 三个变量是 required，
+#      docker-compose 强校验（?required），1Panel 表单中也以 rule: paramComplexity
+#      required: true 强制用户提交非空值，提交时空会被前端拒。
+#   3. PUID / PGID 默认 1000/1000。
+#      上游会自动修复 /data 目录的属主，但不会动 /books ——
+#      若宿主机 ./data/books 不属于 1000:1000（如 NAS 套件中的其他用户），
+#      请在主机侧手动 chown -R <uid>:<gid> ./data/books 后再启动，
+#      否则扫描会因 EACCES 找不到书。
+#   4. APP_URL 影响 Kobo 端点回调与邮件链接；公网部署须填 https://your-domain，
+#      反向代理后通过反代访问本机 48300 端口。
+#   5. NODE_MAX_OLD_SPACE_SIZE=auto 让容器按自身规格自适应；
+#      250K+ 书的库建议显式设 4096 或 8192 防止 OOM。
+#   6. 持久化：./data/{books,app} 均为相对路径 bind mount，
+#      不引入顶层 volumes: 块（符合本仓规约 + 1Panel schema）。
+# ============================================================
+
+networks:
+  1panel-network:
+    external: true
+
+services:
+  # 主应用：BookOrbit Web（Node.js 服务，监听容器内 3000）
+  app:
+    container_name: ${CONTAINER_NAME}
+    image: ${APP_IMAGE}:${APP_VERSION}
+    restart: always
+    # 不要 init: true —— bookorbit 镜像 Dockerfile 已显式 ENTRYPOINT ["/sbin/tini", "-s", "--"]
+    # 套了 tini 作 PID 1，再加 init: true 会变成 tini → tini → entrypoint.sh 双重 init 套娃
+    # （与 s6-overlay / 自带 init 的镜像同源禁忌，详见 AGENTS.md "Common Pitfalls"）
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:3000
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # 外部 PostgreSQL（由 1Panel-postgresql 提供，按容器名互通）
+      POSTGRES_HOST: ${POSTGRES_HOST:?POSTGRES_HOST is required, please set the 1Panel-postgresql container name in 1Panel app form}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required, please set the 1Panel-postgresql random user in 1Panel app form}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required, please set the 1Panel-postgresql password in 1Panel app form}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required, please set the 1Panel-postgresql database name in 1Panel app form}
+      # 不注入 DATABASE_URL —— 上游 compose 端 DATABASE_URL 默认空，应用读 POSTGRES_* 各字段
+      # 应用密钥：冒号语法对齐上游
+      #   上游《Secrets from files》原文：docker-compose.yml marks several keys as
+      #   required... Removing one of those lines entirely fails before the container
+      #   starts. An empty value is accepted.
+      #     ${VAR?msg}   未设置 → 报错；空值 → 放行（= 上游语义，表单可留空）
+      #     ${VAR:?msg}  未设置 或 空值 → 报错（比上游严，会卡住「可空」字段）
+      # 故这三个用 `?` 而非 `:?`；留空时由应用自行生成 / 降级。
+      JWT_SECRET: ${JWT_SECRET?JWT_SECRET is unset; blank it for auto-generation, or set your own}
+      SETUP_BOOTSTRAP_TOKEN: ${SETUP_BOOTSTRAP_TOKEN?SETUP_BOOTSTRAP_TOKEN is unset; blank it to skip the setup prompt}
+      # 外部访问 URL（可空；影响 Kobo 端点回调与邮件内链接）
+      APP_URL: ${APP_URL?APP_URL is unset; blank it if not behind a reverse proxy}
+      # 时区
+      TZ: ${TZ}
+      # 容器进程 UID/GID（NAS 套件常需对齐宿主机 books 目录属主）
+      PUID: ${PUID}
+      PGID: ${PGID}
+      # Node.js 堆内存上限（auto = 容器自适应；大库建议显式设大值）
+      NODE_MAX_OLD_SPACE_SIZE: ${NODE_MAX_OLD_SPACE_SIZE}
+    volumes:
+      # 书架：宿主 ./data/books → 容器 /books（电子书 / 漫画 / 有声书 / PDF 库源）
+      - ./data/books:/books
+      # 应用数据：宿主 ./data/app → 容器 /data（配置 / 缓存 / 上传）
+      - ./data/app:/data
+    read_only: false
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    healthcheck:
+      # /live 端点为上游 liveness probe
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
