@@ -1,0 +1,152 @@
+additionalProperties:
+  key: open-design
+  name: Open Design 0.24.1
+  type: tool
+  formFields:
+    - default: ghcr.io/nexu-io/od:0.26.0
+      edit: true
+      envKey: IMAGE
+      labelEn: Image
+      labelZh: 镜像
+      label:
+        en: Image
+        zh: 镜像
+        ja: イメージ
+        ko: 이미지
+        ru: Образ
+        ms: Imej
+        pt-br: Imagem
+        es-es: Imagen
+        tr: İmaj
+        zh-Hant: 映像
+      required: true
+      rule: paramImageTag
+      type: text
+    - default: 7456
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Web UI Port
+      labelZh: Web UI 端口
+      label:
+        en: Web UI Port
+        zh: Web UI 端口
+        ja: Web UI ポート
+        ko: Web UI 포트
+        ru: Порт Web UI
+        ms: Port Web UI
+        pt-br: Porta Web UI
+        es-es: Puerto Web UI
+        tr: Web UI Portu
+        zh-Hant: Web UI 連接埠
+      required: true
+      rule: paramPort
+      type: number
+    - default: ""
+      edit: true
+      envKey: OD_API_TOKEN
+      labelEn: API Token
+      labelZh: API Token
+      label:
+        en: API Token
+        zh: API Token
+        ja: API トークン
+        ko: API 토큰
+        ru: API-токен
+        ms: Token API
+        pt-br: Token da API
+        es-es: Token de la API
+        tr: API Belirteci
+        zh-Hant: API Token
+      required: true
+      type: password
+    - default: "0"
+      edit: true
+      envKey: OD_DISABLE_API_AUTH
+      labelEn: Disable API Auth
+      labelZh: 关闭 API 鉴权
+      label:
+        en: Disable API Auth
+        zh: 关闭 API 鉴权
+        ja: API 認証を無効化
+        ko: API 인증 비활성화
+        ru: Отключить авторизацию API
+        ms: Lumpuhkan Pengesahan API
+        pt-br: Desativar autenticação da API
+        es-es: Desactivar autenticación de la API
+        tr: API Kimlik Doğrulamasını Devre Dışı Bırak
+        zh-Hant: 關閉 API 鑑權
+      required: true
+      type: select
+      values:
+        - label: false (推荐：依赖 OD_API_TOKEN)
+          value: "0"
+        - label: true (反代已做认证时用)
+          value: "1"
+    - default: ""
+      edit: true
+      envKey: OD_ALLOWED_ORIGINS
+      labelEn: CORS Origins
+      labelZh: 跨源白名单
+      label:
+        en: CORS Origins
+        zh: 跨源白名单
+        ja: CORS 許可オリジン
+        ko: CORS 허용 오리진
+        ru: Доверенные источники CORS
+        ms: Asal CORS
+        pt-br: Origens CORS
+        es-es: Orígenes CORS
+        tr: CORS Kaynakları
+        zh-Hant: 跨源白名單
+      required: false
+      type: text
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon Waktu
+        pt-br: Fuso horário
+        es-es: Zona horaria
+        tr: Saat Dilimi
+        zh-Hant: 時區
+      required: true
+      type: text
+    - default: 99
+      edit: true
+      envKey: UID
+      labelEn: Run as UID
+      labelZh: 运行用户 UID
+      label:
+        en: Run as UID
+        zh: 运行用户 UID
+        zh-Hant: 執行使用者 UID
+        ja: 実行 UID
+        ko: 실행 UID
+        ru: UID пользователя
+        ms: UID pengguna
+        pt-br: UID do usuário
+      required: true
+      type: number
+    - default: 100
+      edit: true
+      envKey: GID
+      labelEn: Run as GID
+      labelZh: 运行组 GID
+      label:
+        en: Run as GID
+        zh: 运行组 GID
+        zh-Hant: 執行群組 GID
+        ja: 実行 GID
+        ko: 실행 GID
+        ru: GID группы пользователя
+        ms: GID kumpulan pengguna
+        pt-br: GID do grupo
+      required: true
+      type: number

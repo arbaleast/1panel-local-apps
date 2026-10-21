@@ -6,10 +6,10 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.51 |
+| anirss | 动漫 RSS | v3.2.52 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
 | aria2 | 轻量级多协议下载工具 | a2b-stable-25-08-12 |
-| bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.4.0 |
+| bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.5.0 |
 | cfnb | Cloudflare CDN 节点优选工具 | v1.0.1 |
 | cfui | cloudflared WebUI 管理面板 | v0.10.6 |
 | cinny | Matrix 聊天客户端 | v4.12.7 |
@@ -44,7 +44,7 @@
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
 | onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.2.4 |
-| open-design | Claude Design 开源替代，agent CLI 驱动 | 0.25.0 |
+| open-design | Claude Design 开源替代，agent CLI 驱动 | 0.26.0 |
 | opencloud | 开源文件管理 / 分享 / 协作平台（无数据库，内置 LDAP + OIDC） | 8.1.0 |
 | openreel-video | 浏览器端开源视频剪辑工具 | v0.5.0 |
 | openshot | 开源视频剪辑与动画制作 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速, 仅 amd64) | 4.0.1 |
@@ -55,11 +55,11 @@
 | photopea | 在线图像编辑器 | 2.2 |
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 20220121 |
 | qdrant | 向量搜索引擎 | v1.19.2-unprivileged |
-| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.30.0 |
+| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.32.0 |
 | searxng | 隐私搜索引擎 | 2026.10.19-d47cb96bf |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.2.0 |
-| syncthing | 文件同步 | 2.1.6 |
+| syncthing | 文件同步 | 2.1.7 |
 | tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.01.00 |
 | traefik | 反向代理 | v3.6.6 |
 | unmanic | 媒体库自动转码 (josh5 镜像, NVIDIA Pascal/P620 NVENC 加速) | 0.4.1 |
