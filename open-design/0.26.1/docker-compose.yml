@@ -1,0 +1,55 @@
+networks:
+  1panel-network:
+    external: true
+
+services:
+  open-design:
+    container_name: ${CONTAINER_NAME}
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
+    image: ${IMAGE}
+    restart: always
+    labels:
+      createdBy: Apps
+    networks:
+      - 1panel-network
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:7456
+    environment:
+      - TZ=${TZ}
+      - NODE_ENV=production
+      # 上游 Dockerfile 默认值，常规不需调；保留 hardcode
+      - NODE_OPTIONS=--max-old-space-size=192
+      # 必须显式 0.0.0.0：上游默认 127.0.0.1，是为桌面 app 配套设计的；
+      # 1Panel 反代场景必须 0.0.0.0 才能让浏览器访问
+      - OD_BIND_HOST=0.0.0.0
+      - OD_PORT=7456
+      - OD_WEB_PORT=${PANEL_APP_PORT_HTTP}
+      - OD_ALLOWED_ORIGINS=${OD_ALLOWED_ORIGINS}
+      - OD_API_TOKEN=${OD_API_TOKEN}
+      - OD_DISABLE_API_AUTH=${OD_DISABLE_API_AUTH}
+    volumes:
+      - open_design_data:/app/.od
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:7456/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  open_design_data:
