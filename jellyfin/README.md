@@ -8,7 +8,7 @@
 ## 数据
 - 媒体库: /mnt/user/media/movies /mnt/user/media/tv /mnt/user/media/music
 - 应用数据: /mnt/user/appdata/jellyfin/
-- 字体目录: ~/.local/share/fonts/ (以只读方式挂载到容器的 /usr/share/fonts/fonts)
+- 字体目录: /usr/share/fonts (宿主机系统字体，只读挂载到容器 /usr/share/fonts)
 
 ## 镜像
 - nyanmisaka/jellyfin (中文硬解支持)
@@ -47,6 +47,47 @@ sudo chown -R 99:100 /data/dsh/home/日常/1panel-local-apps/jellyfin-cache   # 
 - 升级或换版本后新目录的 `data/config` 属主会重置为 root，需要重新 `chown -R 99:100`。
 - 想要回退到 root 运行：把参数改成 UID=0、GID=0（等价于不写 `user:`），此时目录属主无关。
 - 存量部署（已以 root 跑过）直接改 UID/GID 前，先 `chown -R 99:100` 再重启，否则容器起不来。
+
+## 字体（字幕中文显示为方块）
+
+Jellyfin 有两套互不相通的字体机制（官方文档 <https://jellyfin.org/docs/general/administration/configuration/#fonts>）：
+
+- **服务端系统字体（Server Side System Fonts）**：容器内 `/usr/share/fonts` 下能被 fontconfig 识别的字体，用于**烧录（burn-in）字幕**和封面图渲染。宿主机缺中文字体时，烧录进画面的字幕中文会变成方块（tofu）。
+- **回退字体（Fallback Fonts）**：Web 端渲染 ASS 字幕时由服务端 `/FallbackFont` 接口下发给浏览器的字体，需要在 Jellyfin 控制台单独开启并指定目录。
+
+本应用默认把宿主机 `/usr/share/fonts` **只读**挂载到容器 `/usr/share/fonts`（等价于 `-v /usr/share/fonts:/usr/share/fonts:ro`），安装后容器直接复用宿主机已装字体，解决烧录字幕的中文方块问题。对应安装参数「宿主机字体目录 / Host fonts directory」（`FONTS_FOLDER_PATH`）。
+
+### 宿主机准备中文字体
+
+宿主机没有中文字体时先装字体包，再**重新部署**（bind mount 只在容器启动时生效）：
+
+```bash
+# Debian / Ubuntu
+sudo apt install -y fonts-noto-cjk        # 思源黑体，简繁日韩全覆盖
+# 或更小的文泉驿：sudo apt install -y fonts-wqy-zenhei
+# RHEL / CentOS / Rocky
+sudo dnf install -y google-noto-sans-cjk-ttc-fonts
+# Alpine
+sudo apk add font-noto-cjk
+```
+
+验证宿主机与容器内都能看到中文字体：
+
+```bash
+fc-list :lang=zh | head                            # 宿主机
+docker exec -it <容器名> fc-list :lang=zh | head    # 容器内
+```
+
+### 装好字体后仍有方块？
+
+- **Web 端 ASS 字幕**走「回退字体」链路，与系统字体无关：控制台 → 播放（Playback）→ 转码（Transcoding）设置页，勾选「启用回退字体」并把「回退字体路径」指向**直接包含字体文件**的目录（服务端只读取该目录第一层、不递归子目录），例如 `/usr/share/fonts/truetype/wqy`。官方限制回退字体总大小 20 MB（会全部预加载进浏览器），建议放 `woff2`。
+- **烧录字幕**走 ffmpeg + libass + fontconfig，会递归扫描 `/usr/share/fonts` 下所有子目录，宿主机字体包装在哪一层都能识别。
+
+### 自定义字体目录 / 存量安装注意
+
+- 参数「宿主机字体目录」可改成任意含字体文件的宿主机**绝对路径**（如 `/mnt/user/fonts`），同样挂载到容器的 `/usr/share/fonts`。
+- **存量安装**：旧版默认值是 `~/.local/share/fonts/`（不是绝对路径、通常是空目录，等于没挂任何字体）。升级/重新部署后请在应用「参数」里改成 `/usr/share/fonts`（或实际字体目录）再重新部署——否则挂载的是空目录，反而会遮蔽镜像自带字体。
+- 若宿主机确实没有 `/usr/share/fonts` 目录，Docker 会自动创建空目录并覆盖镜像字体：这种情况请先装字体包，或把参数指向其它含字体的目录。
 
 ## 从 2026090709-arm64 切到 10.11.11
 原 `2026090709-arm64` 在 `/dev/shm` 满载时启动失败（`Unhandled exception: The path '/cache' has insufficient free space. Available: 0B, Required: 2GiB`），切换步骤：

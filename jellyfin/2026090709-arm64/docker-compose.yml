@@ -32,4 +32,7 @@ services:
             - ./data/config:/config
             - ${CACHE_FOLDER_PATH}:/cache
             - ${MEDIA_FOLDER_PATH}:/media
-            - ${FONTS_FOLDER_PATH}:/usr/share/fonts/fonts:ro
+            # 宿主机字体只读挂载到容器 /usr/share/fonts（等价于 -v /usr/share/fonts:/usr/share/fonts:ro）。
+            # 服务端「系统字体」用于烧录（burn-in）字幕与封面图渲染；宿主机没有中文字体时，字幕里的中文会显示为方块。
+            # 默认值 /usr/share/fonts 直接复用宿主机已安装的字体（如 fonts-noto-cjk / fonts-wqy-zenhei）。
+            - ${FONTS_FOLDER_PATH}:/usr/share/fonts:ro
