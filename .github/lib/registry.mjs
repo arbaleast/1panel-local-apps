@@ -207,26 +207,46 @@ export class GhcrAdapter {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    let res;
-    try {
-      res = await this.fetchImpl(
-        `https://ghcr.io/v2/${repo}/tags/list?n=1000`,
-        { headers }
-      );
-    } catch (_) {
-      return null;
-    }
-    if (!res.ok) return null;
+    // 翻页拉取全部 tag。GHCR 的 tags/list 单页上限 n=1000，且返回顺序是 tag 字典序
+    // （不是"最新在前"）。tag 总数超过 1000 的镜像（如 ghcr.io/traefik/traefik 有 2700+ 个，
+    // 字典序前 1000 个只到 v2.0.0-alpha6-*）如果只取第一页，v3.x 这类较新 tag 根本不在
+    // 候选集里，pickLatest 只能在 1.x / 2.x 里选，于是把"最新版本"误判成 3.0.3。
+    // 2026-11-01 auto-update 事故：本仓把 traefik 切到 ghcr 后，cron 检出 3.0.3 并
+    // 生成了 traefik/3.0.3/ 版本目录（旧镜像）。修复：跟随 Link rel="next" 翻页，
+    // 上限 MAX_PAGES 页（1000 tag/页）兜底，避免无界请求。
+    const PAGE_SIZE = 1000;
+    const MAX_PAGES = 10;
+    const allTags = [];
+    let nextUrl = `https://ghcr.io/v2/${repo}/tags/list?n=${PAGE_SIZE}`;
+    for (let page = 0; page < MAX_PAGES && nextUrl; page++) {
+      let res;
+      try {
+        res = await this.fetchImpl(nextUrl, { headers });
+      } catch (_) {
+        if (page === 0) return null;
+        break;
+      }
+      if (!res.ok) {
+        if (page === 0) return null;
+        break;
+      }
 
-    let data;
-    try {
-      data = await res.json();
-    } catch (_) {
-      return null;
+      let data;
+      try {
+        data = await res.json();
+      } catch (_) {
+        if (page === 0) return null;
+        break;
+      }
+      allTags.push(...(data?.tags ?? []));
+
+      // Link: </v2/<repo>/tags/list?last=<tag>&n=1000>; rel="next"
+      const link = res.headers?.get?.('link') ?? '';
+      const next = /<([^>]+)>\s*;\s*rel="next"/.exec(link);
+      nextUrl = next ? (next[1].startsWith('http') ? next[1] : `https://ghcr.io${next[1]}`) : null;
     }
 
-    const allTags = data?.tags ?? [];
-    const stable = allTags.filter(t => !this.UNSTABLE_RE.test(t));
+    const stable = [...new Set(allTags)].filter(t => !this.UNSTABLE_RE.test(t));
     if (stable.length === 0) return null;
 
     // 如果有当前 tag，尝试按"变体维度"匹配同 suffix 的版本化 tag。
