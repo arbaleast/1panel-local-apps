@@ -13,7 +13,7 @@ services:
           memory: ${MEMORY_LIMIT}
     environment:
     - BASE_URL=${SEARXNG_EXTERNAL_URL}
-    image: searxng/searxng:2026.9.12-d4f00d15d
+    image: ghcr.io/searxng/searxng:2026.9.12-d4f00d15d
     labels:
       createdBy: Apps
     networks:
