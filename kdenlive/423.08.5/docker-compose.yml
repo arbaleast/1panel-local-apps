@@ -5,7 +5,7 @@ networks:
 # ============================================================
 # Kdenlive 26.08.2-1-ls224 — KDE 专业视频剪辑器 (浏览器 GUI)
 #   上游:   https://github.com/linuxserver/docker-kdenlive
-#   镜像:   linuxserver/kdenlive:423.08.5
+#   镜像:   ghcr.io/linuxserver/kdenlive:423.08.5
 #     基础镜像: lsiobase/selkies (Debian, s6-overlay + Selkies WebRTC)
 #     GUI 协议: Selkies (HTTP 3000 / HTTPS 3001 / WS 8082)
 #     入口: ENTRYPOINT ["/init"] (s6-overlay suexec)
@@ -90,7 +90,7 @@ services:
         device_cgroup_rules:
             - 'c 195:* rw'
         runtime: nvidia
-        image: linuxserver/kdenlive:423.08.5
+        image: ghcr.io/linuxserver/kdenlive:423.08.5
         labels:
             createdBy: Apps
         networks:
