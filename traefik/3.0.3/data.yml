@@ -1,0 +1,134 @@
+name: Traefik
+tags:
+  - 实用工具
+  - 反向代理
+title: Traefik v3 — 云原生边缘路由器 / 反向代理
+description: Traefik v3 反向代理 + 自动 HTTPS（Let's Encrypt DNS 挑战）+ Docker provider 文件动态配置。复用本机 arbaleast.top 通配符证书。
+additionalProperties:
+  key: traefik
+  name: Traefik
+  tags:
+    - Reverse Proxy
+    - Tool
+  shortDescZh: Traefik 反向代理 + 自动 HTTPS
+  shortDescEn: Traefik reverse proxy with auto HTTPS
+  description:
+    en: Traefik v3 edge router / reverse proxy with Let's Encrypt DNS-01 challenge and Docker provider.
+    ja: Traefik v3 エッジルーター／Let's Encrypt DNS-01 対応リバースプロキシ
+    ko: Traefik v3 에지 라우터 / Let's Encrypt DNS-01 지원 리버스 프록시
+    ru: Traefik v3 — обратный прокси с поддержкой Let's Encrypt DNS-01
+    ms: Traefik v3 router pinggir / proksi terbalik dengan Let's Encrypt DNS-01
+    pt-br: Traefik v3 — proxy reverso com suporte a Let's Encrypt DNS-01
+    zh-Hant: Traefik v3 反向代理 + Let's Encrypt DNS-01 自動 HTTPS
+    zh: Traefik v3 反向代理 + Let's Encrypt DNS-01 申请通配符证书
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 100
+  website: https://traefik.io
+  github: https://github.com/traefik/traefik
+  document: https://doc.traefik.io/traefik/
+  architectures:
+    - amd64
+    - arm64
+  formFields:
+    - default: ghcr.io/traefik/traefik:3.0.3
+      edit: true
+      envKey: IMAGE
+      labelEn: Image
+      labelZh: 镜像
+      label:
+        en: Image
+        zh: 镜像
+        ja: イメージ
+        ko: 이미지
+        ru: Образ
+        ms: Imej
+        pt-br: Imagem
+        es-es: Imagen
+        tr: İmaj
+        zh-Hant: 映像
+      required: true
+      rule: paramImageTag
+      type: text
+    - default: "80"
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port (host)
+      labelZh: HTTP 端口 (宿主机)
+      required: true
+      rule: paramPort
+      type: number
+    - default: "443"
+      envKey: PANEL_APP_PORT_HTTPS
+      labelEn: HTTPS Port (host)
+      labelZh: HTTPS 端口 (宿主机)
+      required: true
+      rule: paramPort
+      type: number
+    - default: "8082"
+      envKey: PANEL_APP_PORT_DASHBOARD
+      labelEn: Dashboard Port (host)
+      labelZh: 面板端口 (宿主机)
+      required: true
+      rule: paramPort
+      type: number
+    - default: "false"
+      envKey: PANEL_APP_TRAEFIK_API_INSECURE
+      labelEn: Enable Insecure Dashboard
+      labelZh: 启用 Dashboard 不安全模式
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    - default: WARN
+      envKey: PANEL_APP_LOG_LEVEL
+      labelEn: Log Level (DEBUG/INFO/WARN/ERROR)
+      labelZh: 日志级别
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: DEBUG
+          value: DEBUG
+        - label: INFO
+          value: INFO
+        - label: WARN
+          value: WARN
+        - label: ERROR
+          value: ERROR
+    - default: 99
+      edit: true
+      envKey: UID
+      labelEn: Run as UID
+      labelZh: 运行用户 UID
+      label:
+        en: Run as UID
+        zh: 运行用户 UID
+        zh-Hant: 執行使用者 UID
+        ja: 実行 UID
+        ko: 실행 UID
+        ru: UID пользователя
+        ms: UID pengguna
+        pt-br: UID do usuário
+      required: true
+      type: number
+    - default: 100
+      edit: true
+      envKey: GID
+      labelEn: Run as GID
+      labelZh: 运行组 GID
+      label:
+        en: Run as GID
+        zh: 运行组 GID
+        zh-Hant: 執行群組 GID
+        ja: 実行 GID
+        ko: 실행 GID
+        ru: GID группы пользователя
+        ms: GID kumpulan pengguna
+        pt-br: GID do grupo
+      required: true
+      type: number
