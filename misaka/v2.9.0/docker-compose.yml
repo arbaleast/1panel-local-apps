@@ -5,7 +5,7 @@ networks:
 services:
   misaka:
     container_name: ${CONTAINER_NAME}
-    image: l429609201/misaka_danmu_server:v2.9.0
+    image: ghcr.io/l429609201/misaka_danmu_server:v2.9.0
     restart: always
     networks:
       - 1panel-network

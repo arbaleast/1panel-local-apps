@@ -446,4 +446,93 @@ describe('registry', () => {
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:26.04.5.1.1', '26.04.5.1.1');
     assert.equal(tag, '26.04.6.1.1');
   });
+
+  // 22. GhcrAdapter 翻页：tag 总数超过单页上限（n=1000）时必须跟随 Link rel="next"，
+  //     否则只能在字典序第一页的旧 tag 里选，误判出远古版本（traefik 3.0.3 事故）
+  it('GhcrAdapter paginates tags via Link rel=next (traefik 2700+ tags)', async () => {
+    const requested = [];
+    const fetchMock = (url) => {
+      if (url.includes('/token?')) {
+        return Promise.resolve({ ok: true, json: async () => ({ token: 'anon-token' }) });
+      }
+      requested.push(url);
+      if (url.includes('last=3.0.3')) {
+        return Promise.resolve({
+          ok: true,
+          headers: { get: () => null },
+          json: async () => ({ tags: ['v3.6.6', 'v3.7.17'] }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        headers: {
+          get: (name) =>
+            name.toLowerCase() === 'link'
+              ? '</v2/org/repo/tags/list?last=3.0.3&n=1000>; rel="next"'
+              : null,
+        },
+        json: async () => ({ tags: ['1.0.0', '2.0.0', '3.0.3'] }),
+      });
+    };
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const tag = await adapter.getLatestTag('ghcr.io/org/repo:v3.6.6', 'v3.6.6');
+    assert.equal(tag, 'v3.7.17');
+    assert.equal(requested.length, 2);
+  });
+
+  // 23. GhcrAdapter 翻页：后续页失败时保留已拿到的 tag（宁可用旧数据也不返回 null）
+  it('GhcrAdapter keeps first-page tags when a later page fails', async () => {
+    let tagPages = 0;
+    const fetchMock = (url) => {
+      if (url.includes('/token?')) {
+        return Promise.resolve({ ok: true, json: async () => ({ token: 't' }) });
+      }
+      tagPages += 1;
+      if (tagPages === 1) {
+        return Promise.resolve({
+          ok: true,
+          headers: {
+            get: (name) =>
+              name.toLowerCase() === 'link'
+                ? '</v2/org/repo/tags/list?last=v1.0.0&n=1000>; rel="next"'
+                : null,
+          },
+          json: async () => ({ tags: ['v1.0.0', 'v1.0.1'] }),
+        });
+      }
+      return Promise.resolve({ ok: false, status: 503 });
+    };
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const tag = await adapter.getLatestTag('ghcr.io/org/repo:v1.0.0');
+    assert.equal(tag, 'v1.0.1');
+  });
+
+  // 24. GhcrAdapter 翻页：Link 给出绝对 URL 时直接使用，不重复拼 registry 前缀
+  it('GhcrAdapter follows absolute Link rel=next URL', async () => {
+    const fetchMock = (url) => {
+      if (url.includes('/token?')) {
+        return Promise.resolve({ ok: true, json: async () => ({ token: 't' }) });
+      }
+      if (url === 'https://ghcr.io/v2/org/repo/tags/list?last=v2.0.0&n=1000') {
+        return Promise.resolve({
+          ok: true,
+          headers: { get: () => null },
+          json: async () => ({ tags: ['v3.0.0'] }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        headers: {
+          get: (name) =>
+            name.toLowerCase() === 'link'
+              ? '<https://ghcr.io/v2/org/repo/tags/list?last=v2.0.0&n=1000>; rel="next"'
+              : null,
+        },
+        json: async () => ({ tags: ['v1.0.0', 'v2.0.0'] }),
+      });
+    };
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const tag = await adapter.getLatestTag('ghcr.io/org/repo:v1.0.0');
+    assert.equal(tag, 'v3.0.0');
+  });
 });
