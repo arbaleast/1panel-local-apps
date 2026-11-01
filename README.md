@@ -6,14 +6,14 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.52 |
+| anirss | 动漫 RSS | v3.2.54 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
 | aria2 | 轻量级多协议下载工具 | a2b-stable-25-08-12 |
-| bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.5.0 |
+| bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.6.0 |
 | cfnb | Cloudflare CDN 节点优选工具 | v1.0.1 |
-| cfui | cloudflared WebUI 管理面板 | v0.10.7 |
-| cinny | Matrix 聊天客户端 | v4.12.7 |
-| collabora | 自托管协作在线 Office 套件 (CODE, LibreOffice 内核) | 26.04.5.1.1 |
+| cfui | cloudflared WebUI 管理面板 | v0.10.17 |
+| cinny | Matrix 聊天客户端 | v4.12.8 |
+| collabora | 自托管协作在线 Office 套件 (CODE, LibreOffice 内核) | 26.04.5.2.1 |
 | dendrite | Matrix 协议新一代 homeserver | v0.15.2 |
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
 | firecrawl | 网页爬虫 | 2.11.209 |
@@ -38,29 +38,29 @@
 | mediago | 媒体嗅探与下载 | 3.5.0 |
 | mihomo | 代理工具 | v1.19.18 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
-| misaka | 御坂网络弹幕服务 | v2.8.9 |
-| moviepilot | 影视自动化 | 3.1.9 |
+| misaka | 御坂网络弹幕服务 | v2.9.0 |
+| moviepilot | 影视自动化 | 3.2.3 |
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.8.0 |
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
-| onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.2.4 |
+| onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.3.2 |
 | open-design | Claude Design 开源替代，agent CLI 驱动 | 0.26.1 |
-| opencloud | 开源文件管理 / 分享 / 协作平台（无数据库，内置 LDAP + OIDC） | 8.1.0 |
+| opencloud | 开源文件管理 / 分享 / 协作平台（无数据库，内置 LDAP + OIDC） | 9.0.0 |
 | openreel-video | 浏览器端开源视频剪辑工具 | v0.5.0 |
 | openshot | 开源视频剪辑与动画制作 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速, 仅 amd64) | 4.0.1 |
-| optimisarr | 媒体库自动转码 (FFmpeg 验证 + 回滚, Plex/Jellyfin/Emby, 仅 amd64) | 0.2.23 |
+| optimisarr | 媒体库自动转码 (FFmpeg 验证 + 回滚, Plex/Jellyfin/Emby, 仅 amd64) | 0.2.24 |
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
 | personal-todo-vault | 自托管待办与 Markdown 笔记库（SQLite + 邮件提醒 + WebDAV 备份） | latest |
 | pgvector | 向量数据库 | 0.8.7-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 20220121 |
 | qdrant | 向量搜索引擎 | v1.20.0 |
-| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.33.0 |
-| searxng | 隐私搜索引擎 | 2026.10.19-d47cb96bf |
+| scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.37.0 |
+| searxng | 隐私搜索引擎 | 2026.10.30-ffa88e3ba |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
-| super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.2.0 |
+| super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.3.1 |
 | syncthing | 文件同步 | 2.1.7 |
-| tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.01.00 |
+| tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.04.00 |
 | traefik | 反向代理 | v3.6.6 |
 | unmanic | 媒体库自动转码 (josh5 镜像, NVIDIA Pascal/P620 NVENC 加速) | 0.4.1 |
 | xunlei | cnk3x 维护的迅雷远程下载服务（群晖提取版） | beta |

@@ -1,0 +1,14 @@
+# 保持空目录的占位文件
+#
+# OneNav 持久化目录 ./data 映射到容器内
+#   /data/wwwroot/default/data
+# 容器启动后 php-fpm / nginx / sqlite 会写入以下文件：
+#   config.php              # 管理员账号密码（由 init.sh 首次安装时填入）
+#   onenav.db3              # SQLite 数据库（链接 / 分类 / 设置）
+#   favicon.ico             # 站点图标（容器 run.sh 自动 fallback 拷贝）
+#   extend.js               # 用户自定义 JS 扩展（可选）
+#   backups/                # 自动备份
+#   uploads/                # 浏览器扩展或 API 上传文件
+#   templates/<theme>/      # 用户自定义主题
+#
+# 当前目录由 init.sh 自动写入 / 管理，无需手工创建子目录。
