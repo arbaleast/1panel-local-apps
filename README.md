@@ -16,7 +16,7 @@
 | collabora | 自托管协作在线 Office 套件 (CODE, LibreOffice 内核) | 26.04.5.2.1 |
 | dendrite | Matrix 协议新一代 homeserver | v0.15.2 |
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
-| firecrawl | 网页爬虫 | 2.11.209 |
+| firecrawl | 网页爬虫 | 2.11.642 |
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 (linuxserver, 单 GUI, P620 NVENC 已验证) | 1.11.2-ls41 |
@@ -30,7 +30,7 @@
 | kdenlive | 视频剪辑器 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速) | 423.08.5 |
 | kiwix-serve | 离线维基百科与 ZIM 内容服务器 | latest |
 | linkwarden | Linkwarden 自托管书签管理器 | v2.16.3 |
-| llamacpp | 高性能本地 LLM 推理引擎 | server-vulkan-v0.4.7 |
+| llamacpp | 高性能本地 LLM 推理引擎 | server-vulkan-v0.4.9 |
 | llamaindex | LLM 数据框架 | v0.9.2 |
 | llmwiki | LLM Wiki 知识库（占位应用，详见 README 风险说明） | latest |
 | losslesscut | 浏览器内视频/音频无损剪辑 | 3.64.0-v1 |
@@ -61,7 +61,7 @@
 | super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.3.1 |
 | syncthing | 文件同步 | 2.1.7 |
 | tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.04.00 |
-| traefik | 反向代理 | v3.6.6 |
+| traefik | 反向代理 | v3.7.17 |
 | unmanic | 媒体库自动转码 (josh5 镜像, NVIDIA Pascal/P620 NVENC 加速) | 0.4.1 |
 | xunlei | cnk3x 维护的迅雷远程下载服务（群晖提取版） | beta |
 | zashboard | Mihomo 面板 | latest |

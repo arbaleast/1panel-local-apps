@@ -32,7 +32,7 @@ additionalProperties:
     - amd64
     - arm64
   formFields:
-    - default: ghcr.io/traefik/traefik:3.0.3
+    - default: ghcr.io/traefik/traefik:v3.7.17
       edit: true
       envKey: IMAGE
       labelEn: Image
