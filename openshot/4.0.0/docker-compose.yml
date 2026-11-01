@@ -38,7 +38,7 @@ services:
         device_cgroup_rules:
             - 'c 195:* rw'
         runtime: nvidia
-        image: linuxserver/openshot:4.0.0
+        image: ghcr.io/linuxserver/openshot:4.0.0
         labels:
             createdBy: Apps
         networks:
