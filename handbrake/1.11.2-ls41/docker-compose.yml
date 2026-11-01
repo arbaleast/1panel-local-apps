@@ -33,7 +33,7 @@ services:
         device_cgroup_rules:
             - 'c 195:* rw'
         runtime: nvidia
-        image: linuxserver/handbrake:1.11.2-ls41
+        image: ghcr.io/linuxserver/handbrake:1.11.2-ls41
         labels:
             createdBy: Apps
         networks:

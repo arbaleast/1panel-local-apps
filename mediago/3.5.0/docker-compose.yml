@@ -14,7 +14,7 @@ services:
     command: --local-dir=${LOCAL_DIR:-/app/mediago/downloads}
     environment:
       - LOCAL_DIR=${LOCAL_DIR}
-    image: caorushizi/mediago:3.5.0
+    image: ghcr.io/caorushizi/mediago:3.5.0
     labels:
       createdBy: Apps
     networks:
