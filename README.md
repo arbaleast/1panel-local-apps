@@ -16,7 +16,7 @@
 | collabora | 自托管协作在线 Office 套件 (CODE, LibreOffice 内核) | 26.04.5.2.1 |
 | dendrite | Matrix 协议新一代 homeserver | v0.15.2 |
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
-| firecrawl | 网页爬虫 | 2.11.642 |
+| firecrawl | 网页爬虫 | 2.11.643 |
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 (linuxserver, 单 GUI, P620 NVENC 已验证) | 1.11.2-ls41 |
@@ -47,7 +47,7 @@
 | open-design | Claude Design 开源替代，agent CLI 驱动 | 0.26.1 |
 | opencloud | 开源文件管理 / 分享 / 协作平台（无数据库，内置 LDAP + OIDC） | 9.0.0 |
 | openreel-video | 浏览器端开源视频剪辑工具 | v0.5.0 |
-| openshot | 开源视频剪辑与动画制作 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速, 仅 amd64) | 4.0.1 |
+| openshot | 开源视频剪辑与动画制作 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速, 仅 amd64) | 4.1.0 |
 | optimisarr | 媒体库自动转码 (FFmpeg 验证 + 回滚, Plex/Jellyfin/Emby, 仅 amd64) | 0.2.24 |
 | perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
 | personal-todo-vault | 自托管待办与 Markdown 笔记库（SQLite + 邮件提醒 + WebDAV 备份） | latest |
@@ -56,7 +56,7 @@
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 20220121 |
 | qdrant | 向量搜索引擎 | v1.20.0 |
 | scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.37.0 |
-| searxng | 隐私搜索引擎 | 2026.10.30-ffa88e3ba |
+| searxng | 隐私搜索引擎 | 2026.11.1-9ded3bec1 |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.3.1 |
 | syncthing | 文件同步 | 2.1.7 |
