@@ -116,27 +116,6 @@ additionalProperties:
       required: true
       type: text
     # ---- 数据持久化根目录（./data/data 与 ./data/downloads 实际位置）----
-    - default: ./data
-      edit: true
-      envKey: DATA_PATH
-      labelEn: Data path
-      labelZh: 数据路径
-      label:
-        en: Data path
-        zh: 数据路径
-        zh-Hant: 數據路徑
-        ja: データパス
-        ko: 데이터 경로
-        ru: Путь к данным
-        ms: Laluan data
-        pt-br: Caminho dos dados
-      required: true
-      rule: paramPath
-      type: text
-    # ---- 运行用户 UID/GID（避免下载到宿主后普通账号无法读写）----
-    # 注意：type=number + rule=paramCommon 才能同时满足 0/root 与 1000+ 等合法 ID
-    # paramCommon 的 1Panel 前端正则要求 ≥2 字符，所以 default 不能只填 "0"——
-    # 改用 type=number 绕过该正则，paramCommon rule 仅作为表单输入提示
     - default: 99
       edit: true
       envKey: PUID

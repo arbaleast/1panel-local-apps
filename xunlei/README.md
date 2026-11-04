@@ -107,7 +107,7 @@ A: 检查容器内 `hostname` 是否与 1Panel 填的 `HOSTNAME` 一致；迅雷
 A: 默认 UID/GID 是 `0`（root），SMB 共享配置可能过滤了 root 写文件。改成 NAS 普通用户的 `1000:1000`，并 chown 旧文件（见 UID/GID 段）。
 
 **Q: 升级到新版镜像后任务历史没了？**
-A: 任务历史存在 `./data/data/.drive/` 里，只要 `data/` 目录还在，升级镜像不会丢数据。如果真的丢了，**先检查 bind mount 路径是否正确**——compose 里 `${DATA_PATH}/data:/xunlei/data`，是 `${DATA_PATH}` 的子目录 `data`（不是 `${DATA_PATH}` 自身）。
+A: 任务历史存在 `./data/data/.drive/` 里，只要 `data/` 目录还在，升级镜像不会丢数据。如果真的丢了，**先检查 bind mount 路径是否正确**——compose 里挂载的是 `./data/data:/xunlei/data`，即 `data/` 目录下的 `data` 子目录（不是 `data/` 自身）。
 
 **Q: 不想走 cnk3x 镜像，能用迅雷官方 Docker 镜像吗？**
 A: 迅雷官方目前**没有提供**通用 Linux 的 Docker 镜像，只有群晖 / 威联通 NAS 套件和 Windows 客户端。cnk3x 是从群晖套件提取并打包的社区方案，是目前唯一能在 1Panel / Linux 上跑迅雷远程下载的途径。

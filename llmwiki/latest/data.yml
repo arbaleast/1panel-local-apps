@@ -3,6 +3,19 @@ additionalProperties:
   name: LLM Wiki (latest)
   type: tool
   formFields:
+  - envKey: PANEL_APP_PORT_API
+    label:
+      en: API Port
+      zh: API 端口
+      zh-Hant: API 連接埠
+      ja: API ポート
+      ko: API 포트
+      ru: API-порт
+      ms: Port API
+      pt-br: Porta da API
+    default: "19828"
+    required: true
+    type: number
   - envKey: LLM_WIKI_BIND_HOST
     label:
       en: API Bind Host

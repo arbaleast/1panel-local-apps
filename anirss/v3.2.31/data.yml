@@ -34,22 +34,6 @@ additionalProperties:
       type: text
     - default: anirss
       edit: true
-      envKey: HOSTNAME
-      labelEn: Hostname
-      labelZh: 主机名
-      label:
-        en: Hostname
-        zh: 主机名
-        zh-Hant: 主機名稱
-        ja: ホスト名
-        ko: 호스트명
-        ru: Имя хоста
-        ms: Nama hos
-        pt-br: Nome do host
-      required: true
-      type: text
-    - default: anirss
-      edit: true
       envKey: CONTAINER_NAME
       labelEn: Container Name
       labelZh: 容器名称

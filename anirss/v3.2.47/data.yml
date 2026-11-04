@@ -34,22 +34,6 @@ additionalProperties:
       type: text
     - default: anirss
       edit: true
-      envKey: HOSTNAME
-      labelEn: Hostname
-      labelZh: 主机名
-      label:
-        en: Hostname
-        zh: 主机名
-        zh-Hant: 主機名稱
-        ja: ホスト名
-        ko: 호스트명
-        ru: Имя хоста
-        ms: Nama hos
-        pt-br: Nome do host
-      required: true
-      type: text
-    - default: anirss
-      edit: true
       envKey: CONTAINER_NAME
       labelEn: Container Name
       labelZh: 容器名称
@@ -126,22 +110,6 @@ additionalProperties:
         ru: Внутренний порт сервиса
         ms: Port perkhidmatan dalaman
         pt-br: Porta interna do serviço
-      required: true
-      type: number
-    - default: "27789"
-      edit: true
-      envKey: PANEL_APP_PORT_HTTP
-      labelEn: Host HTTP Port
-      labelZh: 宿主机端口
-      label:
-        en: Host HTTP Port
-        zh: 宿主机端口
-        zh-Hant: 主機埠
-        ja: ホスト側ポート
-        ko: 호스트 포트
-        ru: Порт на хосте
-        ms: Port hos
-        pt-br: Porta no host
       required: true
       type: number
     - default: "-Xms64m -Xmx512m -Xss256k -XX:+UseG1GC"

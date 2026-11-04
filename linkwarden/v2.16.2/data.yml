@@ -109,23 +109,6 @@ additionalProperties:
         pt-br: URL NextAuth
       required: true
       type: text
-    - default: "3000"
-      edit: true
-      envKey: SERVER_PORT
-      labelEn: Server Port (Container)
-      labelZh: 容器内服务端口
-      label:
-        en: Server Port (Container)
-        zh: 容器内服务端口
-        zh-Hant: 容器內服務埠
-        ja: サーバーポート（コンテナ内）
-        ko: 서버 포트 (컨테이너 내)
-        ru: Порт сервера (контейнер)
-        ms: Port pelayan (bekas)
-        pt-br: Porta do servidor (contêiner)
-      required: false
-      type: text
-      hidden: true
     - default: Asia/Shanghai
       edit: true
       envKey: TZ
@@ -142,38 +125,6 @@ additionalProperties:
         pt-br: Fuso horário
       required: true
       type: text
-    - default: "2"
-      edit: true
-      envKey: PANEL_APP_CPUS
-      labelEn: CPU limit (cores, 0=unlimited)
-      labelZh: CPU 上限 (核数, 0=不限)
-      label:
-        en: CPU limit (cores, 0=unlimited)
-        zh: CPU 上限 (核数, 0=不限)
-        zh-Hant: CPU 上限 (核心數, 0=不限)
-        ja: CPU 上限 (コア, 0=無制限)
-        ko: CPU 상한 (코어, 0=무제한)
-        ru: Лимит CPU (ядра, 0=без лимита)
-        ms: Had CPU (teras, 0=tidak terhad)
-        pt-br: Limite de CPU (núcleos, 0=ilimitado)
-      required: false
-      type: number
-    - default: "4096"
-      edit: true
-      envKey: PANEL_APP_MEM_LIMIT
-      labelEn: Memory limit (MB, 0=unlimited)
-      labelZh: 内存上限 (MB, 0=不限)
-      label:
-        en: Memory limit (MB, 0=unlimited)
-        zh: 内存上限 (MB, 0=不限)
-        zh-Hant: 記憶體上限 (MB, 0=不限)
-        ja: メモリ上限 (MB, 0=無制限)
-        ko: 메모리 상한 (MB, 0=무제한)
-        ru: Лимит памяти (МБ, 0=без лимита)
-        ms: Had memori (MB, 0=tidak terhad)
-        pt-br: Limite de memória (MB, 0=ilimitado)
-      required: false
-      type: number
     - default: 0.0.0.0
       edit: true
       envKey: HOST_IP
