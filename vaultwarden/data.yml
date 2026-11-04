@@ -1,0 +1,29 @@
+additionalProperties:
+  key: vaultwarden
+  name: Vaultwarden
+  tags:
+    - Password
+    - Security
+    - Tool
+  shortDescZh: Bitwarden 兼容的自托管密码管理器（Rust 版服务端）
+  shortDescEn: Bitwarden-compatible self-hosted password manager (Rust server)
+  description:
+    zh: Vaultwarden 是一个用 Rust 重写的 Bitwarden 兼容密码管理器服务端。官方 Bitwarden 服务端并不开源，Vaultwarden 提供了可自托管的等价实现：Web 保险库、浏览器扩展、桌面端与移动端客户端均可接入，支持多用户、组织与群组、附件、Send 与两步验证。所有数据保存在本机 SQLite 数据库中，密钥不出本机。
+    en: Vaultwarden is a Rust rewrite of the Bitwarden-compatible password manager server. Since the official Bitwarden server is not open source, Vaultwarden provides a self-hostable equivalent — web vault, browser extensions, desktop and mobile clients, multi-user accounts, organizations and groups, attachments, Send and two-factor authentication. All data stays in a local SQLite database — your keys never leave the host.
+    zh-Hant: Vaultwarden 是用 Rust 重寫的 Bitwarden 相容密碼管理器伺服器。官方 Bitwarden 伺服器並未開源，Vaultwarden 提供可自架的等價實作：Web 保管庫、瀏覽器擴充套件、桌面與行動端用戶端皆可接入，支援多使用者、組織與群組、附件、Send 與兩步驟驗證。所有資料儲存在本機 SQLite 資料庫，密鑰不會離開本機。
+    ja: Vaultwarden は Bitwarden 互換のパスワードマネージャー・サーバーを Rust で書き直したものです。公式 Bitwarden サーバーはオープンソースではないため、Vaultwarden はセルフホスト可能な同等実装を提供します。Web ヴォルト、ブラウザ拡張、デスクトップ／モバイルクライアントのすべてに対応し、複数ユーザー、組織・グループ、添付ファイル、Send、2要素認証にも対応しています。データはローカルの SQLite データベースに保存され、鍵がホストの外に出ることはありません。
+    ko: Vaultwarden은 Bitwarden 호환 비밀번호 관리자 서버를 Rust로 다시 작성한 프로젝트입니다. 공식 Bitwarden 서버는 오픈 소스가 아니므로, Vaultwarden은 자체 호스팅 가능한 동등한 구현을 제공합니다. 웹 보관함, 브라우저 확장 프로그램, 데스크톱·모바일 클라이언트를 모두 지원하고, 다중 사용자, 조직·그룹, 첨부 파일, Send, 2단계 인증을 지원합니다. 모든 데이터는 로컬 SQLite 데이터베이스에 저장되며 키가 호스트 밖으로 나가지 않습니다.
+    ru: Vaultwarden — это переписанный на Rust сервер менеджера паролей, совместимый с Bitwarden. Поскольку официальный сервер Bitwarden не открыт, Vaultwarden предоставляет самостоятельно развёртываемый аналог — веб-хранилище, браузерные расширения, десктопные и мобильные клиенты, несколько пользователей, организации и группы, вложения, Send и двухфакторная аутентификация. Все данные хранятся в локальной базе SQLite — ключи не покидают ваш сервер.
+    ms: Vaultwarden ialah pelayan pengurus kata laluan yang serasi dengan Bitwarden, ditulis semula dalam Rust. Kerana pelayan Bitwarden rasmi bukan sumber terbuka, Vaultwarden menyediakan pelaksanaan setara yang boleh dihos sendiri — peti web, sambungan pelayar, pelanggan desktop dan mudah alih, berbilang pengguna, organisasi dan kumpulan, lampiran, Send dan pengesahan dua faktor. Semua data disimpan dalam pangkalan data SQLite tempatan — kunci anda tidak meninggalkan hos.
+    pt-br: Vaultwarden é um servidor gerenciador de senhas compatível com Bitwarden, reescrito em Rust. Como o servidor oficial do Bitwarden não é de código aberto, o Vaultwarden oferece uma implementação equivalente auto-hospedada — cofre web, extensões de navegador, clientes de desktop e celular, múltiplos usuários, organizações e grupos, anexos, Send e autenticação de dois fatores. Todos os dados ficam em um banco SQLite local — suas chaves nunca saem do servidor.
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+    - arm/v7
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/dani-garcia/vaultwarden
+  github: https://github.com/dani-garcia/vaultwarden
+  document: https://github.com/dani-garcia/vaultwarden/wiki

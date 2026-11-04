@@ -99,4 +99,6 @@ aliases:
   perplexica:  # 兼容旧名（已重命名为 Vane）
     dir: vane
     desc: AI 问答引擎（原 Perplexica）
+  vaultwarden:
+    desc: Bitwarden 兼容的自托管密码管理器（Rust 版服务端）
   # qbittorrent: 故意省略，让 sync-readme 通过遍历根目录自动跳过（无该目录）

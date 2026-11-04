@@ -63,6 +63,7 @@
 | tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.04.00 |
 | traefik | 反向代理 | v3.7.17 |
 | unmanic | 媒体库自动转码 (josh5 镜像, NVIDIA Pascal/P620 NVENC 加速) | 0.4.1 |
+| vaultwarden | Bitwarden 兼容的自托管密码管理器（Rust 版服务端） | 1.37.5 |
 | xunlei | cnk3x 维护的迅雷远程下载服务（群晖提取版） | beta |
 | zashboard | Mihomo 面板 | latest |
 

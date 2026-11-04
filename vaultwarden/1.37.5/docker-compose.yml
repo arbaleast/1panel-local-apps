@@ -1,0 +1,65 @@
+networks:
+  1panel-network:
+    external: true
+
+# vaultwarden (1.37.5) — vaultwarden/server:1.37.5
+# 镜像源: hub.docker.com/r/vaultwarden/server:1.37.5
+#   - 多架构: linux/amd64, linux/arm64, linux/arm/v7（Debian 系默认镜像）
+#   - 官方文档: https://github.com/dani-garcia/vaultwarden
+# 运行身份: 官方镜像无 PUID/PGID 支持（Dockerfile 无 USER 指令、start.sh 不做
+#   chown/su 降权），因此用 compose 的 user: 指定身份，默认 99:100。
+#   上游镜像默认 ROCKET_PORT=80（特权端口），非 root 无法绑定 → 改用 8080，
+#   主机侧端口由 PANEL_APP_PORT_HTTP 映射（默认 48522）。
+#   Rocket 框架读取 ROCKET_PORT / ROCKET_ADDRESS 环境变量（上游镜像自身即
+#   依赖 ROCKET_PORT=80），上游健康检查脚本也读同一个变量。
+# 数据落地: /data —— db.sqlite3（SQLite 库）、config.json、rsa_key.pem /
+#   rsa_key.pub.pem（密钥对）、attachments/、sends/、icon_cache/
+# 健康检查: 复用镜像内置的 /healthcheck.sh（GET /alive）
+#
+# 数据流:
+#   主机侧 ./data → 容器 /data
+#
+# ⚠️ 浏览器访问需要 HTTPS: Web 保险库依赖 Web Crypto API，浏览器只在
+#   "安全上下文"（HTTPS 或 http://localhost）里提供该 API。上游 README 明确
+#   要求启用 HTTPS 并配合反向代理。桌面/移动客户端不受此限制。
+
+services:
+  vaultwarden:
+    container_name: ${CONTAINER_NAME}
+    # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
+    user: "${UID}:${GID}"
+    image: vaultwarden/server:1.37.5
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:${ROCKET_PORT}
+    environment:
+      # 公网访问地址（必须带 http:// 或 https://，否则上游直接退出）
+      #   - 反向代理: https://vault.example.com
+      #   - 局域网直访: http://<主机IP>:<PANEL_APP_PORT_HTTP>
+      # 影响 CORS 源匹配、邮件内链接，以及子路径（https://example.com/vault）挂载
+      DOMAIN: ${DOMAIN}
+      # 容器内监听端口（非特权端口，配合 user: 以非 root 身份运行）
+      ROCKET_PORT: ${ROCKET_PORT}
+      ROCKET_ADDRESS: 0.0.0.0
+      # 是否开放注册（注册完自己的账号后建议改为 false）
+      SIGNUPS_ALLOWED: ${SIGNUPS_ALLOWED}
+      # 管理后台 /admin 的口令（留空 = 禁用管理后台）
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      # 日志级别：error / warn / info / debug / trace
+      LOG_LEVEL: ${LOG_LEVEL}
+      # 时区（影响日志时间戳与邮件发送时间）
+      TZ: ${TZ}
+    volumes:
+      # SQLite 数据库 + 密钥对 + 附件 + Send + 图标缓存
+      - ./data:/data
+    healthcheck:
+      # 与上游镜像内置 HEALTHCHECK 等价: GET /alive
+      test: ["CMD", "/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

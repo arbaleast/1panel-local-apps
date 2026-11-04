@@ -1,0 +1,234 @@
+additionalProperties:
+  key: vaultwarden
+  name: vaultwarden 1.37.5
+  tags:
+    - Password
+    - Security
+    - Tool
+  shortDescZh: Bitwarden 兼容的自托管密码管理器（Rust 版服务端）
+  shortDescEn: Bitwarden-compatible self-hosted password manager (Rust server)
+  description:
+    zh: Vaultwarden 是一个用 Rust 重写的 Bitwarden 兼容密码管理器服务端。官方 Bitwarden 服务端并不开源，Vaultwarden 提供了可自托管的等价实现：Web 保险库、浏览器扩展、桌面端与移动端客户端均可接入，支持多用户、组织与群组、附件、Send 与两步验证。所有数据保存在本机 SQLite 数据库中，密钥不出本机。
+    en: Vaultwarden is a Rust rewrite of the Bitwarden-compatible password manager server. Since the official Bitwarden server is not open source, Vaultwarden provides a self-hostable equivalent — web vault, browser extensions, desktop and mobile clients, multi-user accounts, organizations and groups, attachments, Send and two-factor authentication. All data stays in a local SQLite database — your keys never leave the host.
+    zh-Hant: Vaultwarden 是用 Rust 重寫的 Bitwarden 相容密碼管理器伺服器。官方 Bitwarden 伺服器並未開源，Vaultwarden 提供可自架的等價實作：Web 保管庫、瀏覽器擴充套件、桌面與行動端用戶端皆可接入，支援多使用者、組織與群組、附件、Send 與兩步驟驗證。所有資料儲存在本機 SQLite 資料庫，密鑰不會離開本機。
+    ja: Vaultwarden は Bitwarden 互換のパスワードマネージャー・サーバーを Rust で書き直したものです。公式 Bitwarden サーバーはオープンソースではないため、Vaultwarden はセルフホスト可能な同等実装を提供します。Web ヴォルト、ブラウザ拡張、デスクトップ／モバイルクライアントのすべてに対応し、複数ユーザー、組織・グループ、添付ファイル、Send、2要素認証にも対応しています。データはローカルの SQLite データベースに保存され、鍵がホストの外に出ることはありません。
+    ko: Vaultwarden은 Bitwarden 호환 비밀번호 관리자 서버를 Rust로 다시 작성한 프로젝트입니다. 공식 Bitwarden 서버는 오픈 소스가 아니므로, Vaultwarden은 자체 호스팅 가능한 동등한 구현을 제공합니다. 웹 보관함, 브라우저 확장 프로그램, 데스크톱·모바일 클라이언트를 모두 지원하고, 다중 사용자, 조직·그룹, 첨부 파일, Send, 2단계 인증을 지원합니다. 모든 데이터는 로컬 SQLite 데이터베이스에 저장되며 키가 호스트 밖으로 나가지 않습니다.
+    ru: Vaultwarden — это переписанный на Rust сервер менеджера паролей, совместимый с Bitwarden. Поскольку официальный сервер Bitwarden не открыт, Vaultwarden предоставляет самостоятельно развёртываемый аналог — веб-хранилище, браузерные расширения, десктопные и мобильные клиенты, несколько пользователей, организации и группы, вложения, Send и двухфакторная аутентификация. Все данные хранятся в локальной базе SQLite — ключи не покидают ваш сервер.
+    ms: Vaultwarden ialah pelayan pengurus kata laluan yang serasi dengan Bitwarden, ditulis semula dalam Rust. Kerana pelayan Bitwarden rasmi bukan sumber terbuka, Vaultwarden menyediakan pelaksanaan setara yang boleh dihos sendiri — peti web, sambungan pelayar, pelanggan desktop dan mudah alih, berbilang pengguna, organisasi dan kumpulan, lampiran, Send dan pengesahan dua faktor. Semua data disimpan dalam pangkalan data SQLite tempatan — kunci anda tidak meninggalkan hos.
+    pt-br: Vaultwarden é um servidor gerenciador de senhas compatível com Bitwarden, reescrito em Rust. Como o servidor oficial do Bitwarden não é de código aberto, o Vaultwarden oferece uma implementação equivalente auto-hospedada — cofre web, extensões de navegador, clientes de desktop e celular, múltiplos usuários, organizações e grupos, anexos, Send e autenticação de dois fatores. Todos os dados ficam em um banco SQLite local — suas chaves nunca saem do servidor.
+  type: tool
+  architectures:
+    - amd64
+    - arm64
+    - arm/v7
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/dani-garcia/vaultwarden
+  github: https://github.com/dani-garcia/vaultwarden
+  document: https://github.com/dani-garcia/vaultwarden/wiki
+  # ---------------------------------------------------------------------------
+  # 镜像：vaultwarden/server:1.37.5（Docker Hub，硬编码 tag，由自动更新守护）
+  #   - 多架构：linux/amd64, linux/arm64, linux/arm/v7（Debian 系默认镜像）
+  #   - 同版本另有 -alpine 变体（仅 amd64/arm64），本应用用默认 Debian 系镜像
+  # 端口策略：
+  #   上游镜像默认 ROCKET_PORT=80（特权端口），非 root 身份无法绑定。
+  #   本应用以 user: "${UID}:${GID}"（默认 99/100）运行，故把容器内端口改为
+  #   8080（非特权端口），主机侧端口由 PANEL_APP_PORT_HTTP 映射。
+  #   ROCKET_PORT 是 Rocket 框架读取的环境变量，上游镜像自身即依赖它
+  #   （上游 Dockerfile 里 ENV ROCKET_PORT=80，健康检查脚本也读同一个变量）。
+  # ---------------------------------------------------------------------------
+  formFields:
+    # ---- 主机侧 HTTP 端口 ----
+    - default: 48522
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 連接埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 容器内端口（Rocket 监听端口，非特权端口，配合 user: 以非 root 运行）----
+    - default: 8080
+      edit: true
+      envKey: ROCKET_PORT
+      labelEn: Container Port
+      labelZh: 容器内端口
+      label:
+        en: Container Port
+        zh: 容器内端口
+        zh-Hant: 容器內連接埠
+        ja: コンテナ内ポート
+        ko: 컨테이너 내부 포트
+        ru: Порт внутри контейнера
+        ms: Port dalam bekas
+        pt-br: Porta interna do contêiner
+      required: true
+      rule: paramPort
+      type: number
+    # ---- 访问地址（必须带 http:// 或 https://，影响 CORS 源、邮件链接与子路径挂载）----
+    # 上游校验：DOMAIN 不以 http:// / https:// 开头会直接退出。
+    # 反向代理场景填公开地址（如 https://vault.example.com）；
+    # 局域网直访填 http://<主机IP>:<HTTP端口>。
+    - default: http://localhost
+      edit: true
+      envKey: DOMAIN
+      labelEn: Domain URL
+      labelZh: 访问地址
+      label:
+        en: Domain URL
+        zh: 访问地址
+        zh-Hant: 存取位址
+        ja: アクセスURL
+        ko: 접속 주소
+        ru: Адрес доступа
+        ms: URL Domains
+        pt-br: URL de acesso
+      required: true
+      type: text
+    # ---- 是否允许注册（上游默认 true；注册完自己的账号后建议改为 false）----
+    # 1Panel 表单不支持 boolean，用 select 模拟。
+    - default: "true"
+      edit: true
+      envKey: SIGNUPS_ALLOWED
+      labelEn: Allow Signups
+      labelZh: 允许注册
+      label:
+        en: Allow Signups
+        zh: 允许注册
+        zh-Hant: 允許註冊
+        ja: 登録を許可
+        ko: 가입 허용
+        ru: Разрешить регистрацию
+        ms: Benarkan pendaftaran
+        pt-br: Permitir cadastros
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: "true"
+          value: "true"
+        - label: "false"
+          value: "false"
+    # ---- 管理后台口令（留空 = 禁用 /admin；建议 openssl rand -base64 32）----
+    - default: ""
+      edit: true
+      envKey: ADMIN_TOKEN
+      labelEn: Admin Token
+      labelZh: 管理后台口令
+      label:
+        en: Admin Token
+        zh: 管理后台口令
+        zh-Hant: 管理後台密碼
+        ja: 管理トークン
+        ko: 관리자 토큰
+        ru: Токен админки
+        ms: Token Pentadbir
+        pt-br: Token do administrador
+      required: false
+      type: password
+    # ---- 日志级别（上游默认 info）----
+    - default: info
+      edit: true
+      envKey: LOG_LEVEL
+      labelEn: Log Level
+      labelZh: 日志级别
+      label:
+        en: Log Level
+        zh: 日志级别
+        zh-Hant: 日誌等級
+        ja: ログレベル
+        ko: 로그 수준
+        ru: Уровень логирования
+        ms: Tahap log
+        pt-br: Nível de log
+      required: true
+      rule: paramSelect
+      type: select
+      values:
+        - label: error
+          value: error
+        - label: warn
+          value: warn
+        - label: info
+          value: info
+        - label: debug
+          value: debug
+        - label: trace
+          value: trace
+    # ---- 时区（影响日志时间戳与邮件发送时间）----
+    - default: Asia/Shanghai
+      edit: true
+      envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      required: false
+      type: text
+    # ---- 绑定 IP（反向代理场景用 0.0.0.0）----
+    - default: 0.0.0.0
+      edit: true
+      envKey: HOST_IP
+      labelEn: Bind IP
+      labelZh: 绑定 IP
+      label:
+        en: Bind IP
+        zh: 绑定 IP
+        zh-Hant: 綁定 IP
+        ja: バインド IP
+        ko: 바인딩 IP
+        ru: IP привязки
+        ms: IP ikat
+        pt-br: IP de bind
+      required: true
+      type: text
+    # ---- 运行身份（官方镜像无 PUID/PGID 支持，用 compose 的 user: 指定）----
+    - default: 99
+      edit: true
+      envKey: UID
+      labelEn: Run as UID
+      labelZh: 运行用户 UID
+      label:
+        en: Run as UID
+        zh: 运行用户 UID
+        zh-Hant: 執行使用者 UID
+        ja: 実行 UID
+        ko: 실행 UID
+        ru: UID пользователя
+        ms: UID pengguna
+        pt-br: UID do usuário
+      required: true
+      type: number
+    - default: 100
+      edit: true
+      envKey: GID
+      labelEn: Run as GID
+      labelZh: 运行组 GID
+      label:
+        en: Run as GID
+        zh: 运行组 GID
+        zh-Hant: 執行群組 GID
+        ja: 実行 GID
+        ko: 실행 GID
+        ru: GID группы
+        ms: GID kumpulan
+        pt-br: GID do grupo
+      required: true
+      type: number
