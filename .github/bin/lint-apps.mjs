@@ -2,7 +2,7 @@
 // bin/lint-apps.mjs — 扫描所有应用 data.yml 并校验 schema 合规性
 // zod 依赖仅在此层（bin/）引入，lib/ 层保持零第三方依赖（仅 js-yaml）
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { join, basename } from 'node:path';
+import { join, basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import { z } from 'zod';
@@ -243,18 +243,45 @@ function lintAllVersionDirs(appDir, fullPath) {
 
 // ─── 主逻辑 ─────────────────────────────────────────────────────────────────
 
-// 仓库根目录。
+// 本文件所在的**仓库根**（恒定）。
 // 本文件位于 `.github/bin/`，仓库根是上两级（`../../`）；写成 `..` 会落到 `.github/`，
 // 导致 listApps() 扫到 0 个应用、lint 永远打印 "PASSED"（假绿）。
 // 用 fileURLToPath + URL 解析（Node >= 12 即可），不依赖 20.11+ 才有的 import.meta.dirname。
-const ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const apps = listApps(ROOT);
+const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
+
+/**
+ * 读取 `--<name> <value>` 形式的命令行参数值
+ * @param {string} name 参数名（含 --）
+ * @param {string[]} [argv]
+ * @returns {string|null}
+ */
+function argValue(name, argv = process.argv) {
+  const i = argv.indexOf(name);
+  if (i === -1) return null;
+  const v = argv[i + 1];
+  if (v === undefined || v.startsWith('--')) return null;
+  return v;
+}
+
+// 扫描目标：默认整个仓库；`--root <dir>` 可指向任意目录。
+// 审计 P1-7：自动更新链路需要在 **staging 目录**上复用同一套 SSOT 校验，
+// 而旧实现的 ROOT 硬编码、core 函数未导出 → 根本无法校验 staging。
+//
+// `--root` 模式是**局部扫描**（partial scan）：
+//   · 豁免表仍从真实仓库读（豁免是仓库级 SSOT 产物，不属于被扫描内容）
+//   · 跳过「死亡豁免条目」判定（局部视图无法判定条目是否已失效）
+//   · 跳过镜像 hardcode 策略的全仓不变式（那是仓库级不变量，不是单应用规则）
+const rootArg = argValue('--root');
+const SCAN_ROOT = rootArg ? resolve(rootArg) : REPO_ROOT;
+const IS_PARTIAL_SCAN = SCAN_ROOT !== REPO_ROOT;
+
+const apps = listApps(SCAN_ROOT);
 
 let totalErrors = 0;
 let totalWarnings = 0;
 
 for (const app of apps) {
-  const fullPath = join(ROOT, app.dir);
+  const fullPath = join(SCAN_ROOT, app.dir);
 
   // 根级 data.yml 校验
   const { errors: re, warnings: rw } = lintRootDataYml(app.dir, fullPath);
@@ -274,7 +301,7 @@ for (const app of apps) {
 // ─── 镜像 hardcode 策略（AGENTS.md §6）────────────────────────────────────
 // 变量型镜像只允许出现在例外清单内；清单见 lib/image-policy.mjs。
 // 过去这条规则只写在文档里、没有守卫，2026-11 迁移因此漏掉 music-tag-web/2.8.1。
-const policy = checkImagePolicy(ROOT);
+const policy = IS_PARTIAL_SCAN ? { errors: [] } : checkImagePolicy(SCAN_ROOT);
 for (const err of policy.errors) console.error(`ERROR   ${err}`);
 totalErrors += policy.errors.length;
 
@@ -287,7 +314,7 @@ let findings = [];        // 豁免前全量（死亡条目判定依赖它）
 const observed = new Map(); // app → ruleId → Set(版本目录名 ∪ actual 值)
 
 for (const app of apps) {
-  const appPath = join(ROOT, app.dir);
+  const appPath = join(SCAN_ROOT, app.dir);
 
   // 根级 data.yml（宽松装载：zod 校验已单独负责结构合法性）
   let rootDoc = null;
@@ -367,14 +394,18 @@ for (const f of findings) {
 }
 
 // 豁免：结构错误与死亡条目都是 error（强制说明 + 强制清理）
-const { list: exemptionList, schemaErrors: exemptionSchemaErrors } = loadExemptions(ROOT);
+const { list: exemptionList, schemaErrors: exemptionSchemaErrors } = loadExemptions(REPO_ROOT);
 for (const msg of exemptionSchemaErrors) {
   console.error(`ERROR   ${EXEMPTIONS_FILE}: ${msg}`);
   totalErrors += 1;
 }
-for (const { entry, reason } of findDeadExemptions(exemptionList, observed)) {
-  console.error(`ERROR   ${EXEMPTIONS_FILE}: 死亡条目 ${reason}（app=${entry.app} ruleId=${entry.ruleId}${entry.version ? ` version=${entry.version}` : ''}）`);
-  totalErrors += 1;
+// 死亡条目判定：只在**全仓扫描**时做 —— 局部扫描（staging）只看到 1 个应用 / 1 个版本目录，
+// 其余豁免条目会被误判成"死亡"（审计 P1-7 的局部扫描语义）。
+if (!IS_PARTIAL_SCAN) {
+  for (const { entry, reason } of findDeadExemptions(exemptionList, observed)) {
+    console.error(`ERROR   ${EXEMPTIONS_FILE}: 死亡条目 ${reason}（app=${entry.app} ruleId=${entry.ruleId}${entry.version ? ` version=${entry.version}` : ''}）`);
+    totalErrors += 1;
+  }
 }
 
 const { active, waived } = applyWaivers(findings, exemptionList);
@@ -392,6 +423,8 @@ if (showJson) {
     ({ ruleId, app, version, file, line, message, actual, expected });
   console.log(JSON.stringify({
     apps: apps.length,
+    scanRoot: SCAN_ROOT,
+    partialScan: IS_PARTIAL_SCAN,
     errors: totalErrors,
     warnings: totalWarnings,
     waived: waived.length,

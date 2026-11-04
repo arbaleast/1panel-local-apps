@@ -9,6 +9,9 @@
 // 跨 case 的状态泄漏由模块本身保证（CLI 入口只调用一次）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   shouldSkipAutoUpdate,
   parseCliArgs,
@@ -27,7 +30,10 @@ import {
   overallExitCode,
   formatReason,
   stageForReason,
+  applyChanges,
 } from '../scripts/detect-updates.mjs';
+
+const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
 describe('detect-updates 白名单', () => {
   // 1. 白名单内应用 → true（被跳过）
@@ -521,5 +527,163 @@ describe('formatReason / stageForReason', () => {
     assert.equal(stageForReason('registry-request-failed'), 'registry');
     assert.equal(stageForReason('version-unrecognized'), 'version');
     assert.equal(stageForReason('write-failed'), 'write');
+  });
+});
+
+// ─── 2026-11 可靠性治理：staging 原子写盘 / 幂等 / 冲突 / 回滚 ──────────────
+
+describe('applyChanges（staging → 校验 → 原子提交）', () => {
+  const TMP_BASE = path.join(ROOT, '.agent_cache', 'detect-test');
+
+  /** 建一个最小应用目录 */
+  function makeApp(root, app, version) {
+    const dir = path.join(root, app, version);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'data.yml'), 'additionalProperties:\n  key: x\n');
+    fs.writeFileSync(path.join(dir, 'docker-compose.yml'), 'image: nginx:1.0.0\n');
+    fs.writeFileSync(path.join(root, app, 'data.yml'), 'additionalProperties:\n  key: x\n');
+    return dir;
+  }
+
+  // 每次运行都用**唯一**临时目录（避免上一次运行残留导致幂等判定被提前命中）
+  function freshRoot() {
+    fs.mkdirSync(TMP_BASE, { recursive: true });
+    return fs.mkdtempSync(path.join(TMP_BASE, 'root-'));
+  }
+
+  const noopValidate = () => [];
+
+  it('生成新版本目录：staging → 校验 → 原子 rename，正式目录内容正确', () => {
+    const root = freshRoot();
+    makeApp(root, 'demo', 'v1.0.0');
+    const out = applyChanges(
+      'demo',
+      [
+        { path: 'demo/v2.0.0/docker-compose.yml', file: 'docker-compose.yml', content: 'image: nginx:2.0.0\n' },
+        { path: 'demo/v2.0.0/data.yml', file: 'data.yml', content: 'additionalProperties:\n  key: x\n' },
+      ],
+      { appName: 'demo', fromDir: 'v1.0.0', toDir: 'v2.0.0' },
+      { root, validate: noopValidate, dryRun: false },
+    );
+    assert.equal(out.written, true);
+    assert.equal(out.action, 'CREATE');
+    assert.equal(
+      fs.readFileSync(path.join(root, 'demo', 'v2.0.0', 'docker-compose.yml'), 'utf8'),
+      'image: nginx:2.0.0\n',
+    );
+    // staging 已清理
+    assert.equal(fs.existsSync(path.join(root, '.staging', 'demo', 'v2.0.0')), false);
+  });
+
+  it('校验失败 → 抛错，正式目录**零污染**，staging 被清理', () => {
+    const root = freshRoot();
+    makeApp(root, 'demo', 'v1.0.0');
+    assert.throws(
+      () =>
+        applyChanges(
+          'demo',
+          [{ path: 'demo/v2.0.0/docker-compose.yml', file: 'docker-compose.yml', content: 'BAD\n' }],
+          { appName: 'demo', fromDir: 'v1.0.0', toDir: 'v2.0.0' },
+          { root, validate: () => ['staging 不合法'], dryRun: false },
+        ),
+      /未通过 SSOT 校验/,
+    );
+    // 正式目录未被创建
+    assert.equal(fs.existsSync(path.join(root, 'demo', 'v2.0.0')), false);
+    // 旧版本目录完好
+    assert.ok(fs.existsSync(path.join(root, 'demo', 'v1.0.0', 'docker-compose.yml')));
+    // staging 已清理
+    assert.equal(fs.existsSync(path.join(root, '.staging', 'demo', 'v2.0.0')), false);
+  });
+
+  it('目标目录已存在且内容一致 → 幂等跳过（ALREADY_EXISTS），不覆盖', () => {
+    const root = freshRoot();
+    makeApp(root, 'demo', 'v1.0.0');
+    // 预置一个与产物完全一致的目标目录
+    makeApp(root, 'demo', 'v2.0.0');
+    fs.writeFileSync(
+      path.join(root, 'demo', 'v2.0.0', 'docker-compose.yml'),
+      'image: nginx:2.0.0\n',
+    );
+
+    const out = applyChanges(
+      'demo',
+      [{ path: 'demo/v2.0.0/docker-compose.yml', file: 'docker-compose.yml', content: 'image: nginx:2.0.0\n' }],
+      { appName: 'demo', fromDir: 'v1.0.0', toDir: 'v2.0.0' },
+      { root, validate: noopValidate, dryRun: false },
+    );
+    assert.equal(out.written, false);
+    assert.equal(out.action, 'IDEMPOTENT');
+    // 内容未被改动
+    assert.equal(
+      fs.readFileSync(path.join(root, 'demo', 'v2.0.0', 'docker-compose.yml'), 'utf8'),
+      'image: nginx:2.0.0\n',
+    );
+  });
+
+  it('目标目录已存在且内容不同 → 冲突报错，正式目录零改动', () => {
+    const root = freshRoot();
+    makeApp(root, 'demo', 'v1.0.0');
+    makeApp(root, 'demo', 'v2.0.0');
+    fs.writeFileSync(
+      path.join(root, 'demo', 'v2.0.0', 'docker-compose.yml'),
+      'image: nginx:MANUAL\n',
+    );
+
+    assert.throws(
+      () =>
+        applyChanges(
+          'demo',
+          [{ path: 'demo/v2.0.0/docker-compose.yml', file: 'docker-compose.yml', content: 'image: nginx:2.0.0\n' }],
+          { appName: 'demo', fromDir: 'v1.0.0', toDir: 'v2.0.0' },
+          { root, validate: noopValidate, dryRun: false },
+        ),
+      /历史版本不可变|拒绝覆盖/,
+    );
+    // 既有内容保持原样
+    assert.equal(
+      fs.readFileSync(path.join(root, 'demo', 'v2.0.0', 'docker-compose.yml'), 'utf8'),
+      'image: nginx:MANUAL\n',
+    );
+  });
+
+  it('同一版本重复执行 → 完全幂等（第二次不再产生变更）', () => {
+    const root = freshRoot();
+    makeApp(root, 'demo', 'v1.0.0');
+    const changes = [
+      { path: 'demo/v2.0.0/docker-compose.yml', file: 'docker-compose.yml', content: 'image: nginx:2.0.0\n' },
+      { path: 'demo/v2.0.0/data.yml', file: 'data.yml', content: 'additionalProperties:\n  key: x\n' },
+    ];
+    const vcopy = { appName: 'demo', fromDir: 'v1.0.0', toDir: 'v2.0.0' };
+    const first = applyChanges('demo', changes, vcopy, { root, validate: noopValidate, dryRun: false });
+    assert.equal(first.written, true);
+
+    const second = applyChanges('demo', changes, vcopy, { root, validate: noopValidate, dryRun: false });
+    assert.equal(second.written, false);
+    assert.equal(second.action, 'IDEMPOTENT');
+    // 没有产生第二份目录、没有损坏文件
+    assert.equal(fs.existsSync(path.join(root, 'demo', 'v2.0.0', 'data.yml')), true);
+  });
+
+  it('就地更新同名版本目录：只改受管文件，其余文件不动', () => {
+    const root = freshRoot();
+    makeApp(root, 'demo', 'v1.0.0');
+    fs.writeFileSync(path.join(root, 'demo', 'v1.0.0', 'README.md'), '手维护\n');
+    const out = applyChanges(
+      'demo',
+      [{ path: 'demo/v1.0.0/docker-compose.yml', file: 'docker-compose.yml', content: 'image: nginx:9.9.9\n' }],
+      undefined,
+      { root, validate: noopValidate, dryRun: false },
+    );
+    assert.equal(out.written, true);
+    assert.equal(out.action, 'UPDATE');
+    assert.equal(
+      fs.readFileSync(path.join(root, 'demo', 'v1.0.0', 'docker-compose.yml'), 'utf8'),
+      'image: nginx:9.9.9\n',
+    );
+    assert.equal(
+      fs.readFileSync(path.join(root, 'demo', 'v1.0.0', 'README.md'), 'utf8'),
+      '手维护\n',
+    );
   });
 });

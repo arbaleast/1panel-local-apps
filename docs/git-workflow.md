@@ -24,8 +24,11 @@
 - 分支命名前缀：`feat/` `fix/` `docs/` `refactor/` `chore/` `auto-update/`。
 - Commit message 用 Conventional Commits（`type(scope): subject`；行为不兼容用 `!` 与 `BREAKING CHANGE`）。
 - **回滚只用 revert**：`git revert`，不用 `reset --hard` / force-push 覆盖公共分支历史。
-- **任何分支、任何情形禁止 force-push**（含 `--force` / `--force-with-lease` 覆盖人工分支；
-  自动更新分支的强制覆盖由 [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 按远端 SHA 校验后执行）。
+- **任何分支、任何情形禁止 force-push**（含 `--force` / `--force-with-lease`）。
+  自动更新链路**不再使用任何 force**：远端已有同名分支时，
+  [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 走 `fetch` + `rebase --onto FETCH_HEAD`
+  + 普通快进 `push`（人工 commit 被 rebase 重放保留，而不是被覆盖）；rebase 冲突则中止并报错，
+  不覆盖远端任何提交。
 - 仓库与 git 配置不得出现 secrets；不要把凭据写进 remote URL / config。
 
 ## 2. 前置命令齐套（any git operation 之前）
@@ -44,8 +47,10 @@ git log -5 --oneline
 - 自动更新只写 `auto-update/<date>` 分支；人工分支永远不与该前缀冲突。
 - 自动更新合并前轮询目标 PR 自身的 `head.sha` 必需检查（见 automation.md §4），
   **不会**因其它并行 CI 噪音而提前合并。
-- 人工在 `auto-update/*` 分支上的手工 commit 会被下一次同日期批次 force-with-lease 校验拦下
-  （远端 SHA 不匹配即中止）——不要在有未处理人工改动的同一个 `auto-update/<date>` 分支上并行工作。
+- 人工在 `auto-update/*` 分支上的手工 commit **会被保留**：下一次同日期批次推送时，
+  脚本先 `fetch` + `rebase --onto FETCH_HEAD` 再快进推送（人工 commit 被 rebase 重放到新提交之上）；
+  若产生冲突则 `rebase --abort` 并显式报错，**不覆盖远端、不丢人工改动**。
+  —— 不要在有未处理人工改动的同一个 `auto-update/<date>` 分支上并行工作。
 
 ## 4. 回滚
 

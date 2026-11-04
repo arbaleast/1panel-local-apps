@@ -34,6 +34,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as yaml from 'js-yaml';
 // 共享模块：semver 比较、镜像 registry 适配器、应用目录扫描、compose 模板解析
@@ -41,6 +42,20 @@ import * as semverLib from '../lib/semver.mjs';
 import { createAdapter, parseImage, RegistryRequestError } from '../lib/registry.mjs';
 import { listApps, loadAliases, buildShortToDir } from '../lib/apps.mjs';
 import { resolveImageTemplate, rebuildImageDefault } from '../lib/compose.mjs';
+// 版本目录的原子生成（Staging → Validation → Commit）—— 审计 P1-4/P1-5/P1-6/P1-8
+import {
+  stageVersionDir,
+  commitStagingDir,
+  cleanupStagingDir,
+  cleanupStaleStaging,
+  resolveVersionTarget,
+  isIdenticalDir,
+  stagingRootPath,
+  TARGET_CREATE,
+  TARGET_UPDATE,
+  TARGET_IDEMPOTENT,
+  TARGET_CONFLICT,
+} from '../lib/version-writer.mjs';
 // 汇总与渲染的唯一实现（lib/report.mjs）——本脚本不再 inline 重复实现计数/渲染
 import {
   aggregateResults,
@@ -48,6 +63,10 @@ import {
   renderMarkdown,
   exitCodeForResults,
 } from '../lib/report.mjs';
+// 检测阶段四态枚举（目标 §三.1）与端到端执行结果 schema
+import { detectStatusFromResult } from '../lib/execution-result.mjs';
+// 批次校验（复用 lib/validate-batch.mjs，对 staging 目录做 SSOT 校验）
+import { validateUpdateBatch, loadAliasByDir } from '../lib/validate-batch.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -104,6 +123,7 @@ export const REASONS = Object.freeze([
   'unsupported-registry',
   'no-stable-tag',
   'version-unrecognized',
+  'already-exists',
   'registry-request-failed',
   'write-failed',
   'unexpected-error',
@@ -132,6 +152,7 @@ const REASON_TEXT = Object.freeze({
   'unsupported-registry': '不支持的 registry（{registry}），不做版本检测',
   'no-stable-tag': 'Registry 未返回可用的稳定 tag',
   'version-unrecognized': '版本目录形态无法识别',
+  'already-exists': '目标版本目录已存在且内容一致，幂等跳过（ALREADY_EXISTS）',
   'registry-request-failed': 'Registry 请求失败',
   'write-failed': '写盘失败',
   'unexpected-error': '未预期异常',
@@ -168,6 +189,7 @@ const SKIP_REASON_PRIORITY = [
   'tag-unstable',
   'unsupported-registry',
   'no-stable-tag',
+  'already-exists',
   'data-yml-missing',
   'compose-missing',
   'no-services',
@@ -614,50 +636,231 @@ function getAllVersionDirs(root, appDir) {
 
 /**
  * 写盘函数（DRY_RUN 时只 log，不真写）
- * 统一处理两种写盘需求：单文件 + 新建目录
- * 注意：DRY_RUN 下不再 cpSync 新版本目录（避免 dry-run 误污染），只输出 diff
+ *
+ * ── 审计 P1-4/P1-5/P1-6/P1-8 的改造 ──────────────────────────────────────
+ * 旧实现（**已删除**）直接往正式仓库树里写：
+ *     if (fs.existsSync(dst)) fs.rmSync(dst, { recursive: true, force: true });
+ *     fs.cpSync(src, dst, { recursive: true });
+ *     fs.writeFileSync(<正式路径>, content);
+ * 三个问题：
+ *   1. 裸 rmSync 递归删除**正式版本目录**（历史版本不可变红线）
+ *   2. 直接写正式树 → 中途失败留下半写目录（还会被 git add 卷进 PR）
+ *   3. 校验发生在落树之后 → 坏内容先进树
+ *
+ * 新实现（Staging → Validation → Commit）：
+ *   1. 在 `<repoRoot>/.staging/<app>/<toDir>/` 里复制来源目录并写入受管文件
+ *   2. 对 staging 目录跑 SSOT 校验（lint-apps.mjs --root + validate-update-batch）
+ *   3. 校验通过才 rename 到正式目录（同文件系统 → 原子）
+ *   4. 正式目录已存在：一致 → 幂等跳过；不一致 → 冲突拦截（**永不覆盖**）
+ *   5. 任一步失败 → 只清理本次 staging 目录
  *
  * @param {string} appName - 应用名（仅 log 用）
- * @param {{path: string, content: string}[]} changes - 待写盘的文件列表
- * @param {{appName: string, fromDir: string, toDir: string}} [versionCopy] - 跨版本 cpSync
- * @returns {boolean} true=已真写，false=dry-run 跳过
+ * @param {{path: string, file: string, content: string}[]} changes - 待写盘的文件列表
+ *   `file` = 版本目录内的相对路径；`path` = 仓库相对路径（供 updates.json / 批次校验用）
+ * @param {{appName: string, fromDir: string, toDir: string}} [versionCopy] - 跨版本生成
+ * @param {{root?: string, validate?: Function, dryRun?: boolean}} [opts] - 注入点（单测用）
+ *   `root` = 仓库根（默认 REPO_ROOT）；`validate` = staging 校验函数（默认走 SSOT 校验）
+ *   `dryRun` = 是否只演练不写盘（默认跟随全局 --dry-run 开关）
+ * @returns {{written: boolean, action?: string, reason?: string}} written=false → dry-run 跳过
  */
-function applyChanges(appName, changes, versionCopy) {
-  if (processOptions.DRY_RUN) {
+export function applyChanges(appName, changes, versionCopy, opts = {}) {
+  const dryRun = opts.dryRun !== undefined ? Boolean(opts.dryRun) : processOptions.DRY_RUN;
+  if (dryRun) {
     if (changes.length > 0) {
       log(appName, `[DRY-RUN] 跳过 ${changes.length} 个文件写盘`);
     }
     if (versionCopy) {
-      const overwriteNote = versionCopy.overwrite ? '（会覆盖现有目录）' : '';
-      log(appName, `[DRY-RUN] 跳过 cpSync: ${versionCopy.fromDir}/ -> ${versionCopy.toDir}/${overwriteNote}`);
+      log(appName, `[DRY-RUN] 跳过生成版本目录: ${versionCopy.fromDir}/ -> ${versionCopy.toDir}/`);
     }
-    return false;
+    return { written: false };
   }
-  if (versionCopy) {
-    const src = path.join(APPS_DIR, versionCopy.appName, versionCopy.fromDir);
-    const dst = path.join(APPS_DIR, versionCopy.appName, versionCopy.toDir);
-    if (fs.existsSync(dst)) {
-      log(appName, `⚠ 目标目录 ${versionCopy.toDir}/ 已存在，将覆盖`);
-      fs.rmSync(dst, { recursive: true, force: true });
+
+  const root = opts.root || REPO_ROOT;
+  const validate = opts.validate || defaultStagingValidator;
+
+  // 目标版本目录：versionCopy 存在 → 新目录；否则 → 就地更新当前版本目录
+  const toDir = versionCopy ? versionCopy.toDir : inferTargetDir(changes);
+  const fromDir = versionCopy ? versionCopy.fromDir : toDir;
+  const sameName = fromDir === toDir;
+
+  let staged = null;
+  try {
+    staged = stageVersionDir({
+      root,
+      app: appName,
+      fromDir,
+      toDir,
+      files: changes.map(c => ({ file: c.file, content: c.content })),
+    });
+  } catch (e) {
+    // stageVersionDir 失败时已自行清理 staging
+    throw e;
+  }
+
+  try {
+    // ── 校验 staging（SSOT）────────────────────────────────────────────
+    const validationErrors = validate(staged.stagingRoot, appName, toDir);
+    if (validationErrors.length > 0) {
+      throw new Error(
+        `staging 目录未通过 SSOT 校验（${validationErrors.length} 个错误）：\n    - ${validationErrors.join('\n    - ')}`,
+      );
     }
-    fs.cpSync(src, dst, { recursive: true });
-    log(appName, `cpSync: ${versionCopy.fromDir}/ -> ${versionCopy.toDir}/`);
+
+    // ── 判定目标处置方式 ───────────────────────────────────────────────
+    const dstExists = fs.existsSync(staged.dst);
+    const identical =
+      dstExists && !sameName ? isIdenticalDir(staged.dst, staged.staging) : false;
+    const { action, reason } = resolveVersionTarget({
+      toDir,
+      exists: dstExists,
+      sameName,
+      identical,
+    });
+
+    if (action === TARGET_CONFLICT) {
+      throw new Error(
+        `目标版本目录 ${appName}/${toDir}/ 已存在且与本次产物不一致 → ` +
+          '按「历史版本不可变」红线拒绝覆盖（请人工确认后重跑或改用新版本目录）',
+      );
+    }
+
+    if (action === TARGET_IDEMPOTENT) {
+      cleanupStagingDir({ stagingRoot: staged.stagingRoot, app: appName, toDir });
+      log(appName, `幂等跳过：${toDir}/ 已存在且内容一致（ALREADY_EXISTS）`);
+      return { written: false, action, reason };
+    }
+
+    // ── 原子提交 ───────────────────────────────────────────────────────
+    const { replaced } = commitStagingDir({
+      staging: staged.staging,
+      dst: staged.dst,
+      action,
+      files: staged.files,
+    });
+    cleanupStagingDir({ stagingRoot: staged.stagingRoot, app: appName, toDir });
+
+    if (action === TARGET_CREATE) {
+      log(appName, `生成版本目录 ${fromDir}/ -> ${toDir}/（staging → 原子 rename）`);
+    } else {
+      log(appName, `就地更新版本目录 ${toDir}/（受管文件：${replaced.join(', ')}）`);
+    }
+    return { written: true, action, reason };
+  } catch (e) {
+    // 只清理本次 staging；正式目录零污染
+    cleanupStagingDir({ stagingRoot: staged.stagingRoot, app: appName, toDir });
+    throw e;
   }
-  for (const change of changes) {
-    const filePath = path.join(REPO_ROOT, change.path);
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, change.content, 'utf8');
-    log(appName, `写入 ${change.path}`);
+}
+
+/**
+ * staging 目录的默认校验器：SSOT lint + 批次一致性
+ *
+ * @param {string} stagingRoot
+ * @param {string} appName
+ * @param {string} toDir
+ * @returns {string[]} 错误列表（空 = 通过）
+ */
+function defaultStagingValidator(stagingRoot, appName, toDir) {
+  const errors = [];
+  errors.push(...lintStagingDir(stagingRoot, appName));
+  errors.push(...validateStagingBatch(stagingRoot, appName, toDir));
+  return errors;
+}
+
+/**
+ * 从 changes 里推断目标版本目录名（versionCopy 缺失时使用）
+ * @param {{path: string, file: string}[]} changes
+ * @returns {string}
+ */
+function inferTargetDir(changes) {
+  for (const c of changes || []) {
+    if (!c || typeof c.path !== 'string') continue;
+    const parts = c.path.split('/');
+    if (parts.length >= 2) return parts[1];
   }
-  return true;
+  return '';
+}
+
+/**
+ * 对 staging 目录跑 SSOT 校验（复用 .github/bin/lint-apps.mjs 的核心逻辑）
+ *
+ * lint-apps.mjs 原本只认「脚本所在仓库的根目录」，无法指向任意目录；
+ * 这里以 `--root <stagingRoot>` 调用它（子进程，隔离执行，不共享状态）。
+ *
+ * @param {string} stagingRoot
+ * @param {string} appName
+ * @returns {string[]} 错误列表（空 = 通过）
+ */
+function lintStagingDir(stagingRoot, appName) {
+  const lintBin = path.join(REPO_ROOT, '.github', 'bin', 'lint-apps.mjs');
+  if (!fs.existsSync(lintBin)) return [];
+  try {
+    const res = spawnSync(
+      process.execPath,
+      [lintBin, '--root', stagingRoot, '--json'],
+      { encoding: 'utf8', cwd: REPO_ROOT },
+    );
+    const stdout = (res.stdout || '').trim();
+    let parsed = null;
+    try {
+      parsed = JSON.parse(stdout);
+    } catch {
+      // lint 自身崩溃 → 视为校验失败（不放行）
+      return [`lint-apps.mjs --root ${stagingRoot} 无输出（exit=${res.status}）：${(res.stderr || '').trim().slice(0, 400)}`];
+    }
+    const errors = ((parsed.findings && parsed.findings.errors) || []).map(
+      e => `${e.file || appName}${e.line ? `:${e.line}` : ''} ${e.message}`,
+    );
+    return errors;
+  } catch (e) {
+    return [`调用 lint-apps.mjs 失败: ${e.message}`];
+  }
+}
+
+/**
+ * 对 staging 目录跑批次校验（复用 .github/lib/validate-batch.mjs）
+ *
+ * @param {string} stagingRoot
+ * @param {string} appName
+ * @param {string} toDir
+ * @returns {string[]} 错误列表（空 = 通过）
+ */
+function validateStagingBatch(stagingRoot, appName, toDir) {
+  try {
+    const { errors } = validateUpdateBatch({
+      root: stagingRoot,
+      updates: [{ app: appName, versionDir: toDir, services: [], changes: [] }],
+      // 别名表是**仓库级**产物（不在 staging 里），从真实仓库读
+      aliasByDir: loadAliasByDir(REPO_ROOT),
+      // staging 里没有仓库根 README（README 由 sync-readme.mjs 在检测之后同步），
+      // 拿 staging 比对 README 必然假失败 → 跳过该检查
+      skipReadmeCheck: true,
+    });
+    return errors;
+  } catch (e) {
+    return [`批次校验抛异常: ${e.message}`];
+  }
 }
 
 /**
  * 处理单个应用。
+ *
+ * 目标 §三.1：检测结论严格落在四态枚举上 ——
+ * `HAS_UPDATE` / `NO_UPDATE` / `SKIPPED` / `FAILED`，
+ * 写在结果对象的 `detectStatus` 字段（由 `detectStatusFromResult` 统一推导，
+ * 避免各分支手写导致口径漂移）。
+ *
  * @param {string} appName
  * @returns {Promise<{result: object, updates: object[]}>}
  */
 async function processApp(appName) {
+  const { result, updates } = await processAppInner(appName);
+  // 四态检测结论（唯一推导点）
+  result.detectStatus = detectStatusFromResult(result);
+  return { result, updates };
+}
+
+async function processAppInner(appName) {
   const result = {
     app: appName,
     status: 'success',
@@ -666,6 +869,9 @@ async function processApp(appName) {
     code: 'no-update',
     error: null,
     updates: 0,
+    // 目标 §七.1：当前本地版本（应用版本目录名）与检测到的上游版本
+    currentVersion: null,
+    latestVersion: null,
   };
   const skipReasons = [];
   const skipCtx = new Map(); // reason 码 → 补充上下文（如 registry 名）
@@ -729,9 +935,12 @@ async function processApp(appName) {
     const maxKnown = selectNewestVersionDir(recognizable);
     if (maxKnown) {
       log(appName, `跨版本保护: maxKnown=${maxKnown}（仅处理此 versionDir，历史归档保留）`);
+      // 目标 §七.1：记录应用「当前本地版本」（版本目录名）
+      result.currentVersion = maxKnown;
     } else {
       // 无法可靠识别 → 回退到原行为：所有 versionDir 都处理（保兼容）
       log(appName, '跨版本保护: 无可解析的 semver versionDir，回退到全量 detect');
+      result.currentVersion = recognizable[0] || versionDirs[0] || null;
     }
 
     // 对每个版本目录分别处理
@@ -885,12 +1094,15 @@ async function processApp(appName) {
           }
           return { result, updates: [] };
         }
-        queried = true;
+        // 审计 P1-2：`queried` 只在**拿到确定性结论**（latest 非 null）时置位。
+        // 旧实现在判空之前就置位 → 「空 tag 列表 / 无稳定 tag」永远被 app 级汇总成
+        // success + no-update（"已是最新"），skip 分支不可达 → 上游异常被当成无更新。
         if (!latest) {
           log(appName, svc.name, `${fullImage} 无法获取最新 tag`);
           addSkip('no-stable-tag', 'registry');
           continue;
         }
+        queried = true;
         if (latest === currentTag) {
           log(appName, svc.name, `${fullImage} 已是最新`);
           continue;
@@ -933,12 +1145,13 @@ async function processApp(appName) {
           }
           return { result, updates: [] };
         }
-        queried = true;
+        // 审计 P1-2：同上一处 —— 判空之前不置位
         if (!latest) {
           log(appName, svc.name, '无法获取最新 tag');
           addSkip('no-stable-tag', 'registry');
           continue;
         }
+        queried = true;
         if (latest === svc.tag) {
           log(appName, svc.name, `已是最新 (${svc.tag})`);
           continue;
@@ -992,26 +1205,28 @@ async function processApp(appName) {
       const newVersionDir = maxTo;
 
       // 不在这里真做 cpSync / rmSync ——
-      // 把"是否要 cpSync 新版本目录"记到 update.versionCopy 字段，由 main 末尾 applyChanges
+      // 把"是否要生成新版本目录"记到 update.versionCopy 字段，由 main 末尾 applyChanges
       // 统一在 DRY_RUN 判定后再做（DRY_RUN 模式下只 log 不真复制，避免污染工作树）
       let versionCopy = null;
       if (oldVersionDir === newVersionDir) {
-        log(appName, `${versionDir} 目标版本与当前一致 (${newVersionDir})，跳过目录操作`);
+        log(appName, `${versionDir} 目标版本与当前一致 (${newVersionDir})，就地更新受管文件`);
       } else {
         const newDir = path.join(appDir, newVersionDir);
         const newDirExists = fs.existsSync(newDir);
         // 安全闸：目标目录已存在且与来源目录不同 → 跨目录覆盖会摧毁目标目录的手维护内容
         // （2026-09-25 jellyfin 事故：2026091410-arm64/ 覆盖掉 10.11.11/）
+        //
+        // 审计 P1-6：旧实现在这里直接 `addSkip('version-unrecognized')` —— reason 码张冠李戴，
+        // 而且**只跳过、不报错**：目标目录已存在这件事被当成"合规跳过"，与"幂等跳过"混为一谈。
+        // 现在改为：交给 applyChanges 在 staging 里比对内容后判定
+        //   · 内容一致 → 幂等跳过（ALREADY_EXISTS）
+        //   · 内容不同 → 冲突拦截（CONFLICT），报错中止，**绝不覆盖**
+        // 这里只做最保守的前置拦截（同名异源的历史事故防线），其余交给 staging 判定。
         if (!canCopyVersionDir(oldVersionDir, newVersionDir, newDirExists)) {
-          log(appName, `⚠ 跳过：目标目录 ${newVersionDir}/ 已存在且不同于来源 ${oldVersionDir}/，跨目录覆盖会摧毁目标目录的手维护内容`);
-          addSkip('version-unrecognized', 'version');
-          continue;
+          log(appName, `⚠ 待判定：目标目录 ${newVersionDir}/ 已存在且不同于来源 ${oldVersionDir}/，将在 staging 中比对内容后判定幂等 / 冲突`);
         }
-        if (newDirExists) {
-          log(appName, `⚠ 目标目录 ${newVersionDir}/ 已存在，将覆盖`);
-        }
-        // 注意：先于 cpSync 读一次源目录的 compose/data.yml 用于新版本改写
-        // （在 cpSync 之前，避免源被覆盖；这里只在内存操作，不写盘）
+        // 注意：先于 staging 生成读一次源目录的 compose/data.yml 用于新版本改写
+        // （这里只在内存操作，不写盘）
         versionCopy = {
           appName,
           fromDir: oldVersionDir,
@@ -1019,7 +1234,7 @@ async function processApp(appName) {
           // exists 标记让 applyChanges 在 DRY_RUN log 时一并说明
           overwrite: newDirExists,
         };
-        log(appName, `[pending] cpSync: ${oldVersionDir}/ -> ${newVersionDir}/（DRY_RUN 不真做）`);
+        log(appName, `[pending] 生成版本目录: ${oldVersionDir}/ -> ${newVersionDir}/（staging → 校验 → 原子提交）`);
       }
 
       // 内存中替换 compose / data.yml
@@ -1073,8 +1288,20 @@ async function processApp(appName) {
       }
 
       // 写入新版本目录
-      changes.push({ path: `${appName}/${newVersionDir}/docker-compose.yml`, content: newCompose, to: maxTo });
-      changes.push({ path: `${appName}/${newVersionDir}/data.yml`, content: newData, to: maxTo });
+      // `file` = 版本目录内的相对路径（写盘 / staging 用）
+      // `path` = 仓库相对路径（updates.json / 批次校验 / git add 用）
+      changes.push({
+        path: `${appName}/${newVersionDir}/docker-compose.yml`,
+        file: 'docker-compose.yml',
+        content: newCompose,
+        to: maxTo,
+      });
+      changes.push({
+        path: `${appName}/${newVersionDir}/data.yml`,
+        file: 'data.yml',
+        content: newData,
+        to: maxTo,
+      });
 
       allUpdates.push({ app: appName, from: minFrom, to: maxTo, services: serviceChanges, changes, versionDir, versionCopy });
     }
@@ -1087,7 +1314,22 @@ async function processApp(appName) {
       result.code = 'update-found';
       result.error = null;
       result.updates = allUpdates.length;
+      // 目标 §七.1：记录「检测到的上游版本」
+      result.latestVersion = allUpdates[0].to;
+      if (!result.currentVersion) result.currentVersion = allUpdates[0].versionDir || null;
       return { result, updates: allUpdates };
+    }
+    // 审计 P1-2：即使有其它 service 查询成功，只要出现「上游没给可用稳定 tag」，
+    // app 级结论必须是 skipped（异常可见），不能被 success/no-update 掩盖。
+    // 空 tag 列表 / 全是不稳定 tag → 上游异常，不是"已是最新"。
+    if (skipReasons.includes('no-stable-tag')) {
+      result.status = 'skipped';
+      result.stage = 'registry';
+      result.reason = formatReason('no-stable-tag');
+      result.code = 'no-stable-tag';
+      result.error = null;
+      result.updates = 0;
+      return { result, updates: [] };
     }
     if (queried) {
       // 真的查过 registry 且没有新版本 → 一次**成功**的检测（"已是最新"）
@@ -1147,7 +1389,8 @@ export function stageForReason(code) {
     case 'unsupported-registry': return 'image-parse';
     case 'no-stable-tag':
     case 'registry-request-failed': return 'registry';
-    case 'version-unrecognized': return 'version';
+    case 'version-unrecognized':
+    case 'already-exists': return 'version';
     case 'write-failed': return 'write';
     default: return 'scan';
   }
@@ -1225,22 +1468,55 @@ async function main() {
   if (APPS_FILTER.length > 0) {
     const expanded = APPS_FILTER.map((f) => shortToDir.get(f) || f);
     targetApps = allApps.filter((a) => expanded.includes(a));
+    // 审计 P1-3：过滤名打错 / 别名表损坏 → targetApps 为空 → 旧实现「扫描 0 个应用」
+    // → results=[] → exit 0 → **零工作量伪装成功**。现在显式失败。
+    if (targetApps.length === 0) {
+      console.error(
+        `[detect] APPS_FILTER 过滤后没有任何应用命中（过滤项: ${APPS_FILTER.join(', ')}）` +
+          ' → 拒绝以「扫描 0 个应用」静默成功（请检查应用名 / 别名表）',
+      );
+      process.exit(1);
+    }
   }
   log(`扫描 ${targetApps.length} 个应用`);
+
+  // 审计 P1-8：清理上次异常中断残留的 staging 目录（只清 `.staging/`，不碰正式目录）
+  const stale = cleanupStaleStaging(REPO_ROOT);
+  if (stale.length > 0) {
+    log(`已清理残留 staging: ${stale.join(', ')}`);
+  }
 
   const updates = [];
   const results = [];
   for (const app of targetApps) {
-    const { result, updates: appUpdates } = await processApp(app);
-    results.push(result);
-    if (appUpdates.length > 0) updates.push(...appUpdates);
+    // 审计 P2-1：逐应用兜底 —— 即使 processApp 在其内部 try 之外抛错，
+    // 也不能让整轮崩溃（其它应用已检出的更新会一起丢失）。
+    try {
+      const { result, updates: appUpdates } = await processApp(app);
+      results.push(result);
+      if (appUpdates.length > 0) updates.push(...appUpdates);
+    } catch (e) {
+      console.error(`[detect] ${app} 处理时抛出未捕获异常:`, e);
+      results.push({
+        app,
+        status: 'failed',
+        stage: 'scan',
+        reason: formatReason('unexpected-error'),
+        code: 'unexpected-error',
+        error: e instanceof Error ? e.message : String(e),
+        updates: 0,
+      });
+    }
   }
 
   // 将检测到的变更写入磁盘（供后续 git add 提交）
   // DRY_RUN 模式下只输出 diff，不真写（applyChanges 内部判定）
-  // 注意：必须先做 versionCopy（cpSync + rmSync）再做 changes（覆盖 compose/data.yml），
-  // 否则覆盖会写到一个不存在的目录中。
-  // 写盘失败 → 该应用标记 failed（stage=write），但不影响其它应用。
+  //
+  // 审计 P0-2：旧实现是**两个独立循环**——先 cpSync 全部 versionCopy，再逐个写 changes。
+  // cpSync 失败时只 markWriteFailure（不改 updates 数组），第二个循环**照样**执行 →
+  // mkdirSync 造出一个只含 compose/data.yml 的半成品版本目录 → 被 git add 提交进 PR。
+  // 现在合并为**单个循环**：一次 applyChanges 完成「复制来源目录 + 写受管文件 +
+  // SSOT 校验 + 原子提交」，失败即整体回滚（只清 staging）。
   const resultByApp = new Map(results.map(r => [r.app, r]));
   const markWriteFailure = (app, e) => {
     const r = resultByApp.get(app);
@@ -1256,26 +1532,33 @@ async function main() {
     }
   };
 
+  const appliedUpdates = [];
   for (const update of updates) {
-    if (update.versionCopy) {
-      try {
-        applyChanges(update.app, [], update.versionCopy);
-      } catch (e) {
-        console.error(`[detect] ${update.app} cpSync 失败:`, e.message);
-        markWriteFailure(update.app, e);
+    try {
+      const outcome = applyChanges(update.app, update.changes, update.versionCopy);
+      if (outcome.action === TARGET_IDEMPOTENT) {
+        // 幂等跳过：目标版本目录已存在且内容一致 → 不重复提交，标 SKIPPED / ALREADY_EXISTS
+        const r = resultByApp.get(update.app);
+        if (r) {
+          r.status = 'skipped';
+          r.stage = 'version';
+          r.reason = formatReason('already-exists');
+          r.code = 'already-exists';
+          r.error = null;
+          r.updates = 0;
+        }
+        continue; // 不进 appliedUpdates → 不会进 PR body，也不会触发 has-updates
       }
+      appliedUpdates.push(update);
+    } catch (e) {
+      console.error(`[detect] ${update.app} 写盘失败:`, e.message);
+      markWriteFailure(update.app, e);
+      // 失败的更新不进 appliedUpdates（报告与事实保持一致）
     }
   }
-  for (const update of updates) {
-    if (update.changes.length > 0) {
-      try {
-        applyChanges(update.app, update.changes);
-      } catch (e) {
-        console.error(`[detect] ${update.app} 写盘失败:`, e.message);
-        markWriteFailure(update.app, e);
-      }
-    }
-  }
+  // 用实际落盘成功的更新替换原数组
+  updates.length = 0;
+  updates.push(...appliedUpdates);
 
   const summary = buildResultSummary(results);
 

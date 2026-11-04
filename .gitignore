@@ -21,3 +21,9 @@ node_modules/
 
 # Updates detection artifact
 updates.json
+
+# 自动更新执行结果（PR / CI / merge 阶段轨迹）
+execution.json
+
+# 自动更新版本目录 staging（临时目录，异常中断后自动清理）
+.staging/

@@ -423,7 +423,7 @@ describe('waitForChecks', () => {
       }),
     });
     const r = await client.waitForChecks({
-      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 60000, intervalMs: 1000,
+      owner: 'o', repo: 'r', ref: 'sha', requiredChecks: ['lint'], timeoutMs: 60000, intervalMs: 1000,
       now: clock.now, sleep: clock.sleep,
     });
     assert.equal(r.status, 'success');
@@ -445,7 +445,7 @@ describe('waitForChecks', () => {
       }),
     });
     const r = await client.waitForChecks({
-      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 60000, intervalMs: 1000,
+      owner: 'o', repo: 'r', ref: 'sha', requiredChecks: ['lint'], timeoutMs: 60000, intervalMs: 1000,
       now: clock.now, sleep: clock.sleep,
     });
     assert.equal(r.status, 'failure');
@@ -463,7 +463,7 @@ describe('waitForChecks', () => {
       }),
     });
     const r = await client.waitForChecks({
-      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 5000, intervalMs: 1000,
+      owner: 'o', repo: 'r', ref: 'sha', requiredChecks: ['lint'], timeoutMs: 5000, intervalMs: 1000,
       now: clock.now, sleep: clock.sleep,
     });
     assert.equal(r.status, 'timeout');
@@ -479,7 +479,7 @@ describe('waitForChecks', () => {
       }),
     });
     const r = await client.waitForChecks({
-      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 3000, intervalMs: 1000,
+      owner: 'o', repo: 'r', ref: 'sha', requiredChecks: ['lint'], timeoutMs: 3000, intervalMs: 1000,
       now: clock.now, sleep: clock.sleep,
     });
     assert.equal(r.status, 'timeout');
@@ -496,7 +496,7 @@ describe('waitForChecks', () => {
       },
     });
     const r = await client2.waitForChecks({
-      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 1000, intervalMs: 1000,
+      owner: 'o', repo: 'r', ref: 'sha', requiredChecks: ['lint'], timeoutMs: 1000, intervalMs: 1000,
       now: clock.now, sleep: clock.sleep,
     });
     assert.equal(r.status, 'unknown');
@@ -510,7 +510,7 @@ describe('waitForChecks', () => {
       fetchImpl: routingFetch({ checkRunsStatus: 500 }),
     });
     const r = await client.waitForChecks({
-      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 1000, intervalMs: 1000,
+      owner: 'o', repo: 'r', ref: 'sha', requiredChecks: ['lint'], timeoutMs: 1000, intervalMs: 1000,
       now: clock.now, sleep: clock.sleep,
     });
     assert.equal(r.status, 'unknown');
@@ -528,7 +528,7 @@ describe('waitForChecks', () => {
       }),
     });
     const r = await client.waitForChecks({
-      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 60000, intervalMs: 1000,
+      owner: 'o', repo: 'r', ref: 'sha', requiredChecks: ['lint'], timeoutMs: 60000, intervalMs: 1000,
       now: clock.now, sleep: clock.sleep,
     });
     assert.equal(r.status, 'failure');
@@ -560,5 +560,321 @@ describe('isAuthorizedWriteEvent（脚本层事件护栏）', () => {
     assert.ok(!AUTHORIZED_WRITE_EVENTS.has('pull_request'));
     assert.ok(!AUTHORIZED_WRITE_EVENTS.has('pull_request_target'));
     assert.deepEqual([...AUTHORIZED_WRITE_EVENTS].sort(), ['push', 'schedule', 'workflow_dispatch']);
+  });
+});
+
+// ─── 2026-11 可靠性治理：必需检查门禁 / SHA 重验 / 错误诊断 ─────────────────
+
+describe('waitForChecks：必需检查白名单（审计 P0-1 核心红线）', () => {
+  /** 造一个只返回指定 check runs 的假 fetch */
+  function checkFetch(checkRuns, statusState = 'success') {
+    return async (url) => {
+      if (url.includes('/check-runs')) {
+        return new Response(JSON.stringify({ check_runs: checkRuns }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (url.endsWith('/status')) {
+        return new Response(JSON.stringify({ state: statusState, statuses: [] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response('{}', { status: 404 });
+    };
+  }
+
+  it('必需检查缺失但存在**无关的**成功 check run → 绝不判 success（P0-1 复现回归）', async () => {
+    // 这是审计阶段离线复现的真实漏洞：SHA 上只有一个第三方 check 成功，
+    // 而仓库要求的必需检查**从未出现** → 旧实现判定 success → 直接合并。
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'Some Third-Party Check', status: 'completed', conclusion: 'success' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['只读校验（单测 + 跨文件一致性 lint）'],
+      timeoutMs: 3000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.notEqual(r.status, 'success', '必需检查缺失时绝不允许判定为 success');
+    assert.equal(r.status, 'timeout');
+    assert.deepEqual(r.missing, ['只读校验（单测 + 跨文件一致性 lint）']);
+  });
+
+  it('必需检查 pending → 继续等待，超时后 timeout（不合并）', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'in_progress', conclusion: null },
+      ], 'pending'),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 3000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'timeout');
+  });
+
+  it('必需检查 skipped → failure（跳过也算不通过）', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'completed', conclusion: 'skipped' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 3000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'failure');
+  });
+
+  it('未配置必需检查 → unknown（拒绝判定通过）', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([{ name: 'lint', status: 'completed', conclusion: 'success' }]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: [],
+      timeoutMs: 1000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'unknown');
+    assert.match(r.error, /未配置必需检查/);
+  });
+
+  it('head SHA 变化 → 返回 sha-changed（作废旧结论，要求重验）', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([{ name: 'lint', status: 'completed', conclusion: 'success' }]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'oldsha',
+      requiredChecks: ['lint'],
+      timeoutMs: 60000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+      resolveHeadSha: async () => 'newsha',
+    });
+    assert.equal(r.status, 'sha-changed');
+    assert.equal(r.currentSha, 'newsha');
+  });
+
+  it('head SHA 未变 → 正常走完判定', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([{ name: 'lint', status: 'completed', conclusion: 'success' }]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 60000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+      resolveHeadSha: async () => 'sha',
+    });
+    assert.equal(r.status, 'success');
+  });
+});
+
+describe('GitHubApiError：诊断信息含 HTTP 状态码（审计 P2-10）', () => {
+  it('422 Validation Failed 的 message 里必须出现状态码', async () => {
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: async () =>
+        new Response(
+          JSON.stringify({ message: 'Validation Failed', errors: [{ code: 'custom' }] }),
+          { status: 422, headers: { 'content-type': 'application/json' } },
+        ),
+    });
+    await assert.rejects(
+      () => client.createPullRequest({ owner: 'o', repo: 'r', head: 'b', base: 'main', title: 't', body: 'b' }),
+      (err) => {
+        assert.ok(err instanceof GitHubApiError);
+        assert.match(err.message, /HTTP 422/);
+        assert.match(err.message, /Validation Failed/);
+        assert.equal(err.status, 422);
+        return true;
+      },
+    );
+  });
+
+  it('403 的 message 里必须出现状态码', async () => {
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: async () =>
+        new Response(JSON.stringify({ message: 'Resource not accessible by integration' }), {
+          status: 403,
+          headers: { 'content-type': 'application/json' },
+        }),
+    });
+    await assert.rejects(
+      () => client.listCheckRuns({ owner: 'o', repo: 'r', ref: 'sha' }),
+      (err) => {
+        assert.match(err.message, /HTTP 403/);
+        return true;
+      },
+    );
+  });
+});
+
+describe('findAutoUpdatePullRequests（按分支前缀识别，审计 P2-9）', () => {
+  it('只认 auto-update/ 前缀的分支，人工 PR 一律不认领', async () => {
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: async (url) => {
+        if (url.includes('/pulls?')) {
+          return new Response(
+            JSON.stringify([
+              { number: 1, title: 'chore(deps): auto-update 2026-11-01', head: { ref: 'auto-update/2026-11-01' }, base: { ref: 'main' } },
+              { number: 2, title: 'feat: 人工 PR', head: { ref: 'feat/manual' }, base: { ref: 'main' } },
+              { number: 3, title: 'chore(deps): auto-update 手工标题', head: { ref: 'fix/manual' }, base: { ref: 'main' } },
+            ]),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          );
+        }
+        return new Response('{}', { status: 404 });
+      },
+    });
+    const found = await client.findAutoUpdatePullRequests({ owner: 'o', repo: 'r', base: 'main' });
+    assert.equal(found.length, 1);
+    assert.equal(found[0].number, 1);
+  });
+
+  it('base 分支不匹配的自动更新 PR 不计入', async () => {
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: async (url) => {
+        if (url.includes('/pulls?')) {
+          return new Response(
+            JSON.stringify([
+              { number: 9, title: 'x', head: { ref: 'auto-update/2026-11-01' }, base: { ref: 'dev' } },
+            ]),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          );
+        }
+        return new Response('{}', { status: 404 });
+      },
+    });
+    const found = await client.findAutoUpdatePullRequests({ owner: 'o', repo: 'r', base: 'main' });
+    assert.equal(found.length, 0);
+  });
+});
+
+// ─── skipped / neutral 的必需性语义（2026-11 实况修正）──────────────────────
+//
+// 真实 CI 实况：目标 PR 的 workflow 里，写操作 job 在 `pull_request` 事件下被自身
+// `if:` 跳过 → GitHub 记成一条 conclusion='skipped' 的 check run。
+// 若把 skipped 一律当失败，自动更新 PR 将**永远**无法通过合并门禁。
+describe('waitForChecks：skipped / neutral 按「是否必需」区分', () => {
+  function checkFetch(checkRuns) {
+    return async (url) => {
+      if (url.includes('/check-runs')) {
+        return new Response(JSON.stringify({ check_runs: checkRuns }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (url.endsWith('/status')) {
+        return new Response(JSON.stringify({ state: 'success', statuses: [] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response('{}', { status: 404 });
+    };
+  }
+
+  it('**非必需**检查被 skipped（如被 if: 跳过的写操作 job）→ 不阻断合并', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'completed', conclusion: 'success' },
+        { name: '检测镜像更新并开 PR', status: 'completed', conclusion: 'skipped' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'success', '非必需检查被跳过不应阻断');
+  });
+
+  it('**必需**检查被 skipped → 判 failure（未满足合并条件）', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'completed', conclusion: 'skipped' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'failure', '必需检查被跳过必须阻断合并');
+  });
+
+  it('**必需**检查被 neutral → 判 failure', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'completed', conclusion: 'neutral' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'failure');
+  });
+
+  it('非必需检查被 neutral → 不阻断', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'completed', conclusion: 'success' },
+        { name: '某个非必需检查', status: 'completed', conclusion: 'neutral' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'success');
   });
 });

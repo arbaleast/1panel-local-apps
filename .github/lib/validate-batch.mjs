@@ -558,10 +558,14 @@ export function collectUpdatedServices(updates, appDir) {
  *     tag 问题降级为 warning（历史遗留债务不阻断本批次）；
  *   · **AUDIT 模式**（`updates` 为空）：全仓审计，所有发现按 error 报出。
  *
- * @param {{root: string, updates?: Array<object>, aliasByDir?: Map}} params
+ * @param {{root: string, updates?: Array<object>, aliasByDir?: Map, skipReadmeCheck?: boolean}} params
+ *   `skipReadmeCheck`：跳过「README 版本一致性」检查。
+ *   staging 校验必须传 true —— staging 目录里没有仓库根 README（README 由
+ *   sync-readme.mjs 在检测**之后**同步），拿 staging 去比对 README 必然报
+ *   「README.md 的「应用列表」缺少应用 X」，属于**假失败**。
  * @returns {{errors: string[], warnings: string[]}}
  */
-export function validateUpdateBatch({ root, updates = [], aliasByDir } = {}) {
+export function validateUpdateBatch({ root, updates = [], aliasByDir, skipReadmeCheck = false } = {}) {
   const errors = [];
   const warnings = [];
 
@@ -639,8 +643,10 @@ export function validateUpdateBatch({ root, updates = [], aliasByDir } = {}) {
       }
     }
 
-    // README 版本一致性
-    errors.push(...validateReadmeVersion(root, appDir, aliasMap.get(appDir), table));
+    // README 版本一致性（staging 校验时跳过：staging 里没有仓库根 README）
+    if (!skipReadmeCheck) {
+      errors.push(...validateReadmeVersion(root, appDir, aliasMap.get(appDir), table));
+    }
   }
 
   return { errors, warnings };
