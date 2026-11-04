@@ -20,6 +20,7 @@
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { checkDocExamples } from '../lib/doc-examples.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 // ROOT 可用 --root <dir> 覆盖（测试用夹具复现死链分支）；默认取脚本所在仓库根。
@@ -184,6 +185,10 @@ function main() {
       warnings.push(`${file}: 仅 ${n} 行（<${DOC_MIN_LINES}），应并入相邻主题文档（防碎片化）`);
     }
   }
+
+  // 6. 文档里的 data.yml 示例必须符合真实 schema（与 lint 同一套规则）
+  const exampleResult = checkDocExamples(ROOT, files);
+  for (const err of exampleResult.errors) errors.push(err);
 
   for (const w of warnings) console.log(`WARN  ${w}`);
   for (const e of errors) console.log(`ERROR ${e}`);
