@@ -2,13 +2,14 @@
 /**
  * check-docs.mjs — 文档质量校验（bin 层，无新增第三方依赖）。
  *
- * 校验范围（仓库根 README/AGENTS/CONTRIBUTING + docs/*.md）：
+ * 校验范围（仓库根 README/AGENTS/CONTRIBUTING + docs/*.md + 各应用根 README）：
  *   1. 相对路径链接的目标文件必须存在；
  *   2. 带锚点（#fragment）的内部链接，锚点必须能在目标文件标题中匹配
  *      （GitHub slug 规则的宽容版：忽略大小写与标点差异）；
  *   3. Markdown 代码栅栏（```）必须成对闭合；
  *   4. router 文件 AGENTS.md 行数上限（可被 --max-lines 覆盖，默认 200）；
- *   5. docs/ 下不足 MIN_LINES 行的文档给出警告（防碎片化：应并入相邻主题文档）。
+ *   5. docs/ 下不足 MIN_LINES 行的文档给出警告（防碎片化：应并入相邻主题文档）；
+ *   6. 文档中引用的 `npm run <script>` 必须在 package.json 中真实存在（防幽灵命令）。
  *
  * 退出码：存在 error → 1；仅有 warning → 0（打印 PASSED (with warnings)）。
  * 不校验外链（http/https/mailto/data）与纯文本引用。
@@ -30,10 +31,24 @@ const DOC_MIN_LINES = 40;
 const errors = [];
 const warnings = [];
 
+/**
+ * package.json 中真实存在的 npm 脚本名（用于幽灵命令检查）。
+ * 在 main() 里按最终 ROOT 读取：--root 指向夹具目录时必须以夹具的 package.json 为准。
+ */
+let npmScripts = new Set();
+
 function collectMarkdownFiles() {
   const files = [ROUTER, 'CONTRIBUTING.md', 'README.md'];
   for (const name of readdirSync(join(ROOT, 'docs'))) {
     if (name.endsWith('.md')) files.push(join('docs', name));
+  }
+  // 应用根 README（<app>/README.md）一并纳入：应用说明同样会随版本演进而失效。
+  // 只取应用根目录的 README，不含版本子目录（那属于历史版本快照）。
+  for (const entry of readdirSync(ROOT, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+    if (entry.name === 'docs' || entry.name === 'node_modules' || entry.name === 'scripts') continue;
+    const readme = join(entry.name, 'README.md');
+    if (existsSync(join(ROOT, readme))) files.push(readme);
   }
   return files.filter((f) => existsSync(join(ROOT, f)));
 }
@@ -90,7 +105,7 @@ function checkLink(fromFile, target, label, lineNo) {
   );
 }
 
-function checkFile(file, maxRouterLines) {
+function checkFile(file, maxRouterLines, { repoTooling = true } = {}) {
   const abs = join(ROOT, file);
   const text = readFileSync(abs, 'utf8');
   const lines = text.split('\n');
@@ -117,6 +132,23 @@ function checkFile(file, maxRouterLines) {
       `${file}: ${lines.length} 行，超过 router 上限 ${maxRouterLines}（细节必须下沉到 docs/）`,
     );
   }
+
+  // 5. 幽灵命令：文档里写的仓库工具脚本必须真实存在于 package.json。
+  // 仅对仓库级文档生效：应用 README 里的 `npm run x` 往往指**容器内**应用自己的
+  // package.json（如 personal-todo-vault 的 restore），不属于本仓工具链。
+  if (repoTooling) {
+    for (const [i, line] of lines.entries()) {
+      for (const m of line.matchAll(/\bnpm\s+run\s+([A-Za-z0-9:_-]+)/g)) {
+        const name = m[1];
+        if (!npmScripts.has(name)) {
+          errors.push(
+            `${file}:${i + 1} 引用了不存在的 npm 脚本 \`npm run ${name}\`` +
+              `（package.json scripts: ${[...npmScripts].join('、')}）`,
+          );
+        }
+      }
+    }
+  }
 }
 
 function main() {
@@ -127,8 +159,22 @@ function main() {
   const rootArg = args.indexOf('--root');
   if (rootArg !== -1 && args[rootArg + 1]) ROOT = resolve(args[rootArg + 1]);
 
+  // npm 脚本清单（幽灵命令检查）——按最终 ROOT 读取
+  npmScripts = new Set();
+  try {
+    const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+    for (const name of Object.keys(pkg.scripts || {})) npmScripts.add(name);
+  } catch {
+    warnings.push('package.json 不可读，跳过「npm 脚本存在性」检查');
+  }
+
   const files = collectMarkdownFiles();
-  for (const file of files) checkFile(file, maxRouterLines);
+  for (const file of files) {
+    // 仓库级文档 = AGENTS.md / CONTRIBUTING.md / 根 README.md / docs/*.md
+    const repoTooling = file === ROUTER || file === 'CONTRIBUTING.md' || file === 'README.md'
+      || file.startsWith('docs/');
+    checkFile(file, maxRouterLines, { repoTooling });
+  }
 
   // 5. 防碎片化：docs/ 下过短的文档警告
   for (const file of files) {

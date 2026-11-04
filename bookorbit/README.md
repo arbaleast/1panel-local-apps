@@ -9,7 +9,7 @@
 - **当前版本目录**: `3.2.0/`（与上游 [GitHub release tag v3.2.0](https://github.com/bookorbit/bookorbit/releases/tag/v3.2.0) 对齐；镜像 tag 不带 `v` 前缀）
 - **License**: AGPL-3.0
 
-> ⚠️ **本应用使用外部 PostgreSQL**：本 compose 不再捆绑 PostgreSQL 服务。部署前请先在 1Panel 应用商店部署 **`1Panel-postgresql`**（pgvector/pgvector 应用，本仓已收录为 [`pgvector/`](pgvector/)），并在容器详情页复制其容器名 / 随机用户 / 密码 / 数据库名到本应用表单。详见下文「[安装](#安装)」段。
+> ⚠️ **本应用使用外部 PostgreSQL**：本 compose 不再捆绑 PostgreSQL 服务。部署前请先在 1Panel 应用商店部署 **`1Panel-postgresql`**（pgvector/pgvector 应用，本仓已收录为 [`pgvector/`](../pgvector/)），并在容器详情页复制其容器名 / 随机用户 / 密码 / 数据库名到本应用表单。详见下文「[安装](#安装)」段。
 
 ## 功能要点
 
@@ -58,7 +58,7 @@ bookorbit/
 
 ### 0. 前置：部署 1Panel-postgresql（PostgreSQL 18 + pgvector）
 
-BookOrbit 上游强制要求 4 个 PG 扩展：`uuid-ossp` / `pg_trgm` / `unaccent` / `vector` (pgvector)。`1Panel-postgresql`（本仓 [`pgvector/0.8.7-pg18-trixie/`](../../pgvector/0.8.7-pg18-trixie/)）基于 `pgvector/pgvector` 镜像，**已包含全部 4 个扩展**，开箱即用。
+BookOrbit 上游强制要求 4 个 PG 扩展：`uuid-ossp` / `pg_trgm` / `unaccent` / `vector` (pgvector)。`1Panel-postgresql`（本仓 [`pgvector/0.8.7-pg18-trixie/`](../pgvector/0.8.7-pg18-trixie/)）基于 `pgvector/pgvector` 镜像，**已包含全部 4 个扩展**，开箱即用。
 
 1. 1Panel → 应用商店 → 本地应用 → 搜索 **`1Panel-postgresql`**（或 `pgvector`）→ 安装
 2. 记住安装时设置的端口（默认 `5432`）
@@ -239,7 +239,7 @@ BookOrbit v2.10+ 支持 Kokoro FastAPI TTS。上游提供 opt-in `tts` profile�
      docker exec -it <bookorbit-container> sh -c 'nc -zv 1Panel-postgresql-ZU4y 5432'
      # 应返回 succeeded
      ```
-- **`extension "vector" is not available` / `extension "uuid-ossp" is not available`**：上游强制 4 个 PG 扩展。请确认 1Panel-postgresql 应用是基于 `pgvector/pgvector` 镜像（[本仓 `pgvector/0.8.7-pg18-trixie/`](../../pgvector/0.8.7-pg18-trixie/) 已含），不要换成裸 `postgres` 镜像
+- **`extension "vector" is not available` / `extension "uuid-ossp" is not available`**：上游强制 4 个 PG 扩展。请确认 1Panel-postgresql 应用是基于 `pgvector/pgvector` 镜像（[本仓 `pgvector/0.8.7-pg18-trixie/`](../pgvector/0.8.7-pg18-trixie/) 已含），不要换成裸 `postgres` 镜像
 - **扫描完成但找不到书**：
   1. 检查 `PUID`/`PGID` 是否与 `./data/books` 属主一致（`ls -ldn ./data/books`）
   2. 不一致就 `chown -R <uid>:<gid> ./data/books`
@@ -253,7 +253,7 @@ BookOrbit v2.10+ 支持 Kokoro FastAPI TTS。上游提供 opt-in `tts` profile�
 
 - [上游 BookOrbit README](https://github.com/bookorbit/bookorbit/blob/main/README.md)
 - [上游 BookOrbit 安装指南](https://bookorbit.app/installation)
-- [本仓 1Panel-postgresql 应用 (pgvector)](../../pgvector/0.8.7-pg18-trixie/)
+- [本仓 1Panel-postgresql 应用 (pgvector)](../pgvector/0.8.7-pg18-trixie/)
 - [iOS / Apple Watch App](https://apps.apple.com/us/app/bookorbit-the-official-app/id6811807346)（v3.0.0+ / iOS 26+ / watchOS 26+）
 - [KOReader 插件](https://bookorbit.app/koreader-plugin)
 - [演示站](https://demo.bookorbit.app)（无需账号，含公版书样本库；部分管理功能受限）

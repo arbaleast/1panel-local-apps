@@ -93,7 +93,7 @@ image: pgsty/silo:${APP_VERSION}
 2. 在 1Panel → Silo → 参数编辑中，把 `APP_VERSION` 改为新 tag
 3. 点击"重建应用"
 
-> 注：本仓库的 [`scripts/check-updates.sh`](scripts/check-updates.sh) 与 [`.github/workflows/auto-update.yml`](.github/workflows/auto-update.yml) 只针对 **hardcode** 类应用（compose 中写死 `image:tag`）开 PR，变量型应用由用户掌控升级节奏。
+> 注：本仓库的 [`scripts/check-updates.sh`](../scripts/check-updates.sh) 与 [`.github/workflows/auto-update.yml`](../.github/workflows/auto-update.yml) 只针对 **hardcode** 类应用（compose 中写死 `image:tag`）开 PR，变量型应用由用户掌控升级节奏。
 
 ### pgsty/silo vs minio/minio
 

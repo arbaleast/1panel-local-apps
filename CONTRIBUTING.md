@@ -36,7 +36,7 @@ npm run lint         # 全仓 data.yml 静态校验
 | `npm test` | `node --test ".github/lib/*.test.mjs"` | 全部 `.github/lib/*.test.mjs` 回归（schema / registry / semver / compose / github / report / validate-batch / workflow / pr-flow / docs / image-policy） |
 | `npm run lint` | `node .github/bin/lint-apps.mjs` | 扫描全仓 data.yml + compose 静态校验 + 镜像 hardcode 策略（变量型镜像只允许在 AGENTS.md §6 的例外清单内）；有 error 退出 1；只有 warning 显示 `PASSED (with warnings)` 且退出 0 |
 | `npm run validate:batch` | `node .github/bin/validate-update-batch.mjs` | 全仓批次校验模式 |
-| `npm run docs:check` | `node .github/bin/check-docs.mjs` | docs 交叉引用 / 代码栅栏 / AGENTS 路由有效性 |
+| `npm run docs:check` | `node .github/bin/check-docs.mjs` | 全仓文档校验：根 README/AGENTS/CONTRIBUTING + `docs/*.md` + **各应用根 README** 的交叉引用 / 锚点 / 代码栅栏；仓库级文档里的 `npm run` 幽灵脚本；AGENTS 路由有效性 |
 
 注意：
 
@@ -66,6 +66,8 @@ npm run lint         # 全仓 data.yml 静态校验
   **禁止把同一规则复制到多个文件**（单一事实来源）。
 - 有效内容不足约 40 行的文档不单独成文件，并入相邻主题文档。
 - Markdown 代码栅栏必须闭合，内部链接用相对路径；提交前跑 `npm run docs:check`。
+- **应用根 README（`<app>/README.md`）也在 `docs:check` 扫描范围内**：跨应用链接必须写对相对层级
+  （应用 README 在仓库根下一层，引用别的应用写 `../<app>/`），指向本仓不存在的上游文件时用行内代码而非链接。
 
 ## 6. 工作区卫生（临时脚本与 Trace-less 执行）
 

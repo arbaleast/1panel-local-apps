@@ -36,6 +36,86 @@ test('check-docs.mjs 对当前文档树全绿（链接/锚点/栅栏/router 行�
   assert.doesNotMatch(r.stdout, /\bERROR\b/, `check-docs 输出包含 ERROR：\n${r.stdout}`);
 });
 
+test('应用根 README 也纳入校验范围（全仓文档无死链）', () => {
+  // 回归：应用 README 曾有 21 处死链（bookorbit / infinity / marginalia / silo），
+  // 因为不在扫描范围内而长期无人发现。
+  const apps = readdirSync(ROOT, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && !e.name.startsWith('.') && e.name !== 'docs')
+    .filter((e) => e.name !== 'node_modules' && e.name !== 'scripts')
+    .filter((e) => existsSync(join(ROOT, e.name, 'README.md')));
+  assert.ok(apps.length >= 50, `应用 README 数量异常: ${apps.length}`);
+
+  for (const app of apps) {
+    const file = join(app.name, 'README.md');
+    const text = readFileSync(join(ROOT, file), 'utf8');
+    const linkRe = /\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+    for (const m of text.matchAll(linkRe)) {
+      const target = m[2].replace(/^<|>$/g, '');
+      if (/^(https?:|mailto:|data:|#)/i.test(target)) continue;
+      const pathPart = target.split('#')[0];
+      if (!pathPart) continue;
+      assert.ok(
+        existsSync(join(ROOT, app.name, pathPart)),
+        `${file}: 死链 ${target}（目标不存在）`,
+      );
+    }
+  }
+});
+
+test('check-docs.mjs 报出幽灵 npm 脚本（文档引用了不存在的仓库脚本）', () => {
+  const fixture = join(tmpdir(), `check-docs-ghost-${process.pid}`);
+  try {
+    mkdirSync(join(fixture, 'docs'), { recursive: true });
+    writeFileSync(join(fixture, 'AGENTS.md'), '# router\n', 'utf8');
+    writeFileSync(join(fixture, 'CONTRIBUTING.md'), '# c\n', 'utf8');
+    writeFileSync(join(fixture, 'README.md'), '跑 `npm run not-a-real-script`\n', 'utf8');
+    writeFileSync(join(fixture, 'docs', 'a.md'), '# a\n', 'utf8');
+    writeFileSync(
+      join(fixture, 'package.json'),
+      JSON.stringify({ name: 'fixture', scripts: { test: 'node --test' } }),
+      'utf8',
+    );
+
+    const r = spawnSync(
+      process.execPath,
+      [join(ROOT, '.github', 'bin', 'check-docs.mjs'), '--root', fixture],
+      { cwd: ROOT, encoding: 'utf8', timeout: 60_000 },
+    );
+    assert.equal(r.status, 1, `幽灵脚本应退出 1，实际 ${r.status}\n${r.stdout}\n${r.stderr}`);
+    assert.match(r.stdout, /not-a-real-script/, `应指出幽灵脚本：\n${r.stdout}`);
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('应用 README 里的容器内 npm 命令不误报（仓库脚本检查只覆盖仓库级文档）', () => {
+  const fixture = join(tmpdir(), `check-docs-appnpm-${process.pid}`);
+  try {
+    mkdirSync(join(fixture, 'docs'), { recursive: true });
+    mkdirSync(join(fixture, 'demo'), { recursive: true });
+    writeFileSync(join(fixture, 'AGENTS.md'), '# router\n', 'utf8');
+    writeFileSync(join(fixture, 'CONTRIBUTING.md'), '# c\n', 'utf8');
+    writeFileSync(join(fixture, 'README.md'), '# r\n', 'utf8');
+    writeFileSync(join(fixture, 'docs', 'a.md'), '# a\n', 'utf8');
+    // 应用 README 描述的是容器内应用自己的 package.json
+    writeFileSync(join(fixture, 'demo', 'README.md'), '容器内跑 `npm run restore`\n', 'utf8');
+    writeFileSync(
+      join(fixture, 'package.json'),
+      JSON.stringify({ name: 'fixture', scripts: { test: 'node --test' } }),
+      'utf8',
+    );
+
+    const r = spawnSync(
+      process.execPath,
+      [join(ROOT, '.github', 'bin', 'check-docs.mjs'), '--root', fixture],
+      { cwd: ROOT, encoding: 'utf8', timeout: 60_000 },
+    );
+    assert.equal(r.status, 0, `应用 README 的容器内命令不应报错：\n${r.stdout}\n${r.stderr}`);
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('check-docs.mjs 遇到死链时报告 ERROR 并退出 1（不得抛未捕获异常）', () => {
   const fixture = join(tmpdir(), `check-docs-fixture-${process.pid}`);
   try {
