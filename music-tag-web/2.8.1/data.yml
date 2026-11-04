@@ -28,40 +28,6 @@ additionalProperties:
   github: https://github.com/xhongc/music-tag-web
   logo: https://raw.githubusercontent.com/xhongc/music-tag-web/dev_1.0/logo.png
   formFields:
-    - default: xhongc/music_tag_web
-      edit: true
-      envKey: IMAGE
-      labelEn: Image
-      labelZh: 镜像
-      label:
-        en: Image
-        zh: 镜像
-        zh-Hant: 映像
-        ja: イメージ
-        ko: 이미지
-        ru: Образ
-        ms: Imej
-        pt-br: Imagem
-      required: true
-      rule: paramImageTag
-      type: text
-    - default: 2.8.1
-      edit: true
-      envKey: APP_VERSION
-      labelEn: App Version
-      labelZh: 应用版本
-      label:
-        en: App Version
-        zh: 应用版本
-        zh-Hant: 應用版本
-        ja: アプリバージョン
-        ko: 앱 버전
-        ru: Версия приложения
-        ms: Versi Aplikasi
-        pt-br: Versão do aplicativo
-      required: true
-      rule: paramImageTag
-      type: text
     - default: 8002
       edit: true
       envKey: PANEL_APP_PORT_HTTP

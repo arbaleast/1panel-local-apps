@@ -11,6 +11,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -78,5 +79,84 @@ describe('open-update-pr.mjs 事件护栏', () => {
     const r = runScript({ GITHUB_EVENT_NAME: 'pull_request', PAT_TOKEN: '' });
     assert.equal(r.status, 1);
     assert.match(r.stderr, /不允许执行自动更新写操作/);
+  });
+});
+
+describe('open-update-pr.mjs 安全收口（audit P2）', () => {
+  const src = readFileSync(SCRIPT, 'utf8');
+
+  it('P2-a: 推送使用 --force-with-lease，且不再出现裸 --force', () => {
+    assert.match(src, /'push',\s*'--force-with-lease'/);
+    // 裸 --force（不带 -with-lease 后缀）不允许再出现
+    assert.doesNotMatch(src, /'push',\s*'--force'/);
+  });
+
+  it('P2-b: PR 查询失败 → 强 abort（不再 warn 后继续创建）', () => {
+    assert.doesNotMatch(src, /\[WARN\] 查询.*失败.*继续尝试创建/);
+    assert.match(src, /查询今日已有 PR 失败[\s\S]{0,200}return 1/);
+    assert.match(src, /查询重复批次 PR 失败[\s\S]{0,200}return 1/);
+  });
+
+  it('P2-c: 创建 PR 失败时的 catch 不做任何删除分支动作', () => {
+    // 定位 createPullRequest 的 catch 块：从 catch (e) 到 return 1
+    const m = /client\.createPullRequest\([\s\S]*?\}\s*catch \(e\) \{([\s\S]*?)return 1;/.exec(src);
+    assert.ok(m, '找不到 createPullRequest 的 catch 块');
+    assert.doesNotMatch(m[1], /deleteBranch/, '创建 PR 失败路径不允许删除远程分支');
+    assert.match(m[1], /保留/);
+  });
+
+  it('P2-c: 检查失败 / 超时 → 不合并且保留 PR 与分支', () => {
+    const m = /checkResult\.status !== 'success'([\s\S]*)return 1;/.exec(src);
+    assert.ok(m, '找不到检查失败分支');
+    assert.doesNotMatch(m[1], /deleteBranch/, '检查失败路径不允许删除远程分支');
+    assert.match(m[1], /不合并|保留|保留/);
+  });
+
+  it('P2-d: PAT 回退必须显式警告，且不回显 token 值', () => {
+    const r = runScript({
+      GITHUB_EVENT_NAME: 'schedule',
+      PAT_TOKEN: '',
+      GITHUB_TOKEN: 'gsh_secret_value',
+      GITHUB_REPOSITORY: 'bad repo name',
+    });
+    assert.equal(r.status, 1); // repo 校验失败，但回退警告应一并打印
+    assert.match(r.stderr, /回退使用 GITHUB_TOKEN/);
+    assert.match(r.stderr, /PAT_TOKEN/);
+    // 绝不把 token 值打进日志
+    assert.doesNotMatch(r.stderr, /gsh_secret_value/);
+  });
+
+  it('合并必须带 expectedHeadSha 护栏（只合并等待过检查的那个 SHA）', () => {
+    // 回归：曾只传 merge_method，若等待检查期间 head 被再次推送，
+    // 就会合并未经验证的新提交（目标 §1.3.5 核心核查项）。
+    const m = /client\.mergePullRequest\(\{([\s\S]*?)\}\)/.exec(src);
+    assert.ok(m, '找不到 mergePullRequest 调用');
+    assert.match(m[1], /expectedHeadSha/, '合并调用必须传 expectedHeadSha');
+    // 且必须用「等待检查用的那个 SHA」，不是另取
+    assert.match(m[1], /expectedHeadSha:\s*headSha/);
+  });
+
+  it('head SHA 无法确定时不得合并', () => {
+    const m = /if \(!headSha\) \{([\s\S]*?)return 1;/.exec(src);
+    assert.ok(m, '找不到 head SHA 缺失分支');
+    assert.match(m[1], /不合并|不能验证/);
+  });
+
+  it('PR title / commit message 构造不自带 [skip ci]', async () => {
+    // github.mjs 内注释里提到 [skip ci]（教学说明），这里锁的是**实际生成**的字符串
+    const gh = await import(path.join(ROOT, '.github', 'lib', 'github.mjs'));
+    const title = gh.buildPullRequestTitle({ today: '2026-01-01' });
+    const commit = gh.buildCommitMessage({ today: '2026-01-01' });
+    const text = `${title}\n${commit.subject}\n${commit.body}`;
+    assert.doesNotMatch(text, /\[skip ci\]/i);
+    assert.doesNotMatch(text, /\[ci skip\]/i);
+    // 源码层面：可执行行（去行注释 + 块注释后）不得出现 skip 指令
+    const src = readFileSync(
+      path.join(ROOT, '.github', 'lib', 'github.mjs'),
+      'utf8',
+    )
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
+    assert.doesNotMatch(src, /\[skip ci\]/i);
   });
 });

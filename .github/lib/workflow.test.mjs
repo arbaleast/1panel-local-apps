@@ -121,6 +121,17 @@ describe('auto-update workflow：事件隔离', () => {
     }
   });
 
+  it('只读校验 job 必须执行 npm run docs:check（文档质量由 CI 守护）', () => {
+    // 回归：docs/git-workflow.md 曾承诺 validate job 会跑 docs:check，但工作流里没有，
+    // 导致文档质量实际只靠 npm test 间接覆盖、且文档与实现脱节。
+    for (const [id, job] of validationJobs) {
+      assert.ok(
+        /npm\s+run\s+docs:check/.test(jobRunText(job)),
+        `${id} job 必须执行 npm run docs:check`,
+      );
+    }
+  });
+
   it('每个授予写权限的 job 都必须显式排除 pull_request 事件', () => {
     const writeJobs = Object.entries(jobs).filter(([, job]) => hasWritePermission(job));
     assert.ok(writeJobs.length > 0, '自动更新 job 必须存在（否则无法推送分支 / 开 PR）');

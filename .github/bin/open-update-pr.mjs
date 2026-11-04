@@ -40,7 +40,20 @@ import { validateUpdateBatch, loadAliasByDir } from '../lib/validate-batch.mjs';
 
 const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || '';
 const GITHUB_EVENT_NAME = process.env.GITHUB_EVENT_NAME || '';
-const PAT_TOKEN = process.env.PAT_TOKEN || process.env.GITHUB_TOKEN || '';
+// ⚠️ GITHUB_TOKEN 回退必须显式警告（audit P2-d）：
+//    GITHUB_TOKEN 开出的 PR **不会**再触发 pull_request 工作流（GitHub 防 re-run 循环的
+//    内置机制），必需检查永远不会出现 → 合并门禁 waitForChecks 必然超时 → 批次死锁。
+//    正确做法是配置仓库 secret PAT_TOKEN（classic PAT，勾选 repo 写权限）。
+let PAT_TOKEN = process.env.PAT_TOKEN || '';
+if (!PAT_TOKEN && process.env.GITHUB_TOKEN) {
+  PAT_TOKEN = process.env.GITHUB_TOKEN;
+  console.warn(
+    '[WARN] 未设置 PAT_TOKEN，回退使用 GITHUB_TOKEN：' +
+      'GITHUB_TOKEN 创建的 PR 不会触发 pull_request 工作流（GitHub 防自触发机制），' +
+      '本 PR 的必需检查将永远 pending → 合并门禁超时，批次无法自动合并。' +
+      '请改用仓库 secret PAT_TOKEN（有 repo 写权限的 classic PAT）。'
+  );
+}
 const BASE_BRANCH = process.env.GITHUB_BASE_REF || 'main';
 // 等待必需检查通过的超时时间（默认 30 分钟）
 const MERGE_TIMEOUT_MS = Number(process.env.MERGE_TIMEOUT_MS || 1800000);
@@ -113,8 +126,11 @@ async function main() {
       return 0;
     }
   } catch (e) {
-    // 网络错误时继续尝试创建（与旧行为一致）
-    console.warn(`[WARN] 查询已有 PR 失败（继续尝试创建）: ${e.message}`);
+    // audit P2-b：查询失败必须强 abort，不能带着「未知是否已有 PR」继续往下创建
+    // （旧实现 warn 后继续 → 可能开出重复批次 PR / 重复关闭合并门禁）。
+    console.error(`[ERROR] 查询今日已有 PR 失败，无法判断是否重复 → 中止: ${e.message}`);
+    console.error('[说明] 可重跑 workflow_dispatch；查询成功前不会创建任何分支 / PR。');
+    return 1;
   }
 
   // 1b) 防重复：是否已有「同 base 分支」的批次 PR（第二个批次 PR 会与第一个重复）
@@ -135,7 +151,10 @@ async function main() {
       return 0;
     }
   } catch (e) {
-    console.warn(`[WARN] 查询重复 PR 失败（继续尝试创建）: ${e.message}`);
+    // audit P2-b：同上，重复 PR 查询失败也不允许继续（未知状态下开 PR = 开重复批次）。
+    console.error(`[ERROR] 查询重复批次 PR 失败，无法判断是否重复 → 中止: ${e.message}`);
+    console.error('[说明] 可重跑 workflow_dispatch；查询成功前不会创建任何分支 / PR。');
+    return 1;
   }
 
   // 2) git 配置 + 切分支
@@ -168,7 +187,11 @@ async function main() {
   gitInherit(['commit', '-m', subject, '-m', body]);
 
   // 4) 推送分支
-  gitInherit(['push', '--force', 'origin', branch]);
+  // audit P2-a：--force-with-lease 替代裸 --force。
+  // 分支由 -B 重建（今日分支可能本地残留），推送仍需覆盖远端；但 lease 能在
+  // 远端有「我们不知道的新提交」（如本地 clone 的 remote-tracking 已过期 /
+  // 出现第三方推入）时拒绝覆盖，避免静默吞掉别人的批次提交。
+  gitInherit(['push', '--force-with-lease', 'origin', branch]);
   console.log(`[OK] 推送分支 ${branch}`);
 
   // 5) 组装 PR body
@@ -288,6 +311,9 @@ async function main() {
       repo,
       number: pr.number,
       mergeMethod: 'merge',
+      // sha 护栏：只合并「等待检查通过的那个 head SHA」。
+      // 等待期间若分支被再次推送，GitHub 返回 409 → 不会合并未经验证的提交。
+      expectedHeadSha: headSha,
     });
     merged = result.merged;
     if (merged) {

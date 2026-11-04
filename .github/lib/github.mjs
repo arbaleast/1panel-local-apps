@@ -163,10 +163,21 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
     return data;
   }
 
-  /** 合并 PR，返回 { merged, message } */
-  async function mergePullRequest({ owner, repo, number, mergeMethod = 'merge' }) {
+  /**
+   * 合并 PR，返回 { merged, message }
+   *
+   * @param {object} params
+   * @param {string} params.expectedHeadSha 期望合并的 head SHA（可选但强烈建议传入）：
+   *   GitHub 在 head 已移动时返回 409，避免合并未经验证的提交。
+   */
+  async function mergePullRequest({ owner, repo, number, mergeMethod = 'merge', expectedHeadSha }) {
     const path = `/repos/${owner}/${repo}/pulls/${number}/merge`;
-    const data = await request('PUT', path, { merge_method: mergeMethod });
+    const body = { merge_method: mergeMethod };
+    // sha 护栏：只允许合并「等待检查的那个 head SHA」。
+    // 若等待期间 PR head 被再次推送，GitHub 返回 409（Head branch was modified），
+    // 从而杜绝「合并未经验证的新提交」。
+    if (expectedHeadSha) body.sha = expectedHeadSha;
+    const data = await request('PUT', path, body);
     return {
       merged: Boolean(data && data.merged),
       message: (data && data.message) || '',

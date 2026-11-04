@@ -9,6 +9,7 @@
     "test": "node --test \".github/lib/*.test.mjs\"",
     "lint": "node .github/bin/lint-apps.mjs",
     "validate:batch": "node .github/bin/validate-update-batch.mjs",
+    "docs:check": "node .github/bin/check-docs.mjs",
     "open-pr": "node .github/bin/open-update-pr.mjs",
     "detect": "node .github/scripts/detect-updates.mjs",
     "detect:dry-run": "node .github/scripts/detect-updates.mjs --dry-run"

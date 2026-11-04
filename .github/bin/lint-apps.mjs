@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import { z } from 'zod';
 import { listApps, getAppMeta } from '../lib/apps.mjs';
+import { checkImagePolicy } from '../lib/image-policy.mjs';
 import {
   validateFormField,
   validateKeyMatch,
@@ -257,6 +258,13 @@ for (const app of apps) {
   totalErrors   += ve.length;
   totalWarnings += vw.length;
 }
+
+// ─── 镜像 hardcode 策略（AGENTS.md §6）────────────────────────────────────
+// 变量型镜像只允许出现在例外清单内；清单见 lib/image-policy.mjs。
+// 过去这条规则只写在文档里、没有守卫，2026-11 迁移因此漏掉 music-tag-web/2.8.1。
+const policy = checkImagePolicy(ROOT);
+for (const err of policy.errors) console.error(`ERROR   ${err}`);
+totalErrors += policy.errors.length;
 
 // ─── 输出摘要 ───────────────────────────────────────────────────────────────
 

@@ -1,403 +1,92 @@
 # AGENTS.md — 1Panel Local Apps
 
-## Project
+> 本文件是唯一入口（路由器），只放硬规则与路由；细节手册在 `docs/`，规约见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+> 读法：先看 §3 的任务路由索引，按你手上的任务跳转到对应单一文档，不要通读全仓文档。
 
-1Panel 本地应用仓库，包含自建 Docker 应用的 compose 文件、元数据和图标。
-用于同步到 1Panel 应用商店并持续维护。
+## 1. 项目介绍
 
-## Structure
+1Panel 本地应用仓库：自建 Docker 应用的 compose、元数据与图标，用于同步到 1Panel 应用商店并持续维护。
+CI（[automation](docs/automation.md)）自动守护 hardcode 镜像的更新；文档质量由 `npm run docs:check` 守护。
+
+## 2. 仓库结构速查
 
 ```
-<app-key>/               # 应用目录直接在仓库根
-├── data.yml              # 根元数据 (key, name, type, description, website, github)
-├── logo.png              # 应用图标
-├── README.md             # 中文说明
-└── <version>/            # 版本目录 (名称=版本参数，禁止使用 "latest")
-    ├── data.yml          # 版本配置 + formFields (环境变量定义)
+<app-key>/                 # 应用目录直接在仓库根
+├── data.yml / logo.png / README.md    # 根元数据（key 必须与目录名一致）、图标、中文说明
+└── <version>/             # 版本目录，目录名即 1Panel 版本参数（禁止 latest）
+    ├── data.yml           # 版本配置 + formFields
     ├── docker-compose.yml
-    ├── data/             # 持久化数据目录 (.gitkeep)
-    └── scripts/          # 可选: init.sh 等初始化脚本
+    ├── data/              # 持久化（.gitkeep）
+    └── scripts/           # 可选 init.sh
+.github/{bin,scripts,lib}/  # 可执行入口 / workflow 入口 / 共享纯函数层
+docs/                       # 手册（本路由器的下游）
+.github/bin/check-docs.mjs  # 文档质量校验
 ```
 
-## Rules
+## 3. 任务路由索引
 
-### Compose 文件
+| 任务 | 主文档（单一事实来源） |
+|---|---|
+| 新增 / 更新应用、目录与 README 规范 | [docs/app-structure.md](docs/app-structure.md) |
+| data.yml 字段、formField、校验报错 | [docs/data-yml-schema.md](docs/data-yml-schema.md) |
+| docker-compose 规则、运行身份、init.sh | [docs/compose-conventions.md](docs/compose-conventions.md) |
+| 自动更新 / GitHub Actions / registry 选型 | [docs/automation.md](docs/automation.md) |
+| Git 分支 / commit / push / PR / 回滚 | [docs/git-workflow.md](docs/git-workflow.md) |
+| 环境、SSH、node 可见性、故障速判 | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| 历史事故与教训（写代码前先查相关复盘） | [docs/postmortems.md](docs/postmortems.md) |
+| 本地环境 / 测试命令 / lib 分层 / 文档规约 | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
-- 主服务: `container_name: ${CONTAINER_NAME}`
-- 所有服务: `restart: always`, `networks: [1panel-network]`, `labels: {createdBy: "Apps"}`
-- `1panel-network` 必须声明为 external
-- 公开端口: 使用 `PANEL_APP_PORT_*` 变量
-- 持久化挂载: 优先使用 `./data/...` 相对路径
-- 镜像引用: 一律 hardcode 直接写 `image:tag`，由自动更新守护；例外清单见「Automation」一节（silo / infinity / xunlei 仍是 `${IMAGE}` / `${APP_VERSION}` 变量型、不入自动范围）
+## 4. Agent 工作原则
 
-### 变量声明
+- **先读后改**：改前读现有实现与文档；已读过的规则不留任何任务外遗留。
+- **代码即权威**：运行时行为以代码为准；文档与代码冲突，先核实真实行为再决定修哪边（严禁为文档一致性改运行时行为）。
+- **行为保持**：不重写、不顺手重构；发现无关缺陷单独报告。
+- **实证验收**：只声称实际执行过的验证；环境不可用时如实标「未验证」。
+- **工作区保护**：`git status` 出现非本任务改动 → 停止询问，严禁 stash / checkout / reset 处置它。
+- **远程操作**：未经授权禁止 push / 开合 PR / 触碰 `main`。
+- 大文件读被截断时用 offset 续读到 EOF，不得凭片段断言。
 
-- compose 中每个 `${...}` 变量必须在版本 `data.yml` 的 formFields 中声明
-- 1Panel 自动提供的变量可豁免: `${CONTAINER_NAME}`, `${HOST_IP}`, `${HOST_ADDRESS}`, `${PANEL_DB_PORT}`, `${CPUS}`, `${MEMORY_LIMIT}`
-- 端口变量命名: `PANEL_APP_PORT_HTTP`, `PANEL_APP_PORT_HTTPS`, `PANEL_APP_PORT_API` 等
+## 5. 应用与元数据硬规则（细则见手册）
 
-### 元数据
+- 版本目录名 = 版本参数；**禁止 `latest`**（除非上游完全无版本化 tag，且 PR 注明根因）。
+- 更新应用**只复制版本子目录**，不复制整个 `<key>/*`；SQLite key 有 `local` 前缀（jellyfin → localjellyfin）。
+- 根 `data.yml` 的 `additionalProperties.key` 必须与应用目录名一致；`type` ∈ `tool|media|library`（默认 `tool`）。
+- 描述与 formField `label` 走 i18n：`en, zh, zh-Hant, ja, ko, ru, ms, pt-br`。
+- 图标禁占位符；优先级 显式 URL → Dashboard Icons → Simple Icons → selfh.st。
 
-- `additionalProperties.key` 必须匹配应用目录名
-- `type` 字段: 默认 `tool`
-- `description` 和 form field `labels` 应包含 i18n: `en, zh, zh-Hant, ja, ko, ru, ms, pt-br`
+## 6. Compose 红线（细则见 [docs/compose-conventions.md](docs/compose-conventions.md)）
 
-### 图标
+- 主服务 `container_name: ${CONTAINER_NAME}`；所有服务 `restart: always`、
+  `networks: [1panel-network]`（须声明 external）、`labels: {createdBy: "Apps"}`。
+- 公开端口用 `PANEL_APP_PORT_*`；持久化优先 `./data/...` 相对路径。
+- 镜像一律 hardcode `image: tag`，由自动更新守护；**仅 3 个变量型例外**：
+  `silo`、`infinity/cu124`、`xunlei`（不入自动更新范围，见 automation §2）。
+- 上述例外清单由 `npm run lint` 校验：例外之外出现变量型镜像即报 error；
+  清单单一事实来源在 `.github/lib/image-policy.mjs`（与本节内容由测试锁定一致）。
+- compose 中每个 `${VAR}` 必须在版本 `data.yml` formFields 声明；豁免变量仅 6 个：
+  `${CONTAINER_NAME}` `${HOST_IP}` `${HOST_ADDRESS}` `${PANEL_DB_PORT}` `${CPUS}` `${MEMORY_LIMIT}`。
+- 端口变更影响 1Panel 反代配置，PR 必须说明；更新时 `sed -i` 在 bind mount 上会失败。
 
-- 不允许占位符图标
-- 优先级: 显式 URL → Dashboard Icons → Simple Icons → selfh.st Icons
+## 7. Git 安全红线（细则见 [docs/git-workflow.md](docs/git-workflow.md)）
 
-## Scripts
+- 动手前置 4 件套：`git status --short --branch` / `git branch --show-current` / `git remote -v` / `git log -5 --oneline`。
+- 工作区不干净 → 停；未经授权不 push、不开合 PR、不碰 `main`（既有未推送提交同属保留区，未经授权禁改写）。
+- 分支前缀 `feat/|fix/|docs/|refactor/|chore/|auto-update/`；Conventional Commits。
+- 禁止跨分支 force-push、`reset --hard`、随意动 remote / 其它分支；回滚只用 `git revert`。
+- 仓库与配置禁止出现任何 secret 或 token 类明文。
+- 本地提交前自查三条：`npm run docs:check`、`git diff --check`、`git status --short`（无意外应用配置改动）。
+
+## 8. 真实命令与验证
+
+唯一命令来源是 [package.json](package.json) `scripts`（分层规约见 [CONTRIBUTING.md §4](CONTRIBUTING.md#4-lib-与-bin-分层与依赖规约)）：
 
 ```bash
-# 检查镜像更新
-./scripts/check-updates.sh [app-name...]
+npm test              # node --test ".github/lib/*.test.mjs"（约 360+ case）
+npm run lint          # node .github/bin/lint-apps.mjs（含 warning 时 PASSED (with warnings)，exit 0）
+npm run validate:batch  # node .github/bin/validate-update-batch.mjs
+npm run docs:check    # node .github/bin/check-docs.mjs
 ```
 
-## lib/ 模块
-
-仓库根 [.github/lib/](.github/lib/) 下八个 ESM 模块为脚本层提供共享能力：
-
-| 文件 | 职责 | 关键导出 |
-|---|---|---|
-| [`lib/semver.mjs`](.github/lib/semver.mjs:1) | **严格 SemVer 2.0.0** 解析 / 比较 + 宽松数字段比较（两套语义，禁止混用） | `parse` / `compare` / `compareVersionsLoose` / `isStable` / `pickLatest` / `parseSemver` / `isValidSemver` / `compareSemver` / `pickNewestVersionDir` |
-| [`lib/registry.mjs`](.github/lib/registry.mjs:1) | DockerHub / GHCR 适配器、**唯一**镜像字符串解析入口 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` / `RegistryRequestError` |
-| [`lib/apps.mjs`](.github/lib/apps.mjs:1) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` |
-| [`lib/schema.mjs`](.github/lib/schema.mjs:1) | data.yml 结构定义与校验规则（纯 JS，无第三方依赖） | `validateFormField` / `validateKeyMatch` / `validateUrlField` / `normalizeFormField` / `FORMFIELD_TYPE_WHITELIST` |
-| [`lib/compose.mjs`](.github/lib/compose.mjs:1) | compose image 模板解析（单/双 envKey 形态）与 formField 重组；镜像拆分统一复用 `parseImage` | `resolveImageTemplate` / `rebuildImageDefault` |
-| [`lib/github.mjs`](.github/lib/github.mjs:1) | GitHub REST 客户端（内置 fetch，不经 shell）+ PR body / commit message 构造 + **检查状态门禁** | `createGitHubClient` / `buildPullRequestBody` / `buildCommitMessage` / `GitHubApiError` |
-| [`lib/report.mjs`](.github/lib/report.mjs:1) | 检测结果聚合与渲染（stdout / GitHub Step Summary）的**唯一**实现 | `aggregateResults` / `exitCodeForResults` / `renderSummary` / `renderMarkdown` / `escapeCell` |
-| [`lib/validate-batch.mjs`](.github/lib/validate-batch.mjs:1) | 自动更新批次的全量配置校验（纯函数） | `validateUpdateBatch` / `loadAliasByDir` / `validateDataYamlDocument` / `validateComposeDocument` / `validateImageTags` / `isRecognisableVersionTag` / `readReadmeVersionTable` / `validateReadmeVersion` |
-
-> **SemVer 两套语义（2026-11 审计后）**：`parseSemver` / `isValidSemver` / `compareSemver` 是**严格 SemVer 2.0.0**（三段 + 可选 prerelease/build，`latest` / `2024.08` / `26.04.5.1.1` 一律非法）；`parse` / `compare` / `compareVersionsLoose` 是**宽松数字段比较**（日期型 tag 也能排），只用于「已知形态 tag」的排序与版本目录归档选择。`parse('latest')` 现在返回 `null`（以前被当成 `[0]` 即 0.0.0）。
-
-### 本地跑测试
-
-```bash
-npm test             # 等价 node --test ".github/lib/*.test.mjs"，350+ case（含 schema 校验 + GitHub API 回归 + 批次校验 + 工作流不变量）
-npm run lint         # 等价 node .github/bin/lint-apps.mjs，扫描全部 data.yml
-npm run validate:batch  # 等价 node .github/bin/validate-update-batch.mjs，全仓模式审计
-```
-
-需要 `node >= 24`（`engines` 字段已声明，与 CI 一致；本地用 `.nvmrc` 对齐版本）。
-
-### 新增模块规约
-
-- 任何新增 `lib/*.mjs` **必须**配套 `*.test.mjs`（用 `node:test`）
-- `lib/` 下**禁止**引入 `js-yaml` 之外的第三方依赖；新增依赖须先讨论
-- 三个入口脚本（[`detect-updates.mjs`](.github/scripts/detect-updates.mjs:1) / [`sync-readme.mjs`](.github/scripts/sync-readme.mjs:1) / [`check-updates.sh`](scripts/check-updates.sh:1)）应**优先**复用 `lib/` 模块，不在入口内 inline 重复实现
-- `bin/` 层为可执行入口脚本（如 [`.github/bin/lint-apps.mjs`](.github/bin/lint-apps.mjs:1)），可引入 `zod` 等 `lib/` 层禁用的第三方依赖；任何新增 bin/ 脚本须配套 `package.json` 中的 `scripts` 条目
-
-### DockerHub 镜像选取口径
-
-`DockerHubAdapter` 用 `page_size=100&ordering=last_updated` 翻页（上限 5 页 = 500 tag）取所有相关 tag，再过滤不稳定关键字（`latest|nightly|dev|edge`）后选末位。`page_size` 2026-09-21 从 20 调到 100——anirss 类多架构镜像（30+ tag，每 semver 配 `-arm32v7`/`-arm64v8` 等后缀）单页 20 会被 `last_updated` 排序截到 page 1 之外，形态 3 变体匹配（同 suffix 末尾）找不到目标 → 漏检 arm32v7 新版本（PR #19 复盘）；翻页兜底防止 5+ tag/版本的镜像被切。GHCR 用 OCI Registry API + 匿名 token（`n=1000`），黑名单包含 `alpha|beta|rc|main|master`。
-
-## Automation
-
-`.github/workflows/auto-update.yml` 分成两个**权限与事件完全隔离**的 job（2026-11 安全加固）：
-
-| Job | 触发事件 | 权限 | 职责 |
-|---|---|---|---|
-| `validate` | 所有事件（含 `pull_request`） | `contents: read` | 只读：`npm test` + `npm run lint`。**不碰 Token、不写仓库** |
-| `auto-update` | 仅 `schedule` / `workflow_dispatch` / 受控 `push`（后两者限 `main`） | `contents: write` + `pull-requests: write` | 检测 → 改 README → 校验 → 开 PR → 等检查 → 合并 |
-
-- **PR 事件只能执行只读校验**：`auto-update` job 用事件白名单 `if: schedule || ((workflow_dispatch || push) && github.ref == 'refs/heads/main')`，PR 事件永远进不了持有 `PAT_TOKEN` 的 job；`validate` job 的 checkout 用 `persist-credentials: false`，GITHUB_TOKEN 不落盘到 `.git/config`。这条配置由 [`lib/workflow.test.mjs`](.github/lib/workflow.test.mjs) 回归锁定（`npm test` 会校验 permissions / 事件隔离 / Token fallback / concurrency）。
-- 工作流顶层 `permissions: {}`（默认不给任何 scope），各 job 按需申请最小权限。
-- 每周一 UTC 0 点（也可手动）检测 hardcode 类应用镜像更新；命中即开 PR（分支 `auto-update/<date>`，单 PR 合并本批次全部变更），PR body 列出所有 service 变更。
-- 修改 `<app>/<version>/docker-compose.yml` 与 `<app>/<version>/data.yml`。
-- 变量型应用（compose 用 `${IMAGE}` / `${APP_VERSION}`）不在自动范围；2026-11 全仓 hardcode 迁移后仅剩 3 个例外：`silo`（RELEASE 时间戳 tag 超出版本识别能力）、`infinity/cu124`（`cu124` 功能型 tag 单段、无法用版本比较选型）、`xunlei`（上游仅 `beta` 浮动 tag）；`SKIP_AUTO_UPDATE_APPS` 白名单（anythingllm / jellyfin）保留——混排日期型目录，手维护防跨目录覆盖（见 2026-09-25 jellyfin 事故）。
-- **自动更新 PR 的 title 与 commit message 都不含 `[skip ci]` 等 skip 指令**：GitHub 对 `pull_request` 事件按 **PR 的 HEAD commit message**（以及 PR title/body）判定 skip → 命中后 `pull_request` workflow 整体被跳过、必需检查永远停留在 Pending → 合并门禁必然超时。合并后的「push 递归触发」由工作流 `on.push.paths` 过滤防住（push 只对 `.github/**` 等自动更新链路自身文件触发，应用配置 / README 不在其中），不需要 skip 指令。回归测试：[`lib/github.test.mjs`](.github/lib/github.test.mjs) 的 `buildCommitMessage` / `buildPullRequestTitle` 用例。
-- **合并门禁**：开 PR 前跑 [`lib/validate-batch.mjs`](.github/lib/validate-batch.mjs) 的全量配置校验（data.yml YAML+schema / 目录结构 / compose 语法 / 更新后的镜像 tag / README 版本一致性）；PR 创建后轮询 GitHub Checks（[`lib/github.mjs`](.github/lib/github.mjs) 的 `waitForChecks`），**只有全部必需检查 success 才合并**；检查失败 / 超时 / 状态未知一律**保留 PR 与远程分支、不合并**。
-- **检测失败不会被吞掉**：`.github/scripts/detect-updates.mjs` 为每个应用产出 `success` / `skipped` / `failed` 三态结果（写入 `updates.json` 的 `results` + `summary`），Registry 网络错误绝不算「无更新」；存在 failed 时脚本退出码为 2，workflow 末尾的「检测失败门禁」步骤显式 `exit 1` 让整个 workflow 变红。
-- 同步更新仓库根 `README.md` 的"应用列表"表格（应用名/描述/版本）
-  - 应用名映射与描述覆盖：[`.github/app-aliases.yml`](.github/app-aliases.yml)
-  - 同步脚本：[`.github/scripts/sync-readme.mjs`](.github/scripts/sync-readme.mjs)
-
-## Deployment
-
-1. 修改 compose 或 data.yml
-2. `git commit` 并 `git push`
-3. 由 1Panel 计划任务拉取最新仓库并触发本地应用同步
-4. 在 1Panel UI 重新部署应用
-
-### 沙箱中 Git Push
-
-沙箱 SSH 鉴权默认不可用，需手动配置 SSH 密钥：
-
-```bash
-# 1. 查找可用的 SSH 密钥（通常在 /data/dsh/home/ssh-key-vault/ 或 ~/.ssh/）
-ls -la /data/dsh/home/ssh-key-vault/
-
-# 2. 配置 git 使用 SSH 密钥
-git config core.sshCommand "ssh -i /data/dsh/home/ssh-key-vault/id_ed25519_deploy -o StrictHostKeyChecking=no"
-
-# 3. 切换到 SSH URL（如果 remote 是 HTTPS）
-git remote set-url origin git@github.com:arbaleast/1panel-local-apps.git
-
-# 4. 推送
-git push origin main
-```
-
-> 注意：如果 SSH 密钥有密码保护，需要使用 ssh-agent 或配置 GIT_SSH_COMMAND 加载密钥。
-
-## Common Pitfalls
-
-- **auto-update 工作流曾是 CI 提权面：`pull_request` 事件能触达持有 PAT 的 job（2026-11-01 审计）**：旧版 [`auto-update.yml`](.github/workflows/auto-update.yml) 顶层写 `permissions: contents: write / pull-requests: write`，并且 `pull_request` 事件会触发整个工作流——于是**任何外部 PR 的代码都能在持有 `secrets.PAT_TOKEN` 的 job 里执行**（`detect-and-pr` job 的 checkout 用的是 PAT），典型的 CI 提权漏洞；同时该 job 还会「检测 → 改 README → 推分支 → 开 PR → 立刻合并」，等于让 PR 代码自己给自己发写权限。**修复后的铁律**（改动本仓工作流时必须保持）：
-  1. **PR 事件只能跑只读 job**：`validate` job（`contents: read`、`persist-credentials: false`、不接触任何 secret）。
-  2. **写操作 job 必须排除 PR 事件并限定 main 分支**：`auto-update` job 用事件白名单
-     （`schedule` / `workflow_dispatch` / `push`，且后两者 `github.ref == 'refs/heads/main'`），
-     防止从任意分支以 PAT 写权限运行不可信代码。
-  3. **工作流顶层 `permissions: {}`**，各 job 按需申请最小 scope（别再在顶层给写权限）。
-  4. **PAT 只出现在写操作 job**；只读 job 连 `GITHUB_TOKEN` 都不落盘。
-  5. **脚本层再加一道护栏**：[`detect-updates.mjs`](.github/scripts/detect-updates.mjs) 与
-     [`open-update-pr.mjs`](.github/bin/open-update-pr.mjs) 开头都检查 `GITHUB_EVENT_NAME`，
-     在 `pull_request` / `pull_request_target` 下直接退出（后者用
-     [`lib/github.mjs`](.github/lib/github.mjs) 的 `isAuthorizedWriteEvent` 白名单，
-     回归测试见 [`lib/pr-flow.test.mjs`](.github/lib/pr-flow.test.mjs)）——即使工作流配错也不会写仓库。
-  **判定方法**：`grep -n "permissions\|PAT_TOKEN\|pull_request" .github/workflows/auto-update.yml` 逐条确认 PAT 与写权限没有出现在任何 PR 可达路径上。
-- **自动更新 PR 不能「开完就合」**：旧版 [`bin/open-update-pr.mjs`](.github/bin/open-update-pr.mjs) 创建 PR 后**立刻调用 merge**，既不等检查、也不校验生成内容——坏掉的 `data.yml` / 写了 `latest` 的镜像 tag / README 没同步，全部直接进主干。现在：① 开 PR 前跑 [`lib/validate-batch.mjs`](.github/lib/validate-batch.mjs) 的批次校验（data.yml YAML+schema / 目录结构 / compose 语法 / 更新后的镜像 tag / README 版本一致性），有 error 就不开 PR；② PR 创建后用 [`lib/github.mjs`](.github/lib/github.mjs) 的 `waitForChecks` 轮询 check-runs + combined status，**只有全部 success 才合并**；failure / timeout / unknown 一律**保留 PR 与远程分支**、非零退出。**注意**：用 `GITHUB_TOKEN` 而不是 PAT 开的 PR **不会触发 `pull_request` 工作流**（GitHub 的防递归机制）→ 必需检查永远不会出现 → 门禁必然超时 → PR 保留不合并（安全失败），所以本仓必须配置 `secrets.PAT_TOKEN`。
-- **PR title 或 HEAD commit message 里的 `[skip ci]` 会把合并门禁锁死**：GitHub Actions 的 skip 指令对 **PR title / body** 以及 **PR 的 HEAD commit message** 都生效 → 带 `[skip ci]` 的自动更新 PR 不会触发 `pull_request` 工作流（检查停留在 Pending）→ 必需检查永远不跑 → 合并门禁只能超时。**正确做法**：自动更新的 commit message 与 PR title 都**不带** skip 指令；防合并后 push 递归靠工作流 `on.push.paths` 白名单（只匹配 `.github/**` 等自动更新链路文件），不靠 skip。
-- **Registry 请求失败必须与「无更新」严格区分（2026-11-01 审计）**：旧版 [`lib/registry.mjs`](.github/lib/registry.mjs) 把网络错误 / HTTP 非 2xx / JSON 解析失败全部 `return null`，与「请求成功但没有稳定 tag」混为一谈 → detect 记一条日志继续跑 → **整个 workflow 绿灯**，但那个应用其实根本没检测过。现在 `getLatestTag` 只在「请求成功且没有可用稳定 tag」时返回 `null`，其余一律抛 `RegistryRequestError`；detect 把每个应用记成 `success` / `skipped` / `failed` 三态，存在 failed 时脚本退出码 2、workflow 末尾的门禁步骤 `exit 1`。**分页中途失败也必须抛错**——GHCR 的 tag 是**字典序**返回的，第一页装的是**最旧**的 tag，静默沿用半截数据会选到远古版本（traefik `3.0.3` 事故就是这么来的）。
-
-- **日期型 versionDir 会被 auto-update 跨目录覆盖（2026-09-25 jellyfin 事故，已加两道防线）**：本仓 `jellyfin/` 同时存在纯 semver 目录（`10.11.11/`）与日期型目录（`2026091410-arm64/`）。`lib/semver.mjs` 的 `parse('2026091410-arm64')` → `[2026091410]`，数值远大于 `10.11.11`，于是"跨版本保护"选出的 `maxKnown` 是**日期型目录**；而 `lib/registry.mjs` 的变体正则只认 3 种形态（裸变体 / 变体+版本 / `vX.Y.Z-suffix`），**日期型 tag（数字开头）不匹配** → fallback 到 `pickLatest` 的 pure-semver 选取 → 命中 `10.11.11` → detect 判定"最新版本 = 10.11.11" → `cpSync 2026091410-arm64/ → 10.11.11/`（rmSync + cpSync）→ **10.11.11 目录里手维护的 `name` / `CACHE_FOLDER_PATH` / 自定义 formFields 被兄弟目录整体顶掉**（该事故已实际发生：2026-09-25 的 auto-update PR 把 `name` 改回 `jellyfin 2026081705-arm64`、cache default 退回 `/dev/shm`）。**两道防线**：① `.github/scripts/detect-updates.mjs` 的 `SKIP_AUTO_UPDATE_APPS` 加入 `jellyfin`（手维护应用，镜像由用户在 1Panel UI 的 IMAGE 参数里改）；② 新增导出函数 `canCopyVersionDir(fromDir, toDir, targetExists)`——目标目录已存在且与来源目录不同时**拒绝 cpSync**（宁可漏一次更新，也不摧毁目标目录），并在 `processApp` 里 `continue` 跳过该 versionDir。**教训**：新增"日期型 + semver 混排"的应用时，要么统一版本目录形态，要么直接进白名单；只加 `maxKnown` 保护不够（它按数值大小选目录，日期型永远最大）。
-- **多段数字版本 tag 会被历史遗留的 3 段纯 semver 抢占（2026-10-19 collabora 复盘）**：`lib/semver.mjs` 的 `pickLatest` 走"纯 semver 优先"分支（`PURE_SEMVER_RE = /^v?\d+\.\d+\.\d+$/`），只要候选里**存在任意** 3 段纯 semver tag，它们就会盖过所有非纯 semver tag。`collabora/code` 正好踩中：它同时有 2017 年的 `2.1.2`~`2.1.5`（3 段）和当前的 `26.04.5.1.1`（5 段），`pickLatest` 返回 **`2.1.5`** → detect 判定"最新版本 = 2.1.5" → 新建一个 `2.1.5/` 版本目录并把镜像 tag 改写成 `collabora/code:2.1.5`（**2017 年的老镜像，应用直接降级**）。**修复**：[`lib/registry.mjs`](.github/lib/registry.mjs) 的 `DockerHubAdapter.getLatestTag` / `GhcrAdapter.getLatestTag` 新增**形态 4**——当 `currentTag` 匹配 `^\d+(?:\.\d+){3,}$`（4 段及以上纯数字）时，把候选收敛到"**同段数**"的纯数字 tag 再 `pickLatest`；同段数候选不存在时回退原逻辑（宁可不报也不误报）。**判定方法**：`node -e "import('./.github/lib/semver.mjs').then(m=>console.log(m.pickLatest(['2.1.5','26.04.5.1.1'])))"` → 返回 `2.1.5` 即命中该坑。**回归测试**：[`lib/registry.test.mjs`](.github/lib/registry.test.mjs) case 18-21（DockerHub 选型 / 检出更新 / 无同段数回退 / GHCR 对称）。**教训**：`pickLatest` 的"纯 semver 优先"是全局性偏好，对**多段数字版本**（`26.04.5.1.1` 这类 upstream 用 4 段以上的版本号）的镜像一律不适用；接入这类镜像前必须先跑一次 `pickLatest` 验证选出来的是不是想要的 tag。
-- **PR body 拼进 shell 命令 → 反引号被当命令执行 → 批次静默丢失（2026-10-20 auto-update 事故）**：旧版 [`bin/open-update-pr.mjs`](.github/bin/open-update-pr.mjs:1) 用 `execSync(\`curl ... -d ${JSON.stringify(JSON.stringify(payload))} ...\`)` 调 GitHub API。PR body 里的 markdown 反引号（`v3.2.51`、`anirss/v3.2.51/data.yml`）被 POSIX shell 当成**命令替换**执行：
-  ```
-  /bin/sh: 1: 2026-10-20T03:03:25.637Z: not found      ← 检测时间被吃掉
-  /bin/sh: 1: v3.2.49: not found                       ← before/after 列被吃掉
-  /bin/sh: 1: anirss/v3.2.51/data.yml: Permission denied
-  ```
-  后果链：body 被掏空 → GitHub 返回错误对象（无 `number` / `html_url`）→ 旧代码只判 `JSON.parse` 成功就打印 **`[OK] PR 已开: undefined`** → merge 请求打到 `/pulls/undefined/merge` 得到 `Not Found` → **旧代码仍继续执行并删掉了刚推送的远程分支** → 2026-10-20 整批 42 个文件的更新在 GitHub 上凭空消失（事后核对：该分支的 PR 从未创建）。该缺陷不止一次：PR #33（2026-10-13）与 PR #35（2026-10-17）的 body 同样被掏空（表格 before/after 全空、文件列表只剩 `- `、页脚"由  自动生成"）。**修复**：① 新增 [`lib/github.mjs`](.github/lib/github.mjs) —— GitHub 客户端改用 Node 内置 `fetch`（**不经 shell**），`createPullRequest` 必须拿到数字 `number` 才算成功，否则抛 `GitHubApiError`；② `bin/open-update-pr.mjs` 的 git 调用改用 `execFileSync('git', [...])`（参数数组），commit message 拆成两个 `-m`（旧写法把 `\n` 写进 shell 双引号，git 收到的是**字面量** `\n`）；③ 失败一律非零退出并**保留**远程分支，远程分支只在 PR **合并成功后**才删。**回归测试**：[`lib/github.test.mjs`](.github/lib/github.test.mjs) 锁死"反引号原样送达 GitHub"这条不变量（16 case）。**教训**：**永远不要把不可信内容（PR body / issue 标题 / 分支名 / commit message）拼进 shell 命令字符串**——用 `fetch` + `JSON.stringify` 或 `execFileSync` 参数数组；同理，**API 响应必须做形状校验**（"JSON 能 parse" ≠ "业务成功"），失败时**绝不能**执行清理动作（删分支 / 删文件），否则一次静默失败就会把已完成的批次一起毁掉。
-- **使用 s6-overlay 的镜像不能加 `init: true`**：s6-overlay 要求自身就是容器的 **PID 1**（`s6-overlay-suexec: fatal: can only run as pid 1` 是它的守卫检查），而 `init: true` 会让 Docker 注入 `tini` 抢占 PID 1，二者冲突导致容器启动即失败并被 `restart: always` 反复重拉（日志刷屏同一行）。**复盘（photoprism，2026-10-03）**：`photoprism/260919/docker-compose.yml` 误加 `init: true` 导致无法启动。**解决方式**：删掉 `init: true`。**判定方法**：镜像基线用 s6-overlay（`linuxserver/*`、`hotio/*`、PhotoPrism、部分 Go 自建镜像）或从日志出现 `s6-overlay-suexec` / `s6-rc` 判断。**全仓自查**：`grep -rn --include="docker-compose.yml" -E "^\s*init:\s*true" .`（注意 [bookorbit/3.2.0](bookorbit/3.2.0/docker-compose.yml:47) 也有 `init: true`，改动前需确认其镜像是否用 s6-overlay）。**同源禁忌**：也不要给这类镜像加 `user:`（会让 s6 无 root 无法降权启动）或 `pid:`（直接改写 PID 1）。
-- **官方镜像（非 s6）指定运行身份用 compose 的 `user:`，不是 PUID/PGID 环境变量**：`jellyfin/jellyfin` 官方镜像（`jellyfin-packaging/docker/Dockerfile`）是 `ENTRYPOINT ["/jellyfin/jellyfin"]` + **无 `USER` 指令**——没有 entrypoint 脚本做 chown/su 降权，也**不读** `PUID`/`PGID` 环境变量；要换运行身份只能写 compose 的 `user: "${UID}:${GID}"`（上游文档 <https://jellyfin.org/docs/general/installation/container/> 的原话："Replace `uid:gid` if you want to run jellyfin as a specific user/group"）。**代价**：容器内所有文件以该身份创建，宿主机 bind mount 目录（尤其 `/config` 数据库目录）必须 `chown` 到同一 UID/GID，否则启动即失败。**因此**：用 `user:` 的应用要在 README 里写清"先 chown 再启动"，并把 `UID`/`GID` 做成 `type: number` 的 formField（`paramCommon` 前端正则要求 ≥2 字符，单字符 ID 会被拒，见 [xunlei/beta](xunlei/beta/data.yml) 的处理）。
-- **全仓运行身份（UID / GID）统一口径：先判机制，再选参数名**：本仓 2026-11 起给**每个应用**都提供运行身份安装参数，默认 `99` / `100`（与仓库既有 `kdenlive` / `openshot` / `unmanic` 的 `PUID=99` / `PGID=100` 保持一致）。**两套机制互斥，选错会启动失败**：
-  | 镜像类型 | 判定依据 | 机制 | 宿主机 chown |
-  |---|---|---|---|
-  | 镜像原生支持 PUID/PGID | Dockerfile 有 `ENV PUID/PGID` 或 entrypoint 里 `chown` + `su-exec`/`gosu`/`usermod` 降权 | formField `PUID`/`PGID` + compose `environment` 透传 | **不需要**（镜像自己 chown） |
-  | 官方镜像（无 PUID/PGID、非 s6） | 无 `USER` 指令、无降权 entrypoint | formField `UID`/`GID` + compose `user: "${UID}:${GID}"` | **必须**手工 `chown -R 99:100 <安装目录>/data` |
-  | s6-overlay（linuxserver/* 等） | 日志出现 `s6-overlay-suexec` | PUID/PGID（**禁止** `user:`） | 不需要 |
-  | Postgres 系（pgvector / silo） | `initdb` 需 root chown `PGDATA` | **不提供**该参数 | — |
-  | 官方镜像自带非 root `USER` 且内部目录由该 UID 持有（`collabora/code`） | 镜像 config 有 `User: 1001`，`/opt/cool` 属主同 UID | **不提供**该参数（沿用镜像内置身份） | — |
-  **判定方法**：`curl -sS https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<Dockerfile>` 看 `USER` / `PUID` / `PGID` / `chown` / `su-exec` / `gosu` 四个关键词；entrypoint 脚本（`entrypoint.sh` / `exec.sh` / `start.sh`）里出现 `chown -R ${PUID}:${PGID}` + `exec su-exec ${PUID}:${PGID}` 即为 PUID 家族（`anirss` 即此形态：`docker/exec.sh`）。**已知 PUID 家族**：`anirss` `aria2` `bookorbit` `handbrake` `ignis` `kdenlive` `misaka` `moviepilot` `openshot` `optimisarr` `syncthing` `tdarr` `unmanic` `xunlei`。
-- **`init.sh` 里 `source` 1Panel 写出的 `.env` 会撞上 bash 的只读变量 `UID`**：本仓自 2026-11 起给每个应用都提供运行身份参数，1Panel 写出的 `.env` 里必然含 `UID=99` / `GID=100`；而 `UID` 在 bash 里是**只读变量**（`UID=99` → `bash: UID: readonly variable`）。带 `set -e` 的 `init.sh` 会在 source 这一步直接中断，后续配置/权限准备全部不执行，容器随后以缺失或错误配置启动。**解决方式**：source 前先把 `.env` 另存一份并改名再 source——
-  ```sh
-  ENV_TMP="${WORKDIR}/.env.tmp"
-  sed -e 's/^UID=/RUN_UID=/' -e 's/^GID=/RUN_GID=/' "${ENV_FILE}" > "${ENV_TMP}"
-  set -a; . "${ENV_TMP}"; set +a; rm -f "${ENV_TMP}"
-  ```
-  注意 `/bin/sh` 在 CentOS 系上就是 bash（dash 下 `UID` 非只读），两种都要兼容。参考：[`cfnb/v1.0.1/scripts/init.sh`](cfnb/v1.0.1/scripts/init.sh)。
-- **应用只认 `config.yaml` 且上游默认配置不可信时，必须自己生成配置**：静态二进制（Go + viper/mapstructure）用 **Go 字段名**（小写无下划线）匹配配置键，而上游随镜像生成的那份默认 `config.yaml` 往往是 snake_case —— 后者**读不进来且被静默忽略**（不报错、不生效），照抄上游默认配置会得到"参数完全没反应"的诡异现象。**判定方法**：拿镜像里的二进制做差分探测——每次只改一个键跑一遍，用**启动日志里的可观测量**（模式文案 / 成功率百分比 / 并发数 / 监听端口 / 订阅路径）判断该键是否生效；判定要精确解析数字（正则抓具体数值），别用"行里含某数字"这种粗判，会被时间戳骗出假阳性。**实现路径**：宿主机 `scripts/init.sh` 按 1Panel 安装参数生成配置文件并挂进容器（写文件要**原地覆写**，不能用 tempfile + mv，否则 bind mount 换 inode 后容器仍持旧文件；数据目录固定用 compose 同级的 `./data`，不读 `.env` 里可能存在的 `DATA_PATH`，否则配置会写到容器挂载不到的地方）。参考：[`cfnb/v1.0.1/scripts/init.sh`](cfnb/v1.0.1/scripts/init.sh) 与 [`cfnb/README.md`](cfnb/README.md) 的「配置说明」表。
-- **禁止使用 `latest` 作为版本目录名或镜像 tag**：`latest` 会导致版本漂移，1Panel UI 中该目录名即为版本参数。应使用具体 semver / date-based / functional tag（如 `v1.2.3`、`2024.08`、`pg` 等）。仅当上游镜像完全无版本化 tag 时方可例外保留 `latest`（需在 PR 描述中注明根因）。
-- 版本目录名就是版本参数，改目录名即改版本选项
-- SQLite key 有 `local` 前缀: `jellyfin` → `localjellyfin`
-- 更新时只复制版本子目录，不要复制整个 `<key>/*`
-- sed -i 在 bind-mount 上会失败，用 tempfile + mv
-- 端口变更会影响反向代理配置
-- **formField type 不支持 boolean**: 1Panel 前端 [`params/index.vue`](https://github.com/1Panel-dev/1Panel/blob/main/frontend/src/views/app-store/apps/params/index.vue) 使用 `v-if` 按 type 渲染表单控件，**仅支持 6 种 type**：`text` / `number` / `password` / `service` / `select` / `apps`。如果在 formFields 中使用 `type: boolean`，UI 中该字段会完全不显示且无任何报错。**解决方式**：布尔开关一律用 `type: select` + `values: [{label: 'true', value: 'true'}, {label: 'false', value: 'false'}]` 来模拟。参考应用：`anirss`、`firecrawl`、`mihomo`、`moviepilot`、`handbrake`、`traefik` 等均有同模式字段。**检测技巧**：新增 formField 后如果 UI 未出现，先核对 `type` 是否在上述白名单内。
-- **GHCR 镜像更新检测应使用 OCI Registry API**：GitHub Packages API（`https://api.github.com/orgs/<org>/packages/container/<repo>/versions`）对匿名访问返回 401，即使提供 `GITHUB_TOKEN` 也无法跨组织读取 packages，导致 hardcode 类 GHCR 镜像永远检测不到更新。**正确方式**：先用 `https://ghcr.io/token?scope=repository:<repo>:pull` 获取匿名 pull token（无需认证），再用 `https://ghcr.io/v2/<repo>/tags/list?n=1000` 列出 tags。**必须翻页**：`n=1000` 只是**单页上限**，且 GHCR 返回顺序是 **tag 字典序**（不是"最新在前"）——tag 总数超过 1000 的镜像（如 `ghcr.io/traefik/traefik` 有 2700+ 个，字典序第一页只到 `v2.0.0-alpha6-*`，`v3.6.6` 根本不在第一页）如果只取第一页，`pickLatest` 只能在 1.x / 2.x 旧 tag 里选，会把"最新版本"误判成 `3.0.3` 这类远古版本。**2026-11-01 事故复盘**：本仓把 traefik 切到 ghcr 后，auto-update cron 检出 `3.0.3` 并生成了旧镜像的 `traefik/3.0.3/` 版本目录（PR #41）。**修复**：[`lib/registry.mjs`](.github/lib/registry.mjs) 的 `GhcrAdapter.getLatestTag` 跟随 `Link: <...>; rel="next"` 翻页（上限 `MAX_PAGES=10` 页；相对/绝对 next URL 都支持，后续页失败时保留已拿到的 tag，第一页失败仍返回 null）。**回归测试**：[`lib/registry.test.mjs`](.github/lib/registry.test.mjs) case 22-24。**判定方法**：`node -e "import('./.github/lib/registry.mjs').then(async m=>console.log(await m.createAdapter('ghcr.io/traefik/traefik:v3.6.6').getLatestTag('ghcr.io/traefik/traefik:v3.6.6','v3.6.6')))"` → 返回 `v3.7.17` 这类新 tag 才正常，返回 `3.0.3` 即命中该坑。参考实现：`.github/lib/registry.mjs`（入口脚本 `detect-updates.mjs` 经 `createAdapter` 复用）。
-- **compose 环境变量名需与上游实际读取名一致**：上游容器进程读取的环境变量名未必与 compose 中声明的相同（如上游 `start-all.sh` 读取 `HINDSIGHT_CP_HOSTNAME` 而非 `HINDSIGHT_CP_HOST`）。在新增版本目录或补全 formField 时，应通过阅读上游 Dockerfile / 启动脚本 / `.env.example` 交叉验证变量名，不确定时查上游仓库对应 tag 的 `docker/standalone/start-all.sh`。
-- **1Panel 拒绝顶层 `volumes` 块使用变量插值命名卷**：部署时报错 `validating .../docker-compose.yml: volumes additional properties '${CONTAINER_NAME}-xxx' not allowed`。**根因**：1Panel 用 Go json-schema 严格校验顶层 `volumes` 键名，只接受字面量（如 `pgvector_data: null`），不接受 `${...}` 插值。**解决方式**：需要按 `${CONTAINER_NAME}` 命名的卷一律改为相对路径 bind mount（如 `./data/minio:/data`），并直接删掉顶层 `volumes:` 块，与本仓「持久化挂载优先使用 `./data/...` 相对路径」规约一致。**参考**：[`marginalia/0.3.4/docker-compose.yml`](marginalia/0.3.4/docker-compose.yml:1) commit `3d08ed4`。
-- **`additionalProperties.type` 必须在白名单 `[tool, media, library]` 内**：[`lint-apps.mjs`](.github/bin/lint-apps.mjs:38) 中 `rootAdditionalPropertiesSchema.type = z.enum(TYPE_ENUM)`，仅接受 `tool` / `media` / `library`。历史遗留中曾出现 `type: photo`（[`immich/data.yml`](immich/data.yml:11)、[`immich/v3.0.3/data.yml`](immich/v3.0.3/data.yml:1)）和 `type: database`（[`pgvector/data.yml`](pgvector/data.yml:11)、[`qdrant/data.yml`](qdrant/data.yml:11)），均会被 lint 拒绝。**解决方式**：媒体类用 `media`，数据库类用 `tool`；如需在 README/描述里强调「这是照片管理」「这是数据库」，应放在 `description`/`tags`/`shortDescZh` 而非 `type`。
-- **`formField.rule` 必须在白名单 6 选 1**：`FORMFIELD_RULE_WHITELIST = [paramImageTag, paramPort, paramPath, paramCommon, paramSelect, paramComplexity]`（见 [`lib/schema.mjs`](.github/lib/schema.mjs:1)）。历史遗留 `rule: paramHttp`（[`llamaindex/v0.9.2/data.yml`](llamaindex/v0.9.2/data.yml:1)）和 `rule: paramInt`（[`immich/v3.0.3/data.yml`](immich/v3.0.3/data.yml:1) 4 处）不在白名单。**解决方式**：URL 类改用 `paramCommon`（同 source/dest 字符串），整数类改用 `paramCommon`（同 number 文本框）。**检测技巧**：lint 报 `rule="X" 不在白名单内` 时，先查 `lib/schema.mjs` 的 `FORMFIELD_RULE_WHITELIST`。
-- **`formField.rule` 必须是 string，不能是 object**：[`lint-apps.mjs`](.github/bin/lint-apps.mjs:32) 中 `rule: z.string().optional()`，但 [`jellystat/1.1.11/data.yml`](jellystat/1.1.11/data.yml:1) 曾用 `rule: { type: parameter, required: true, max: 128, min: 16, range: {...} }`（object 形式，疑似 1Panel v1 旧 schema）。**解决方式**：直接删除 `rule:` object 块（rule optional），如需保留校验信息可放入 `label`/`description` 文案里。
-- **`formField` 必填 `envKey` 和 `type`，禁用 `key:`**：[`formFieldZodSchema`](.github/bin/lint-apps.mjs:24) 显式要求 `envKey: z.string().min(1)` 和 `type: z.string()`。[`jellystat/1.1.11/data.yml`](jellystat/1.1.11/data.yml:1) 历史遗留用 `key: PANEL_APP_PORT_HTTP`（少 envKey 3 字符），schema 完全不接受。**解决方式**：所有 formField 顶层 `key:` 改为 `envKey:`。**检测技巧**：运行 `node .github/bin/lint-apps.mjs 2>&1 | grep -E "formFields\[\d+\]"` 查看每个 formField 报的错。
-- **`formField.values[].value` 必须是 string，纯数字 tag 必须加双引号**：`type: select` 的 `values[].value` 在 1Panel Go struct 中声明为 `string`，而 YAML 会把纯数字解析成 `int`。**症状**：应用同步报 `data.yml 文件解析失败 json: cannot unmarshal number into Go struct field AppFormValue.formFields.values.value of type string`，且 `应用未同步到版本！无法添加到应用列表`。**复盘（photoprism，2026-10-03）**：上游 DockerHub tag 是纯日期格式 `260919`，写成 `- value: 260919` 时 YAML 解析为 int 触发该错（此前版本号 `260919-28c46a116` 含字母所以是 string，恰好掩盖了这个问题）。**解决方式**：给 `values[].value`（建议连 `default` 与 `label` 一起）加双引号：`value: "260919"`。**注意区分**：`formFields[].default` 在 Go 中是 `interface{}`，端口号（`type: number`）用裸数字没问题，**只有 `values[].value` 强制 string**。**检测技巧**：`lint-apps.mjs` 走 js-yaml + zod，会把 number 隐式转 string 而**不报错**，只有 1Panel Go 侧会暴露 —— 本地校验用：
-  ```bash
-  node -e "import('js-yaml').then(({load})=>{const fs=require('fs');const a=load(fs.readFileSync('<app>/<version>/data.yml','utf8'),{strict:true}).additionalProperties;a.formFields.forEach((f,i)=>(f.values||[]).forEach((v,j)=>{if(typeof v.value!=='string')console.log('BAD',f.envKey,v.value,typeof v.value)}))})"
-  ```
-- **`versionAdditionalPropertiesSchema` 继承 `key`/`name` 必填**：[`lint-apps.mjs`](.github/bin/lint-apps.mjs:44) 中 `versionAdditionalPropertiesSchema = rootAdditionalPropertiesSchema.extend({ formFields: required })`，**继承**了 `key: z.string().min(1)` 和 `name: z.string().min(1)` 必填。历史遗留的 `additionalProperties: { formFields: [...] }`（缺 key/name）会被 union 拒绝。**解决方式**：在 `additionalProperties:` 下、紧贴 `formFields:` 之前补 3 行：
-  ```yaml
-  additionalProperties:
-    key: <app-key>            # 必须与目录名一致
-    name: <app-key> <version> # 1Panel UI 显示名
-    type: tool                # tool | media | library
-    formFields:
-  ```
-  **已修复的应用**：hindsight×5、jellyfin×2、llamacpp×2、[`infinity/cu124/data.yml`](infinity/cu124/data.yml:1)、[`mineru/3.4.2/data.yml`](mineru/3.4.2/data.yml:1)（4 空格缩进）、[`gecoos/v2.2/data.yml`](gecoos/v2.2/data.yml:1)（仅缺 name）。
-- **zod 3.x `invalid_union` 隐藏内层错误**：[`lint-apps.mjs`](.github/bin/lint-apps.mjs:52) 中 `versionDataYmlSchema = z.union([A, B])` 失败时只报 `Invalid input`，不展开 A/B 各自的子错误，导致根因难定位。**诊断套路**（写入临时 `.agent_cache/union_split.mjs`）：
-  ```js
-  const resultA = A.safeParse(data);
-  const resultB = B.safeParse(data);
-  if (!resultA.success) console.log('A 失败:', JSON.stringify(resultA.error.issues, null, 2));
-  if (!resultB.success) console.log('B 失败:', JSON.stringify(resultB.error.issues, null, 2));
-  ```
-  一般根因落在 `additionalProperties.key` / `additionalProperties.name` / `additionalProperties.type` 之一。
-- **firecrawl 历史 case 警示**：[`firecrawl/2.11.14/2.11.202/2.11.209/data.yml`](firecrawl/2.11.14/data.yml:185) formFields 列表里曾出现重复且残缺的 `- default: 1Panel-localpgvector-kD9L`（缺 envKey/type），是 union 失败的真正根因，**不是**缺 `key/name`。**检测技巧**：当 union 错误出现在已有完整 `additionalProperties` 元数据的应用上时，**先**检查 formFields 列表里有没有缺 `envKey` 或 `type` 的残缺项（grep `^- default:` 找孤立项），**再**判断是否需要补 `key/name`。
-- **顶层 `data.yml` 必须是 `{ additionalProperties: {...} }`**：[`rootDataYmlSchema`](.github/bin/lint-apps.mjs:41) 只接受这种结构，**禁止**顶层直接平铺 `key`/`name`/`description`/`formFields`。历史遗留 [`jellystat/1.1.11/data.yml`](jellystat/1.1.11/data.yml:1) 顶层有 `version`/`image`/`appId`/`servicePort`/`formFields`，[`llmwiki/latest/data.yml`](llmwiki/latest/data.yml:1) 顶层有 `key`/`version`/`name`/`description`/`formFields`，均需重组成 `additionalProperties: { key, name, type, formFields }`。
-- **版本目录 `data.yml` 支持两种 union 形式**：[`versionDataYmlSchema`](.github/bin/lint-apps.mjs:52) 接受：
-  1. `additionalProperties: { key, name, type, formFields, ... }`（紧凑）
-  2. `{ name?, title?, description?, additionalProperties: {...} }`（顶层有可选 `name`/`title`/`description` + 嵌套 `additionalProperties`）
-  两种**不可混用**：选了形式 1 就不要再在根级写 `name:`/`title:`/`description:`，否则 YAML 不会报但 zod 报 Invalid union 之外的奇怪错。
-- **临时诊断脚本应放 `.agent_cache/`**：仓库根 `.gitignore` line 20 已忽略 `.agent_cache/`，所有 `*.mjs` / `*.ps1` / `txt` 诊断产物放在该目录下，结束后用 `node .agent_cache/cleanup.mjs`（仅保留 `.gitkeep`）清理，符合「Trace-less Execution」原则。
-- **1Panel formField 没有 `help:` / `placeholder:` 渲染**：实测 1Panel [`params/index.vue`](https://github.com/1Panel-dev/1Panel/blob/dev/frontend/src/views/app-store/detail/params/index.vue) 的 `el-input` 只绑定 `v-model="form[p.envKey]"` 并读取 `p.default` / `p.label`，**整个模板里没有 `p.help` 也没有 `p.placeholder` 任何引用**。这意味着：
-  - 写 `help:` 字段在 lint 里不会被拒绝（zod `passthrough` 沉默通过），UI 上也**完全不显示**。仓库里 [`searxng/2026.9.7-3e454637f/data.yml`](searxng/2026.9.7-3e454637f/data.yml:65) / [`mineru/3.4.2/data.yml`](mineru/3.4.2/data.yml:174) / [`vane/v1.12.2/data.yml`](vane/v1.12.2/data.yml:121) 都用 `help:` 但用户看不到，是历史遗留死代码。
-  - 写 `placeholder:` 同样不生效（前端没有这个 prop 绑定）。
-  - **正确做法**：把"提示文字"塞进 `default` 字段（作为示例值；Element Plus 的 `<el-input>` 会把 `default` 当输入框初始值，但用户**删掉**才会清空——不是灰色 placeholder），或者把冗长说明拆到 **README.md** 的「安装 / 配置」段落，**不要**堆在 `label` 里把标题拉成 2-3 行。
-  - **dendrite 复盘（2026-09-11）**：[`dendrite/v0.15.2/data.yml`](dendrite/v0.15.2/data.yml:107) 最初把 `DATABASE_URL` 的 i18n label 写成 60+ 字符的"label 内嵌使用说明"（8 个语种 × 60 字符 = ~500 字符垃圾），1Panel UI 渲染成单行 label 后整行被截断 / 换行。**解决**：label 收回到 ≤12 字符短词（"数据库连接串" / "Database URL"），详细说明（含 Postgres 连接串示例、容器名命名规则）移到 README 的「安装 → 切到 PostgreSQL」段落。
-  - **1Panel-postgresql 容器名命名限制**：1Panel 自动生成的 PG 容器名形如 `1Panel-postgresql-ZU4y`，后缀是 Base32 `[A-Z0-9]` 4 字符随机串。用户填 `DATABASE_URL` 时，**Postgres 主机名段必须与该容器名完全一致**（仅大写字母与数字，**没有**短横线 / 下划线 / 小写字母）。如果上游应用层想做 host 校验，**不能**用 `^[a-z0-9-]+$` 之类的宽松正则，要用 `^[A-Za-z0-9-]+$` 且 host 部分须显式校验非空。本仓 `paramCommon` 规则本身不限制这个，由开发者根据上游网络拓扑自行决定。
-  - **`rule: paramCommon` 不能放过完整 DSN / URL**：1Panel `frontend/src/global/form-rules.ts:369` 的 `checkParamCommon` 正则是 `/^[a-zA-Z0-9]{1}[a-zA-Z0-9._-]{1,63}$/`（即"支持英文、数字、.-和_，长度 2-64"那条用户会看到的提示）。Postgres DSN 形如 `postgres://user:pass@host:5432/dbname?sslmode=disable` 含 `:` / `@` / `?` / `/` 全部会被前端拒，**即使是合法连接串也提交不了**。`paramImageTag` / `paramPort` / `paramPath` / `paramComplexity` 同样都不能放过。**正确做法**：把 DSN 拆成 `DB_TYPE`（select） + `DB_HOST`（`paramCommon`） + `DB_PORT`（`paramPort`） + `DB_NAME`（`paramCommon`） + `DB_USER`（`paramCommon`） + `DB_PASSWORD`（`paramComplexity`）6 个分字段，由 `init.sh` 在容器内拼。**dendrite 复盘（2026-09-11）**：[`dendrite/v0.15.2/data.yml`](dendrite/v0.15.2/data.yml:101) 最初用单 `DATABASE_URL` 字段 + `paramCommon`，用户填 `postgresql://user_wEJsSp:password_tyrcEJ@1Panel-postgresql-ZU4y:5432/dendrite?sslmode=disable` 时前端弹"支持英文、数字、.-和_，长度 2-64"拒掉，**改成 6 个分字段后**每条提示都跟字段语义一致，提交成功。
-- **安装参数保持简短（"浅色提示"实现路径）**：1Panel formField 表单只暴露**与本机部署强相关**的少量字段（HTTP 端口、容器内端口、TZ、反代 Origin 等）。任何可通过应用内「配置中心」/Web UI 完成的设置（SMTP 凭据、WebDAV 凭据、第三方 API key、备份策略、主题等）**不暴露**在 1Panel 表单里——避免明文凭据进入 docker-compose 与 .env、避免字段数膨胀到 10+、避免 DSN 拼接被 `paramCommon` 拒掉（见上一条）。在表单字段里**用 `default` 兼做浅色提示**——例如 `TZ` 的 `default: Asia/Shanghai`、`TODO_ALLOWED_ORIGINS` 的 `default: ""`（提示「留空 = 仅 HTTP 直访」），或参考 `kiwix-serve` 的 `ZIM_FILES default: "*.zim"` / `DOWNLOAD default: ""`（提示「留空 = 服务本地文件」）——这样 1Panel UI 输入框渲染时直接显示示例值，用户可视地看到「这个字段长什么样」，比写 `placeholder:` / `help:` 不被渲染要可靠（见上一条 1Panel formField 不渲染 help/placeholder）。**典型对照**：[`personal-todo-vault/latest/data.yml`](personal-todo-vault/latest/data.yml:1) 仅 4 个字段（HTTP 端口 / 容器内端口 / 时区 / Origin），SMTP 与坚果云 WebDAV 全部走应用内「配置中心」用 AES-256-GCM 加密落盘。
-
-## 沙箱中 `node` 不可见的应对
-
-本仓 lint / test 脚本依赖 `node >= 24`（`package.json` `engines` 字段已声明，与 CI 的 `.nvmrc` 一致），但执行沙箱（Windows + fnm + `cmd.exe`）下 `node` / `npm` **经常不在 PATH 里**，体现为：
-
-```text
-'node' is not recognized as an internal or external command,
-operable program or batch file.
-```
-
-### 现象与根因
-
-- `D:\Env\UserScoop\shims\fnm.exe` 装在沙箱里，但**沙箱 shell 不会自动执行 fnm 的 PATH 注入钩子**（`fnm current` 直接报 `` `fnm env` was not applied in this context.``）
-- `where node` 命中 `C:\Windows\System32\where.exe` 自身；`where node.exe` 在沙箱里 `INFO: Could not find files`
-- `D:\Env\UserScoop\shims\` 下只有 `fnm.exe`，**没有** `node.exe` shim（fnm 不会为 node 创建持久 shim）
-- 直接 `dir "C:\Users\33098\AppData\Roaming\fnm\node-versions\v22.22.3\installation"` 在本机也不存在，fnm list 显示 `v22.22.3 default` 但实际安装目录被搬走或未同步
-
-### 排查阶梯（按代价从低到高）
-
-1. **确认任务可仅靠 git 完成**：lint / test 必须 `node`，但**文档、commit、push、revert、status、diff 全部可仅用 `git` 完成**。沙箱里只要能 `git status` / `git commit` / `git push` 就够覆盖绝大多数维护性任务，**不要**为「想跑一次 lint」反复尝试唤起 node。
-2. **查 PATH 中是否被前缀 cmd 截断**：用 `where node`、`where npm`、`where fnm` 分别看；
-   - 命中 `D:\Env\UserScoop\shims\fnm.exe`：fnm 在，但 shell 缺 env 注入，走第 3 步；
-   - 全部 `INFO: Could not find`：fnm 都不在 PATH，沙箱 exec 环境与真实 shell 不一致，**不要**继续追 node，跳到第 5 步。
-3. **让 fnm 给出 env 块**（一次性，不会改当前 shell）：
-   ```cmd
-   fnm env --shell=cmd
-   ```
-   输出里 `SET PATH=...;C:\Users\33098\AppData\Local\fnm_multishells\<pid>_<ts>;D:\Env\UserScoop\shims;...` 包含当前 multi-shell 路径。但**该 PATH 不持久**，下一条命令仍然找不到 node。
-4. **PowerShell 递归定位 node.exe**（慢，可能跑飞）：
-   ```powershell
-   Get-ChildItem -Path 'C:\Users\33098\AppData\Roaming\fnm','C:\Users\33098\AppData\Local\fnm' -Recurse -Filter node.exe -ErrorAction SilentlyContinue | Select-Object -First 5 -ExpandProperty FullName
-   ```
-   **注意**：递归整个 fnm 目录（尤其是跨 `node-versions\v*\installation\`）在 Windows 上动辄几十秒，**且对本仓大多数任务无收益**——本仓 lint 已经验证通过，commit 前不必再跑。
-5. **止损策略**（推荐默认行为）：
-   - `git` / `curl` / `findstr` / `dir` / `del` 在沙箱里都可用，能完成 AGENTS.md 改写、`git commit` / `push` / `revert`、文件 diff 校验、临时清理；
-   - `node` 相关操作（lint、test、auto-update 脚本）**留给用户真实 shell**（VSCode 集成终端 / PowerShell 已配 fnm PATH 注入的环境），不要在沙箱里硬撑；
-   - 不要在沙箱中尝试 `npm install` / `node .github/bin/lint-apps.mjs` 等命令重试超过一次，连续失败即应转为文档 commit / ask user。
-
-### 反例
-
-- ❌ `cd .agent_cache && node x.mjs && type out.txt` —— fnm 没注入 env，`node` 报 not recognized 概率 > 50%；
-- ❌ `npm run lint | tee out.txt` —— `tee` 在 Windows cmd 上对 npm 包装器退出码语义不一致，输出会丢；
-- ❌ 反复递归 `dir /b /s "C:\Users\33098" | findstr node.exe` —— 全盘扫描动辄 30s+，沙箱里**会卡住后台终端**，并污染 `Actively Running Terminals` 列表。
-- ✅ 改为 `git diff AGENTS.md` / `git status` / `git log --oneline` 完成同类校验。
-
-## anirss 不更新根因复盘（2026-09-08）
-
-**症状**：上游 wushuo894/ani-rss 在 2026-09-05 发布 v3.2.29 / v3.2.29-arm32v7，但本仓 `anirss/` 下最末版本仍停留在 v3.2.24（2026-08-28）。`detect-updates.mjs` cron 周一拍不出 PR。
-
-**根因**（[`registry.mjs`](.github/lib/registry.mjs:90) refactor 引入的回归）：
-
-`DockerHubAdapter.getLatestTag` 的 variant 正则 `^([a-zA-Z][a-zA-Z0-9]*)(?:-|$)/` 对 `currentTag='v3.2.18-arm32v7'` 永远不匹配（'v' 之后是 '3'，既不是 `-` 也不是 `$`）。fallback 走 `pickLatest(stable)` → `pickLatest` 内部 `PURE_SEMVER_RE = /^v?\d+\.\d+\.\d+$/` 把所有 `*-arm32v7` tag 过滤掉，永远返回无后缀的 `v3.2.29`。
-
-**链式后果**（[`detect-updates.mjs`](.github/scripts/detect-updates.mjs:303-322) hardcode 路径）：
-
-1. anirss 9 个 versionDir 全部把 `maxTo` 设为 `v3.2.29`（arm32v7 后缀在 fallback 中被丢）
-2. 9 次循环对同一 `v3.2.29/` 目录 `rmSync` + `cpSync` 覆盖，**`v3.2.29-arm32v7/` 目录永远不会被创建**
-3. 1Panel UI 版本下拉中 arm32v7 用户拿不到 v3.2.29
-
-**PR #14 全空 before/after 同根**：cron 周一 2026-08-25 跑 `detect-updates.mjs`（refactor 之后首次），所有应用遍历后 `serviceChanges` 全部为空（refactor 在 `processApp` 返回路径上漏处理），所以全 PR 空修改。这与本仓 firecrawl/handbrake/hindsight/jellyfin/linkwarden/llamacpp/moviepilot/qdrant/searxng/syncthing/vane 全军覆没**同源**。
-
-**修复**（[`.github/lib/registry.mjs`](.github/lib/registry.mjs:87)）：
-
-variant 识别扩展为 3 种 currentTag 形态：
-1. 裸变体 `'pg'` → 匹配 `'pg-1.16.0'`（AGENTS.md 已有业务，行为不变）
-2. 变体+版本 `'pg-1.16.0'` → 匹配 `'pg-1.16.1'`（行为不变）
-3. **semver+后缀 `'v3.2.18-arm32v7'` → 匹配 `'v3.2.29-arm32v7'`**（新增）
-
-形态 3 实现：先正则提取 suffix，再 `pickLatest(stable.filter(t => t.endsWith('-' + suffix)))`。同 suffix 的版本不存在时（如上游删了 arm32v7）走 fallback，避免误报。
-
-**清理**：[`GhcrAdapter`](.github/lib/registry.mjs:132) 内部残留的 `[DEBUG-hindsight]` 8 处 `console.log` 全部删除（PR #13 hindsight 修复遗留）。
-
-**回归测试**（[`.github/lib/registry.test.mjs`](.github/lib/registry.test.mjs:200)）：
-
-- case 14: `v3.2.18-arm32v7` → `v3.2.29-arm32v7`（anirss 核心场景）
-- case 15: `v3.2.24`（无后缀）走 fallback 拿到 `v3.2.29`
-- case 16: `v3.2.18-arm64v8`（suffix 不存在）走 fallback 不误报
-- case 17: GHCR 同样形态 3 支持
-
-**手动补救**：anirss 补出 `v3.2.29/` + `v3.2.29-arm32v7/` 两个目录（cpSync v3.2.24 / v3.2.18-arm32v7 后改 compose image），保证 1Panel UI 当下可用。
-
-**教训**：
-
-- 变体识别是**两个维度**的复合查询：prefix（裸变体语义）+ suffix（semver 后缀架构）。原正则只支持 prefix 一种形态，semver+后缀这种主流架构（anirss/handbrake/scrob 等都这样）会全部走错路径。
-- 测试覆盖不足：原 `registry.test.mjs` 只测了 `pg` / `railway`（anythingllm 业务），没有 `v3.2.X-arm32v7` 这种 semver+suffix 形态。新增 case 14-17 锁死该形态。
-- DEBUG 日志 `[DEBUG-hindsight]` 这种前缀在 PR 合入时**没有清理**——下次类似 PR 应检查 `git grep DEBUG-`。
-- `pickLatest` 的 `PURE_SEMVER_RE` 过滤是双刃剑：把变体 tag 当作"非 semver"丢掉，导致上游有同 suffix 但版本号低时不报错。需要上游**专门**给 suffix 维度筛选（不能完全靠 pickLatest 退路）。
-
-## bookorbit 等 9 个双 envKey 变量型应用不更新根因复盘（2026-10-14）
-
-**症状**：上游 bookorbit 在 2026-10-14 之前已发布 `ghcr.io/bookorbit/bookorbit:3.4.0`，但本仓 `bookorbit/3.2.0/` 仍停留在 3.2.0；其它 8 个用 `image: ${IMAGE}:${APP_VERSION}` 双 envKey 形态的应用（photoprism/mineru/onenav/cinny/music-tag-web/navi-homepage/newapi/xunlei）同样检不出新版本。`detect-updates.mjs` 静默跳过这些应用，cron 不出 PR。
-
-**根因**（[`.github/scripts/detect-updates.mjs`](.github/scripts/detect-updates.mjs) 旧 240-288 行变量型分支）：
-
-变量型分支的设计假设是"image 模板只含 1 个 `${VAR}`，且该 envKey 的 `formField.default` 持有完整镜像字符串"。代码 `defaultVal.split(':')` 拿 `(imageRepo, currentTag)`：
-
-```js
-for (const envKey of varEnvKeys) {
-  // 查 field.default 后 split(':')
-  const [imageRepo, currentTag] = defaultVal.split(':');
-  if (!imageRepo || !currentTag) continue;  // ← 这里静默 continue
-}
-```
-
-但 bookorbit 这 9 个应用把镜像拆成两个 envKey：
-
-- `APP_IMAGE` default = `ghcr.io/bookorbit/bookorbit`（无 tag）→ split 后 `currentTag = undefined` → continue
-- `APP_VERSION` default = `3.2.0` → split 后 `imageRepo = '3.2.0'`、`currentTag = undefined` → continue
-
-两个 envKey 单独都失败，**整个变量型分支对双 envKey 形态输出 0 更新**。
-
-**直接验证**（`.agent_cache/dryrun-bookorbit-variable.mjs`，跑完已清理）：
-
-```
-[APP_IMAGE] defaultVal="ghcr.io/bookorbit/bookorbit"  split → imageRepo="..."  currentTag=undefined  → continue
-[APP_VERSION] defaultVal="3.2.0"  split → imageRepo="3.2.0"  currentTag=undefined  → continue
-```
-
-旁证：`grep "image: \${X}:\${Y}" --include=docker-compose.yml -r .` 命中 9 个应用，全部中招。
-
-**修复**（新增 [`lib/compose.mjs`](.github/lib/compose.mjs)，detect 变量型分支改写）：
-
-把"按 envKey 单独 split"换成 `resolveImageTemplate(image, fields)` 纯函数，**统一处理 2 种变量型形态**：
-
-1. **单 envKey 持有完整字符串**（`image: ghcr.io/foo/bar:${VERSION}` + `VERSION.default = 'ghcr.io/foo/bar:v1.19.18'`）—— 原行为，AGENTS.md 注释的 mihomo 业务
-2. **双 envKey 拆 repo/tag**（`image: ${APP_IMAGE}:${APP_VERSION}` + `APP_IMAGE.default = 'repo'`, `APP_VERSION.default = 'tag'`）—— bookorbit 等 9 个应用，**新增支持**
-
-`resolveImageTemplate` 返回 `{imageRepo, currentTag, envKey, defaultVal, newDefaultVal}`，detect 拿到这个对象后调 `rebuildImageDefault(image, envKey, imageRepo, latest)` 计算写回 formField 的新值：
-
-- 形态 2（单 envKey）：`newDefaultVal = "imageRepo:newTag"`（直接覆盖那个 field）
-- 形态 3（双 envKey）：`newDefaultVal = "newTag"`（只覆盖 tag 那个 field，repo 字段不动）
-
-detect 末尾的写回逻辑（[`.github/scripts/detect-updates.mjs:384-397`](.github/scripts/detect-updates.mjs:384)）**已天然兼容**两种形态，零修改。
-
-**回归测试**（新增 [`lib/compose.test.mjs`](.github/lib/compose.test.mjs)，19 case）：
-
-- 形态 2：`${VERSION}` + field.default 含完整字符串 → 正确拆出 repo/tag
-- 形态 2 边界：default 不含 `:`、envKey 找不到、default 为空 → null
-- 形态 2 边界：registry 端口在 repo 段内（`ghcr.io:443/foo`）→ `lastIndexOf` 仍正确
-- 形态 3 核心：bookorbit `${APP_IMAGE}:${APP_VERSION}` → 正确拆出，envKey 指向 `APP_VERSION`
-- 形态 3 核心：photoprism 复杂 tag `260919-28c46a116` → 正确处理
-- 形态 3 边界：envKey 之一缺失 / 默认值含 `:` / 默认值都为空 / 3+ envKey → 全部 null（保守放弃）
-
-**端到端验证**（`.agent_cache/dryrun-bookorbit-after-fix.mjs`，跑完已清理）：
-
-```
-[app] ✓ resolved: imageRepo=ghcr.io/bookorbit/bookorbit  currentTag=3.2.0  envKey=APP_VERSION
-    ⚠ 3.2.0 -> 3.4.0  |  APP_VERSION.default 改写为 "3.4.0"
-```
-
-旁证 8 个其它应用全部 1+ service 可解析，修复**全部受益**。`npm test` 88/88 通过（原 69 + 新增 19），lint 0 新增错误。
-
-**教训**：
-
-- 变量型 compose 模板有**至少 2 种形态**（单 envKey 持有完整字符串 / 多 envKey 拆 repo 和 tag），原代码只覆盖前者。所有"只假设一种输入形态"的逻辑都应在 `lib/` 层建纯函数 + 配套测试，避免在 detect 入口堆 if-else。
-- "按 envKey 单独循环"是双 envKey 形态的**根本反模式**——`split(':')` 无法在多 envKey 场景工作。修复的本质是把"对 envKey 循环"换成"对 image 整体解析一次"。
-- AGENTS.md 注释里只举了 `mihomo` 一种业务，导致 9 个应用上线时无人发现假设不成立。**新加 formField 类型时必须在 AGENTS.md 列出全部已知的 compose 形态**，否则静默失败。
-- 端到端 dry-run 之前要确认副作用：detect 写盘（`updates.json` + 新版本目录）会真的改仓库。隔离办法是 `.agent_cache/dryrun-*.mjs` + `rmSync` 清理，符合"Trace-less Execution"。
-
-**相关文件**：
-
-- [`lib/compose.mjs`](.github/lib/compose.mjs) — 纯函数实现
-- [`lib/compose.test.mjs`](.github/lib/compose.test.mjs) — 19 case 回归测试
-- [`scripts/detect-updates.mjs`](.github/scripts/detect-updates.mjs) — 变量型分支改用 `resolveImageTemplate`
+- 检测链路只允许 dry-run（见 [automation §2](docs/automation.md#2-检测链路detect)）；**不要**跑不存在的命令，
+  也不要在 CI 外跑会写仓库的检测/批次。
+- 环境（`node >= 24`）与沙箱故障见 [docs/troubleshooting.md](docs/troubleshooting.md)。

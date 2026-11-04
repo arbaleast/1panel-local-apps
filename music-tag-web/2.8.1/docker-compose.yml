@@ -2,12 +2,12 @@ networks:
   1panel-network:
     external: true
 services:
-  # Music Tag Web 主应用(变量型镜像,不在 auto-update 范围)
+  # Music Tag Web 主应用（hardcode 镜像，由 auto-update 守护）
   music-tag-web:
     container_name: ${CONTAINER_NAME}
     # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
     user: "${UID}:${GID}"
-    image: ${IMAGE}:${APP_VERSION}
+    image: xhongc/music_tag_web:2.8.1
     restart: always
     networks:
       - 1panel-network
