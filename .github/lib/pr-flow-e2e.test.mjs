@@ -212,6 +212,68 @@ function runScript(repo, api, extraEnv = {}) {
   });
 }
 
+// ─── 合法应用夹具（供 detect → PR 交接用例）────────────────────────────────
+
+/** 演示应用的 compose（满足仓库规约：hardcode 镜像 / restart / 1panel-network） */
+function DEMO_COMPOSE(tag) {
+  return [
+    'services:',
+    '  main:',
+    `    image: nginx:${tag}`,
+    '    container_name: ${CONTAINER_NAME}',
+    '    restart: always',
+    '    volumes:',
+    '      - ./data:/data',
+    '    networks:',
+    '      - 1panel-network',
+    'networks:',
+    '  1panel-network:',
+    '    external: true',
+    '',
+  ].join('\n');
+}
+
+/**
+ * 在工作副本里写一个**合法**的最小应用（根 data.yml + 两个版本目录 + README 列表）
+ * —— 批次校验（validate-update-batch）必须对它零报错
+ */
+function writeDemoAppFixture(work) {
+  const rootData = `additionalProperties:
+  key: demoapp
+  name: Demo App
+  type: tool
+  shortDescZh: 演示应用
+  shortDescEn: Demo app
+  description:
+    zh: 演示应用
+    en: Demo app
+`;
+  const versionData = `additionalProperties:
+  key: demoapp
+  name: Demo App
+  type: tool
+  formFields: []
+`;
+  fs.mkdirSync(path.join(work, 'demoapp', 'v1.0.0'), { recursive: true });
+  fs.mkdirSync(path.join(work, 'demoapp', 'v2.0.0'), { recursive: true });
+  fs.writeFileSync(path.join(work, 'demoapp', 'data.yml'), rootData);
+  fs.writeFileSync(path.join(work, 'demoapp', 'v1.0.0', 'data.yml'), versionData);
+  fs.writeFileSync(path.join(work, 'demoapp', 'v1.0.0', 'docker-compose.yml'), DEMO_COMPOSE('1.0.0'));
+  fs.writeFileSync(path.join(work, 'demoapp', 'v2.0.0', 'data.yml'), versionData);
+  fs.writeFileSync(path.join(work, 'demoapp', 'v2.0.0', 'docker-compose.yml'), DEMO_COMPOSE('2.0.0'));
+  fs.writeFileSync(
+    path.join(work, 'README.md'),
+    `# demo
+
+## 应用列表
+
+| 应用 | 说明 | 当前版本 |
+|------|------|----------|
+| demoapp | 演示应用 | v2.0.0 |
+`,
+  );
+}
+
 // ─── 主流程 ───────────────────────────────────────────────────────────────
 
 describe('open-update-pr.mjs 隔离式本地 E2E', () => {
@@ -326,6 +388,56 @@ describe('open-update-pr.mjs 隔离式本地 E2E', () => {
         remoteBranches(repo.remote, repo.g).length >= 0,
         '远程分支状态可读',
       );
+    });
+  });
+
+  it('detect → PR 交接：updates.json 里的应用目录确实被提交进批次', async () => {
+    const repo = makeLocalRepo('handoff');
+    await withMock({}, async (api) => {
+      // 模拟 detect-updates.mjs 的产物：一个**合法**的新应用版本目录（批次校验必须放行）
+      writeDemoAppFixture(repo.work);
+      fs.writeFileSync(
+        path.join(repo.work, 'updates.json'),
+        JSON.stringify({
+          updates: [
+            {
+              app: 'demoapp',
+              from: 'v1.0.0',
+              to: 'v2.0.0',
+              versionDir: 'v1.0.0',
+              versionCopy: { appName: 'demoapp', fromDir: 'v1.0.0', toDir: 'v2.0.0' },
+              services: [{ name: 'main', repo: 'nginx', from: '1.0.0', to: '2.0.0' }],
+              changes: [
+                {
+                  path: 'demoapp/v2.0.0/docker-compose.yml',
+                  file: 'docker-compose.yml',
+                  content: DEMO_COMPOSE('2.0.0'),
+                },
+              ],
+            },
+          ],
+          scanned: 1,
+          timestamp: new Date().toISOString(),
+          results: [],
+        }),
+      );
+
+      const res = await runScript(repo, api);
+      assert.equal(res.status, 0, `交接路径应成功，stderr:\n${res.stderr}`);
+
+      // 批次分支上应同时含「新版本目录」与「README」
+      const files = repo
+        .g(['ls-tree', '-r', '--name-only', 'auto-update/2026-11-04'], repo.remote)
+        .stdout.split('\n')
+        .map(s => s.trim())
+        .filter(Boolean);
+      assert.ok(
+        files.includes('demoapp/v2.0.0/docker-compose.yml'),
+        `新版本目录应被提交进批次，实际: ${files.join(', ')}`,
+      );
+      assert.ok(files.includes('README.md'), 'README 应被提交进批次');
+      // 且不得把无关文件卷进来（updates.json 是 gitignore 的产物，不该进批次）
+      assert.ok(!files.includes('updates.json'), 'updates.json 不应进批次提交');
     });
   });
 
