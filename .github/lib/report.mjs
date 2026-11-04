@@ -1,7 +1,8 @@
 // lib/report.mjs — detect-updates 汇总报告纯函数（**唯一**的聚合与渲染实现）
 //
 // 职责：把每个应用的检测结果（{app, status, stage, reason, error?, updates}）
-// 聚合成统计 + 渲染控制台文本 / GitHub Step Summary markdown。
+// 聚合成统计 + 渲染控制台文本 / GitHub Step Summary markdown；
+// 并渲染端到端执行轨迹（PR / CI / 合并阶段）。
 //
 // 设计约束（audit task 2 follow-up）：
 //   - 本模块是 **唯一** 的计数与渲染来源。入口脚本（.github/scripts/detect-updates.mjs）
@@ -11,6 +12,40 @@
 //   - 纯函数，无 IO；输入是**普通对象数组**（updates.json 的 JSON 往返结果可直接传入），
 //     不含类实例 / 函数，因此 CI 可以 `require('./updates.json').results` 直接渲染。
 //   - 每个应用恰好一条记录；status ∈ 'success' | 'skipped' | 'failed'。
+//
+// ── 端到端执行结果（2026-11 治理，目标 §七）────────────────────────────────
+//   renderExecutionMarkdown / renderExecutionSummary 渲染**端到端**执行轨迹：
+//   批次分支 / PR（编号 + 链接 + 是否复用）/ CI 检查状态 / 自动合并状态 / 阶段明细，
+//   并给出「成功更新 / 无更新 / 幂等跳过 / 警告 / 失败」五类统计。
+//   Schema 与聚合在 lib/execution-result.mjs（唯一事实来源）。
+
+// 端到端执行结果的 schema / 聚合（唯一事实来源）
+import {
+  aggregateExecutionResults,
+  toExecutionResults,
+  EXEC_STATUS,
+  EXEC_STATUSES,
+  EXEC_STAGE,
+  EXEC_STAGES,
+  createExecutionResult,
+  withStage,
+  statusFromDetectResult,
+  exitCodeForExecutionResults,
+} from './execution-result.mjs';
+
+// re-export：调用方只依赖 report.mjs 一个入口
+export {
+  aggregateExecutionResults,
+  toExecutionResults,
+  EXEC_STATUS,
+  EXEC_STATUSES,
+  EXEC_STAGE,
+  EXEC_STAGES,
+  createExecutionResult,
+  withStage,
+  statusFromDetectResult,
+  exitCodeForExecutionResults,
+};
 
 /**
  * 结果状态枚举
@@ -216,5 +251,142 @@ export function renderMarkdown(results, opts = {}) {
   }
   lines.push('');
 
+  return lines.join('\n');
+}
+
+// ─── 端到端执行结果渲染（目标 §七.2）────────────────────────────────────
+
+/**
+ * 渲染端到端执行结果的 **markdown**（GitHub Step Summary）
+ *
+ * 内容：
+ *   · 批次概览：分支 / PR（编号 + 链接 + 是否复用）/ CI 状态 / 合并状态
+ *   · 五类统计：成功更新 / 无更新 / 幂等跳过 / 警告 / 失败
+ *   · 阶段明细表（检测 → 目录生成 → SSOT 校验 → PR → CI → 合并）
+ *
+ * @param {object} execution - execution.json 的内容
+ * @param {{title?: string, results?: Array<object>}} [opts]
+ *   `results` = updates.json 的 results 数组（用于五类统计；缺省则只渲染批次概览）
+ * @returns {string}
+ */
+export function renderExecutionMarkdown(execution, opts = {}) {
+  const ex = execution && typeof execution === 'object' ? execution : {};
+  const lines = [];
+
+  lines.push(`## ${opts.title ?? '自动更新执行结果'}`);
+  lines.push('');
+  if (ex.timestamp) lines.push(`- 时间: \`${escapeCell(ex.timestamp)}\``);
+  if (ex.branch) lines.push(`- 批次分支: \`${escapeCell(ex.branch)}\``);
+
+  // PR
+  const pr = ex.pr || null;
+  if (pr && pr.number) {
+    const link = pr.url ? `[#${pr.number}](${pr.url})` : `#${pr.number}`;
+    lines.push(`- PR: ${link}${pr.reused ? '（复用既有自动更新 PR）' : ''}`);
+  } else {
+    lines.push('- PR: 未创建');
+  }
+
+  // CI
+  const ci = ex.ci || null;
+  if (ci) {
+    const missing = (ci.missing || []).length > 0 ? `（缺失必需检查: ${ci.missing.join(', ')}）` : '';
+    lines.push(`- CI 检查: \`${escapeCell(ci.status)}\`${missing}`);
+    if (ci.sha) lines.push(`- 检查对应 head SHA: \`${escapeCell(ci.sha)}\``);
+    if (ci.error) lines.push(`- CI 原因: ${escapeCell(ci.error)}`);
+  } else {
+    lines.push('- CI 检查: 未执行');
+  }
+
+  // 合并
+  const merge = ex.merge || null;
+  if (merge) {
+    lines.push(`- 自动合并: \`${escapeCell(merge.status)}\`${merge.message ? ` — ${escapeCell(merge.message)}` : ''}`);
+  } else {
+    lines.push('- 自动合并: 未执行');
+  }
+  lines.push('');
+
+  // 五类统计
+  const results = Array.isArray(opts.results) ? opts.results : [];
+  if (results.length > 0) {
+    const agg = aggregateExecutionResults(toExecutionResults(results));
+    lines.push('### 分类统计');
+    lines.push('');
+    lines.push('| 分类 | 数量 | 应用 |');
+    lines.push('| --- | --- | --- |');
+    lines.push(`| 成功更新 | ${agg.updated} | ${escapeCell(agg.updatedApps.join(', '))} |`);
+    lines.push(`| 无更新 | ${agg.noUpdate} | ${escapeCell(agg.noUpdateApps.join(', '))} |`);
+    lines.push(`| 幂等跳过 | ${agg.skipped} | ${escapeCell(agg.skippedApps.join(', '))} |`);
+    lines.push(`| 警告 | ${agg.warning} | ${escapeCell(agg.warningApps.join(', '))} |`);
+    lines.push(`| 失败 | ${agg.failed} | ${escapeCell(agg.failedApps.join(', '))} |`);
+    lines.push('');
+
+    if (agg.failed > 0) {
+      lines.push('### 失败明细');
+      lines.push('');
+      lines.push('| app | stage | reason | error |');
+      lines.push('| --- | --- | --- | --- |');
+      for (const r of results) {
+        if (r?.status !== 'failed') continue;
+        lines.push(
+          `| ${escapeCell(r.app)} | ${escapeCell(r.stage)} | ${escapeCell(r.reason)} | ${escapeCell(r.error ?? '')} |`,
+        );
+      }
+      lines.push('');
+    }
+  }
+
+  // 阶段明细
+  const steps = Array.isArray(ex.steps) ? ex.steps : [];
+  if (steps.length > 0) {
+    lines.push('### 阶段明细');
+    lines.push('');
+    lines.push('| 阶段 | 结果 | 说明 |');
+    lines.push('| --- | --- | --- |');
+    for (const s of steps) {
+      lines.push(`| ${escapeCell(s?.name)} | ${escapeCell(s?.outcome)} | ${escapeCell(s?.detail ?? '')} |`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * 渲染端到端执行结果的 **控制台文本**（本地 / 非 Actions 环境降级输出）
+ *
+ * @param {object} execution
+ * @param {{results?: Array<object>}} [opts]
+ * @returns {string}
+ */
+export function renderExecutionSummary(execution, opts = {}) {
+  const ex = execution && typeof execution === 'object' ? execution : {};
+  const lines = [];
+  lines.push('=== 自动更新执行结果 ===');
+  if (ex.branch) lines.push(`批次分支: ${ex.branch}`);
+  const pr = ex.pr || null;
+  lines.push(
+    pr && pr.number
+      ? `PR: #${pr.number}${pr.reused ? '（复用）' : ''} ${pr.url || ''}`
+      : 'PR: 未创建',
+  );
+  const ci = ex.ci || null;
+  lines.push(`CI: ${ci ? ci.status : '未执行'}`);
+  const merge = ex.merge || null;
+  lines.push(`合并: ${merge ? merge.status : '未执行'}`);
+
+  const results = Array.isArray(opts.results) ? opts.results : [];
+  if (results.length > 0) {
+    const agg = aggregateExecutionResults(toExecutionResults(results));
+    lines.push(
+      `分类: 成功更新 ${agg.updated} | 无更新 ${agg.noUpdate} | 幂等跳过 ${agg.skipped} | 警告 ${agg.warning} | 失败 ${agg.failed}`,
+    );
+  }
+
+  const steps = Array.isArray(ex.steps) ? ex.steps : [];
+  for (const s of steps) {
+    lines.push(`  - ${s?.name}: ${s?.outcome}${s?.detail ? ` — ${s.detail}` : ''}`);
+  }
   return lines.join('\n');
 }

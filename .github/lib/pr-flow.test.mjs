@@ -85,16 +85,39 @@ describe('open-update-pr.mjs 事件护栏', () => {
 describe('open-update-pr.mjs 安全收口（audit P2）', () => {
   const src = readFileSync(SCRIPT, 'utf8');
 
-  it('P2-a: 推送使用 --force-with-lease，且不再出现裸 --force', () => {
-    assert.match(src, /'push',\s*'--force-with-lease'/);
-    // 裸 --force（不带 -with-lease 后缀）不允许再出现
-    assert.doesNotMatch(src, /'push',\s*'--force'/);
+  it('P2-a: 推送**不使用任何 force**（rebase 到远端 tip 后快进推送）', () => {
+    // 2026-11 治理：旧实现用 `git push --force-with-lease` 覆盖远端同名日期分支，
+    // 新实现改成「远端 tip 之上 rebase → 普通 push」—— 目标是**零 force**。
+    // 只看**可执行行**（注释里可以讨论 force-with-lease 是什么）
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    assert.doesNotMatch(code, /'push',\s*'--force/, '推送不得带任何 force 参数');
+    assert.doesNotMatch(code, /--force-with-lease/, '推送不得带 --force-with-lease');
+    assert.match(code, /'push',\s*'origin',\s*branch/, '推送必须是普通快进 push');
+    // 覆盖远端已有提交前，先 rebase 到远端 tip 之上
+    assert.match(code, /'rebase',\s*'--onto',\s*'FETCH_HEAD'/);
+    assert.match(code, /'fetch',\s*'origin',\s*branch/);
   });
 
   it('P2-b: PR 查询失败 → 强 abort（不再 warn 后继续创建）', () => {
     assert.doesNotMatch(src, /\[WARN\] 查询.*失败.*继续尝试创建/);
-    assert.match(src, /查询今日已有 PR 失败[\s\S]{0,200}return 1/);
-    assert.match(src, /查询重复批次 PR 失败[\s\S]{0,200}return 1/);
+    assert.match(src, /查询既有自动更新 PR 失败[\s\S]{0,200}return 1/);
+  });
+
+  it('P2-b2: 自动更新 PR 按**分支前缀**识别（不靠标题字符串，不碰人工 PR）', () => {
+    assert.match(src, /findAutoUpdatePullRequests/, '必须用按分支前缀识别的查询');
+    assert.doesNotMatch(src, /PR_TITLE_PREFIX/, '不得再用 PR 标题前缀识别自动更新 PR');
+  });
+
+  it('P0-3: 重复批次 PR **不再静默跳过**（改为复用；复用不了则显式失败）', () => {
+    // 旧实现：发现已有批次 PR → `return 0` → workflow 全绿但更新被静默丢弃
+    assert.doesNotMatch(
+      src,
+      /\[SKIP\][\s\S]{0,120}已存在[\s\S]{0,120}return 0;/,
+      '不得存在「已存在 → 打印 SKIP → return 0」的静默跳过路径',
+    );
+    assert.match(src, /\[REUSE\] 复用既有自动更新 PR/, '必须走复用路径');
+    assert.match(src, /updatePullRequest/, '复用时必须更新既有 PR');
+    assert.match(src, /存在 \$\{autoPrs\.length\} 个未合并的自动更新 PR/, '多个 PR 时必须显式失败');
   });
 
   it('P2-c: 创建 PR 失败时的 catch 不做任何删除分支动作', () => {
@@ -112,18 +135,42 @@ describe('open-update-pr.mjs 安全收口（audit P2）', () => {
     assert.match(m[1], /不合并|保留|保留/);
   });
 
-  it('P2-d: PAT 回退必须显式警告，且不回显 token 值', () => {
+  it('P2-d: GITHUB_TOKEN 回退必须**显式中止**，且不回显 token 值', () => {
     const r = runScript({
       GITHUB_EVENT_NAME: 'schedule',
       PAT_TOKEN: '',
       GITHUB_TOKEN: 'gsh_secret_value',
-      GITHUB_REPOSITORY: 'bad repo name',
+      GITHUB_REPOSITORY: 'owner/repo',
     });
-    assert.equal(r.status, 1); // repo 校验失败，但回退警告应一并打印
-    assert.match(r.stderr, /回退使用 GITHUB_TOKEN/);
+    assert.equal(r.status, 1, '回退 GITHUB_TOKEN 必须非零退出');
+    assert.match(r.stderr, /拒绝使用 GITHUB_TOKEN/);
     assert.match(r.stderr, /PAT_TOKEN/);
     // 绝不把 token 值打进日志
     assert.doesNotMatch(r.stderr, /gsh_secret_value/);
+    // 回退路径不得走到开 PR
+    assert.doesNotMatch(r.stdout, /\[OK\] PR 已开/);
+  });
+
+  it('P0-1: 合并门禁必须绑定**必需检查白名单**（缺任一 → 绝不合并）', () => {
+    assert.match(src, /requiredChecks:\s*REQUIRED_CHECKS/, 'waitForChecks 必须传 requiredChecks');
+    assert.match(src, /REQUIRED_CHECKS/, '必须读取 REQUIRED_CHECKS');
+    assert.match(src, /resolveHeadSha/, '必须检测 head SHA 变化并重新验证');
+  });
+
+  it('P2-7: git add 使用**路径白名单**，不得 `git add -A`', () => {
+    assert.doesNotMatch(src, /'add',\s*'-A'/, '不得使用 git add -A（会把工作区残留卷进 PR）');
+    assert.match(src, /'add',\s*'--'/, 'git add 必须限定路径');
+  });
+
+  it('P2-15: 批次校验必须在 git add / commit / push **之前**', () => {
+    const validateIdx = src.indexOf('validateUpdateBatch({');
+    const addIdx = src.indexOf("'add', '--'");
+    const pushIdx = src.indexOf("'push', 'origin', branch");
+    assert.ok(validateIdx > 0, '找不到批次校验');
+    assert.ok(addIdx > 0, '找不到 git add');
+    assert.ok(pushIdx > 0, '找不到 git push');
+    assert.ok(validateIdx < addIdx, '批次校验必须早于 git add');
+    assert.ok(validateIdx < pushIdx, '批次校验必须早于 git push');
   });
 
   it('合并必须带 expectedHeadSha 护栏（只合并等待过检查的那个 SHA）', () => {

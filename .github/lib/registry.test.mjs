@@ -1,7 +1,17 @@
 // lib/registry.test.mjs
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseImage, DockerHubAdapter, GhcrAdapter, createAdapter, RegistryRequestError } from './registry.mjs';
+import {
+  parseImage,
+  DockerHubAdapter,
+  GhcrAdapter,
+  createAdapter,
+  RegistryRequestError,
+  assertTagArray,
+  computeRetryDelay,
+  fetchWithRetry,
+  isRetryableStatus,
+} from './registry.mjs';
 
 // 辅助：将回调式 mock 转为 Promise
 function makeMockFetch(calls) {
@@ -33,7 +43,7 @@ describe('registry', () => {
       },
     ]);
 
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:latest');
     assert.equal(tag, 'v1.2.4');
     assert.equal(tokenRequested, true);
@@ -55,7 +65,7 @@ describe('registry', () => {
       },
     ]);
 
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:latest');
     assert.equal(tag, 'v1.0.0');
   });
@@ -66,6 +76,8 @@ describe('registry', () => {
   it('DockerHub throws RegistryRequestError on 429', async () => {
     const adapter = new DockerHubAdapter({
       fetchImpl: () => Promise.resolve({ ok: false, status: 429 }),
+      // 注入 no-op sleep：重试退避不真的等待（单测不引入真实时延）
+      sleep: async () => {},
     });
     await assert.rejects(
       () => adapter.getLatestTag('nginx'),
@@ -315,7 +327,7 @@ describe('registry', () => {
         json: async () => ({ results: p2, next: null }),
       }),
     ]);
-    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock });
+    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     const tag = await adapter.getLatestTag('wushuo894/ani-rss:v3.2.32-arm32v7', 'v3.2.32-arm32v7');
     assert.equal(tag, 'v3.2.37-arm32v7');
   });
@@ -336,15 +348,17 @@ describe('registry', () => {
         }),
       });
     };
-    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock });
+    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     const tag = await adapter.getLatestTag('wushuo894/ani-rss:v3.2.32-arm32v7', 'v3.2.32-arm32v7');
     assert.equal(tag, 'v3.2.36-arm32v7');
     assert.equal(callCount, 1, '单页足够时只调 1 次 fetch');
   });
 
-  // 16d. 超过 5 页（500 tag）时停止翻页，fallback 用已拉到的 tag 计算最新
-  // 防止 scrob 这类 80+ tag 镜像 + 大量历史 tag 触发无限翻页
-  it('DockerHubAdapter: caps pagination at MAX_PAGES (5) without infinite loop', async () => {
+  // 16d. 超过 5 页（500 tag）时**停止翻页并抛错**（审计 P2-4）
+  // 旧行为：静默用半截 tag 列表算「最新版本」→ 可能选到远古版本
+  // （traefik 3.0.3 同型事故：GHCR tag 是字典序，半截数据必然选到最旧的）。
+  // 新行为：tag 列表不完整 → 抛 RegistryRequestError → detect 记 failed（而不是误报更新）
+  it('DockerHubAdapter: caps pagination at MAX_PAGES (5) and throws on truncated tag list', async () => {
     let callCount = 0;
     const fetchMock = () => {
       callCount++;
@@ -359,10 +373,12 @@ describe('registry', () => {
         }),
       });
     };
-    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock });
-    const tag = await adapter.getLatestTag('test/repo:v1.0.0', 'v1.0.0');
+    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
+    await assert.rejects(
+      () => adapter.getLatestTag('test/repo:v1.0.0', 'v1.0.0'),
+      (err) => err instanceof RegistryRequestError && /翻页达到上限/.test(err.message),
+    );
     assert.equal(callCount, 5, '最多 5 页翻页');
-    assert.equal(tag, 'v1.0.100');
   });
 
   // 17. GhcrAdapter semver+后缀变体
@@ -376,7 +392,7 @@ describe('registry', () => {
         }),
       }),
     ]);
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:v3.2.18-arm32v7', 'v3.2.18-arm32v7');
     assert.equal(tag, 'v3.2.29-arm32v7');
   });
@@ -451,7 +467,7 @@ describe('registry', () => {
         json: async () => ({ tags: ['2.1.5', '26.04.5.1.1', '26.04.6.1.1'] }),
       }),
     ]);
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:26.04.5.1.1', '26.04.5.1.1');
     assert.equal(tag, '26.04.6.1.1');
   });
@@ -483,7 +499,7 @@ describe('registry', () => {
         json: async () => ({ tags: ['1.0.0', '2.0.0', '3.0.3'] }),
       });
     };
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:v3.6.6', 'v3.6.6');
     assert.equal(tag, 'v3.7.17');
     assert.equal(requested.length, 2);
@@ -520,7 +536,7 @@ describe('registry', () => {
       }
       return Promise.resolve({ ok: false, status: 503 });
     };
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     await assert.rejects(
       () => adapter.getLatestTag('ghcr.io/org/repo:v1.0.0'),
       (e) => {
@@ -557,7 +573,7 @@ describe('registry', () => {
         json: async () => ({ tags: ['v1.0.0', 'v2.0.0'] }),
       });
     };
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     const tag = await adapter.getLatestTag('ghcr.io/org/repo:v1.0.0');
     assert.equal(tag, 'v3.0.0');
   });
@@ -636,6 +652,7 @@ describe('registry', () => {
   it('DockerHub converts network throw into RegistryRequestError', async () => {
     const adapter = new DockerHubAdapter({
       fetchImpl: () => Promise.reject(new Error('ECONNRESET')),
+      sleep: async () => {},
     });
     await assert.rejects(
       () => adapter.getLatestTag('nginx:1.0'),
@@ -658,7 +675,7 @@ describe('registry', () => {
       }
       return Promise.reject(new Error('socket hang up'));
     };
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     await assert.rejects(
       () => adapter.getLatestTag('ghcr.io/org/repo:v1'),
       (e) => {
@@ -706,7 +723,7 @@ describe('registry', () => {
       }
       return Promise.resolve({ ok: true, json: async () => ({ tags: [] }) });
     };
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     assert.equal(await adapter.getLatestTag('ghcr.io/org/repo:v1'), null);
   });
 
@@ -718,7 +735,7 @@ describe('registry', () => {
       }
       return Promise.resolve({ ok: false, status: 401 });
     };
-    const adapter = new GhcrAdapter({ fetchMock, fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchMock, fetchImpl: fetchMock, sleep: async () => {} });
     await assert.rejects(
       () => adapter.getLatestTag('ghcr.io/org/repo:v1'),
       (e) => {
@@ -817,8 +834,7 @@ describe('registry', () => {
   // 41. getLatestTag 对不可解析的镜像字符串抛错（而不是静默返回 null）
   it('getLatestTag throws RegistryRequestError on unparsable image string', async () => {
     const docker = new DockerHubAdapter({
-      fetchImpl: () => Promise.reject(new Error('不应该发起请求')),
-    });
+      fetchImpl: () => Promise.reject(new Error('不应该发起请求')), sleep: async () => {} });
     await assert.rejects(
       () => docker.getLatestTag('${IMAGE}:${TAG}'),
       (e) => {
@@ -829,8 +845,7 @@ describe('registry', () => {
     );
 
     const ghcr = new GhcrAdapter({
-      fetchImpl: () => Promise.reject(new Error('不应该发起请求')),
-    });
+      fetchImpl: () => Promise.reject(new Error('不应该发起请求')), sleep: async () => {} });
     await assert.rejects(
       () => ghcr.getLatestTag('ng inx:1.0'),
       (e) => {
@@ -866,7 +881,7 @@ describe('registry', () => {
       }
       return Promise.resolve({ ok: false, status: 500 });
     };
-    const adapter = new GhcrAdapter({ fetchImpl: fetchMock });
+    const adapter = new GhcrAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     await assert.rejects(
       () => adapter.getLatestTag('ghcr.io/org/repo:v1'),
       (e) => {
@@ -916,7 +931,7 @@ describe('registry', () => {
       }
       return Promise.resolve({ ok: false, status: 502 });
     };
-    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock });
+    const adapter = new DockerHubAdapter({ fetchImpl: fetchMock, sleep: async () => {} });
     await assert.rejects(
       () => adapter.getLatestTag('org/repo:v1.0.0'),
       (e) => {
@@ -926,5 +941,164 @@ describe('registry', () => {
         return true;
       },
     );
+  });
+});
+
+// ─── 2026-11 可靠性治理：响应形状校验 / 重试退避 / 404 不重试 ───────────────
+
+describe('assertTagArray（上游响应形状校验，审计 P1-1）', () => {
+  it('DockerHub results 缺失 → 抛错（不得静默当成空列表）', () => {
+    assert.throws(
+      () => assertTagArray({ count: 0 }, 'dockerhub', 'https://hub.docker.com/x'),
+      (e) => e instanceof RegistryRequestError && /响应结构异常/.test(e.message),
+    );
+  });
+
+  it('DockerHub results 不是数组 → 抛错', () => {
+    assert.throws(
+      () => assertTagArray({ results: 'nope' }, 'dockerhub', 'https://hub.docker.com/x'),
+      (e) => e instanceof RegistryRequestError && /响应结构异常/.test(e.message),
+    );
+  });
+
+  it('DockerHub results 条目缺 name → 抛错', () => {
+    assert.throws(
+      () => assertTagArray({ results: [{ tag: 'v1' }] }, 'dockerhub', 'https://hub.docker.com/x'),
+      (e) => e instanceof RegistryRequestError && /name/.test(e.message),
+    );
+  });
+
+  it('GHCR tags 缺失 → 抛错', () => {
+    assert.throws(
+      () => assertTagArray({ name: 'x' }, 'ghcr', 'https://ghcr.io/x'),
+      (e) => e instanceof RegistryRequestError && /响应结构异常/.test(e.message),
+    );
+  });
+
+  it('合法响应 → 正常返回', () => {
+    assert.deepEqual(assertTagArray({ tags: ['v1', 'v2'] }, 'ghcr', 'u'), ['v1', 'v2']);
+    assert.deepEqual(assertTagArray({ results: [{ name: 'v1' }] }, 'dockerhub', 'u'), [{ name: 'v1' }]);
+  });
+});
+
+describe('DockerHubAdapter：200 但结构异常 → failed（不得误判 no-update）', () => {
+  it('HTTP 200 + 缺 results → 抛 RegistryRequestError', async () => {
+    const adapter = new DockerHubAdapter({
+      fetchImpl: async () =>
+        new Response(JSON.stringify({ count: 0 }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+    });
+    await assert.rejects(
+      () => adapter.getLatestTag('nginx', '1.25'),
+      (e) => e instanceof RegistryRequestError && /响应结构异常/.test(e.message),
+    );
+  });
+
+  it('GHCR HTTP 200 + 缺 tags → 抛 RegistryRequestError', async () => {
+    const adapter = new GhcrAdapter({
+      fetchImpl: async (url) => {
+        if (url.includes('/token')) {
+          return new Response(JSON.stringify({ token: 'anon' }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          });
+        }
+        return new Response(JSON.stringify({ name: 'x' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      },
+    });
+    await assert.rejects(
+      () => adapter.getLatestTag('ghcr.io/org/repo', 'v1.0.0'),
+      (e) => e instanceof RegistryRequestError && /响应结构异常/.test(e.message),
+    );
+  });
+});
+
+describe('重试与退避（审计 P2-3）', () => {
+  it('isRetryableStatus：429 / 5xx 可重试，404 / 4xx 不可重试', () => {
+    assert.equal(isRetryableStatus(429), true);
+    assert.equal(isRetryableStatus(500), true);
+    assert.equal(isRetryableStatus(503), true);
+    assert.equal(isRetryableStatus(404), false);
+    assert.equal(isRetryableStatus(403), false);
+  });
+
+  it('computeRetryDelay 指数增长且有上限', () => {
+    assert.equal(computeRetryDelay(0, { baseDelayMs: 100, maxDelayMs: 1000 }), 100);
+    assert.equal(computeRetryDelay(1, { baseDelayMs: 100, maxDelayMs: 1000 }), 200);
+    assert.equal(computeRetryDelay(5, { baseDelayMs: 100, maxDelayMs: 1000 }), 1000);
+  });
+
+  it('429 → 退避后重试并成功', async () => {
+    let calls = 0;
+    const delays = [];
+    const res = await fetchWithRetry(
+      async () => {
+        calls++;
+        if (calls === 1) return new Response('{}', { status: 429 });
+        return new Response('{}', { status: 200 });
+      },
+      'https://example.invalid/x',
+      {},
+      { sleep: async (ms) => { delays.push(ms); } },
+    );
+    assert.equal(calls, 2);
+    assert.equal(res.status, 200);
+    assert.deepEqual(delays, [500]);
+  });
+
+  it('404 → **不重试**（直接返回，交调用方报错）', async () => {
+    let calls = 0;
+    const res = await fetchWithRetry(
+      async () => {
+        calls++;
+        return new Response('{}', { status: 404 });
+      },
+      'https://example.invalid/x',
+      {},
+      { sleep: async () => {} },
+    );
+    assert.equal(calls, 1);
+    assert.equal(res.status, 404);
+  });
+
+  it('网络异常 → 退避后重试；耗尽后抛出', async () => {
+    let calls = 0;
+    await assert.rejects(
+      () =>
+        fetchWithRetry(
+          async () => {
+            calls++;
+            throw new Error('ECONNRESET');
+          },
+          'https://example.invalid/x',
+          {},
+          { retries: 2, sleep: async () => {} },
+        ),
+      /ECONNRESET/,
+    );
+    assert.equal(calls, 3);
+  });
+
+  it('adapter 对 429 自动重试（端到端）', async () => {
+    let calls = 0;
+    const adapter = new DockerHubAdapter({
+      fetchImpl: async () => {
+        calls++;
+        if (calls === 1) return new Response('{}', { status: 429 });
+        return new Response(JSON.stringify({ results: [{ name: '1.2.3' }], next: null }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      },
+      sleep: async () => {},
+    });
+    const tag = await adapter.getLatestTag('nginx', '1.2.3');
+    assert.equal(tag, '1.2.3');
+    assert.equal(calls, 2);
   });
 });

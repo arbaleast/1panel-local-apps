@@ -223,3 +223,68 @@ describe('auto-update workflow：事件隔离', () => {
     assert.ok(!/pulls\/.*\/merge/.test(text), 'workflow 不得直接调 merge API');
   });
 });
+
+// ─── 2026-11 可靠性治理：必需检查绑定 / 权限补齐 / 去掉 paths 过滤 ──────────
+
+describe('auto-update workflow：合并门禁与必需检查（2026-11 治理）', () => {
+  /** 找出跑 open-update-pr.mjs 的 step */
+  function prSteps(job) {
+    return (job?.steps || []).filter((s) => String(s?.run || '').includes('open-update-pr.mjs'));
+  }
+
+  it('REQUIRED_CHECKS 环境变量必须与 validate job 的 name 完全一致', () => {
+    // 审计 P0-1：合并门禁按「必需检查名」判定。若 env 与 job name 脱节，
+    // 必需检查永远匹配不上 → 门禁恒超时（或误判为通过）。
+    const [validateId, validateJob] = validationJobs[0];
+    const jobName = validateJob.name;
+    assert.ok(jobName, `${validateId} job 必须有 name（它就是 check run 的名字）`);
+
+    const [autoId, autoJob] = autoUpdateJobs[0];
+    const steps = prSteps(autoJob);
+    assert.ok(steps.length > 0, `${autoId} job 必须有开 PR 的 step`);
+    const env = steps[0].env || {};
+    assert.ok(
+      Object.prototype.hasOwnProperty.call(env, 'REQUIRED_CHECKS'),
+      `${autoId} job 的开 PR step 必须显式声明 REQUIRED_CHECKS`,
+    );
+    const required = String(env.REQUIRED_CHECKS)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    assert.deepEqual(
+      required,
+      [jobName],
+      `REQUIRED_CHECKS 必须与 ${validateId} job 的 name 一致（改名时必须同步）`,
+    );
+  });
+
+  it('自动更新 job 必须授予 checks: read 与 statuses: read（合并门禁要读检查状态）', () => {
+    // 审计 P1-9：waitForChecks 调 /commits/{sha}/check-runs 与 /commits/{sha}/status，
+    // 两者分别要求 checks: read / statuses: read。缺了 → GITHUB_TOKEN 路径恒 403
+    // → 门禁恒 unknown → 永不合并。
+    const [id, job] = autoUpdateJobs[0];
+    const perms = jobPermissions(job);
+    assert.equal(perms.checks, 'read', `${id} job 需要 checks: read 读取目标 PR 的 Check Runs`);
+    assert.equal(perms.statuses, 'read', `${id} job 需要 statuses: read 读取目标 PR 的 commit status`);
+  });
+
+  it('pull_request 触发器**不得**使用 paths 过滤（避免必需检查从未触发导致 PR 卡死）', () => {
+    // 审计 P0-1 触发路径 + required check 死锁：路径过滤会让 validate job 在
+    // 「只改 README / 非白名单文件」的 PR 上根本不跑 → 必需检查从未出现
+    // → GitHub 视为未通过 → PR 永久卡死。
+    const triggers = workflow.on ?? workflow[true] ?? workflow[String('on')];
+    const pr = triggers.pull_request;
+    assert.ok(pr, '必须保留 pull_request 触发');
+    assert.equal(
+      pr.paths,
+      undefined,
+      'pull_request 不得使用 paths 过滤（必需检查必须对每个 PR 都出现）',
+    );
+  });
+
+  it('合并门禁步骤不得使用管理员 / 绕过分支保护的参数', () => {
+    const text = JSON.stringify(workflow);
+    assert.ok(!/--admin/.test(text), 'workflow 不得使用 gh pr merge --admin');
+    assert.ok(!/bypass/i.test(text), 'workflow 不得出现绕过分支保护的配置');
+  });
+});

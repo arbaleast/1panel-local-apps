@@ -58,6 +58,33 @@ export const FAILING_CONCLUSIONS = new Set([
 export const AUTHORIZED_WRITE_EVENTS = new Set(['schedule', 'workflow_dispatch', 'push']);
 
 /**
+ * 自动更新 PR 的**分支前缀**（识别自动更新 PR 的唯一依据）
+ *
+ * 审计 P2-9：旧实现靠 PR title 前缀字符串识别「重复批次 PR」，人工 PR 只要
+ * 标题撞上就会被误判。这里改用**分支前缀**——只有 `auto-update/` 开头的分支
+ * 才是自动更新产物，人工分支（feat/fix/docs/...）永远不会被认领、覆盖或关闭。
+ */
+export const AUTO_UPDATE_BRANCH_PREFIX = 'auto-update/';
+
+/**
+ * 目标 PR 上**必须**通过的检查（默认清单）
+ *
+ * 审计 P0-1（核心红线）：旧实现的 waitForChecks 只要求「该 SHA 上至少有一个
+ * check run 且全部成功」，**完全没有校验「仓库配置的必需检查是否已经出现」**。
+ * 结果：只要 SHA 上存在任何一个**无关的**成功 check run（例如第三方 App、
+ * 或路径过滤导致本仓 workflow 未触发的历史 check），就会判定 success →
+ * 直接进入 mergePullRequest → **提前合并未经验证的 PR**。
+ *
+ * 现在必须**逐个**确认 requiredChecks 里的检查已经出现且 completed+success；
+ * 缺失任何一个都视为「未满足合并条件」，继续等待直至超时，绝不合并。
+ *
+ * 名称必须与 auto-update.yml 里 validate job 的 `name:` 完全一致；
+ * workflow.test.mjs 会锁定两者一致，改名时不会漏改。
+ */
+export const DEFAULT_REQUIRED_CHECKS = Object.freeze(['只读校验（单测 + 跨文件一致性 lint）']);
+
+
+/**
  * 判断当前事件是否允许执行自动更新写操作（脚本层防御纵深）
  *
  * 工作流的 `if:` 是第一道防线；本函数是第二道——即使工作流配置被改错，
@@ -126,14 +153,20 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
     }
 
     if (!res.ok) {
-      const apiMessage = (data && (data.message || data.error)) || `HTTP ${res.status}`;
-      const detail = data && data.errors ? ` (${JSON.stringify(data.errors)})` : '';
-      throw new GitHubApiError(`GitHub API ${method} ${path} 失败: ${apiMessage}${detail}`, {
-        status: res.status,
-        method,
-        path,
-        details: data,
-      });
+      // 审计 P2-10：**必须**把 HTTP 状态码写进 message —— 旧实现只带 GitHub 的
+      // message 字段（如 "Validation Failed"），状态码 422/403/404 全部丢失，
+      // 调用方只打印 e.message → 日志里看不到真正的失败原因。
+      const apiMessage = (data && (data.message || data.error)) || '(无响应体)';
+      const detail = data && data.errors ? ` ${JSON.stringify(data.errors)}` : '';
+      throw new GitHubApiError(
+        `GitHub API ${method} ${path} 失败: HTTP ${res.status} ${apiMessage}${detail}`,
+        {
+          status: res.status,
+          method,
+          path,
+          details: data,
+        },
+      );
     }
     return data;
   }
@@ -147,6 +180,34 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
   }
 
   /**
+   * 读取单个 PR（用于重新确认 head SHA / 状态）
+   * @param {{owner: string, repo: string, number: number}} params
+   * @returns {Promise<object>}
+   */
+  async function getPullRequest({ owner, repo, number }) {
+    return await request('GET', `/repos/${owner}/${repo}/pulls/${number}`);
+  }
+
+  /**
+   * 找出**自动更新**产生的 open PR（按分支前缀识别，绝不碰人工 PR）
+   *
+   * 审计 P2-9：旧实现按 PR **标题前缀字符串**识别重复批次 PR → 人工 PR 撞标题
+   * 就会被误判。这里只认 `head.ref` 以 `auto-update/` 开头的 PR。
+   *
+   * @param {{owner: string, repo: string, base?: string}} params
+   * @returns {Promise<Array<object>>}
+   */
+  async function findAutoUpdatePullRequests({ owner, repo, base }) {
+    const open = await listOpenPullRequests({ owner, repo });
+    return open.filter(pr => {
+      const headRef = pr && pr.head && typeof pr.head.ref === 'string' ? pr.head.ref : '';
+      if (!headRef.startsWith(AUTO_UPDATE_BRANCH_PREFIX)) return false;
+      if (!base) return true;
+      return pr.base && pr.base.ref ? pr.base.ref === base : true;
+    });
+  }
+
+  /**
    * 创建 PR。**必须**拿到 number，否则视为失败（2026-10-20 事故就是
    * 错误对象被当成 PR，导致 "PR 已开: undefined"）。
    */
@@ -156,6 +217,31 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
     if (!data || typeof data.number !== 'number') {
       throw new GitHubApiError('GitHub API 创建 PR 未返回编号（number），判定为失败', {
         method: 'POST',
+        path,
+        details: data,
+      });
+    }
+    return data;
+  }
+
+  /**
+   * 更新已有 PR 的标题 / 正文（幂等复用已有自动更新 PR 时使用）
+   *
+   * 只用于**自动更新分支**上的 PR（由 findAutoUpdatePullRequests 按分支前缀筛出），
+   * 绝不用于人工 PR。
+   *
+   * @param {{owner: string, repo: string, number: number, title?: string, body?: string}} params
+   * @returns {Promise<object>}
+   */
+  async function updatePullRequest({ owner, repo, number, title, body }) {
+    const path = `/repos/${owner}/${repo}/pulls/${number}`;
+    const payload = {};
+    if (typeof title === 'string') payload.title = title;
+    if (typeof body === 'string') payload.body = body;
+    const data = await request('PATCH', path, payload);
+    if (!data || typeof data.number !== 'number') {
+      throw new GitHubApiError('GitHub API 更新 PR 未返回编号（number），判定为失败', {
+        method: 'PATCH',
         path,
         details: data,
       });
@@ -233,31 +319,63 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
    *   · `success` —— 至少有一个 check run，且全部 completed + conclusion=success，
    *                  同时合并状态不是 failure / pending；
    *   · `failure` —— 任一 check run 的 conclusion 在失败集合里，或合并状态为 failure；
-   *   · `timeout` —— 超时仍有检查在跑，或**始终没有出现任何 check run**；
-   *   · `unknown` —— API 调用本身失败（网络错误 / 非 2xx）。
+   *   · `timeout` —— 超时仍有检查在跑，或**始终没有出现任何 check run**，
+   *                   或**必需检查始终没有出现**；
+   *   · `unknown` —— API 调用本身失败（网络错误 / 非 2xx），或未配置必需检查；
+   *   · `sha-changed` —— 等待期间 PR 的 head SHA 变了（由 resolveHeadSha 检测）。
    *
    * `now` / `sleep` 可注入，便于单测（不依赖真实定时器）。
    *
-   * @param {{owner: string, repo: string, ref: string, timeoutMs?: number,
-   *          intervalMs?: number, now?: () => number, sleep?: (ms: number) => Promise<void>}} params
-   * @returns {Promise<{status: 'success'|'failure'|'timeout'|'unknown',
+   * @param {{owner: string, repo: string, ref: string, requiredChecks?: string[],
+   *          timeoutMs?: number, intervalMs?: number,
+   *          now?: () => number, sleep?: (ms: number) => Promise<void>,
+   *          resolveHeadSha?: () => Promise<string|null>}} params
+   * @returns {Promise<{status: 'success'|'failure'|'timeout'|'unknown'|'sha-changed',
    *                    checks: Array<{name: string, status: string, conclusion: string|null}>,
-   *                    error?: string}>}
+   *                    missing?: string[], currentSha?: string|null, error?: string}>}
    */
   async function waitForChecks({
     owner,
     repo,
     ref,
+    requiredChecks = DEFAULT_REQUIRED_CHECKS,
     timeoutMs = 1800000,
     intervalMs = 30000,
     now = () => Date.now(),
     sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms)),
+    resolveHeadSha = null,
   }) {
     const start = now();
     let checks = [];
 
+    // 审计 P0-1：没有必需检查清单就**无法判定"必需检查已通过"** →
+    // 直接 unknown，绝不返回 success（否则又回到"任意一个成功 check 就能合并"的漏洞）。
+    const required = Array.isArray(requiredChecks)
+      ? requiredChecks.map(c => String(c).trim()).filter(Boolean)
+      : [];
+    if (required.length === 0) {
+      return {
+        status: 'unknown',
+        checks,
+        error: '未配置必需检查（requiredChecks），无法判定目标 PR 的必需检查是否通过 → 拒绝合并',
+      };
+    }
+
     // 最多轮询到超时（每轮至少 sleep 一次，保证 now 能推进）
     for (;;) {
+      // 审计 P2-11：等待期间 PR 可能被再次推送 → head SHA 变化 → 旧 SHA 的检查结论作废。
+      if (typeof resolveHeadSha === 'function') {
+        let currentSha = null;
+        try {
+          currentSha = await resolveHeadSha();
+        } catch (e) {
+          return { status: 'unknown', checks, error: `读取 PR 最新 head SHA 失败: ${e.message}` };
+        }
+        if (currentSha && currentSha !== ref) {
+          return { status: 'sha-changed', checks, currentSha };
+        }
+      }
+
       let runs;
       let combined;
       try {
@@ -281,18 +399,32 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
         return { status: 'failure', checks };
       }
 
-      // 3) 全部通过
+      // 3) 全部通过 —— 且**每一个必需检查都必须已经出现**（审计 P0-1 核心）
       const allPassed =
         checks.length > 0 &&
         checks.every(c => c.status === 'completed' && c.conclusion === 'success');
       const combinedPending = combined && combined.state === 'pending';
-      if (allPassed && !combinedPending) {
-        return { status: 'success', checks };
+      const missing = required.filter(name => !checks.some(c => c.name === name));
+      const requiredNotGreen = required.filter(name => {
+        const c = checks.find(x => x.name === name);
+        return !c || c.status !== 'completed' || c.conclusion !== 'success';
+      });
+      if (allPassed && !combinedPending && missing.length === 0 && requiredNotGreen.length === 0) {
+        return { status: 'success', checks, missing: [] };
       }
 
-      // 4) 超时（检查仍在跑，或始终没有出现任何 check run）
+      // 4) 超时（检查仍在跑、始终没有出现任何 check run、或必需检查始终没有出现）
       if (now() - start >= timeoutMs) {
-        return { status: 'timeout', checks };
+        const stillMissing = required.filter(name => !checks.some(c => c.name === name));
+        return {
+          status: 'timeout',
+          checks,
+          missing: stillMissing,
+          error:
+            stillMissing.length > 0
+              ? `超时：必需检查未出现（${stillMissing.join(', ')}）`
+              : '超时：检查仍未跑完',
+        };
       }
 
       await sleep(intervalMs);
@@ -302,7 +434,10 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
   return {
     request,
     listOpenPullRequests,
+    getPullRequest,
+    findAutoUpdatePullRequests,
     createPullRequest,
+    updatePullRequest,
     mergePullRequest,
     deleteBranch,
     listCheckRuns,

@@ -11,7 +11,11 @@
 | Job | 触发事件 | 权限 | 职责 |
 |---|---|---|---|
 | `validate` | 所有事件（含 `pull_request`） | `contents: read` | 只读：`npm test` + `npm run lint` + `npm run docs:check`。lint 分级拦截：error（P0/P1）阻塞合并，warning（P2）转 `::warning::` 标注仅提示。不碰 Token、不写仓库 |
-| `auto-update` | 仅 `schedule` / `workflow_dispatch` / 受控 `push`（后两者限 `main`） | `contents: write` + `pull-requests: write` | 检测 → 改 README → 校验 → 开 PR → 等检查 → 合并 |
+| `auto-update` | 仅 `schedule` / `workflow_dispatch` / 受控 `push`（后两者限 `main`） | `contents: write` + `pull-requests: write` + `checks: read` + `statuses: read` | 检测 → 改 README → 校验 → 开 PR → 等检查 → 合并 |
+
+> `checks: read` / `statuses: read` 是合并门禁的**必需项**：合并门禁要读目标 PR 的
+> Check Runs（`/commits/{sha}/check-runs`）与合并状态（`/commits/{sha}/status`），
+> 缺任一 scope 这两个接口直接 403 → 门禁恒为 `unknown` → 永不合并（2026-11 审计 P1-9）。
 
 铁律（改动本工作流时必须保持；源自 2026-11-01 CI 提权漏洞复盘，见 [postmortems.md](postmortems.md#auto-update-工作流曾是-ci-提权面2026-11-01)）：
 
@@ -25,6 +29,13 @@
    在 `pull_request` / `pull_request_target` 下直接退出（后者走
    [lib/github.mjs](../.github/lib/github.mjs) 的 `isAuthorizedWriteEvent` 白名单）。工作流配错也不会写仓库。
 6. `concurrency` 区分 PR 校验与批次更新（`group` 含 `github.event_name`），避免互相阻塞或并行写分支。
+7. **`pull_request` 触发器不得加 `paths` 过滤**：路径过滤会让 `validate` 在「只改 README /
+   非白名单文件」的 PR 上根本不跑 → 必需检查从未出现 → GitHub 视为未通过 → PR 永久卡死
+   （2026-11 审计 P0-1 触发路径 + required check 死锁）。
+8. **必需检查名必须双写一致**：工作流的 `REQUIRED_CHECKS` 环境变量与 `validate` job 的 `name:`
+   必须完全相同（由 [lib/workflow.test.mjs](../.github/lib/workflow.test.mjs) 锁定），
+   否则合并门禁永远匹配不上目标 PR 的检查。
+
 
 ## 2. 检测链路（detect）
 
@@ -35,6 +46,43 @@
 三态结果：每个应用产出 `success` / `skipped` / `failed`（写入 `updates.json` 的 `results` + `summary`）。
 **Registry 网络错误绝不算「无更新」**；存在 failed 时脚本退出码 2，workflow 末尾「检测失败门禁」
 步骤显式 `exit 1` 让整个 workflow 变红。
+
+2026-11 可靠性治理补充的不变量：
+
+- **上游响应形状异常 = 失败**：HTTP 200 但缺少 `results` / `tags` 字段（或类型不对）时
+  [lib/registry.mjs](../.github/lib/registry.mjs) 的 `assertTagArray` **抛错**，
+  不得静默归一成「空 tag 列表」→ 旧实现会把上游异常误判成「已是最新」。
+- **空 tag 列表 ≠ 无更新**：查询成功但没有可用稳定 tag 时应用结论是 `skipped` +
+  `no-stable-tag`（**不是** `success`/`no-update`）。
+- **过滤名打错 = 失败**：`APPS_FILTER` 过滤后命中 0 个应用 → 直接非零退出，
+  不允许「扫描 0 个应用」伪装成功。
+- **429 / 5xx / 网络抖动自动重试**（指数退避，`sleep` 可注入便于单测）；404 不重试。
+- **翻页达上限 = 失败**：tag 列表不完整时抛错，不许沿用半截数据算「最新版本」。
+
+### 2.1 新版本目录的原子生成（Staging → Validation → Commit）
+
+新版本目录**不直接写进仓库正式树**，而是走
+[lib/version-writer.mjs](../.github/lib/version-writer.mjs) 的三段式流程：
+
+1. **Staging**：在 `<repoRoot>/.staging/<app>/<toDir>/` 里复制来源版本目录并写入受管文件
+   （`docker-compose.yml` / `data.yml`）。正式目录此时**零改动**。
+2. **Validation**：对 staging 目录直接复用已交付的 SSOT 校验能力 ——
+   `node .github/bin/lint-apps.mjs --root <stagingRoot> --json`（局部扫描模式：
+   豁免表仍从真实仓库读、跳过死亡豁免判定、跳过全仓镜像策略不变式）
+   + [lib/validate-batch.mjs](../.github/lib/validate-batch.mjs) 的批次一致性校验。
+3. **Commit**：校验通过才 `renameSync` 进正式目录（同文件系统 → 原子）。
+
+目标版本目录已存在时**永不删除、永不覆盖**：
+
+| 情形 | 处置 |
+|---|---|
+| 目标不存在 | `CREATE` —— rename 进正式目录 |
+| 目标存在且**同名**（就地更新当前版本目录的受管文件） | `UPDATE` —— 只替换受管文件，其余文件（`data/` / `scripts/`）不动 |
+| 目标存在且与产物**完全一致** | `IDEMPOTENT` —— 幂等跳过（`SKIPPED / ALREADY_EXISTS`） |
+| 目标存在且内容不同 | `CONFLICT` —— **报错拦截**，禁止覆盖（历史版本不可变） |
+
+任一步失败只清理**本次** staging 目录（路径必须落在 `.staging` 之内），
+正式目录与用户已有文件零污染；下次运行会自愈残留 staging。
 
 跳过条件（与实现一致）：
 
@@ -73,17 +121,25 @@
 PR 创建后 [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 的合并流程
 （细节全部走 [lib/github.mjs](../.github/lib/github.mjs)）：
 
-- 防重：先按 PR title 前缀 `chore(deps): auto-update` 查 open PR，再用
-  `GET /pulls?head=<owner>:<branch>` 二次确认；**查询失败 = 中止**（不做任何写操作，分支不创建），
-  绝不在「无法确认是否重复」的情况下继续创建。
-- 推送：分支名 `auto-update/<date>`（单 PR 合并本批次全部变更）；分支由 `checkout -B` 重建后
-  以 `--force-with-lease` 推送（替代裸 `--force`）：远端有本地不知道的新提交时会拒绝覆盖，
-  防止静默吞掉第三方批次提交（2026-11 audit P2-a）。
-  进一步硬化点（未实现，如需再做）：先 `ls-remote` 取远端 SHA，改用
-  `--force-with-lease=<branch>:<SHA>` 显式租约，拿不到就中止。
-- 合并门禁：轮询 GitHub Checks + combined status，**键控到目标 PR 响应的 `head.sha`**
-  （不是触发 workflow 自身的 SHA）；`waitForChecks` 只在各必要检查 success 后合并；
-  failure / timeout / unknown 一律**保留 PR 与远程分支**、非零退出。
+- 防重：**按分支前缀 `auto-update/` 识别**自动更新 PR（`findAutoUpdatePullRequests`），
+  人工 PR（`feat/` / `fix/` / `docs/` …）永远不会被认领、覆盖或关闭。
+  查询失败 = 中止（不做任何写操作，分支不创建），绝不在「无法确认是否重复」的情况下继续创建。
+- 复用：已有未合并的自动更新 PR 时**复用其分支并更新该 PR**（幂等），
+  **不再像旧实现那样 `return 0` 静默跳过**（那会让 workflow 全绿却丢掉整批更新）；
+  同时存在多个未合并的自动更新 PR 时**显式失败**，交人工裁决。
+- 推送：分支名 `auto-update/<date>`（单 PR 合并本批次全部变更）。**全程不使用任何 force**：
+  远端已有同名分支时先 `fetch` + `rebase --onto FETCH_HEAD`，再普通快进 `push`；
+  rebase 冲突则中止并保留本地提交（不覆盖任何人的提交）。
+- 暂存：`git add -- <本次改动的应用目录白名单>`（**不是** `git add -A`），
+  工作区残留文件不会被卷进批次 PR；无改动时不产生空提交。
+- 批次校验**前移到 `git add` / `commit` / `push` 之前**：坏内容不再先进远端分支才被拦。
+- 合并门禁：轮询 GitHub Checks + combined status，**键控到目标 PR 的最新 head SHA**
+  （不是触发 workflow 自身的 SHA）；**必须逐个确认 `REQUIRED_CHECKS` 里的必需检查
+  已出现且 `completed + success`**，缺任一 → 继续等待直至超时 → **绝不合并**
+  （旧实现只要求「该 SHA 上至少有一个 check run 且全绿」，一个**无关的**第三方
+  check 成功就会被判为通过 → 提前合并，属 P0 漏洞）。
+  failure / timeout / unknown / 缺检查 一律**保留 PR 与远程分支**、非零退出。
+- **head SHA 变化 → 作废旧结论**：等待期间重新读 PR 的 head SHA，变化则换新 SHA 重新验证。
 - **合并带 sha 护栏**：合并请求体带 `sha: <等待检查的 head SHA>`。若等待期间分支被再次推送，
   GitHub 返回 409（Head branch was modified）→ 不合并，避免把「未经验证的新提交」并入 main
   （回归见 lib/github.test.mjs「merge 带 expectedHeadSha …」与 pr-flow.test.mjs 同名断言）。
@@ -92,13 +148,30 @@ PR 创建后 [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 的合并�
   检查永远停留 Pending → 合并门禁必然超时（回归见 lib/github.test.mjs 的 `buildCommitMessage` /
   `buildPullRequestTitle`）。合并后的「push 递归触发」由工作流 `on.push.paths` 白名单防住
   （只匹配 `.github/**` 等自动更新链路自身文件）。
-- Token：`secrets.PAT_TOKEN`（缺失时 `|| github.token` 托底并打 `[WARN]` 日志提醒——
-  `GITHUB_TOKEN` 创建的 PR 不会触发 `pull_request` 工作流 → 必需检查不出现 → 合并门禁超时，
+- Token：`secrets.PAT_TOKEN`（**缺失时直接中止**——`GITHUB_TOKEN` 创建的 PR 不会触发
+  `pull_request` 工作流 → 必需检查不出现 → 合并门禁必然超时，
   **本仓必须配置 `secrets.PAT_TOKEN`**）。Token 缺失时脚本直接非零退出，不静默降级。
-- 失败处理铁律：API 响应必须做形状校验（"JSON 能 parse" ≠ "业务成功"）；失败时**绝不执行清理动作**
+- 失败处理铁律：API 响应必须做形状校验（"JSON 能 parse" ≠ "业务成功"）；
+  API 错误日志**必须含 HTTP 状态码 + 响应摘要**；失败时**绝不执行清理动作**
   （删分支 / 删文件）；remote 分支只在 PR 合并成功后删除。全部调用用 Node 内置 `fetch` /
   `execFileSync` 参数数组，**绝不把不可信内容（PR body / commit message）拼进 shell 命令字符串**
   （2026-10-20 事故复盘，见 postmortems.md）。
+
+### 4.1 执行结果与 Summary（可观测性）
+
+端到端执行轨迹写在仓库根 `execution.json`（已 gitignore），字段与 schema 定义在
+[lib/execution-result.mjs](../.github/lib/execution-result.mjs)：
+应用名、当前本地版本、检测到的上游版本、最终状态
+（`UPDATED` / `NO_UPDATE` / `SKIPPED` / `WARNING` / `FAILED`）、
+六个阶段结果（检测 → 目录生成 → SSOT 校验 → PR → CI → 合并，含 PR 编号/链接）、
+失败或跳过原因与出错阶段。
+
+渲染由 [lib/report.mjs](../.github/lib/report.mjs) 统一实现（唯一渲染入口）：
+`renderExecutionMarkdown` 写 `$GITHUB_STEP_SUMMARY`（GitHub Actions），
+`renderExecutionSummary` 在本地/非 Actions 环境降级为控制台结构化输出。
+Summary 必须给出**成功更新 / 无更新 / 幂等跳过 / 警告 / 失败**五类清单，
+禁止只输出一条笼统的成功或失败日志。
+
 
 ## 5. README 同步
 
@@ -109,21 +182,24 @@ PR 创建后 [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 的合并�
 
 ## 6. lib/ 模块一览
 
-仓库根 [`.github/lib/`](../.github/lib/) 十个 ESM 模块为脚本层共享能力（层规约见
+仓库根 [`.github/lib/`](../.github/lib/) 十二个 ESM 模块为脚本层共享能力（层规约见
 [CONTRIBUTING.md](../CONTRIBUTING.md)）：
 
 | 文件 | 职责 | 关键导出 |
 |---|---|---|
 | [`lib/semver.mjs`](../.github/lib/semver.mjs) | 严格 SemVer 2.0.0 解析/比较 + 宽松数字段比较（两套语义禁止混用） | `parse` / `compare` / `compareVersionsLoose` / `isStable` / `pickLatest` / `parseSemver` / `isValidSemver` / `compareSemver` / `pickNewestVersionDir` |
-| [`lib/registry.mjs`](../.github/lib/registry.mjs) | DockerHub / GHCR 适配器、唯一镜像字符串解析入口 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` / `RegistryRequestError` |
-| [`lib/apps.mjs`](../.github/lib/apps.mjs) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` |
+| [`lib/registry.mjs`](../.github/lib/registry.mjs) | DockerHub / GHCR 适配器、唯一镜像字符串解析入口、响应形状校验与重试退避 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` / `RegistryRequestError` / `assertTagArray` / `fetchWithRetry` / `computeRetryDelay` / `isRetryableStatus` |
+| [`lib/apps.mjs`](../.github/lib/apps.mjs) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` / `loadAliases` / `buildShortToDir` |
 | [`lib/schema.mjs`](../.github/lib/schema.mjs) | data.yml 结构定义与校验规则（纯 JS） | `validateFormField` / `validateKeyMatch` / `validateUrlField` / `normalizeFormField` / `FORMFIELD_TYPE_WHITELIST` |
 | [`lib/consistency.mjs`](../.github/lib/consistency.mjs) | 跨文件一致性规则集（compose ↔ data.yml ↔ README ↔ 目录名），ruleId 单一事实来源 | `RULES` / `RULE_IDS` / `BUILTIN_VARS` / `checkVarDeclarations` / `checkFormOrphans` / `checkHighPrivilege` 等 check* |
 | [`lib/lint-exemptions.mjs`](../.github/lib/lint-exemptions.mjs) | lint 豁免清单加载/匹配/死条目检测（数据在 `.github/lint-exemptions.yml`） | `loadExemptions` / `exemptionMatches` / `applyWaivers` / `findDeadExemptions` |
 | [`lib/compose.mjs`](../.github/lib/compose.mjs) | compose image 模板解析（单/双 envKey 形态）与 formField 重组 | `resolveImageTemplate` / `rebuildImageDefault` |
-| [`lib/github.mjs`](../.github/lib/github.mjs) | GitHub REST 客户端（内置 fetch 不经 shell）+ PR body / commit message 构造 + 检查状态门禁 | `createGitHubClient` / `buildPullRequestBody` / `buildCommitMessage` / `GitHubApiError` |
-| [`lib/report.mjs`](../.github/lib/report.mjs) | 检测结果聚合与渲染（stdout / Step Summary）唯一实现 | `aggregateResults` / `exitCodeForResults` / `renderSummary` / `renderMarkdown` / `escapeCell` |
+| [`lib/github.mjs`](../.github/lib/github.mjs) | GitHub REST 客户端（内置 fetch 不经 shell）+ PR body / commit message 构造 + 必需检查门禁 | `createGitHubClient` / `buildPullRequestBody` / `buildCommitMessage` / `GitHubApiError` / `DEFAULT_REQUIRED_CHECKS` / `AUTO_UPDATE_BRANCH_PREFIX` |
+| [`lib/report.mjs`](../.github/lib/report.mjs) | 检测结果聚合与渲染（stdout / Step Summary）唯一实现 | `aggregateResults` / `exitCodeForResults` / `renderSummary` / `renderMarkdown` / `renderExecutionMarkdown` / `renderExecutionSummary` / `escapeCell` |
 | [`lib/validate-batch.mjs`](../.github/lib/validate-batch.mjs) | 自动更新批次的全量配置校验（纯函数） | `validateUpdateBatch` / `loadAliasByDir` / `validateDataYamlDocument` / `validateComposeDocument` / `validateImageTags` / `isRecognisableVersionTag` / `readReadmeVersionTable` / `validateReadmeVersion` |
+| [`lib/version-writer.mjs`](../.github/lib/version-writer.mjs) | 新版本目录的原子生成（staging → 校验 → 提交）与历史版本不可变保护 | `stageVersionDir` / `commitStagingDir` / `resolveVersionTarget` / `cleanupStagingDir` / `cleanupStaleStaging` / `isIdenticalDir` |
+| [`lib/execution-result.mjs`](../.github/lib/execution-result.mjs) | 端到端执行结果 schema（应用 → 阶段 → 状态）与五类聚合 | `EXEC_STATUS` / `EXEC_STAGE` / `createExecutionResult` / `withStage` / `toExecutionResults` / `aggregateExecutionResults` / `exitCodeForExecutionResults` |
+
 
 ## 相关文档
 

@@ -81,7 +81,7 @@ docs/                       # 手册（本路由器的下游）
 唯一命令来源是 [package.json](package.json) `scripts`（分层规约见 [CONTRIBUTING.md §4](CONTRIBUTING.md#4-lib-与-bin-分层与依赖规约)）：
 
 ```bash
-npm test              # node --test ".github/lib/*.test.mjs"（约 360+ case）
+npm test              # node --test ".github/lib/*.test.mjs"（约 500 case）
 npm run lint          # node .github/bin/lint-apps.mjs（含 warning 时 PASSED (with warnings)，exit 0）
 npm run validate:batch  # node .github/bin/validate-update-batch.mjs
 npm run docs:check    # node .github/bin/check-docs.mjs

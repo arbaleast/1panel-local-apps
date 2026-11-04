@@ -585,3 +585,53 @@ describe('validateAppStructure / validateReadmeVersion / readReadmeVersionTable'
     assert.ok(errs.some(e => /README 未重新同步/.test(e)), errs.join(' | '));
   });
 });
+
+// ─── 2026-11 治理：staging 校验跳过 README 版本一致性 ─────────────────────
+
+describe('validateUpdateBatch：skipReadmeCheck（staging 校验用）', () => {
+  const mkRoot = () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-readme-'));
+    const appDir = path.join(root, 'demo');
+    fs.mkdirSync(path.join(appDir, 'v1.0.0'), { recursive: true });
+    fs.writeFileSync(
+      path.join(appDir, 'v1.0.0', 'data.yml'),
+      'additionalProperties:\n  key: demo\n  name: Demo\n  type: tool\n',
+    );
+    fs.writeFileSync(
+      path.join(appDir, 'v1.0.0', 'docker-compose.yml'),
+      'services:\n  main:\n    image: nginx:1.0.0\n',
+    );
+    fs.writeFileSync(
+      path.join(appDir, 'data.yml'),
+      'additionalProperties:\n  key: demo\n  name: Demo\n  type: tool\n',
+    );
+    return root;
+  };
+
+  it('默认校验 README 一致性（staging 没有 README → 报「缺少应用」）', () => {
+    const root = mkRoot();
+    const { errors } = validateUpdateBatch({
+      root,
+      updates: [{ app: 'demo', versionDir: 'v1.0.0', services: [], changes: [] }],
+    });
+    assert.ok(
+      errors.some(e => /缺少应用/.test(e)),
+      `应报 README 缺少应用，实际: ${errors.join(' | ')}`,
+    );
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  it('skipReadmeCheck: true → 不再因 README 报假失败', () => {
+    const root = mkRoot();
+    const { errors } = validateUpdateBatch({
+      root,
+      updates: [{ app: 'demo', versionDir: 'v1.0.0', services: [], changes: [] }],
+      skipReadmeCheck: true,
+    });
+    assert.ok(
+      !errors.some(e => /缺少应用/.test(e)),
+      `不应报 README 缺少应用，实际: ${errors.join(' | ')}`,
+    );
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+});

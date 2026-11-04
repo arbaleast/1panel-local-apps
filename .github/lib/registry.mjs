@@ -4,6 +4,123 @@ import { pickLatest } from './semver.mjs';
 // 默认请求超时（~30s）。测试可通过构造参数注入更短的超时。
 const DEFAULT_TIMEOUT_MS = 30000;
 
+// 默认重试策略（审计 P2-3：旧实现对 429 / 5xx / 网络抖动**一次都不重试**，
+// 可恢复故障被固化成整轮红）。
+const DEFAULT_RETRIES = 2;
+const DEFAULT_RETRY_BASE_DELAY_MS = 500;
+const DEFAULT_RETRY_MAX_DELAY_MS = 4000;
+
+/** 默认 sleep（可注入，便于 node:test 断言重试次数而不真的等待） */
+function defaultSleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 指数退避延迟计算（纯函数，便于单测）
+ * @param {number} attempt 第几次尝试（0 起）
+ * @param {{baseDelayMs?: number, maxDelayMs?: number}} [opts]
+ * @returns {number}
+ */
+export function computeRetryDelay(attempt, { baseDelayMs = DEFAULT_RETRY_BASE_DELAY_MS, maxDelayMs = DEFAULT_RETRY_MAX_DELAY_MS } = {}) {
+  return Math.min(maxDelayMs, baseDelayMs * 2 ** Math.max(0, attempt));
+}
+
+/**
+ * 判断一个 HTTP 状态码是否**值得重试**
+ *
+ * · 429（限流）→ 重试
+ * · 5xx（服务端错误）→ 重试
+ * · 404 / 4xx（客户端错误）→ **不重试**（重试也不会变好，只会浪费时间）
+ *
+ * @param {number} status
+ * @returns {boolean}
+ */
+export function isRetryableStatus(status) {
+  if (status === 429) return true;
+  return typeof status === 'number' && status >= 500 && status <= 599;
+}
+
+/**
+ * 带重试与指数退避的 fetch
+ *
+ * 语义：
+ *   · 2xx → 直接返回 Response
+ *   · 429 / 5xx → 退避后重试；重试耗尽 → **返回最后一个 Response**（由调用方抛带 status 的错误）
+ *   · 404 及其它 4xx → 立即返回 Response（不重试）
+ *   · 网络异常 → 退避后重试；重试耗尽 → 抛出最后一次异常
+ *
+ * @param {Function} fetchImpl
+ * @param {string} url
+ * @param {object} [opts]
+ * @param {{retries?: number, baseDelayMs?: number, maxDelayMs?: number, sleep?: Function}} [retry]
+ * @returns {Promise<Response>}
+ */
+export async function fetchWithRetry(
+  fetchImpl,
+  url,
+  opts = {},
+  { retries = DEFAULT_RETRIES, baseDelayMs = DEFAULT_RETRY_BASE_DELAY_MS, maxDelayMs = DEFAULT_RETRY_MAX_DELAY_MS, sleep = defaultSleep } = {},
+) {
+  let lastError = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    let res;
+    try {
+      res = await fetchImpl(url, opts);
+    } catch (e) {
+      lastError = e;
+      if (attempt === retries) throw e;
+      await sleep(computeRetryDelay(attempt, { baseDelayMs, maxDelayMs }));
+      continue;
+    }
+    if (res && res.ok) return res;
+    if (!isRetryableStatus(res && res.status)) return res; // 4xx 不重试
+    if (attempt === retries) return res; // 重试耗尽 → 交给调用方报错
+    await sleep(computeRetryDelay(attempt, { baseDelayMs, maxDelayMs }));
+  }
+  if (lastError) throw lastError;
+  throw new Error(`Registry 请求失败: ${url}`);
+}
+
+/**
+ * 校验上游响应形状：**字段缺失 / 类型不对 → 抛错**
+ *
+ * 审计 P1-1：旧实现用 `data?.results ?? []` / `data?.tags ?? []` ——
+ * 上游返回 HTTP 200 但结构异常（字段改名 / 错误体 / 空对象）时被静默归一为
+ * 「空 tag 列表」→ detect 判成 success + no-update（"已是最新"）→ **漏检且 CI 绿灯**。
+ * 与「请求成功但确实没有稳定 tag」（返回 null）严格区分。
+ *
+ * @param {unknown} data 上游 JSON
+ * @param {'dockerhub'|'ghcr'} kind
+ * @param {string} url
+ * @returns {string[]} 解析出的 tag 名数组（DockerHub 是 results 对象的 name 字段）
+ * @throws {RegistryRequestError} 字段缺失或不是数组
+ */
+export function assertTagArray(data, kind, url) {
+  const field = kind === 'dockerhub' ? 'results' : 'tags';
+  const arr = data && typeof data === 'object' ? data[field] : undefined;
+  if (!Array.isArray(arr)) {
+    const actual = arr === undefined ? '缺失' : Array.isArray(arr) ? '非数组' : typeof arr;
+    throw new RegistryRequestError(
+      `Registry 响应结构异常：期望 ${field} 为数组，实际为 ${actual}（${kind}）`,
+      { url },
+    );
+  }
+  if (kind === 'dockerhub') {
+    // DockerHub 的 results 是对象数组，每项必须带字符串 name
+    return arr.map(t => {
+      if (!t || typeof t !== 'object' || typeof t.name !== 'string') {
+        throw new RegistryRequestError(
+          `Registry 响应结构异常：results 条目缺少字符串 name 字段（${kind}）`,
+          { url },
+        );
+      }
+      return { name: t.name };
+    });
+  }
+  return arr.filter(t => typeof t === 'string');
+}
+
+
 /**
  * Registry 请求失败错误。
  *
@@ -153,9 +270,12 @@ export class DockerHubAdapter {
   // DockerHub 不稳定标签黑名单（比 GHCR 少 alpha/beta/rc/main/master）
   UNSTABLE_RE = /^(latest|nightly|dev|edge)$/i;
 
-  constructor({ fetchImpl = globalThis.fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+  constructor({ fetchImpl = globalThis.fetch, timeoutMs = DEFAULT_TIMEOUT_MS, retries = DEFAULT_RETRIES, retryBaseDelayMs = DEFAULT_RETRY_BASE_DELAY_MS, sleep } = {}) {
     this.fetchImpl = fetchImpl;
     this.timeoutMs = timeoutMs;
+    this.retries = retries;
+    this.retryBaseDelayMs = retryBaseDelayMs;
+    this.sleep = sleep;
   }
 
   canHandle(image) {
@@ -164,7 +284,7 @@ export class DockerHubAdapter {
   }
 
   /**
-   * 带超时的 fetch 包装
+   * 带超时 + 重试的 fetch 包装
    * @param {string} url
    * @param {object} [opts]
    * @returns {Promise<Response>}
@@ -175,8 +295,13 @@ export class DockerHubAdapter {
       options.signal = AbortSignal.timeout(this.timeoutMs);
     }
     try {
-      return await this.fetchImpl(url, options);
+      return await fetchWithRetry(this.fetchImpl, url, options, {
+        retries: this.retries,
+        baseDelayMs: this.retryBaseDelayMs,
+        sleep: this.sleep || defaultSleep,
+      });
     } catch (e) {
+      if (e instanceof RegistryRequestError) throw e;
       throw new RegistryRequestError(`Registry 请求失败: ${e.message}`, { url, cause: e });
     }
   }
@@ -240,12 +365,35 @@ export class DockerHubAdapter {
         );
       }
 
-      const results = data?.results ?? [];
+      // 审计 P1-1：字段缺失 / 类型不对 → **抛错**（不再 `?? []` 静默归一为空列表）
+      let results;
+      try {
+        results = assertTagArray(data, 'dockerhub', nextUrl);
+      } catch (e) {
+        throw withPartial(e, currentPage, allResults.length);
+      }
       allResults.push(...results);
 
       // DockerHub 返回 next 为 null 时表示已到末页
-      if (!data?.next) break;
-      nextUrl = data.next;
+      const next = data?.next;
+      if (!next) {
+        nextUrl = null; // 明确标记「已到末页」，避免被误判成翻页截断
+        break;
+      }
+      nextUrl = next;
+    }
+
+    // 审计 P2-4：翻页达上限且仍有下一页 → **不能静默用半截数据**
+    // （GHCR tag 是字典序，半截数据必然选到远古版本 → traefik 3.0.3 同型事故）
+    if (nextUrl) {
+      throw withPartial(
+        new RegistryRequestError(
+          `DockerHub 翻页达到上限（${MAX_PAGES} 页）仍有下一页，tag 列表不完整`,
+          { url: nextUrl },
+        ),
+        MAX_PAGES,
+        allResults.length,
+      );
     }
 
     // 过滤不稳定标签
@@ -332,9 +480,12 @@ export class GhcrAdapter {
   // GHCR 不稳定标签黑名单（全量）
   UNSTABLE_RE = /^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/i;
 
-  constructor({ fetchImpl = globalThis.fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+  constructor({ fetchImpl = globalThis.fetch, timeoutMs = DEFAULT_TIMEOUT_MS, retries = DEFAULT_RETRIES, retryBaseDelayMs = DEFAULT_RETRY_BASE_DELAY_MS, sleep } = {}) {
     this.fetchImpl = fetchImpl;
     this.timeoutMs = timeoutMs;
+    this.retries = retries;
+    this.retryBaseDelayMs = retryBaseDelayMs;
+    this.sleep = sleep;
   }
 
   canHandle(image) {
@@ -343,7 +494,7 @@ export class GhcrAdapter {
   }
 
   /**
-   * 带超时的 fetch 包装
+   * 带超时 + 重试的 fetch 包装
    * @param {string} url
    * @param {object} [opts]
    * @returns {Promise<Response>}
@@ -354,8 +505,13 @@ export class GhcrAdapter {
       options.signal = AbortSignal.timeout(this.timeoutMs);
     }
     try {
-      return await this.fetchImpl(url, options);
+      return await fetchWithRetry(this.fetchImpl, url, options, {
+        retries: this.retries,
+        baseDelayMs: this.retryBaseDelayMs,
+        sleep: this.sleep || defaultSleep,
+      });
     } catch (e) {
+      if (e instanceof RegistryRequestError) throw e;
       throw new RegistryRequestError(`Registry 请求失败: ${e.message}`, { url, cause: e });
     }
   }
@@ -376,10 +532,15 @@ export class GhcrAdapter {
 
     // 优先尝试获取匿名 pull token（无需认证）。
     // token 端点失败 → 降级为匿名调用（不视为失败）。
+    // 注意：token 端点**不重试** —— 它只是可选优化，失败就直接匿名降级，
+    // 重试只会拖慢整轮检测（审计 P2-3 的重试只用于真正的 tag 列表请求）。
     try {
-      const tokenRes = await this.request(
-        `https://ghcr.io/token?scope=repository:${repo}:pull`
-      );
+      const tokenUrl = `https://ghcr.io/token?scope=repository:${repo}:pull`;
+      const tokenOpts = {};
+      if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+        tokenOpts.signal = AbortSignal.timeout(this.timeoutMs);
+      }
+      const tokenRes = await this.fetchImpl(tokenUrl, tokenOpts);
       if (tokenRes.ok) {
         const tokenData = await tokenRes.json();
         token = tokenData?.token ?? null;
@@ -439,12 +600,32 @@ export class GhcrAdapter {
           allTags.length,
         );
       }
-      allTags.push(...(data?.tags ?? []));
+      // 审计 P1-1：字段缺失 / 类型不对 → **抛错**（不再 `?? []` 静默归一为空列表）
+      let tags;
+      try {
+        tags = assertTagArray(data, 'ghcr', nextUrl);
+      } catch (e) {
+        throw withPartial(e, currentPage, allTags.length);
+      }
+      allTags.push(...tags);
 
       // Link: </v2/<repo>/tags/list?last=<tag>&n=1000>; rel="next"
       const link = res.headers?.get?.('link') ?? '';
       const next = /<([^>]+)>\s*;\s*rel="next"/.exec(link);
       nextUrl = next ? (next[1].startsWith('http') ? next[1] : `https://ghcr.io${next[1]}`) : null;
+    }
+
+    // 审计 P2-4：翻页达上限且仍有下一页 → **不能静默用半截数据**
+    // （GHCR tag 是字典序，半截数据必然选到远古版本 → traefik 3.0.3 同型事故）
+    if (nextUrl) {
+      throw withPartial(
+        new RegistryRequestError(
+          `GHCR 翻页达到上限（${MAX_PAGES} 页）仍有下一页，tag 列表不完整`,
+          { url: nextUrl },
+        ),
+        MAX_PAGES,
+        allTags.length,
+      );
     }
 
     const stable = [...new Set(allTags)].filter(t => !this.UNSTABLE_RE.test(t));

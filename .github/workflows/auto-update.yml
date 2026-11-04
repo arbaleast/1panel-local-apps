@@ -42,15 +42,14 @@ on:
       - 'package-lock.json'
   pull_request:
     # PR 事件只用于跑只读校验（validate job）。
-    paths:
-      - '.github/lib/**'
-      - '.github/bin/**'
-      - '.github/scripts/**'
-      - '.github/workflows/**'
-      - '**/data.yml'
-      - '**/docker-compose.yml'
-      # readme.vars 等规则校验 README 引用的变量，README 改动同样需要过校验
-      - '**/README.md'
+    #
+    # ⚠️ 这里**故意不加 paths 过滤**（2026-11 可靠性治理）：
+    #   路径过滤 + Required Status Checks 的组合会造成「必需检查从未被触发」——
+    #   GitHub 会把「从未出现的必需检查」视为**未通过**，导致 PR 永久卡死。
+    #   自动更新 PR 只改 README / data.yml 等应用文件，若按 paths 过滤，
+    #   validate job 可能根本不跑 → open-update-pr.mjs 的必需检查门禁永远超时。
+    #   本仓应用规模小（60 个应用），全量校验成本可接受。
+    types: [opened, synchronize, reopened]
 
 # 顶层不授予任何权限：每个 job 按需显式申请（最小权限原则）。
 # 未列出的 scope（如 actions、id-token、packages）一律为 none。
@@ -144,6 +143,8 @@ jobs:
     permissions:
       contents: write        # 推分支
       pull-requests: write   # 开 PR / 合并 PR
+      checks: read           # 读目标 PR 的 Check Runs（合并门禁必需）
+      statuses: read         # 读目标 PR 的合并 commit status（合并门禁必需）
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -199,6 +200,18 @@ jobs:
             echo "无 updates.json 生成" >> $GITHUB_STEP_SUMMARY
           fi
 
+      # 端到端执行结果（检测 → 目录生成 → SSOT 校验 → PR → CI → 合并）
+      # 由 bin/open-update-pr.mjs 写出 execution.json；本步骤负责渲染到 Summary。
+      # always()：即使开 PR / 合并失败，Summary 也要给出「失败在哪一步、为什么」。
+      - name: 输出执行结果（PR / CI / 合并阶段）
+        if: always()
+        run: |
+          if [[ -f execution.json ]]; then
+            node -e "import('./.github/lib/report.mjs').then(m=>{const d=require('./execution.json');process.stdout.write(m.renderExecutionMarkdown(d,{title:'自动更新执行结果'}))})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "无 execution.json 生成（未进入开 PR 阶段）" >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: 检查是否有更新
         id: check
         # always()：即使部分应用检测失败，也要让健康应用的批次走完开 PR 流程，
@@ -235,6 +248,9 @@ jobs:
           # 超时或状态未知 → 保留 PR 与远程分支，不合并（脚本内默认 30 分钟，这里收紧）。
           MERGE_TIMEOUT_MS: '900000'
           CHECK_POLL_INTERVAL_MS: '20000'
+          # 目标 PR 上**必须**通过的检查（缺任一 → 绝不合并）。
+          # 必须与上面 validate job 的 `name:` 完全一致（workflow.test.mjs 会锁定两者一致）。
+          REQUIRED_CHECKS: 只读校验（单测 + 跨文件一致性 lint）
         run: node .github/bin/open-update-pr.mjs
 
       # ─── 门禁：任一应用检测失败 → 整个 workflow 明确失败 ──────────────────
