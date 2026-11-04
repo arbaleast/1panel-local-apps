@@ -9,7 +9,19 @@
 | 层 | 文件 | 依赖 | 职责 |
 |---|---|---|---|
 | lib | [`.github/lib/schema.mjs`](../.github/lib/schema.mjs) | 无第三方 | 白名单常量 + 纯函数规则校验 |
-| bin | [`.github/bin/lint-apps.mjs`](../.github/bin/lint-apps.mjs) | zod（**仅此层允许**） | data.yml 结构解析 + 全仓扫描（`npm run lint`） |
+| lib | [`.github/lib/consistency.mjs`](../.github/lib/consistency.mjs) | 无第三方 | 跨文件一致性规则（变量声明/Tag/端口/卷/运行时/README 对齐，ruleId 单一事实来源） |
+| lib | [`.github/lib/lint-exemptions.mjs`](../.github/lib/lint-exemptions.mjs) | js-yaml | 结构化豁免加载/匹配/死条目检测 |
+| bin | [`.github/bin/lint-apps.mjs`](../.github/bin/lint-apps.mjs) | zod（**仅此层允许**） | data.yml 结构解析 + 全仓扫描（`npm run lint`），error 阻塞 / warning 提示 |
+
+### 1.1 跨文件一致性与豁免
+
+`npm run lint` 除 schema 校验外，还执行跨文件一致性检查（compose ↔ data.yml ↔ README ↔ 版本目录名），
+每条 finding 带 `ruleId`（定义在 `lib/consistency.mjs` 的 `RULES`，分级 P0/P1=error、P2=warning）。
+应用自身的合理差异（如必须 `privileged`、上游仅发布 `latest` tag、README 引用关联应用的变量）
+通过 [`.github/lint-exemptions.yml`](../.github/lint-exemptions.yml) 登记豁免：
+
+- 每条必须绑定 `app + ruleId`（可选 `version`/`value` 收窄粒度）并写明实证过的 `reason`；
+- 禁止全局关闭检查；死条目（应用/版本消失、规则不再报错）会被 lint 报 error 强制清理。
 
 ## 2. 根级 data.yml
 

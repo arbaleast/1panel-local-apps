@@ -65,22 +65,6 @@ additionalProperties:
           value: "true"
         - label: "false"
           value: "false"
-    - default: WARN
-      envKey: PANEL_APP_LOG_LEVEL
-      labelEn: Log Level (DEBUG/INFO/WARN/ERROR)
-      labelZh: 日志级别
-      required: true
-      rule: paramSelect
-      type: select
-      values:
-        - label: DEBUG
-          value: DEBUG
-        - label: INFO
-          value: INFO
-        - label: WARN
-          value: WARN
-        - label: ERROR
-          value: ERROR
     - default: 99
       edit: true
       envKey: UID

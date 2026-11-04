@@ -38,7 +38,7 @@ import {
   ROOT_REQUIRED_FIELDS,
   TYPE_ENUM,
 } from './schema.mjs';
-import { getCurrentVersion, listApps } from './apps.mjs';
+import { getCurrentVersion, listApps, loadAliases } from './apps.mjs';
 import { isValidSemver } from './semver.mjs';
 
 // ---------------------------------------------------------------------------
@@ -84,28 +84,17 @@ export function parseYamlFile(filePath) {
 /**
  * 读取别名表（.github/app-aliases.yml），构造 dir → alias 的映射
  *
- * 映射项额外带 `_shortName`（README 表格里显示的名字）与 `dir`（实际目录名）。
+ * 映射项额外带 `_shortName`（README 表格里显示的名字）、`dir`（实际目录名）
+ * 与 `aliases`（指向同一 dir 的历史名）。
+ *
+ * 实现已收敛到 lib/apps.mjs 的 loadAliases（唯一事实来源）；此处保留本函数名
+ * 以兼容既有调用方。
  *
  * @param {string} root - 仓库根目录
- * @returns {Map<string, {dir: string, _shortName: string, preferred_version?: string}>}
+ * @returns {Map<string, {dir: string, _shortName: string, aliases: string[], preferred_version?: string}>}
  */
 export function loadAliasByDir(root) {
-  const map = new Map();
-  const file = path.join(root, '.github', 'app-aliases.yml');
-  if (!fs.existsSync(file)) return map;
-  let data;
-  try {
-    data = yaml.load(fs.readFileSync(file, 'utf8'));
-  } catch {
-    return map;
-  }
-  const aliases = (data && data.aliases) || {};
-  for (const [name, conf] of Object.entries(aliases)) {
-    if (!conf || typeof conf !== 'object') continue;
-    const dir = conf.dir || name;
-    map.set(dir, { ...conf, dir, _shortName: name });
-  }
-  return map;
+  return loadAliases(root);
 }
 
 // ---------------------------------------------------------------------------

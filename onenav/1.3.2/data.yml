@@ -72,23 +72,6 @@ additionalProperties:
       required: true
       rule: paramComplexity
       type: password
-    - default: OneNav
-      edit: true
-      envKey: ONENAV_SITE_TITLE
-      labelEn: Site Title
-      labelZh: 站点标题
-      label:
-        en: Site Title
-        zh: 站点标题
-        zh-Hant: 站點標題
-        ja: サイトタイトル
-        ko: 사이트 제목
-        ru: Название сайта
-        ms: Tajuk Laman
-        pt-br: Título do site
-      required: false
-      rule: paramCommon
-      type: text
     - default: Asia/Shanghai
       edit: true
       envKey: TZ

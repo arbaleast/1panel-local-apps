@@ -13,6 +13,19 @@ additionalProperties:
       type: service
       required: true
       default: "3000"
+    - envKey: JS_LISTEN_IP
+      label:
+        en: Listen IP
+        zh: 监听 IP
+        zh-Hant: 監聽 IP
+        ja: リッスン IP
+        ko: 수신 IP
+        ru: IP прослушивания
+        ms: IP Pendengar
+        pt-br: IP de Escuta
+      type: text
+      required: false
+      default: "0.0.0.0"
     - envKey: TZ
       label:
         en: Timezone

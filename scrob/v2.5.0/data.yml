@@ -20,6 +20,22 @@ additionalProperties:
   github: https://github.com/ellite/scrob
   formFields:
     # ---- PostgreSQL 用户名 ----
+    - default: 7330
+      edit: true
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Web Port
+      labelZh: Web 端口
+      label:
+        en: Web Port
+        zh: Web 端口
+        zh-Hant: Web 埠
+        ja: Web ポート
+        ko: Web 포트
+        ru: Web порт
+        ms: Port Web
+        pt-br: Porta Web
+      required: true
+      type: number
     - default: scrob
       edit: true
       envKey: POSTGRES_USER

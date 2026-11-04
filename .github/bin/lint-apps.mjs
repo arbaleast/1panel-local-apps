@@ -17,6 +17,18 @@ import {
   TYPE_ENUM,
   ROOT_REQUIRED_FIELDS,
 } from '../lib/schema.mjs';
+import {
+  RULE_IDS,
+  stripCommentedLines,
+  runVersionChecks,
+  checkReadmeVars,
+} from '../lib/consistency.mjs';
+import {
+  loadExemptions,
+  findDeadExemptions,
+  applyWaivers,
+  EXEMPTIONS_FILE,
+} from '../lib/lint-exemptions.mjs';
 
 // ─── Zod schema（bin/ 层可用 zod，lib/ 层禁止引入）──────────────────────────
 
@@ -266,20 +278,147 @@ const policy = checkImagePolicy(ROOT);
 for (const err of policy.errors) console.error(`ERROR   ${err}`);
 totalErrors += policy.errors.length;
 
+// ─── SSOT 跨文件一致性校验（docs/compose-conventions.md 的代码化下游）───────
+// 规则以 lib/consistency.mjs 为唯一事实来源；豁免登记在 .github/lint-exemptions.yml。
+// 本段只做编排（扫描/装载/豁免/输出），不含任何规则本体。
+
+const showJson = process.argv.includes('--json');
+let findings = [];        // 豁免前全量（死亡条目判定依赖它）
+const observed = new Map(); // app → ruleId → Set(版本目录名 ∪ actual 值)
+
+for (const app of apps) {
+  const appPath = join(ROOT, app.dir);
+
+  // 根级 data.yml（宽松装载：zod 校验已单独负责结构合法性）
+  let rootDoc = null;
+  const rootDataPath = join(appPath, 'data.yml');
+  if (existsSync(rootDataPath)) {
+    try { rootDoc = yaml.load(readFileSync(rootDataPath, 'utf8')); } catch { /* 由 zod 段报解析错误 */ }
+  }
+
+  // 版本目录（口径与 lintAllVersionDirs 一致）
+  let entries = [];
+  try { entries = readdirSync(appPath, { withFileTypes: true }); } catch { /* 由 listApps 段负责 */ }
+  const versionDirs = entries.filter((e) =>
+    e.isDirectory() && e.name !== 'data' && e.name !== 'scripts' && !e.name.startsWith('.'));
+
+  const versionDocs = [];
+  for (const ve of versionDirs) {
+    const versionPath = join(appPath, ve.name);
+    const hasDataYml  = existsSync(join(versionPath, 'data.yml'));
+    const hasCompose  = existsSync(join(versionPath, 'docker-compose.yml'));
+    if (!hasDataYml && !hasCompose) continue;
+
+    let versionDoc = null;
+    if (hasDataYml) {
+      try { versionDoc = yaml.load(readFileSync(join(versionPath, 'data.yml'), 'utf8')); } catch { /* 由 zod 段报 */ }
+    }
+    let composeRaw = '';
+    if (hasCompose) {
+      try { composeRaw = readFileSync(join(versionPath, 'docker-compose.yml'), 'utf8'); } catch { /* 同上 */ }
+    }
+    let composeDoc = null;
+    if (composeRaw) {
+      // 与 registry/更新链路同口径：剥注释行后再解析，文档样例不影响结构判断
+      try { composeDoc = yaml.load(stripCommentedLines(composeRaw).map((l) => l.text).join('\n')); } catch { /* 结构缺失时逐规则静默降级 */ }
+    }
+    // 版本脚本目录全文（formField 可能由 init.sh 等钩子消费，见 goal §5.3「未通过 .env/脚本」）
+    let scriptsText = '';
+    const scriptsDir = join(versionPath, 'scripts');
+    if (existsSync(scriptsDir)) {
+      for (const se of readdirSync(scriptsDir, { withFileTypes: true })) {
+        if (!se.isFile()) continue;
+        try { scriptsText += `\n${readFileSync(join(scriptsDir, se.name), 'utf8')}`; } catch { /* 二进制等不可读内容按空处理 */ }
+      }
+    }
+
+    const ctx = {
+      app: app.dir,
+      version: ve.name,
+      dataPath: `${app.dir}/${ve.name}/data.yml`,
+      composePath: `${app.dir}/${ve.name}/docker-compose.yml`,
+      rootDoc, versionDoc, composeRaw, composeDoc, scriptsText,
+    };
+    findings.push(...runVersionChecks(ctx));
+    versionDocs.push(versionDoc);
+  }
+
+  // README（应用级，version=null）
+  const readmeAbs = join(appPath, 'README.md');
+  if (existsSync(readmeAbs)) {
+    findings.push(...checkReadmeVars({
+      app: app.dir,
+      version: null,
+      readmePath: `${app.dir}/README.md`,
+      readmeRaw: readFileSync(readmeAbs, 'utf8'),
+      versionDocs,
+    }));
+  }
+}
+
+// 死亡条目观察表（豁免前全量）
+for (const f of findings) {
+  if (!observed.has(f.app)) observed.set(f.app, new Map());
+  const byRule = observed.get(f.app);
+  if (!byRule.has(f.ruleId)) byRule.set(f.ruleId, new Set());
+  const bucket = byRule.get(f.ruleId);
+  if (f.version) bucket.add(f.version);
+  if (f.actual) bucket.add(String(f.actual));
+}
+
+// 豁免：结构错误与死亡条目都是 error（强制说明 + 强制清理）
+const { list: exemptionList, schemaErrors: exemptionSchemaErrors } = loadExemptions(ROOT);
+for (const msg of exemptionSchemaErrors) {
+  console.error(`ERROR   ${EXEMPTIONS_FILE}: ${msg}`);
+  totalErrors += 1;
+}
+for (const { entry, reason } of findDeadExemptions(exemptionList, observed)) {
+  console.error(`ERROR   ${EXEMPTIONS_FILE}: 死亡条目 ${reason}（app=${entry.app} ruleId=${entry.ruleId}${entry.version ? ` version=${entry.version}` : ''}）`);
+  totalErrors += 1;
+}
+
+const { active, waived } = applyWaivers(findings, exemptionList);
+for (const f of active) {
+  const loc  = `${f.file}${f.line ? `:${f.line}` : ''}`;
+  const head = f.severity === 'P2' ? 'WARN    ' : 'ERROR   ';
+  const tail = f.actual != null ? ` | actual=${f.actual}${f.expected != null ? ` ⇨ expected=${f.expected}` : ''}` : '';
+  if (f.severity === 'P2') { console.warn(`WARN    [${f.ruleId}] ${loc} - ${f.message}${tail}`); totalWarnings += 1; }
+  else                     { console.error(`ERROR   [${f.ruleId}] ${loc} - ${f.message}${tail}`); totalErrors   += 1; }
+}
+
+if (showJson) {
+  // 机器可读视图：P0/P1 为 errors，P2 为 warnings；waived 单列出豁免命中
+  const pick = ({ ruleId, app, version, file, line, message, actual, expected }) =>
+    ({ ruleId, app, version, file, line, message, actual, expected });
+  console.log(JSON.stringify({
+    apps: apps.length,
+    errors: totalErrors,
+    warnings: totalWarnings,
+    waived: waived.length,
+    findings: {
+      errors: active.filter((f) => f.severity !== 'P2').map(pick),
+      warnings: active.filter((f) => f.severity === 'P2').map(pick),
+      waived: waived.map((f) => ({ ...pick(f), waivedBy: f.waivedBy.reason })),
+    },
+  }, null, 2));
+}
+
 // ─── 输出摘要 ───────────────────────────────────────────────────────────────
 
-console.log(`\n── lint summary ──────────────────────────────`);
-console.log(`apps scanned : ${apps.length}`);
-console.log(`errors       : ${totalErrors}`);
-console.log(`warnings     : ${totalWarnings}`);
+if (!showJson) {
+  console.log(`\n── lint summary ──────────────────────────────`);
+  console.log(`apps scanned : ${apps.length}`);
+  console.log(`errors       : ${totalErrors}`);
+  console.log(`warnings     : ${totalWarnings}`);
+  console.log(`waived       : ${waived.length}`);
+}
 
+// 用 exitCode 而非 process.exit()：后者会在管道输出未刷新时截断 --json（文件重定向不受影响）
 if (totalErrors > 0) {
-  console.log(`\nFAILED — ${totalErrors} error(s) found`);
-  process.exit(1);
+  if (!showJson) console.log(`\nFAILED — ${totalErrors} error(s) found`);
+  process.exitCode = 1;
 } else if (totalWarnings > 0) {
-  console.log(`\nPASSED (with warnings)`);
-  process.exit(0);
+  if (!showJson) console.log(`\nPASSED (with warnings)`);
 } else {
-  console.log(`\nPASSED`);
-  process.exit(0);
+  if (!showJson) console.log(`\nPASSED`);
 }

@@ -84,26 +84,6 @@ additionalProperties:
     # ----------------------------------------------------------------------------
     # 站点标题（仅展示，写入 config.php）
     # ----------------------------------------------------------------------------
-    - default: OneNav
-      edit: true
-      envKey: ONENAV_SITE_TITLE
-      labelEn: Site Title
-      labelZh: 站点标题
-      label:
-        en: Site Title
-        zh: 站点标题
-        zh-Hant: 站點標題
-        ja: サイトタイトル
-        ko: 사이트 제목
-        ru: Название сайта
-        ms: Tajuk Laman
-        pt-br: Título do site
-      required: false
-      rule: paramCommon
-      type: text
-    # ----------------------------------------------------------------------------
-    # 时区（默认 Asia/Shanghai，与镜像内 install.sh 一致）
-    # ----------------------------------------------------------------------------
     - default: Asia/Shanghai
       edit: true
       envKey: TZ

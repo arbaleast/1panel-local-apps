@@ -15,6 +15,71 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 export const SKIP_DIRS = new Set(['.github', 'scripts', '.git', 'node_modules', '.agent_cache']);
 
 /**
+ * 加载别名表（.github/app-aliases.yml）—— **别名表的唯一加载实现**。
+ *
+ * 之前 validate-batch / detect-updates / sync-readme 各写了一份同样的加载逻辑，
+ * 三份副本会随修改分叉（单点定义原则）。现在统一到这里。
+ *
+ * 键 = 实际目录（dir）；值 = 该应用的主名与历史别名：
+ *   - `_shortName`：展示用主名。多个条目指向同一 dir 时，**目录同名条目优先**
+ *     （canonical 优先）。否则旧名（perplexica → vane）会覆盖当前名，
+ *     导致 README「应用列表」与应用目录 key（vane）自相矛盾。
+ *   - `aliases`：指向同一 dir 的其它历史名，仍可用于按名解析（APPS_FILTER 等）。
+ *
+ * @param {string} [root] - 仓库根目录
+ * @returns {Map<string, {dir: string, _shortName: string, aliases: string[], preferred_version?: string}>}
+ */
+export function loadAliases(root = ROOT) {
+  const map = new Map();
+  const file = path.join(root, '.github', 'app-aliases.yml');
+  if (!fs.existsSync(file)) return map;
+  let data;
+  try {
+    data = yaml.load(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return map;
+  }
+  const aliases = (data && data.aliases) || {};
+  for (const [name, conf] of Object.entries(aliases)) {
+    if (!conf || typeof conf !== 'object') continue;
+    const dir = conf.dir || name;
+    const existing = map.get(dir);
+    if (!existing) {
+      map.set(dir, { ...conf, dir, _shortName: name, aliases: [] });
+      continue;
+    }
+    // 同 dir 多个条目：目录同名者（canonical）作为主名，其余记为历史别名
+    if (name === dir && existing._shortName !== dir) {
+      map.set(dir, {
+        ...conf,
+        dir,
+        _shortName: name,
+        aliases: [...existing.aliases, existing._shortName],
+      });
+    } else {
+      existing.aliases.push(name);
+    }
+  }
+  return map;
+}
+
+/**
+ * 由别名表构建 shortName → dir 映射（**含历史别名**），供 APPS_FILTER 按名过滤。
+ * 旧名仍可解析（perplexica → vane），当前名也可解析（vane → vane）。
+ *
+ * @param {Map<string, {dir: string, _shortName: string, aliases?: string[]}>} aliasByDir
+ * @returns {Map<string, string>}
+ */
+export function buildShortToDir(aliasByDir) {
+  const shortToDir = new Map();
+  for (const [dir, conf] of aliasByDir.entries()) {
+    shortToDir.set(conf._shortName, dir);
+    for (const alias of conf.aliases || []) shortToDir.set(alias, dir);
+  }
+  return shortToDir;
+}
+
+/**
  * 列出所有应用目录
  * @param {string} [root] - 可选，覆盖默认 ROOT
  * @param {Map<string, {dir: string, name: string, description?: string}>} [aliasByDir] - 别名表
