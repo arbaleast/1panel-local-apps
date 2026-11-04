@@ -33,8 +33,8 @@ npm run lint         # 全仓 data.yml 静态校验
 
 | 命令 | 等价物 | 用途 |
 |---|---|---|
-| `npm test` | `node --test ".github/lib/*.test.mjs"` | 全部 `.github/lib/*.test.mjs` 回归（schema / registry / semver / compose / github / report / validate-batch / workflow / pr-flow / docs） |
-| `npm run lint` | `node .github/bin/lint-apps.mjs` | 扫描全仓 data.yml + compose 静态校验（有 error 退出 1；只有 warning 显示 `PASSED (with warnings)` 且退出 0） |
+| `npm test` | `node --test ".github/lib/*.test.mjs"` | 全部 `.github/lib/*.test.mjs` 回归（schema / registry / semver / compose / github / report / validate-batch / workflow / pr-flow / docs / image-policy） |
+| `npm run lint` | `node .github/bin/lint-apps.mjs` | 扫描全仓 data.yml + compose 静态校验 + 镜像 hardcode 策略（变量型镜像只允许在 AGENTS.md §6 的例外清单内）；有 error 退出 1；只有 warning 显示 `PASSED (with warnings)` 且退出 0 |
 | `npm run validate:batch` | `node .github/bin/validate-update-batch.mjs` | 全仓批次校验模式 |
 | `npm run docs:check` | `node .github/bin/check-docs.mjs` | docs 交叉引用 / 代码栅栏 / AGENTS 路由有效性 |
 

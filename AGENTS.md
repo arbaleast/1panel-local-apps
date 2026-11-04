@@ -61,6 +61,8 @@ docs/                       # 手册（本路由器的下游）
 - 公开端口用 `PANEL_APP_PORT_*`；持久化优先 `./data/...` 相对路径。
 - 镜像一律 hardcode `image: tag`，由自动更新守护；**仅 3 个变量型例外**：
   `silo`、`infinity/cu124`、`xunlei`（不入自动更新范围，见 automation §2）。
+- 上述例外清单由 `npm run lint` 校验：例外之外出现变量型镜像即报 error；
+  清单单一事实来源在 `.github/lib/image-policy.mjs`（与本节内容由测试锁定一致）。
 - compose 中每个 `${VAR}` 必须在版本 `data.yml` formFields 声明；豁免变量仅 6 个：
   `${CONTAINER_NAME}` `${HOST_IP}` `${HOST_ADDRESS}` `${PANEL_DB_PORT}` `${CPUS}` `${MEMORY_LIMIT}`。
 - 端口变更影响 1Panel 反代配置，PR 必须说明；更新时 `sed -i` 在 bind mount 上会失败。
