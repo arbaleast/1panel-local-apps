@@ -10,7 +10,7 @@
 
 | Job | 触发事件 | 权限 | 职责 |
 |---|---|---|---|
-| `validate` | 所有事件（含 `pull_request`） | `contents: read` | 只读：`npm test` + `npm run lint`。不碰 Token、不写仓库 |
+| `validate` | 所有事件（含 `pull_request`） | `contents: read` | 只读：`npm test` + `npm run lint` + `npm run docs:check`。不碰 Token、不写仓库 |
 | `auto-update` | 仅 `schedule` / `workflow_dispatch` / 受控 `push`（后两者限 `main`） | `contents: write` + `pull-requests: write` | 检测 → 改 README → 校验 → 开 PR → 等检查 → 合并 |
 
 铁律（改动本工作流时必须保持；源自 2026-11-01 CI 提权漏洞复盘，见 [postmortems.md](postmortems.md#auto-update-工作流曾是-ci-提权面2026-11-01)）：
