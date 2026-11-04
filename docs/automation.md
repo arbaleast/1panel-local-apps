@@ -169,7 +169,23 @@ PR 创建后 [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 的合并�
   `execFileSync` 参数数组，**绝不把不可信内容（PR body / commit message）拼进 shell 命令字符串**
   （2026-10-20 事故复盘，见 postmortems.md）。
 
-### 4.1 执行结果与 Summary（可观测性）
+### 4.1 回归测试分层（PR 编排链路）
+
+PR 门禁的三层回归，各管一段，互不重叠：
+
+| 层 | 文件 | 验证对象 |
+|---|---|---|
+| 源码不变量 | [lib/pr-flow.test.mjs](../.github/lib/pr-flow.test.mjs) | 脚本**结构**不变量：零 force、批次校验前移、git add 白名单、禁止静默跳过、requiredChecks 绑定 |
+| 函数级 mock | [lib/github.test.mjs](../.github/lib/github.test.mjs) | 单个 API 行为：必需检查门禁、sha-changed、错误状态码、分支前缀识别 |
+| **进程级隔离 E2E** | [lib/pr-flow-e2e.test.mjs](../.github/lib/pr-flow-e2e.test.mjs) | **整条编排链路**：git 分支 → 提交 → 推送 → 开/复用 PR → 等检查 → 合并 → 删分支 |
+
+E2E 层的隔离方式（满足「测试隔离铁律」）：git 远端是**本地裸仓库**（`git init --bare`），
+GitHub API 是**本地 mock HTTP 服务**（`GITHUB_API_BASE` 指向 `127.0.0.1` 临时端口），
+检查状态由 mock 返回 —— **绝不触达 GitHub、绝不产生真实 push / PR / 合并**。
+覆盖场景：完整链路、幂等重跑、复用既有自动更新 PR、多个未合并 PR 显式失败、
+必需检查失败不合并、**必需检查缺失（0 Checks）不提前合并**。
+
+### 4.2 执行结果与 Summary（可观测性）
 
 端到端执行轨迹写在仓库根 `execution.json`（已 gitignore），字段与 schema 定义在
 [lib/execution-result.mjs](../.github/lib/execution-result.mjs)：
