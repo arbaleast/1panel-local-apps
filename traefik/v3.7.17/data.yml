@@ -32,25 +32,6 @@ additionalProperties:
     - amd64
     - arm64
   formFields:
-    - default: ghcr.io/traefik/traefik:v3.7.17
-      edit: true
-      envKey: IMAGE
-      labelEn: Image
-      labelZh: 镜像
-      label:
-        en: Image
-        zh: 镜像
-        ja: イメージ
-        ko: 이미지
-        ru: Образ
-        ms: Imej
-        pt-br: Imagem
-        es-es: Imagen
-        tr: İmaj
-        zh-Hant: 映像
-      required: true
-      rule: paramImageTag
-      type: text
     - default: "80"
       envKey: PANEL_APP_PORT_HTTP
       labelEn: HTTP Port (host)

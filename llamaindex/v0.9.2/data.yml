@@ -22,23 +22,6 @@ additionalProperties:
   github: https://github.com/run-llama/llama_index
   document: https://docs.llamaindex.ai/
   formFields:
-  - default: llamaindex/llama-deploy:v0.9.2
-    edit: true
-    envKey: IMAGE
-    labelEn: Docker Image
-    labelZh: Docker 镜像
-    label:
-      en: Docker Image
-      zh: Docker 镜像
-      zh-Hant: Docker 鏡像
-      ja: Docker イメージ
-      ko: Docker 이미지
-      ru: Docker образ
-      ms: Imej Docker
-      pt-br: Imagem Docker
-    required: true
-    type: text
-    rule: paramImageTag
   - default: llamaindex
     edit: true
     envKey: CONTAINER_NAME

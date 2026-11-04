@@ -17,23 +17,6 @@ additionalProperties:
     required: true
     rule: paramPort
     type: number
-  - default: ramuses/photopea:2.2
-    edit: true
-    envKey: IMAGE
-    labelEn: Image
-    labelZh: 镜像
-    label:
-      en: Image
-      zh: 镜像
-      zh-Hant: 映像
-      ja: イメージ
-      ko: 이미지
-      ru: Образ
-      ms: Imej
-      pt-br: Imagem
-    required: true
-    rule: paramImageTag
-    type: text
   - default: 99
     edit: true
     envKey: UID

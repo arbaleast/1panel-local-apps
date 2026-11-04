@@ -39,7 +39,7 @@ services:
     container_name: ${CONTAINER_NAME}
     # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
     user: "${UID}:${GID}"
-    image: ${APP_IMAGE}:${APP_VERSION}
+    image: photoprism/photoprism:20220121
     restart: always
     # 注意：不要加 init: true。
     # 镜像内置 s6-overlay 作为 init 系统，要求自身就是容器的 PID 1；

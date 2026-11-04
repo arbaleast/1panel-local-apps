@@ -3,34 +3,6 @@ additionalProperties:
   name: mineru 3.4.2
   type: tool
   formFields:
-    - default: alexsuntop/mineru
-      edit: true
-      envKey: IMAGE
-      label:
-        en: Image (community multi-arch build)
-        zh: 镜像（社区多架构构建版）
-        zh-Hant: 映像（社群多架構建置版）
-        ja: イメージ（コミュニティマルチアーキテクチャビルド）
-        ko: 이미지 (커뮤니티 멀티 아키텍처 빌드)
-        ru: Образ (мульти-архитектурная сборка сообщества)
-        ms: Imej (binaan multi-arsitektur komuniti)
-        pt-br: Imagem (build multi-arquitetura da comunidade)
-      required: true
-      type: text
-    - default: 3.4.2
-      edit: true
-      envKey: APP_VERSION
-      label:
-        en: Image tag
-        zh: 镜像标签
-        zh-Hant: 映像標籤
-        ja: イメージタグ
-        ko: 이미지 태그
-        ru: Тег образа
-        ms: Tag imej
-        pt-br: Tag da imagem
-      required: true
-      type: text
     - default: 8002
       edit: true
       envKey: PANEL_APP_PORT_API

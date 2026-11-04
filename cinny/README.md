@@ -78,12 +78,10 @@ Cinny 是纯静态前端 SPA，**无服务端状态、无数据库、无用户�
 
 ## 镜像更新
 
-上游使用 GitHub Actions 在每次 release tag 时自动构建 `ghcr.io/cinnyapp/cinny:<tag>`。本应用使用变量型镜像（`${IMAGE}:${APP_VERSION}`），不在 1Panel 自动更新守护范围；如需升级：
+上游使用 GitHub Actions 在每次 release tag 时自动构建 `ghcr.io/cinnyapp/cinny:<tag>`。每个版本目录的镜像已 hardcode（如 `ghcr.io/cinnyapp/cinny:v4.12.6`），由本仓 auto-update 工作流守护：上游发布新 tag 时自动补出新版本目录。如需手动升级：
 
 1. 1Panel → 本地应用 → Cinny → 升级
 2. 选择新版本目录（如 `v4.12.7`，需先在仓库中补出对应版本目录）
-
-镜像源 `ghcr.io/cinnyapp/cinny` 也可通过修改 `IMAGE` formField 切到 DockerHub 同步的 `cinnyapp/cinny` 镜像（内容一致）。
 
 ## 常见问题
 

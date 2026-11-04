@@ -8,7 +8,7 @@ services:
         limits:
           cpus: ${CPUS}
           memory: ${MEMORY_LIMIT}
-    image: ${IMAGE}
+    image: mintplexlabs/anythingllm:pg-1.16.0
     restart: always
     networks:
       - 1panel-network

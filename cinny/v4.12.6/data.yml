@@ -24,42 +24,6 @@ additionalProperties:
   website: https://cinny.in
   github: https://github.com/cinnyapp/cinny
   formFields:
-    # ---- 镜像源（变量型应用，ghcr.io 官方，linux/amd64+arm64 双架构）----
-    - default: ghcr.io/cinnyapp/cinny
-      edit: true
-      envKey: IMAGE
-      labelEn: Image
-      labelZh: 镜像
-      label:
-        en: Image
-        zh: 镜像
-        zh-Hant: 映像
-        ja: イメージ
-        ko: 이미지
-        ru: Образ
-        ms: Imej
-        pt-br: Imagem
-      required: true
-      rule: paramImageTag
-      type: text
-    # ---- 镜像版本（v-prefix semver，例 v4.12.6）----
-    - default: v4.12.6
-      edit: true
-      envKey: APP_VERSION
-      labelEn: App Version
-      labelZh: 应用版本
-      label:
-        en: App Version
-        zh: 应用版本
-        zh-Hant: 應用版本
-        ja: アプリバージョン
-        ko: 앱 버전
-        ru: Версия приложения
-        ms: Versi Aplikasi
-        pt-br: Versão do aplicativo
-      required: true
-      rule: paramImageTag
-      type: text
     # ---- HTTP 端口（容器内 Nginx 监听 80）----
     - default: 40080
       edit: true

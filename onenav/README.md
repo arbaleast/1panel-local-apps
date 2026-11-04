@@ -127,10 +127,9 @@ $site_setting['password']       = ENCRYPTED_PASSWORD;
 
 ### 跟随上游 release（跨版本升级）
 
-1. 修改 `onenav/<new-version>/docker-compose.yml` 镜像 tag（如 `1.2.4` → `1.2.5`）
-2. 在 `onenav/<new-version>/data.yml` 中把 `APP_VERSION` 默认值同步改成 `1.2.5`
-3. 提交并推送
-4. 由 1Panel 计划任务拉取最新仓库 → 用户在 1Panel UI 选择新版本重新部署
+1. 修改 `onenav/<new-version>/docker-compose.yml` 镜像 tag（如 `1.2.4` → `1.2.5`）；镜像已 hardcode，`scripts/init.sh` 的 `IMAGE` / `APP_VERSION` 常量需同步改
+2. 提交并推送
+3. 由 1Panel 计划任务拉取最新仓库 → 用户在 1Panel UI 选择新版本重新部署
 
 ### 容器内源码升级（不重建容器）
 

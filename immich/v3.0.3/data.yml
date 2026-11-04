@@ -16,19 +16,6 @@ additionalProperties:
   github: https://github.com/immich-app/immich
   document: https://docs.immich.app/
   formFields:
-  - default: v3.0.3
-    edit: true
-    envKey: APP_VERSION
-    labelEn: App Version
-    labelZh: 版本
-    required: true
-    rule: paramSelect
-    type: select
-    values:
-    - label: v3.0.3
-      value: v3.0.3
-    - label: v3.0.1
-      value: v3.0.1
   - default: 2283
     edit: true
     envKey: PANEL_APP_PORT_HTTP

@@ -26,42 +26,6 @@ additionalProperties:
   website: https://github.com/QuantumNous/new-api
   github: https://github.com/QuantumNous/new-api
   formFields:
-    # ---- 镜像源（calciumion/new-api，DockerHub multi-arch manifest）----
-    - default: calciumion/new-api
-      edit: true
-      envKey: IMAGE
-      labelEn: Image
-      labelZh: 镜像
-      label:
-        en: Image
-        zh: 镜像
-        zh-Hant: 映像
-        ja: イメージ
-        ko: 이미지
-        ru: Образ
-        ms: Imej
-        pt-br: Imagem
-      required: true
-      rule: paramImageTag
-      type: text
-    # ---- 镜像版本：上游目前仅发布 v1.0.0-rc.X 预发布，detect 跟踪该序列 ----
-    - default: v1.0.0-rc.40
-      edit: true
-      envKey: APP_VERSION
-      labelEn: App Version
-      labelZh: 应用版本
-      label:
-        en: App Version
-        zh: 应用版本
-        zh-Hant: 應用版本
-        ja: アプリバージョン
-        ko: 앱 버전
-        ru: Версия приложения
-        ms: Versi Aplikasi
-        pt-br: Versão do aplicativo
-      required: true
-      rule: paramImageTag
-      type: text
     # ---- Web 面板 HTTP 端口（容器内 new-api 固定监听 3000）----
     - default: 3000
       edit: true

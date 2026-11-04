@@ -13,7 +13,7 @@
 #   因此首次安装时必须从镜像里把示例配置复制到宿主机 ./data/。
 #
 # 工作流程:
-#   1. 加载 1Panel 写的 .env（IMAGE / APP_VERSION / ...）
+#   1. 加载 1Panel 写的 .env（安装参数；镜像已 hardcode，不再来自安装参数）
 #   2. 创建 ./data 与 ./data/uploads 目录
 #   3. 若 ./data/config.json 不存在：
 #        docker pull <IMAGE>:<APP_VERSION>
@@ -53,8 +53,8 @@ else
 fi
 
 # 兜底默认值
-IMAGE="${IMAGE:-ghcr.io/damisunshine/navi-homepage}"
-APP_VERSION="${APP_VERSION:-1.2.0}"
+IMAGE="ghcr.io/damisunshine/navi-homepage"
+APP_VERSION="1.2.0"
 
 # 解析 DATA_PATH（compose 里的 ./data；相对路径相对 WORKDIR）
 DATA_PATH="${DATA_PATH:-./data}"

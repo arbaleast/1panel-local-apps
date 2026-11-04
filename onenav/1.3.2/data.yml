@@ -21,40 +21,6 @@ additionalProperties:
   website: https://www.onenav.top
   github: https://github.com/helloxz/onenav
   formFields:
-    - default: helloz/onenav
-      edit: true
-      envKey: IMAGE
-      labelEn: Image
-      labelZh: 镜像
-      label:
-        en: Image
-        zh: 镜像
-        zh-Hant: 映像
-        ja: イメージ
-        ko: 이미지
-        ru: Образ
-        ms: Imej
-        pt-br: Imagem
-      required: true
-      rule: paramImageTag
-      type: text
-    - default: 1.3.2
-      edit: true
-      envKey: APP_VERSION
-      labelEn: Version
-      labelZh: 版本
-      label:
-        en: Version
-        zh: 版本
-        zh-Hant: 版本
-        ja: バージョン
-        ko: 버전
-        ru: Версия
-        ms: Versi
-        pt-br: Versão
-      required: true
-      rule: paramImageTag
-      type: text
     - default: 48080
       edit: true
       envKey: PANEL_APP_PORT_HTTP

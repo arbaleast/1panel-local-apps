@@ -11,7 +11,7 @@ services:
             - MACHINE_LEARNING_MODEL_PRECISION=${ML_MODEL_PRECISION}
         healthcheck:
             disable: false
-        image: ghcr.io/immich-app/immich-machine-learning:${APP_VERSION}
+        image: ghcr.io/immich-app/immich-machine-learning:v3.0.3
         labels:
             createdBy: Apps
         networks:
@@ -42,7 +42,7 @@ services:
             - IMMICH_WORKER_THREADS=${IMMICH_WORKER_THREADS}
         healthcheck:
             disable: false
-        image: ghcr.io/immich-app/immich-server:${APP_VERSION}
+        image: ghcr.io/immich-app/immich-server:v3.0.3
         # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
         user: "${UID}:${GID}"
         labels:

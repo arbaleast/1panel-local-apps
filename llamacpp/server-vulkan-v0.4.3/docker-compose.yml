@@ -15,7 +15,7 @@ services:
             - NVIDIA_VISIBLE_DEVICES=all
             - NVIDIA_DRIVER_CAPABILITIES=compute,utility
         runtime: nvidia
-        image: ${IMAGE}
+        image: ghcr.io/anbeeld/beellama.cpp:server-vulkan-v0.4.3
         labels:
             createdBy: Apps
         networks:

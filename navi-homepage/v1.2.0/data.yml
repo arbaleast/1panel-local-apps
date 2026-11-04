@@ -22,43 +22,6 @@ additionalProperties:
   github: https://github.com/DamiSunshine/navi-homepage
   formFields:
     # ----------------------------------------------------------------------------
-    # 镜像源（多架构 GHCR manifest，按 tag 选 amd64 / arm64）
-    # ----------------------------------------------------------------------------
-    - default: ghcr.io/damisunshine/navi-homepage
-      edit: true
-      envKey: IMAGE
-      labelEn: Image
-      labelZh: 镜像
-      label:
-        en: Image
-        zh: 镜像
-        zh-Hant: 映像
-        ja: イメージ
-        ko: 이미지
-        ru: Образ
-        ms: Imej
-        pt-br: Imagem
-      required: true
-      rule: paramImageTag
-      type: text
-    - default: 1.2.0
-      edit: true
-      envKey: APP_VERSION
-      labelEn: Version
-      labelZh: 版本
-      label:
-        en: Version
-        zh: 版本
-        zh-Hant: 版本
-        ja: バージョン
-        ko: 버전
-        ru: Версия
-        ms: Versi
-        pt-br: Versão
-      required: true
-      rule: paramImageTag
-      type: text
-    # ----------------------------------------------------------------------------
     # HTTP 端口：主机侧端口 → 容器 80（Navi 内部监听 80，由反向协议栈转给 Node）
     # ----------------------------------------------------------------------------
     - default: 48090

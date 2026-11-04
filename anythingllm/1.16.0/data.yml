@@ -29,24 +29,6 @@ additionalProperties:
   github: https://github.com/Mintplex-Labs/anything-llm
   document: https://docs.anythingllm.com/
   formFields:
-  # 默认使用 :pg-1.16.0 标签镜像（含内置 PostgreSQL，版本钉住 1.16.0）；如需纯 SQLite 可切换为 mintplexlabs/anythingllm:1.16.0
-  - default: mintplexlabs/anythingllm:pg-1.16.0
-    edit: true
-    envKey: IMAGE
-    labelEn: Docker Image
-    labelZh: Docker 镜像
-    label:
-      en: Docker Image
-      zh: Docker 镜像
-      zh-Hant: Docker 鏡像
-      ja: Docker イメージ
-      ko: Docker 이미지
-      ru: Docker образ
-      ms: Imej Docker
-      pt-br: Imagem Docker
-    required: true
-    type: text
-    rule: paramImageTag
   - default: '3001'
     edit: true
     envKey: PANEL_APP_PORT_HTTP

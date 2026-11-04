@@ -117,7 +117,7 @@ cd 1panel-local-apps
 
 **行为：**
 - 扫描所有应用的根 `<app>/docker-compose.yml`
-- 仅处理 hardcode 类镜像（含 `:tag` 且不含变量）；变量型（`${IMAGE}` / `${APP_VERSION}`）与 `latest` 标签跳过
+- 仅处理 hardcode 类镜像（含 `:tag` 且不含变量）；`latest` 标签跳过（2026-11 起 compose 镜像默认全仓 hardcode，仅 silo / infinity / xunlei 三个例外仍用变量、检测跳过）
 - 调 Docker Hub API（ghcr.io 用 GitHub Container Registry API）查最新 tag
 - 检测到新版本 → 自动开 PR，分支命名 `auto-update/<app>-<yyyy-mm-dd>`
 - PR body 列出所有 service 的 `before`/`after` tag

@@ -42,7 +42,7 @@ services:
   # 主应用：BookOrbit Web（Node.js 服务，监听容器内 3000）
   app:
     container_name: ${CONTAINER_NAME}
-    image: ${APP_IMAGE}:${APP_VERSION}
+    image: ghcr.io/bookorbit/bookorbit:3.5.0
     restart: always
     # 不要 init: true —— bookorbit 镜像 Dockerfile 已显式 ENTRYPOINT ["/sbin/tini", "-s", "--"]
     # 套了 tini 作 PID 1，再加 init: true 会变成 tini → tini → entrypoint.sh 双重 init 套娃

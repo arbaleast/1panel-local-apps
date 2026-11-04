@@ -18,7 +18,7 @@ services:
             - NVIDIA_VISIBLE_DEVICES=all
             - NVIDIA_DRIVER_CAPABILITIES=all
         runtime: nvidia
-        image: ${IMAGE}
+        image: jellyfin/jellyfin:10.11.11
         labels:
             createdBy: Apps
         networks:

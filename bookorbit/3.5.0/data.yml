@@ -29,40 +29,6 @@ additionalProperties:
   github: https://github.com/bookorbit/bookorbit
   document: https://bookorbit.app/installation
   formFields:
-    - default: ghcr.io/bookorbit/bookorbit
-      edit: true
-      envKey: APP_IMAGE
-      labelEn: App Image
-      labelZh: 应用镜像
-      label:
-        en: App Image
-        zh: 应用镜像
-        zh-Hant: 應用映像
-        ja: アプリイメージ
-        ko: 앱 이미지
-        ru: Образ приложения
-        ms: Imej Aplikasi
-        pt-br: Imagem do app
-      required: true
-      rule: paramImageTag
-      type: text
-    - default: 3.5.0
-      edit: true
-      envKey: APP_VERSION
-      labelEn: App Version
-      labelZh: 应用版本
-      label:
-        en: App Version
-        zh: 应用版本
-        zh-Hant: 應用版本
-        ja: アプリバージョン
-        ko: 앱 버전
-        ru: Версия приложения
-        ms: Versi Aplikasi
-        pt-br: Versão do app
-      required: true
-      rule: paramImageTag
-      type: text
     - default: 48300
       edit: true
       envKey: PANEL_APP_PORT_HTTP

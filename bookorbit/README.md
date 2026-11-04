@@ -171,7 +171,7 @@ BookOrbit v2.10+ 支持 Kokoro FastAPI TTS。上游提供 opt-in `tts` profile�
 
 1. 新建 `bookorbit/<new-version>/` 目录
 2. 把 `3.2.0/` 下的 `docker-compose.yml` 与 `data.yml` 复制到新目录
-3. 在新 `data.yml` 中把 `APP_VERSION` 默认值同步改成新版本号（如 `3.3.0`）
+3. 把新目录 compose 的镜像 tag 同步改成新版本号（如 `3.3.0`）
 4. 由 1Panel 计划任务拉取最新仓库 → 用户在 1Panel UI 选择新版本重新部署
 
 > 由于 `./data/app` 与 `./data/books` 均为相对路径 bind mount，跨版本升级数据不会丢失；上游 BookOrbit 在启动时自动跑数据库迁移（外部 PG 模式下也会自动连到 1Panel-postgresql 跑迁移）。

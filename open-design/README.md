@@ -66,7 +66,7 @@ docker run --rm -v open_design_data:/data -v $PWD/backup:/backup \
 |---|---|---|---|
 | 端口绑定 | `127.0.0.1:${PORT}:7456` | `${HOST_IP}:${PANEL_APP_PORT_HTTP}:7456` | 1Panel 反代必须监听全接口 |
 | 持久化 | named volume `open_design_data` | **同名** named volume `open_design_data` + 顶层 `volumes:` 字面量声明 | 与上游一致；1Panel 仅禁止 `${...}` 变量插值命名卷，**字面量**（如 `open_design_data: null`）允许，参考 `pgvector/0.8.7-pg18-trixie/` |
-| 镜像来源 | `${OPEN_DESIGN_IMAGE:-ghcr.io/nexu-io/od:latest}` | `${IMAGE}` | 与 mihomo/handbrake/hindsight 风格一致；default 由 formField 注入 |
+| 镜像来源 | `${OPEN_DESIGN_IMAGE:-ghcr.io/nexu-io/od:latest}` | `ghcr.io/nexu-io/od:<tag>`（hardcode） | 由 auto-update 工作流守护镜像升级 |
 | 网络 | 默认 bridge | `1panel-network: external: true` | AGENTS.md 强制 |
 | `OD_BIND_HOST` | `0.0.0.0`（base）/ `127.0.0.1`（Linux override） | `0.0.0.0` | 1Panel 反代必须 0.0.0.0；host 装了 agent CLI 的高级场景不在本仓覆盖范围 |
 | `host agent CLI 挂载` | linux override 提供 | 不提供 | 1Panel 场景下用户主机 agent CLI 不在容器内；如需自己挂，可手工改 compose |

@@ -23,7 +23,7 @@
 | `2026090709-arm64/` | `jellyfin/jellyfin:2026090709-arm64` | arm64 | 历史版本；启动检查 `/cache` ≥ 2 GiB |
 | `2026091410-arm64/` | `jellyfin/jellyfin:2026091410-arm64` | arm64 | 历史版本 |
 
-`10.11.11/` 目录使用 `${IMAGE}` 变量，1Panel UI 中可在「参数」中改写为 `nyanmisaka/jellyfin:<tag>-amd64` 等其他镜像。
+`10.11.11/` 目录镜像已 hardcode 为 `jellyfin/jellyfin:10.11.11`（如需换 `nyanmisaka/jellyfin` 等其他镜像，直接改 docker-compose.yml 后重新部署）。
 
 ## 运行用户 UID / GID
 

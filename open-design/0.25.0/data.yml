@@ -3,25 +3,6 @@ additionalProperties:
   name: Open Design 0.24.1
   type: tool
   formFields:
-    - default: ghcr.io/nexu-io/od:0.25.0
-      edit: true
-      envKey: IMAGE
-      labelEn: Image
-      labelZh: 镜像
-      label:
-        en: Image
-        zh: 镜像
-        ja: イメージ
-        ko: 이미지
-        ru: Образ
-        ms: Imej
-        pt-br: Imagem
-        es-es: Imagen
-        tr: İmaj
-        zh-Hant: 映像
-      required: true
-      rule: paramImageTag
-      type: text
     - default: 7456
       edit: true
       envKey: PANEL_APP_PORT_HTTP

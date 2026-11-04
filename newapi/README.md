@@ -133,7 +133,7 @@ REDIS_CONN_STRING=redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
 
 ## 镜像更新
 
-本应用使用变量型镜像（`${IMAGE}:${APP_VERSION}`），`detect-updates` 周一 cron 会拉取 `calciumion/new-api` 的新 tag，发现新 RC（如 `v1.0.0-rc.41`）会**新建版本目录** `v1.0.0-rc.41/` 并保留 `v1.0.0-rc.40/` 供回滚（在 1Panel UI「升级」中可下拉切换）。
+每个版本目录的镜像已 hardcode（如 `calciumion/new-api:v1.0.0-rc.40`），`detect-updates` 周一 cron 会拉取 `calciumion/new-api` 的新 tag，发现新 RC（如 `v1.0.0-rc.41`）会**新建版本目录** `v1.0.0-rc.41/` 并保留 `v1.0.0-rc.40/` 供回滚（在 1Panel UI「升级」中可下拉切换）。
 
 手动升级方式：
 

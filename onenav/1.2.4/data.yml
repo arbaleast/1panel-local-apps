@@ -22,46 +22,6 @@ additionalProperties:
   github: https://github.com/helloxz/onenav
   formFields:
     # ----------------------------------------------------------------------------
-    # 镜像源（Docker Hub 官方 helloz/onenav 多架构镜像）
-    # ----------------------------------------------------------------------------
-    - default: helloz/onenav
-      edit: true
-      envKey: IMAGE
-      labelEn: Image
-      labelZh: 镜像
-      label:
-        en: Image
-        zh: 镜像
-        zh-Hant: 映像
-        ja: イメージ
-        ko: 이미지
-        ru: Образ
-        ms: Imej
-        pt-br: Imagem
-      required: true
-      rule: paramImageTag
-      type: text
-    # ----------------------------------------------------------------------------
-    # 上游版本号（Docker tag 与 OneNav GitHub release tag 一致，如 1.2.4）
-    # ----------------------------------------------------------------------------
-    - default: 1.2.4
-      edit: true
-      envKey: APP_VERSION
-      labelEn: Version
-      labelZh: 版本
-      label:
-        en: Version
-        zh: 版本
-        zh-Hant: 版本
-        ja: バージョン
-        ko: 버전
-        ru: Версия
-        ms: Versi
-        pt-br: Versão
-      required: true
-      rule: paramImageTag
-      type: text
-    # ----------------------------------------------------------------------------
     # HTTP 端口：主机侧端口 → 容器 80
     # ----------------------------------------------------------------------------
     - default: 48080

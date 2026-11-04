@@ -32,7 +32,7 @@ music-tag-web/
 ├── data.yml               # 根元数据
 ├── logo.png               # 应用图标
 ├── README.md              # 本说明
-└── 2.7.7/                 # V2 协议 + 变量型镜像
+└── 2.7.7/                 # V2 协议 + hardcode 镜像
     ├── data.yml           # 版本配置 + formFields
     ├── docker-compose.yml
     └── data/              # 持久化占位(.gitkeep)
@@ -58,8 +58,6 @@ music-tag-web/
 
 | 变量 | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `IMAGE` | text | `xhongc/music_tag_web` | 镜像名称(变量型,不在自动更新范围) |
-| `APP_VERSION` | text | `2.7.7` | 镜像 tag,跟随上游稳定版手动更新 |
 | `PANEL_APP_PORT_HTTP` | number | `8002` | 主机侧 HTTP 端口 |
 | `ENABLE_MYSQL` | select | `false` | 是否启用外部 MySQL;关闭时容器内置 SQLite |
 | `MYSQL_HOST` | text | _(空)_ | MySQL 主机;留空走 SQLite |
@@ -78,9 +76,9 @@ music-tag-web/
 
 ## 升级方式
 
-本应用采用**变量型镜像**(`${IMAGE}:${APP_VERSION}`),不参与仓库的 hardcode 自动更新流程。升级方式:
+本应用镜像已 hardcode（如 `xhongc/music_tag_web:2.7.7`），由本仓 auto-update 工作流守护。手动升级方式:
 
-1. 在仓库内编辑 `music-tag-web/2.7.7/data.yml` 中的 `APP_VERSION` 默认值(如 `2.7.8`)
+1. 在仓库内编辑 `music-tag-web/2.7.7/docker-compose.yml` 的镜像 tag(如 `2.7.8`)
 2. 提交并推送到 GitHub
 3. 由 1Panel 计划任务拉取最新仓库,触发本地应用同步
 4. 在 1Panel UI 中对该应用执行「升级」,容器将拉取新 tag

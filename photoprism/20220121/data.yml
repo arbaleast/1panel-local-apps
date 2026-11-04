@@ -22,47 +22,6 @@ additionalProperties:
   github: https://github.com/photoprism/photoprism
   document: https://docs.photoprism.app/
   formFields:
-    - default: photoprism/photoprism
-      edit: true
-      envKey: APP_IMAGE
-      labelEn: App Image
-      labelZh: 应用镜像
-      label:
-        en: App Image
-        zh: 应用镜像
-        zh-Hant: 應用映像
-        ja: アプリイメージ
-        ko: 앱 이미지
-        ru: Образ приложения
-        ms: Imej Aplikasi
-        pt-br: Imagem do app
-      required: true
-      rule: paramImageTag
-      type: text
-    - default: "20220121"
-      edit: true
-      envKey: APP_VERSION
-      labelEn: App Version
-      labelZh: 应用版本
-      label:
-        en: App Version
-        zh: 应用版本
-        zh-Hant: 應用版本
-        ja: アプリバージョン
-        ko: 앱 버전
-        ru: Версия приложения
-        ms: Versi Aplikasi
-        pt-br: Versão do app
-      required: true
-      rule: paramSelect
-      type: select
-      values:
-        - label: 260919 (2026-09-19, latest)
-          value: "260919"
-        - label: 260728 (2026-07-28)
-          value: "260728"
-        - label: 260601 (2026-06-01)
-          value: "260601"
     - default: 2342
       edit: true
       envKey: PANEL_APP_PORT_HTTP

@@ -3,22 +3,6 @@ additionalProperties:
   name: jellyfin 2026090709-arm64
   type: tool
   formFields:
-    - default: jellyfin/jellyfin:2026090709-arm64
-      edit: true
-      envKey: IMAGE
-      labelEn: Image
-      labelZh: 镜像
-      label:
-        en: Image
-        zh: 镜像
-        zh-Hant: 映像
-        ja: イメージ
-        ko: 이미지
-        ru: Образ
-        ms: Imej
-        pt-br: Imagem
-      required: true
-      type: text
     - default: 8096
       edit: true
       envKey: PANEL_APP_PORT_HTTP

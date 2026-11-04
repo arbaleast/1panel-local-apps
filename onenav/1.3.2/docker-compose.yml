@@ -47,7 +47,7 @@ services:
     container_name: ${CONTAINER_NAME}
     # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
     user: "${UID}:${GID}"
-    image: ${IMAGE}:${APP_VERSION}
+    image: helloz/onenav:1.3.2
     restart: always
     networks:
       - 1panel-network

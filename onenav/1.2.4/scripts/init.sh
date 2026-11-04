@@ -13,7 +13,7 @@
 #   （写盘前要生成正确的 ENCRYPTED_PASSWORD = md5(USER.PASSWORD)）。
 #
 # 工作流程:
-#   1. 加载 1Panel 写的 .env（IMAGE / APP_VERSION / ONENAV_USER / ONENAV_PASSWORD / ...）
+#   1. 加载 1Panel 写的 .env（ONENAV_USER / ONENAV_PASSWORD ...；镜像已 hardcode，不再来自安装参数）
 #   2. 创建 ./data 与必要的子目录
 #   3. 若 ./data/config.php 不存在：
 #        docker pull <IMAGE>:<APP_VERSION>
@@ -59,8 +59,8 @@ else
 fi
 
 # 兜底默认值
-IMAGE="${IMAGE:-helloz/onenav}"
-APP_VERSION="${APP_VERSION:-1.2.4}"
+IMAGE="helloz/onenav"
+APP_VERSION="1.2.4"
 ONENAV_USER="${ONENAV_USER:-admin}"
 ONENAV_PASSWORD="${ONENAV_PASSWORD:-onenav123}"
 

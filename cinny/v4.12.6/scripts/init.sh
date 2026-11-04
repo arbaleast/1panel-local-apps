@@ -16,7 +16,8 @@
 # 并把 defaultHomeserver 改为 0（指向新加的那一项）。
 #
 # 工作流程:
-#   1. 从 1Panel 写的 .env 加载 formField 值（DEFAULT_HOMESERVER / IMAGE / APP_VERSION）
+#   1. 从 1Panel 写的 .env 加载 formField 值（DEFAULT_HOMESERVER）
+#      （IMAGE / APP_VERSION 已 hardcode 进 compose 与本脚本，不再来自安装参数）
 #   2. 若 host 端 ./data/config.json 不存在：
 #        docker run 临时 cinny 镜像，把镜像内 /app/config.json 拷到 host ./data/config.json
 #      若 host 端已存在：保留用户历史编辑（不覆盖）
@@ -58,8 +59,8 @@ fi
 
 # 兜底默认值
 DEFAULT_HOMESERVER="${DEFAULT_HOMESERVER:-matrix.org}"
-IMAGE="${IMAGE:-ghcr.io/cinnyapp/cinny}"
-APP_VERSION="${APP_VERSION:-v4.12.6}"
+IMAGE="ghcr.io/cinnyapp/cinny"
+APP_VERSION="v4.12.6"
 
 # 解析 DATA_PATH（compose 里的 ./data；相对路径相对 WORKDIR）
 DATA_PATH="${DATA_PATH:-./data}"

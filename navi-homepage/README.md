@@ -148,12 +148,12 @@ cp -a /backup/navi-homepage-20260101/* /opt/1panel/apps/navi-homepage/v1.2.0/dat
 ### 升级注意事项
 
 - 主机侧 `./data/config.json` 是兼容历史版本的。**不要**在升级时删除它
-- 如需切换到上游最新开发版，把 `APP_VERSION` 字段改为对应 tag（如 `v1.3.0`）
+- 如需切换到上游最新开发版，把 compose 的镜像 tag 改为对应 tag（如 `v1.3.0`，`scripts/init.sh` 里的常量同步改）
 - 上游 schema 变更时（罕见），Navi 启动器会自动迁移 config.json；如迁移失败会回退到示例配置（**用户编辑会丢**，请先备份）
 
 ## 镜像更新
 
-本应用使用 `ghcr.io/damisunshine/navi-homepage`（多架构 GHCR manifest），不在本仓 `.github/workflows/auto-update.yml` 的 hardcode 检测范围（compose 用 `${IMAGE}` / `${APP_VERSION}` 变量，详见 [AGENTS.md](../AGENTS.md) 「Automation」一节）。
+本应用使用 `ghcr.io/damisunshine/navi-homepage`（多架构 GHCR manifest），每个版本目录的镜像已 hardcode（如 `ghcr.io/damisunshine/navi-homepage:1.2.0`），由本仓 `.github/workflows/auto-update.yml` 守护镜像升级（详见 [AGENTS.md](../AGENTS.md) 「Automation」一节）。另注意 `scripts/init.sh` 也同步 hardcode 了镜像常量，切镜像需同时改两处。
 
 手动拉取最新镜像：
 

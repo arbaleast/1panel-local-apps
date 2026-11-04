@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // detect-updates.mjs — 检测 hardcode 类应用的镜像更新，修改文件并输出 updates.json
-// 仅处理 compose 中 image 含硬编码 tag 的应用，变量型（${IMAGE} 等）用 lib/compose.mjs 解析
+// 仅处理 compose 中 image 含硬编码 tag 的应用（2026-11 全仓 hardcode 迁移后的常态）；
+// 变量型仅剩 silo / infinity / xunlei 3 个例外（tag 不可版本识别，检测跳过），见 AGENTS.md「Automation」
 // 适配 AGENTS.md "禁止 latest 作目录名" 规则：每应用可有多个具体版本目录；检测到新 tag 后
 // 保留旧版本目录并 cpSync 新版本目录，1Panel UI 版本下拉展示所有历史版本，支持回滚。
 //

@@ -28,7 +28,7 @@
 - `1panel-network` 必须声明为 external
 - 公开端口: 使用 `PANEL_APP_PORT_*` 变量
 - 持久化挂载: 优先使用 `./data/...` 相对路径
-- 镜像引用: 变量型应用使用 `${IMAGE}` / `${APP_VERSION}`；hardcode 类应用直接写 `image:tag`，由自动更新守护
+- 镜像引用: 一律 hardcode 直接写 `image:tag`，由自动更新守护；例外清单见「Automation」一节（silo / infinity / xunlei 仍是 `${IMAGE}` / `${APP_VERSION}` 变量型、不入自动范围）
 
 ### 变量声明
 
@@ -105,7 +105,7 @@ npm run validate:batch  # 等价 node .github/bin/validate-update-batch.mjs，�
 - 工作流顶层 `permissions: {}`（默认不给任何 scope），各 job 按需申请最小权限。
 - 每周一 UTC 0 点（也可手动）检测 hardcode 类应用镜像更新；命中即开 PR（分支 `auto-update/<date>`，单 PR 合并本批次全部变更），PR body 列出所有 service 变更。
 - 修改 `<app>/<version>/docker-compose.yml` 与 `<app>/<version>/data.yml`。
-- 变量型应用（compose 用 `${IMAGE}` / `${APP_VERSION}`）不在自动范围。
+- 变量型应用（compose 用 `${IMAGE}` / `${APP_VERSION}`）不在自动范围；2026-11 全仓 hardcode 迁移后仅剩 3 个例外：`silo`（RELEASE 时间戳 tag 超出版本识别能力）、`infinity/cu124`（`cu124` 功能型 tag 单段、无法用版本比较选型）、`xunlei`（上游仅 `beta` 浮动 tag）；`SKIP_AUTO_UPDATE_APPS` 白名单（anythingllm / jellyfin）保留——混排日期型目录，手维护防跨目录覆盖（见 2026-09-25 jellyfin 事故）。
 - **自动更新 PR 的 title 与 commit message 都不含 `[skip ci]` 等 skip 指令**：GitHub 对 `pull_request` 事件按 **PR 的 HEAD commit message**（以及 PR title/body）判定 skip → 命中后 `pull_request` workflow 整体被跳过、必需检查永远停留在 Pending → 合并门禁必然超时。合并后的「push 递归触发」由工作流 `on.push.paths` 过滤防住（push 只对 `.github/**` 等自动更新链路自身文件触发，应用配置 / README 不在其中），不需要 skip 指令。回归测试：[`lib/github.test.mjs`](.github/lib/github.test.mjs) 的 `buildCommitMessage` / `buildPullRequestTitle` 用例。
 - **合并门禁**：开 PR 前跑 [`lib/validate-batch.mjs`](.github/lib/validate-batch.mjs) 的全量配置校验（data.yml YAML+schema / 目录结构 / compose 语法 / 更新后的镜像 tag / README 版本一致性）；PR 创建后轮询 GitHub Checks（[`lib/github.mjs`](.github/lib/github.mjs) 的 `waitForChecks`），**只有全部必需检查 success 才合并**；检查失败 / 超时 / 状态未知一律**保留 PR 与远程分支、不合并**。
 - **检测失败不会被吞掉**：`.github/scripts/detect-updates.mjs` 为每个应用产出 `success` / `skipped` / `failed` 三态结果（写入 `updates.json` 的 `results` + `summary`），Registry 网络错误绝不算「无更新」；存在 failed 时脚本退出码为 2，workflow 末尾的「检测失败门禁」步骤显式 `exit 1` 让整个 workflow 变红。
