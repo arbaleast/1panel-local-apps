@@ -6,13 +6,15 @@
  *   2. package.json 中的 docs:check 命令与 bin/check-docs.mjs 一一对应。
  *   3. AGENTS.md router 行数受控，且路由索引覆盖 docs/ 全部手册（防「孤儿手册」）。
  *   4. AGENTS.md 作为路由器不得内嵌长篇细则（行数 + 「详见手册」结构）。
+ *   5. 死链分支必须「报 ERROR 退出 1」而不是抛未捕获异常（回归：base 未定义导致 CI 崩）。
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ROUTER_MAX_LINES = 200;
@@ -32,6 +34,34 @@ test('check-docs.mjs 对当前文档树全绿（链接/锚点/栅栏/router 行�
   assert.match(r.stdout, /PASSED/, `check-docs 输出缺少 PASSED：\n${r.stdout}`);
   // 不允许静默吞错
   assert.doesNotMatch(r.stdout, /\bERROR\b/, `check-docs 输出包含 ERROR：\n${r.stdout}`);
+});
+
+test('check-docs.mjs 遇到死链时报告 ERROR 并退出 1（不得抛未捕获异常）', () => {
+  const fixture = join(tmpdir(), `check-docs-fixture-${process.pid}`);
+  try {
+    mkdirSync(join(fixture, 'docs'), { recursive: true });
+    writeFileSync(join(fixture, 'AGENTS.md'), '# router\n\n- [缺失目标](missing.md)\n', 'utf8');
+    writeFileSync(join(fixture, 'CONTRIBUTING.md'), '# contributing\n', 'utf8');
+    writeFileSync(join(fixture, 'README.md'), '# readme\n', 'utf8');
+    writeFileSync(join(fixture, 'docs', 'a.md'), '# a\n', 'utf8');
+
+    const r = spawnSync(
+      process.execPath,
+      [join(ROOT, '.github', 'bin', 'check-docs.mjs'), '--root', fixture],
+      { cwd: ROOT, encoding: 'utf8', timeout: 60_000 },
+    );
+    assert.equal(r.status, 1, `死链应退出 1，实际 ${r.status}\n${r.stdout}\n${r.stderr}`);
+    assert.match(r.stdout, /ERROR/, `应输出 ERROR：\n${r.stdout}`);
+    assert.match(r.stdout, /missing\.md/, `ERROR 应指出缺失目标：\n${r.stdout}`);
+    // 关键回归：不得出现未捕获异常（如 ReferenceError: base is not defined）
+    assert.doesNotMatch(
+      r.stderr,
+      /ReferenceError|TypeError|is not defined/,
+      `死链分支不得崩溃：\n${r.stderr}`,
+    );
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
 });
 
 test('package.json 的 docs:check 脚本指向 bin/check-docs.mjs', () => {

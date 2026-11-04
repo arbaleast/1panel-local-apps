@@ -69,7 +69,7 @@ npm run lint         # 全仓 data.yml 静态校验
 
 ## 6. 工作区卫生（临时脚本与 Trace-less 执行）
 
-- 诊断 / 分拆探测用的临时脚本一律放 [`.agent_cache/`](.agent_cache/)（`.gitignore` 已忽略该目录），
+- 诊断 / 分拆探测用的临时脚本一律放 `.agent_cache/`（`.gitignore` 已忽略该目录），
   用完删除，不把诊断脚本提交进仓库。
 - 结束前自查：`git status --short` 应只含本次任务实际要提交的文件；应用配置目录（`<app>/<version>/`）
   出现在无关 diff 里即为污染，先回滚再提交。

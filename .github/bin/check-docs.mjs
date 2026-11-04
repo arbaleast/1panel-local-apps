@@ -12,12 +12,17 @@
  *
  * 退出码：存在 error → 1；仅有 warning → 0（打印 PASSED (with warnings)）。
  * 不校验外链（http/https/mailto/data）与纯文本引用。
+ *
+ * 用法：node .github/bin/check-docs.mjs [--max-lines N] [--root DIR]
+ *   --root DIR 指定被检目录（测试夹具用；默认仓库根）。
  */
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+// ROOT 可用 --root <dir> 覆盖（测试用夹具复现死链分支）；默认取脚本所在仓库根。
+let ROOT = join(SCRIPT_DIR, '..', '..');
 const ROUTER = 'AGENTS.md';
 const ROUTER_MAX_LINES_DEFAULT = 200;
 const DOC_MIN_LINES = 40;
@@ -67,7 +72,7 @@ function checkLink(fromFile, target, label, lineNo) {
   }
   const abs = join(ROOT, dirname(fromFile), pathPart);
   if (!existsSync(abs)) {
-    errors.push(`${fromFile}:${lineNo} 链接目标不存在: ${base}（"${label}"）`);
+    errors.push(`${fromFile}:${lineNo} 链接目标不存在: ${pathPart}（"${label}"）`);
     return;
   }
   try {
@@ -81,7 +86,7 @@ function checkLink(fromFile, target, label, lineNo) {
   const compact = (s) => s.replace(/[^a-z0-9\u4e00-\u9fff]+/gi, '');
   if (slugs.some((s) => compact(s) === compact(anchor))) return;
   errors.push(
-    `${fromFile}:${lineNo} 锚点在目标文件中找不到: ${base}（标题候选: ${slugs.slice(0, 6).join(' | ')}…）`,
+    `${fromFile}:${lineNo} 锚点在目标文件中找不到: ${pathPart}（标题候选: ${slugs.slice(0, 6).join(' | ')}…）`,
   );
 }
 
@@ -119,6 +124,8 @@ function main() {
   const maxArg = args.indexOf('--max-lines');
   const maxRouterLines =
     maxArg !== -1 ? Number(args[maxArg + 1]) || ROUTER_MAX_LINES_DEFAULT : ROUTER_MAX_LINES_DEFAULT;
+  const rootArg = args.indexOf('--root');
+  if (rootArg !== -1 && args[rootArg + 1]) ROOT = resolve(args[rootArg + 1]);
 
   const files = collectMarkdownFiles();
   for (const file of files) checkFile(file, maxRouterLines);

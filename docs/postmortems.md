@@ -194,7 +194,7 @@ lint（js-yaml + zod）不报这个错，本地校验脚本与说明见
 
 ### 几何性 schema 联合（union）盲区：firecrawl / jellystat / llamaindex / immich / pgvector / qdrant 等
 
-- zod 3.x `invalid_union` 隐藏内层错误；诊断脚本写 [`.agent_cache/`](../.agent_cache/)
+- zod 3.x `invalid_union` 隐藏内层错误；诊断脚本写 `.agent_cache/`
   （gitignore 已忽略）用 safeParse 分 case 展开。
 - firecrawl 的真正根因是 formFields 列表里重复且残缺的 `- default: 1Panel-localpgvector-kD9L`
   （缺 envKey/type），不是缺 key/name；**union 错误先 grep `^- default:` 找孤立项**。
@@ -260,7 +260,7 @@ registry 端口在 repo 段内 `ghcr.io:443/foo` 的边界、形态 3 bookorbit 
 - formField 类型/形态清单必须集中在 [compose-conventions.md](compose-conventions.md) /
   [data-yml-schema.md](data-yml-schema.md) 这类文档单点维护，否则新应用上线时无人发现假设不成立。
 - 端到端 dry-run 会写盘（`updates.json` + 新版本目录），隔离验证须走
-  [`.agent_cache/`](../.agent_cache/) 临时脚本 + 清理（见 [CONTRIBUTING.md](../CONTRIBUTING.md) 工作区卫生）。
+  `.agent_cache/` 临时脚本 + 清理（见 [CONTRIBUTING.md](../CONTRIBUTING.md) 工作区卫生）。
 
 ## 初始化与配置生成类事故
 
