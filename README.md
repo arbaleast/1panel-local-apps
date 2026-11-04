@@ -49,7 +49,6 @@
 | openreel-video | 浏览器端开源视频剪辑工具 | v0.5.0 |
 | openshot | 开源视频剪辑与动画制作 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速, 仅 amd64) | 4.1.1 |
 | optimisarr | 媒体库自动转码 (FFmpeg 验证 + 回滚, Plex/Jellyfin/Emby, 仅 amd64) | 0.2.25 |
-| perplexica | AI 问答引擎（原 Perplexica；2026-11 应用目录已重命名为 vane） | v1.12.2 |
 | personal-todo-vault | 自托管待办与 Markdown 笔记库（SQLite + 邮件提醒 + WebDAV 备份） | latest |
 | pgvector | 向量数据库 | 0.8.7-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
@@ -63,6 +62,7 @@
 | tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.06.00 |
 | traefik | 反向代理 | v3.7.17 |
 | unmanic | 媒体库自动转码 (josh5 镜像, NVIDIA Pascal/P620 NVENC 加速) | 0.4.1 |
+| vane | AI 问答引擎（原 Perplexica，已重命名为 vane） | v1.12.2 |
 | vaultwarden | Bitwarden 兼容的自托管密码管理器（Rust 版服务端） | 1.37.5 |
 | xunlei | cnk3x 维护的迅雷远程下载服务（群晖提取版） | beta |
 | zashboard | Mihomo 面板 | latest |
@@ -106,7 +106,7 @@ npm run docs:check     # 文档链接 / 结构校验
 │   └── ...
 ├── ...                           # 其余应用同结构
 ├── scripts/
-│   └── check-updates.sh          # 更新检查
+│   └── check-updates.sh          # 已弃用的只读薄壳（等价 npm run detect:dry-run）
 ├── .github/
 │   ├── workflows/
 │   │   └── auto-update.yml       # 自动检测 hardcode 类应用镜像更新

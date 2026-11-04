@@ -18,7 +18,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 // 共享模块：应用目录扫描
-import { listApps, getCurrentVersion } from '../lib/apps.mjs';
+import { listApps, getCurrentVersion, loadAliases } from '../lib/apps.mjs';
 
 // ---------- 常量 ----------
 
@@ -146,13 +146,8 @@ function main() {
   // 构建正向映射: shortName -> alias 配置
   const aliasByName = new Map(Object.entries(aliases));
 
-  // 构建反向映射: dirName -> alias 配置（用于别名表中指定了 dir 的条目）
-  const aliasByDir = new Map();
-  for (const [name, conf] of Object.entries(aliases)) {
-    const dir = conf.dir || name;
-    // 确保 dir 属性始终存在（lib/apps.mjs listApps 依赖此字段）
-    aliasByDir.set(dir, { ...conf, dir, _shortName: name });
-  }
+  // 反向映射: dirName -> alias 配置（实现收敛到 lib/apps.mjs，唯一事实来源）
+  const aliasByDir = loadAliases(REPO_ROOT);
 
   log(`加载别名表: ${Object.keys(aliases).length} 条`);
 

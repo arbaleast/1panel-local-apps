@@ -4,7 +4,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { SKIP_DIRS, listApps, getAppMeta, getCurrentVersion } from './apps.mjs';
+import {
+  SKIP_DIRS,
+  listApps,
+  getAppMeta,
+  getCurrentVersion,
+  loadAliases,
+  buildShortToDir,
+} from './apps.mjs';
 
 describe('apps', () => {
   let tmpRoot;
@@ -234,5 +241,66 @@ describe('apps', () => {
 
     const ver = getCurrentVersion(tmpRoot, 'myapp');
     assert.equal(ver, '26.04.5.2.1');
+  });
+});
+
+// ─── 别名表加载（loadAliases / buildShortToDir）────────────────────────────
+// 回归：别名表曾有三份重复实现（validate-batch / detect-updates / sync-readme），
+// 且都以 dir 为键 last-wins 覆盖 → 旧名 perplexica 覆盖当前名 vane，
+// README「应用列表」与应用目录 key（vane）自相矛盾，且按当前名过滤会失效。
+
+describe('别名表加载', () => {
+  /** 构造一个含 .github/app-aliases.yml 的临时仓库 */
+  function makeRepo(aliasesYaml) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'alias-test-'));
+    fs.mkdirSync(path.join(root, '.github'), { recursive: true });
+    fs.writeFileSync(path.join(root, '.github', 'app-aliases.yml'), aliasesYaml, 'utf8');
+    return root;
+  }
+
+  it('同一 dir 多个条目时，目录同名条目（canonical）作为主名', () => {
+    const root = makeRepo(
+      ['aliases:', '  vane:', '    desc: AI 问答引擎', '  perplexica:', '    dir: vane', ''].join('\n'),
+    );
+    const map = loadAliases(root);
+    const entry = map.get('vane');
+    assert.ok(entry, '应存在 vane 条目');
+    assert.equal(entry._shortName, 'vane', '主名必须是目录同名条目 vane');
+    assert.deepEqual(entry.aliases, ['perplexica'], '旧名应记入 aliases');
+  });
+
+  it('条目顺序颠倒时结果一致（canonical 优先）', () => {
+    const root = makeRepo(
+      ['aliases:', '  perplexica:', '    dir: vane', '  vane:', '    desc: AI 问答引擎', ''].join('\n'),
+    );
+    const map = loadAliases(root);
+    assert.equal(map.get('vane')._shortName, 'vane');
+    assert.deepEqual(map.get('vane').aliases, ['perplexica']);
+  });
+
+  it('当前名与历史别名都能解析到同一 dir（APPS_FILTER 按名过滤）', () => {
+    const root = makeRepo(
+      ['aliases:', '  vane:', '    desc: AI 问答引擎', '  perplexica:', '    dir: vane', ''].join('\n'),
+    );
+    const shortToDir = buildShortToDir(loadAliases(root));
+    assert.equal(shortToDir.get('vane'), 'vane');
+    assert.equal(shortToDir.get('perplexica'), 'vane');
+  });
+
+  it('只有旧名指向某 dir（无 canonical 条目）时保持原行为', () => {
+    const root = makeRepo(
+      ['aliases:', '  photopea:', '    dir: ramuses/photopea', ''].join('\n'),
+    );
+    const map = loadAliases(root);
+    assert.equal(map.get('ramuses/photopea')._shortName, 'photopea');
+  });
+
+  it('真实仓库：vane 以 canonical 为主名，perplexica 为历史别名', () => {
+    const repoRoot = path.join(path.dirname(new URL(import.meta.url).pathname), '..', '..');
+    const map = loadAliases(repoRoot);
+    const entry = map.get('vane');
+    assert.ok(entry, '真实仓库应有 vane 别名条目');
+    assert.equal(entry._shortName, 'vane');
+    assert.ok(entry.aliases.includes('perplexica'), 'perplexica 应作为历史别名保留');
   });
 });

@@ -1,0 +1,225 @@
+# 跨文件一致性校验豁免清单（单一事实来源）
+#
+# schema：app(必填) / ruleId(必填) / version(可选，缺省=该应用全部版本) / value(可选，须与 finding.actual 完全一致) / reason(必填)
+# 约束：每条必须绑定到具体应用与检查项，禁止全局关闭；ruleId 必须是引擎已知项；
+#       死条目（应用/版本目录消失、规则不再产生 finding）会被 lint 报 error 强制清理。
+# 生成方式：由 stage6-waive.js 依据全量 lint 实测结果生成（72 组 / 220 findings 全覆盖），reason 均经文件实证。
+#
+exemptions:
+  - app: aria2
+    ruleId: dir.latest
+    reason: "上游镜像仅发布 latest 滚动 tag（compose image 实证），无版本号可跟随；目录名取 latest 为唯一可行参数（历史 PR 已注明根因）"
+  - app: handbrake-web
+    ruleId: dir.latest
+    reason: "上游镜像仅发布 latest 滚动 tag（compose image 实证），无版本号可跟随；目录名取 latest 为唯一可行参数（历史 PR 已注明根因）"
+  - app: kiwix-serve
+    ruleId: dir.latest
+    reason: "上游镜像仅发布 latest 滚动 tag（compose image 实证），无版本号可跟随；目录名取 latest 为唯一可行参数（历史 PR 已注明根因）"
+  - app: llmwiki
+    ruleId: dir.latest
+    reason: "上游镜像仅发布 latest 滚动 tag（compose image 实证），无版本号可跟随；目录名取 latest 为唯一可行参数（历史 PR 已注明根因）"
+  - app: personal-todo-vault
+    ruleId: dir.latest
+    reason: "上游镜像仅发布 latest 滚动 tag（compose image 实证），无版本号可跟随；目录名取 latest 为唯一可行参数（历史 PR 已注明根因）"
+  - app: zashboard
+    ruleId: dir.latest
+    reason: "上游镜像仅发布 latest 滚动 tag（compose image 实证），无版本号可跟随；目录名取 latest 为唯一可行参数（历史 PR 已注明根因）"
+  - app: optimisarr
+    ruleId: form.orphan
+    reason: "RENDER_GID 为 GPU 硬件加速可选项：compose 注释块（group_add: ${RENDER_GID}）与 README:76 启用说明配套，默认不启用；删除声明会使用户启用 GPU 时无处赋值"
+  - app: searxng
+    ruleId: form.orphan
+    reason: "REDIS_URL 为登记过的可选项：formField 标签与 compose 注释自述——留空用默认文件缓存，启用外部 Redis 时由用户在 1Panel 额外环境变量中手动接线 SEARXNG_REDIS_URL；默认单机部署不引用"
+  - app: anirss
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 v3.2.13: anirss ⇨ Ani-RSS），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: aria2
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 a2b-latest: aria2 a2b-latest ⇨ Aria2），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: bookorbit
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 3.2.0: bookorbit 3.2.0 ⇨ BookOrbit），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: cfnb
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 v1.0.1: cfnb v1.0.1 ⇨ cfnb），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: cfui
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 0.7.1: cfui 0.7.1 ⇨ cfui），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: cinny
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 v4.12.6: cinny v4.12.6 ⇨ Cinny），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: collabora
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 26.04.5.1.1: Collabora Online 26.04.5.1.1 ⇨ Collabora Online），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: firecrawl
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 2.11.14: firecrawl ⇨ Firecrawl），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: gecoos
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 v2.2: gecoos v2.2 ⇨ Gecoos 集客 AC），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: grimmory
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 3.5.0: grimmory 3.5.0 ⇨ grimmory），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: handbrake-web
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 latest: HandBrake Web latest ⇨ HandBrake Web），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: hindsight
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 0.10.0: hindsight v0.9.2 ⇨ hindsight），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: ignis
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 0.8.10: ignis 0.8.10 ⇨ Ignis），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: infinity
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 cu124: infinity cu124 ⇨ infinity），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: jellyfin
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 10.11.11: jellyfin 10.11.11 ⇨ Jellyfin），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: jellystat
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 1.1.11: jellystat 1.1.11 ⇨ Jellystat），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: kdenlive
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 26.08.2-1-ls224: kdenlive 26.08.2-1-ls224 ⇨ Kdenlive），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: kiwix-serve
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 latest: kiwix-serve latest ⇨ Kiwix Serve），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: linkwarden
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 v1.53.1: linkwarden ⇨ Linkwarden），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: llamacpp
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 server-cuda12-v0.4.1: llamacpp server-cuda12-v0.4.1 ⇨ Llama.cpp），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: llmwiki
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 latest: LLM Wiki (latest) ⇨ llmwiki），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: losslesscut
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 3.64.0: losslesscut 3.64.0-v1 ⇨ losslesscut），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: marginalia
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 0.3.4: marginalia ⇨ Marginalia），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: mediago
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 3.5.0: mediago ⇨ MediaGo），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: mineru
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 3.4.2: mineru 3.4.2 ⇨ MinerU），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: navi-homepage
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 v1.2.0: navi-homepage v1.2.0 ⇨ Navi Homepage），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: newapi
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 v0.13.2: newapi v1.0.0-rc.40 ⇨ New API），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: onenav
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 1.2.4: onenav 1.2.4 ⇨ OneNav），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: open-design
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 0.24.1: Open Design 0.24.1 ⇨ Open Design），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: openreel-video
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 v0.5.0: openreel-video v0.5.0 ⇨ OpenReel Video），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: openshot
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 4.0.0: openshot 4.0.0 ⇨ OpenShot），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: optimisarr
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 0.2.22: optimisarr 0.2.22 ⇨ Optimisarr），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: personal-todo-vault
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 latest: personal-todo-vault latest ⇨ Personal Todo Vault），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: photoprism
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 20220121: photoprism 260919 ⇨ PhotoPrism），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: super-productivity
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 v19.1.0: super-productivity v19.1.0 ⇨ Super Productivity），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: tdarr
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 2.91.01: tdarr 2.91.01 ⇨ tdarr），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: unmanic
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 0.4.1: unmanic 0.4.1 ⇨ unmanic），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: vaultwarden
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 1.37.5: vaultwarden 1.37.5 ⇨ Vaultwarden），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: xunlei
+    ruleId: meta.name-drift
+    reason: "版本级 additionalProperties.name 与根目录 name 的历史差异（如 beta: xunlei beta ⇨ Xunlei 远程下载），属纯展示性元数据；逐版本对齐需改写全部历史版本文件并改变 1Panel 商店显示，收益低于风险"
+  - app: gecoos
+    ruleId: port.orphan
+    version: v2.2
+    reason: "v2.2 使用 network_mode: host，无 ports 映射属预期；端口经环境变量 mp=${PANEL_APP_PORT_WEB} 生效（compose:17），声明非死配置"
+  - app: mineru
+    ruleId: readme.vars
+    reason: "README 任务查询示例中的 ${TASK_ID} 为上游 API 的路径参数演示（curl 示例），非 compose/formFields 变量"
+  - app: newapi
+    ruleId: readme.vars
+    reason: "README 外接数据库章节引用关联数据库应用的 DB_* 变量与上游 SQL_DSN 拼接约定（教程性质），非本应用 compose 变量"
+  - app: open-design
+    ruleId: readme.vars
+    reason: "README 迁移对照表记录上游原变量 ${PORT}/${OPEN_DESIGN_IMAGE:-...} 的改写前后对照，属文档性历史说明"
+  - app: unmanic
+    ruleId: readme.vars
+    reason: "README 路径说明中的 ${HOST_PATH_BINDPATH} 为宿主机路径前缀占位示意（教程性质），非 compose 变量"
+  - app: anythingllm
+    ruleId: runtime.high-privilege
+    reason: "上游镜像要求 SYS_ADMIN 与 seccomp:unconfined（内置浏览器/文档解析沙箱所需），属上游运行约定"
+  - app: aria2
+    ruleId: runtime.high-privilege
+    reason: "上游 a2b 镜像约定 NET_ADMIN（网络控制能力），删除会导致容器无法启动"
+  - app: bookorbit
+    ruleId: runtime.high-privilege
+    reason: "上游镜像以 root 起步后降权，需 CHOWN/DAC_OVERRIDE/FOWNER 完成首启文件属主修正"
+  - app: collabora
+    ruleId: runtime.high-privilege
+    reason: "Collabora Online 镜像启动时经 /opt/cool/.caps-verified 校验 MKNOD 能力（compose 注释注明），缺失即拒绝启动"
+  - app: gecoos
+    ruleId: runtime.high-privilege
+    reason: "AC 控制器需 privileged + network_mode: host 创建虚拟网络接口（VLAN/TAP）并执行 L2/L3 转发（compose 注释注明）"
+  - app: handbrake
+    ruleId: runtime.high-privilege
+    reason: "GPU 转码：NVIDIA_ENABLE=true 时经 runtime: nvidia 拉起 nvidia-container-cli（compose 注释注明），删除则 GPU 编码不可用"
+  - app: handbrake-web
+    ruleId: runtime.high-privilege
+    reason: "GPU 转码：deploy.resources 预约 nvidia 设备（上游 setup guide 约定），删除则 GPU 编码不可用"
+  - app: infinity
+    ruleId: runtime.high-privilege
+    reason: "GPU 向量检索：runtime: nvidia + deploy.devices 预约 GPU 设备，为该镜像的核心运行要求"
+  - app: jellyfin
+    ruleId: runtime.high-privilege
+    reason: "硬件转码：devices 挂载 /dev/dri（VAAPI/QSV）与 runtime: nvidia（NVIDIA_VISIBLE_DEVICES=all）双通道，为媒体服务核心能力"
+  - app: kdenlive
+    ruleId: runtime.high-privilege
+    reason: "GPU 渲染导出：上游镜像要求 runtime: nvidia，删除则硬件编码不可用"
+  - app: llamacpp
+    ruleId: runtime.high-privilege
+    reason: "GPU 推理：上游镜像要求 runtime: nvidia，删除则回退 CPU 推理（性能不可用级）"
+  - app: mihomo
+    ruleId: runtime.high-privilege
+    reason: "TUN 模式核心能力：NET_ADMIN + /dev/net/tun 设备挂载，缺失则 TUN 代理模式无法启用"
+  - app: mineru
+    ruleId: runtime.high-privilege
+    reason: "GPU 推理：runtime 经 ${GPU_RUNTIME} 变量注入，默认空串回落普通 runtime（按需开启，非强制提权）"
+  - app: openshot
+    ruleId: runtime.high-privilege
+    reason: "GPU 渲染导出：上游镜像要求 runtime: nvidia，删除则硬件编码不可用"
+  - app: unmanic
+    ruleId: runtime.high-privilege
+    reason: "GPU 转码：上游镜像要求 runtime: nvidia，删除则硬件转码不可用"
+  - app: xunlei
+    ruleId: runtime.high-privilege
+    reason: "SPK 启动器需在容器内做 bind mount 自挂载（SYS_ADMIN，compose 注释注明），属迅雷远程下载方案固有要求"
+  - app: grimmory
+    ruleId: runtime.identity-mixed
+    reason: "jlesage 基座身份双通道约定：user: ${UID}:${GID} 由 UID/GID 注入，另保留 USER_ID/GROUP_ID env 供基座 s6 内部降权，属有意设计（见 compose 注释）"
+  - app: losslesscut
+    ruleId: runtime.identity-mixed
+    reason: "jlesage 基座身份双通道约定：user: ${UID}:${GID} 由 UID/GID 注入，另保留 USER_ID/GROUP_ID env 供基座 s6 内部降权，属有意设计（见 compose 注释）"
+  - app: linkwarden
+    ruleId: tag.dir
+    reason: "历史版本目录名（v1.53.1/v1.56.x）沿用旧命名体系，镜像 tag 已由 compose hardcode 为 v2.16.x（compose 为镜像权威）；重命名目录会破坏存量实例的 1Panel 升级参数"
+  - app: traefik
+    ruleId: volume.path
+    reason: "traefik 为宿主机级反代：静态/动态配置与 ACME 证书位于宿主机固定路径（/home/al/workspace/traefik 与 .acme.sh），迁入仓库会引入证书等敏感文件；绝对路径挂载属部署特性"

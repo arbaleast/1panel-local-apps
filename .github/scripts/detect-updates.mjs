@@ -39,7 +39,7 @@ import * as yaml from 'js-yaml';
 // 共享模块：semver 比较、镜像 registry 适配器、应用目录扫描、compose 模板解析
 import * as semverLib from '../lib/semver.mjs';
 import { createAdapter, parseImage, RegistryRequestError } from '../lib/registry.mjs';
-import { listApps } from '../lib/apps.mjs';
+import { listApps, loadAliases, buildShortToDir } from '../lib/apps.mjs';
 import { resolveImageTemplate, rebuildImageDefault } from '../lib/compose.mjs';
 // 汇总与渲染的唯一实现（lib/report.mjs）——本脚本不再 inline 重复实现计数/渲染
 import {
@@ -566,25 +566,6 @@ export function determineExitCode(results) {
 }
 
 // ---------- 主流程 ----------
-
-/**
- * 加载别名表，构建 dir -> 配置 映射
- * 别名表中 dir 可指向嵌套路径（如 ramuses/photopea），供嵌套应用识别
- * @returns {Map<string, object>} aliasByDir
- */
-function loadAliases() {
-  const aliasesPath = path.join(REPO_ROOT, '.github', 'app-aliases.yml');
-  if (!fs.existsSync(aliasesPath)) return new Map();
-  const aliasesData = yaml.load(fs.readFileSync(aliasesPath, 'utf8')) || {};
-  const aliases = aliasesData.aliases || {};
-  const aliasByDir = new Map();
-  for (const [name, conf] of Object.entries(aliases)) {
-    const dir = conf.dir || name;
-    // 确保 dir 属性始终存在（lib/apps.mjs listApps 依赖此字段）
-    aliasByDir.set(dir, { ...conf, dir, _shortName: name });
-  }
-  return aliasByDir;
-}
 
 /**
  * 使用 adapter 获取镜像最新稳定 tag
@@ -1233,13 +1214,11 @@ async function main() {
     process.exit(1);
   }
 
-  // 加载别名表（dir 可能指向嵌套路径，如 ramuses/photopea）
-  const aliasByDir = loadAliases();
-  // shortName -> dir 映射：APPS_FILTER 支持按短名（如 photopea）或实际目录（如 ramuses/photopea）过滤
-  const shortToDir = new Map();
-  for (const [dir, conf] of aliasByDir.entries()) {
-    shortToDir.set(conf._shortName, dir);
-  }
+  // 加载别名表（dir 可能指向嵌套路径，如 ramuses/photopea）——实现收敛到 lib/apps.mjs
+  const aliasByDir = loadAliases(REPO_ROOT);
+  // shortName -> dir 映射：APPS_FILTER 支持按短名（如 photopea）、当前名（vane）、
+  // 历史别名（perplexica）或实际目录（如 ramuses/photopea）过滤
+  const shortToDir = buildShortToDir(aliasByDir);
 
   const allApps = listApps(REPO_ROOT, aliasByDir).map(a => a.dir);
   let targetApps = allApps;

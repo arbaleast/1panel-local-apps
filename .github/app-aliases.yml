@@ -95,8 +95,8 @@ aliases:
   zashboard:
     desc: Mihomo 面板
   vane:
-    desc: AI 问答引擎
-  perplexica:  # 兼容旧名（已重命名为 Vane）
+    desc: AI 问答引擎（原 Perplexica，已重命名为 vane）
+  perplexica:  # 兼容旧名（已重命名为 Vane）：仅作历史别名，主名以目录同名条目 vane 为准
     dir: vane
     desc: AI 问答引擎（原 Perplexica）
   vaultwarden:
