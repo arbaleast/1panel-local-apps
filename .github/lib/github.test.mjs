@@ -225,6 +225,57 @@ describe('createGitHubClient', () => {
     assert.match(r.message, /merged/i);
   });
 
+  it('merge 带 expectedHeadSha 时请求体含 sha 护栏（head 被移动则 GitHub 拒绝）', async () => {
+    const sink = [];
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: fakeFetch({ merged: true, message: 'Pull Request successfully merged' }, sink),
+    });
+    await client.mergePullRequest({
+      owner: 'o',
+      repo: 'r',
+      number: 36,
+      expectedHeadSha: 'abc123def456',
+    });
+    assert.equal(sink[0].init.method, 'PUT');
+    assert.equal(sink[0].url, 'https://api.github.com/repos/o/r/pulls/36/merge');
+    const body = JSON.parse(sink[0].init.body);
+    assert.equal(body.sha, 'abc123def456');
+    assert.equal(body.merge_method, 'merge');
+  });
+
+  it('merge 未传 expectedHeadSha 时不带 sha 字段（保持向后兼容）', async () => {
+    const sink = [];
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: fakeFetch({ merged: true, message: 'ok' }, sink),
+    });
+    await client.mergePullRequest({ owner: 'o', repo: 'r', number: 36 });
+    const body = JSON.parse(sink[0].init.body);
+    assert.ok(!('sha' in body), '未传 expectedHeadSha 时不应带 sha');
+  });
+
+  it('merge 遇 409（head 已被修改）时抛错，绝不静默视为已合并', async () => {
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: async () =>
+        new Response(
+          JSON.stringify({ message: 'Head branch was modified. Review and try the merge again.' }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
+        ),
+    });
+    await assert.rejects(
+      () =>
+        client.mergePullRequest({
+          owner: 'o',
+          repo: 'r',
+          number: 36,
+          expectedHeadSha: 'abc123def456',
+        }),
+      /Head branch was modified|409/,
+    );
+  });
+
   it('merge 失败（未合并）时 merged=false 且带 message', async () => {
     const client = createGitHubClient({
       token: 't',

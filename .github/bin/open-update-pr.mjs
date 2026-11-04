@@ -311,6 +311,9 @@ async function main() {
       repo,
       number: pr.number,
       mergeMethod: 'merge',
+      // sha 护栏：只合并「等待检查通过的那个 head SHA」。
+      // 等待期间若分支被再次推送，GitHub 返回 409 → 不会合并未经验证的提交。
+      expectedHeadSha: headSha,
     });
     merged = result.merged;
     if (merged) {

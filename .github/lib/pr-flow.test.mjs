@@ -126,6 +126,22 @@ describe('open-update-pr.mjs 安全收口（audit P2）', () => {
     assert.doesNotMatch(r.stderr, /gsh_secret_value/);
   });
 
+  it('合并必须带 expectedHeadSha 护栏（只合并等待过检查的那个 SHA）', () => {
+    // 回归：曾只传 merge_method，若等待检查期间 head 被再次推送，
+    // 就会合并未经验证的新提交（目标 §1.3.5 核心核查项）。
+    const m = /client\.mergePullRequest\(\{([\s\S]*?)\}\)/.exec(src);
+    assert.ok(m, '找不到 mergePullRequest 调用');
+    assert.match(m[1], /expectedHeadSha/, '合并调用必须传 expectedHeadSha');
+    // 且必须用「等待检查用的那个 SHA」，不是另取
+    assert.match(m[1], /expectedHeadSha:\s*headSha/);
+  });
+
+  it('head SHA 无法确定时不得合并', () => {
+    const m = /if \(!headSha\) \{([\s\S]*?)return 1;/.exec(src);
+    assert.ok(m, '找不到 head SHA 缺失分支');
+    assert.match(m[1], /不合并|不能验证/);
+  });
+
   it('PR title / commit message 构造不自带 [skip ci]', async () => {
     // github.mjs 内注释里提到 [skip ci]（教学说明），这里锁的是**实际生成**的字符串
     const gh = await import(path.join(ROOT, '.github', 'lib', 'github.mjs'));

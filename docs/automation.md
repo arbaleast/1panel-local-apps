@@ -84,6 +84,9 @@ PR 创建后 [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 的合并�
 - 合并门禁：轮询 GitHub Checks + combined status，**键控到目标 PR 响应的 `head.sha`**
   （不是触发 workflow 自身的 SHA）；`waitForChecks` 只在各必要检查 success 后合并；
   failure / timeout / unknown 一律**保留 PR 与远程分支**、非零退出。
+- **合并带 sha 护栏**：合并请求体带 `sha: <等待检查的 head SHA>`。若等待期间分支被再次推送，
+  GitHub 返回 409（Head branch was modified）→ 不合并，避免把「未经验证的新提交」并入 main
+  （回归见 lib/github.test.mjs「merge 带 expectedHeadSha …」与 pr-flow.test.mjs 同名断言）。
 - GitHub 对 `pull_request` 事件按 **PR 的 HEAD commit message 与 PR title/body** 判定 skip 指令：
   自动更新的 commit message 与 PR title **不得含 `[skip ci]` 等 skip 指令**，否则 `pull_request`
   检查永远停留 Pending → 合并门禁必然超时（回归见 lib/github.test.mjs 的 `buildCommitMessage` /
