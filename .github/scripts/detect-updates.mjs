@@ -39,7 +39,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as yaml from 'js-yaml';
 // 共享模块：semver 比较、镜像 registry 适配器、应用目录扫描、compose 模板解析
 import * as semverLib from '../lib/semver.mjs';
-import { createAdapter, parseImage, RegistryRequestError } from '../lib/registry.mjs';
+// 统一版本引擎（唯一事实来源）：分类 / 轨道 / 比较 / 选型
+import { pickNewestVersionDir } from '../lib/version.mjs';
+// 统一更新决策引擎（目标 §七 Decision Result）
+import { decideUpdate, createDecisionResult } from '../lib/decision.mjs';
+import { createAdapter, parseImage, RegistryRequestError, createTagCache } from '../lib/registry.mjs';
 import { listApps, loadAliases, buildShortToDir } from '../lib/apps.mjs';
 import { resolveImageTemplate, rebuildImageDefault } from '../lib/compose.mjs';
 // 版本目录的原子生成（Staging → Validation → Commit）—— 审计 P1-4/P1-5/P1-6/P1-8
@@ -72,6 +76,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 // 应用目录直接在仓库根，不在 apps/ 子目录下
 const APPS_DIR = REPO_ROOT;
+
+// 同一运行周期内复用同一仓库的 tag 列表（目标 §五.2 请求去重 / 避免触发限流）。
+// 显式注入而非隐式全局状态：单测不注入 → 行为与旧实现一致。
+const TAG_CACHE = createTagCache();
 
 const APPS_FILTER = []; // 由 parseCliArgs 调用前填充（env + 位置参数），main 入口消费
 function initAppsFilter() {
@@ -122,6 +130,7 @@ export const REASONS = Object.freeze([
   'tag-unstable',
   'unsupported-registry',
   'no-stable-tag',
+  'version-incompatible',
   'version-unrecognized',
   'already-exists',
   'registry-request-failed',
@@ -151,6 +160,7 @@ const REASON_TEXT = Object.freeze({
   'tag-unstable': '镜像 tag 不稳定，跳过',
   'unsupported-registry': '不支持的 registry（{registry}），不做版本检测',
   'no-stable-tag': 'Registry 未返回可用的稳定 tag',
+  'version-incompatible': '上游没有与当前版本轨道兼容的候选 tag（拒绝跨轨道升级）',
   'version-unrecognized': '版本目录形态无法识别',
   'already-exists': '目标版本目录已存在且内容一致，幂等跳过（ALREADY_EXISTS）',
   'registry-request-failed': 'Registry 请求失败',
@@ -181,6 +191,7 @@ const SKIP_REASON_PRIORITY = [
   'compose-invalid',
   'write-failed',
   'version-unrecognized',
+  'version-incompatible',
   'image-unresolved',
   'image-template-unresolved',
   'digest-image',
@@ -361,15 +372,21 @@ export function compareVersionsLoose(a, b) {
  * @returns {string|null}
  */
 function selectNewestVersionDir(dirs) {
-  if (typeof semverLib.pickNewestVersionDir === 'function') {
-    return semverLib.pickNewestVersionDir(dirs) ?? null;
-  }
-  // 旧 semver.mjs（无新 API）时的本地等价实现
-  let best = null;
-  for (const d of dirs) {
-    if (!best || compareVersionsLoose(d, best) > 0) best = d;
-  }
-  return best;
+  // 收敛到 lib/version.mjs（唯一事实来源）：strict 口径 = 只认严格 SemVer 目录，
+  // tier-2 退到 `v?数字` 目录。与既有实现行为一致。
+  return pickNewestVersionDir(dirs, 'strict') ?? null;
+}
+
+// ---------- 工具：镜像来源归一（Decision Result 的 source） ----------
+/**
+ * 把 registry 名归一为 Decision Result 的 source 枚举。
+ * @param {string} registry 'dockerhub' | 'ghcr.io' | 'host[:port]'
+ * @returns {'dockerhub'|'ghcr'|'custom'}
+ */
+export function sourceOf(registry) {
+  if (registry === 'dockerhub') return 'dockerhub';
+  if (registry === 'ghcr.io') return 'ghcr';
+  return 'custom';
 }
 
 // ---------- 工具：镜像分类（导出供单测） ----------
@@ -597,9 +614,39 @@ export function determineExitCode(results) {
  * @throws {RegistryRequestError} Registry 请求失败（网络 / HTTP / JSON / 翻页）
  */
 async function getLatestTag(image, currentTag) {
-  const adapter = createAdapter(image);
+  const adapter = createAdapter(image, { cache: TAG_CACHE });
   if (!adapter) return null;
   return await adapter.getLatestTag(image, currentTag);
+}
+
+/**
+ * 对单个 service 做更新判定，产出标准化的 Decision Result（目标 §七）。
+ *
+ * 分工：**registry.mjs 只负责传输**（取回 tag 列表），
+ *       **decision.mjs 负责判定**（分类 / 轨道 / 比较 / 选型 / shouldUpdate）。
+ *
+ * @param {string} appKey 应用标识
+ * @param {string} image 完整镜像引用
+ * @param {string} currentTag 当前使用的 tag
+ * @param {string} source 'dockerhub' | 'ghcr'
+ * @returns {Promise<object>} Decision Result
+ * @throws {RegistryRequestError} Registry 请求失败（网络 / HTTP / JSON / 翻页）
+ */
+async function decideService(appKey, image, currentTag, source) {
+  const adapter = createAdapter(image, { cache: TAG_CACHE });
+  if (!adapter) {
+    return createDecisionResult({
+      appKey,
+      currentImage: image,
+      currentVersion: currentTag,
+      comparisonResult: 'uncomparable',
+      reason: `不支持的 registry（${source}）`,
+      source,
+    });
+  }
+  // 传输层：取回上游 tag 列表（失败一律抛错，**绝不**吞成无更新）
+  const candidates = await adapter.fetchAllTags(image);
+  return decideUpdate({ appKey, currentImage: image, currentTag, candidates, source });
 }
 
 /**
@@ -869,12 +916,16 @@ async function processAppInner(appName) {
     code: 'no-update',
     error: null,
     updates: 0,
+    // 每个 service 的标准化更新决策（目标 §七 Decision Result）
+    decisions: [],
     // 目标 §七.1：当前本地版本（应用版本目录名）与检测到的上游版本
     currentVersion: null,
     latestVersion: null,
   };
   const skipReasons = [];
   const skipCtx = new Map(); // reason 码 → 补充上下文（如 registry 名）
+  const decisions = [];       // 每个 service 的 Decision Result（目标 §七）
+  let primaryTo = null;       // 主服务的新版本（= 应用语义版本号）
   let queried = false; // 是否真的向 registry 查询过（决定"已是最新" vs "跳过"）
   const addSkip = (reason, stage, ctx = {}) => {
     skipReasons.push(reason);
@@ -983,6 +1034,9 @@ async function processAppInner(appName) {
         addSkip('no-services', 'compose');
         continue;
       }
+      // 主服务 = compose 里第一个带 image 的 service（与 lib/consistency.mjs 的 tag.dir 口径一致）。
+      // 版本目录名以**主服务**的 tag 为准，避免副作用 service 劫持应用版本号。
+      const primaryServiceName = services[0]?.name ?? null;
 
       let dataObj;
       try {
@@ -1082,10 +1136,10 @@ async function processAppInner(appName) {
           continue;
         }
 
-        // 向 registry 请求最新 tag（传递当前 tag 用于变体匹配）
-        let latest;
+        // 更新判定统一走 decision.mjs（目标 §七）：产出标准化 Decision Result
+        let decision;
         try {
-          latest = await getLatestTag(fullImage, currentTag);
+          decision = await decideService(appName, fullImage, currentTag, sourceOf(parsed.registry));
         } catch (e) {
           if (e instanceof RegistryRequestError) {
             fail('registry', 'registry-request-failed', e);
@@ -1094,21 +1148,31 @@ async function processAppInner(appName) {
           }
           return { result, updates: [] };
         }
-        // 审计 P1-2：`queried` 只在**拿到确定性结论**（latest 非 null）时置位。
-        // 旧实现在判空之前就置位 → 「空 tag 列表 / 无稳定 tag」永远被 app 级汇总成
-        // success + no-update（"已是最新"），skip 分支不可达 → 上游异常被当成无更新。
-        if (!latest) {
-          log(appName, svc.name, `${fullImage} 无法获取最新 tag`);
+        decisions.push(decision);
+        // 审计 P1-2：`queried` 只在**拿到确定性结论**时置位。
+        if (decision.comparisonResult === 'error') {
+          fail('registry', 'registry-request-failed', new Error(decision.reason));
+          return { result, updates: [] };
+        }
+        if (decision.comparisonResult === 'uncomparable') {
+          log(appName, svc.name, `${fullImage} ${decision.reason}`);
           addSkip('no-stable-tag', 'registry');
           continue;
         }
+        if (decision.comparisonResult === 'incompatible') {
+          log(appName, svc.name, `${fullImage} ${decision.reason}`);
+          addSkip('version-incompatible', 'version');
+          continue;
+        }
         queried = true;
-        if (latest === currentTag) {
+        const latest = decision.candidateVersion;
+        if (!decision.shouldUpdate || !latest) {
           log(appName, svc.name, `${fullImage} 已是最新`);
           continue;
         }
 
         log(appName, svc.name, `${fullImage} ⚠ ${currentTag} -> ${latest}`);
+        if (svc.name === primaryServiceName) primaryTo = latest;
         const newDefaultVal = rebuildImageDefault(svc.image, envKey, imageRepo, latest);
         variableTagChanges.push({
           svcName: svc.name,
@@ -1134,9 +1198,9 @@ async function processAppInner(appName) {
       let maxTo = null;
 
       for (const svc of hardcoded) {
-        let latest;
+        let decision;
         try {
-          latest = await getLatestTag(svc.image, svc.tag);
+          decision = await decideService(appName, svc.image, svc.tag, sourceOf(svc.registry));
         } catch (e) {
           if (e instanceof RegistryRequestError) {
             fail('registry', 'registry-request-failed', e);
@@ -1145,18 +1209,30 @@ async function processAppInner(appName) {
           }
           return { result, updates: [] };
         }
-        // 审计 P1-2：同上一处 —— 判空之前不置位
-        if (!latest) {
-          log(appName, svc.name, '无法获取最新 tag');
+        decisions.push(decision);
+        // 审计 P1-2：同上一处 —— 只有拿到确定性结论才置位
+        if (decision.comparisonResult === 'error') {
+          fail('registry', 'registry-request-failed', new Error(decision.reason));
+          return { result, updates: [] };
+        }
+        if (decision.comparisonResult === 'uncomparable') {
+          log(appName, svc.name, `${decision.reason}`);
           addSkip('no-stable-tag', 'registry');
           continue;
         }
+        if (decision.comparisonResult === 'incompatible') {
+          log(appName, svc.name, `${decision.reason}`);
+          addSkip('version-incompatible', 'version');
+          continue;
+        }
         queried = true;
-        if (latest === svc.tag) {
+        const latest = decision.candidateVersion;
+        if (!decision.shouldUpdate || !latest) {
           log(appName, svc.name, `已是最新 (${svc.tag})`);
           continue;
         }
         log(appName, svc.name, `⚠ ${svc.tag} -> ${latest}`);
+        if (svc.name === primaryServiceName) primaryTo = latest;
         hasAnyUpdate = true;
         if (!minFrom || compareVersionsLoose(svc.tag, minFrom) < 0) minFrom = svc.tag;
         if (!maxTo || compareVersionsLoose(latest, maxTo) > 0) maxTo = latest;
@@ -1202,7 +1278,14 @@ async function processAppInner(appName) {
       // 例：anirss/v3.2.5/ 检测到 v3.2.6 → 保留 v3.2.5/，新建 v3.2.6/
       // 用户可在 1Panel UI 中切换版本，旧版本目录永久保留在仓库 git history 中。
       const oldVersionDir = versionDir;
-      const newVersionDir = maxTo;
+      // 版本目录名 = **应用语义版本号**（主服务的 tag），而不是各 service tag 的宽松最大值。
+      // 旧实现取 maxTo（跨 service 的数字段最大值）→ 副作用 service 会劫持应用版本目录名：
+      //   postgres:16-alpine → 9.6.24 会让 linkwarden 生成 linkwarden/9.6.24/；
+      //   rabbitmq:3-management → 3.13.7 会让 firecrawl 生成 firecrawl/3.13.7/。
+      // 这与 docs/postmortems.md 记录的 collabora 降级事故同型（目标 §六.1：应用语义版本号）。
+      // 主服务未更新时保持原目录名 → 走「就地更新受管文件」路径（version-writer 已支持）。
+      const appTo = primaryTo ?? maxTo;
+      const newVersionDir = primaryTo ?? oldVersionDir;
 
       // 不在这里真做 cpSync / rmSync ——
       // 把"是否要生成新版本目录"记到 update.versionCopy 字段，由 main 末尾 applyChanges
@@ -1294,7 +1377,7 @@ async function processAppInner(appName) {
         path: `${appName}/${newVersionDir}/docker-compose.yml`,
         file: 'docker-compose.yml',
         content: newCompose,
-        to: maxTo,
+        to: appTo,
       });
       changes.push({
         path: `${appName}/${newVersionDir}/data.yml`,
@@ -1303,8 +1386,11 @@ async function processAppInner(appName) {
         to: maxTo,
       });
 
-      allUpdates.push({ app: appName, from: minFrom, to: maxTo, services: serviceChanges, changes, versionDir, versionCopy });
+      allUpdates.push({ app: appName, from: minFrom, to: appTo, services: serviceChanges, changes, versionDir, versionCopy });
     }
+
+    // 每个 service 的标准化更新决策（目标 §七 Decision Result）
+    result.decisions = decisions;
 
     // ── 汇总 app 级结论 ───────────────────────────────────────────────
     if (allUpdates.length > 0) {
@@ -1390,6 +1476,7 @@ export function stageForReason(code) {
     case 'no-stable-tag':
     case 'registry-request-failed': return 'registry';
     case 'version-unrecognized':
+    case 'version-incompatible':
     case 'already-exists': return 'version';
     case 'write-failed': return 'write';
     default: return 'scan';

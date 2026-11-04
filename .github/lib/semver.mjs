@@ -101,11 +101,17 @@ export function isSemver(v) {
 
 /**
  * 比较两段 prerelease 标识符列表（SemVer 优先级规则）
+ *
+ * ⚠️ 本函数原先是模块私有。lib/version.mjs 的版本引擎需要它来比较
+ *    **多段数字版本**（如 `26.04.5.1.1`）的预发布后缀 —— 那类版本
+ *    无法用三段 SemVer 对象表达，但 prerelease 标识符的优先级规则
+ *    与 SemVer 2.0.0 完全一致。导出为纯增量，不改变任何既有行为。
+ *
  * @param {string[]} a
  * @param {string[]} b
  * @returns {-1|0|1}
  */
-function comparePrerelease(a, b) {
+export function comparePrerelease(a, b) {
   // 无 prerelease 的版本优先级更高
   if (a.length === 0 && b.length === 0) return 0;
   if (a.length === 0) return 1;
@@ -326,30 +332,6 @@ export function isStable(v) {
   return !UNSTABLE_RE.test(first);
 }
 
-// ---------------------------------------------------------------------------
-// pickLatest
-// ---------------------------------------------------------------------------
-
-/**
- * pickLatest 内部比较器：两侧都是严格 SemVer 时用 SemVer 优先级，
- * 否则回退到宽松数字段比较；完全相等时用 localeCompare 兜底（取字典序大者）。
- * @param {string} a
- * @param {string} b
- * @returns {number}
- */
-function compareCandidates(a, b) {
-  const pa = parseSemver(a);
-  const pb = parseSemver(b);
-  if (pa && pb) {
-    const r = compareSemver(pa, pb);
-    if (r !== 0) return r;
-  } else {
-    const r = compare(a, b);
-    if (r !== 0) return r;
-  }
-  return a.localeCompare(b);
-}
-
 /**
  * 从列表中选取最新版本
  *
@@ -381,62 +363,6 @@ export function pickLatest(list) {
   let best = pool[0];
   for (const t of pool.slice(1)) {
     if (compareCandidates(t, best) > 0) best = t;
-  }
-  return best;
-}
-
-// ---------------------------------------------------------------------------
-// 版本目录选择（maxKnown 跨版本保护 / README 版本列）
-// ---------------------------------------------------------------------------
-
-/**
- * 从版本目录名列表中选出“最新”的目录名
- *
- * 规则：
- *  1. 存在严格 SemVer 目录时：候选集**只取严格 SemVer 目录**（conservative 门槛不变，
- *     绝不把 latest / 自定义 tag / 日期型目录当 SemVer），
- *     但候选内部改用**旧的归档口径**选最大：先 `compareVersionsLoose`（数字段比较），
- *     相等时用完整目录名 `localeCompare` 取字典序大者。
- *  2. 否则仅当目录名以 `v?数字` 开头时，用宽松数字段比较取最大。
- *  3. 其余情况返回 null（调用方回退到全量处理）。
- *
- * ⚠️ tier-1 的比较口径是「version 目录归档选择口径」，**不等同 SemVer 比较**：
- *    目录名里的架构 / 变体后缀（`1.11.2-ls41`、`3.64.0-v1`、`v3.2.53-arm32v7`）
- *    在 SemVer 里是 prerelease（优先级低于正式版），但在本口径里它们与同号正式版
- *    “数值等价”，最终由目录名字典序决定（`1.11.2-ls41` > `1.11.2`），
- *    以保持与既有 version 目录归档 / maxKnown 行为一致。
- *    注意：这**不**放宽 SemVer 判定本身——`parseSemver('1.11.2-ls41')` 仍是
- *    带 prerelease 的合法 SemVer，只是目录选择时优先保留带变体后缀的那个目录。
- *
- * @param {string[]} dirs 目录名数组
- * @returns {string|null}
- */
-export function pickNewestVersionDir(dirs) {
-  if (!Array.isArray(dirs) || dirs.length === 0) return null;
-
-  const names = dirs.filter(d => typeof d === 'string' && d.length > 0);
-  if (names.length === 0) return null;
-
-  const semverDirs = names.filter(isValidSemver);
-  if (semverDirs.length > 0) {
-    // tier-1 内部改用「旧归档口径」选最大：compareVersionsLoose 数字段比较，
-    // 相等时按完整目录名 localeCompare 取字典序大者（保持既有 version 目录归档行为）
-    let best = semverDirs[0];
-    for (const d of semverDirs.slice(1)) {
-      const r = compareVersionsLoose(d, best);
-      if (r > 0 || (r === 0 && d.localeCompare(best) > 0)) best = d;
-    }
-    return best;
-  }
-
-  // 次选：以 v?数字 开头的目录，用宽松数字段比较取最大
-  const numeric = names.filter(d => /^v?\d/i.test(d));
-  if (numeric.length === 0) return null;
-
-  let best = numeric[0];
-  for (const d of numeric.slice(1)) {
-    const r = compareVersionsLoose(d, best);
-    if (r > 0 || (r === 0 && d.localeCompare(best) > 0)) best = d;
   }
   return best;
 }

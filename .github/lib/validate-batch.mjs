@@ -39,19 +39,26 @@ import {
   TYPE_ENUM,
 } from './schema.mjs';
 import { getCurrentVersion, listApps, loadAliases } from './apps.mjs';
-import { isValidSemver } from './semver.mjs';
+// 版本与镜像解析统一走 lib/version.mjs + lib/image-ref.mjs（单一事实来源）。
+// 本模块只保留**向后兼容的导出别名**，不再维护第二份实现。
+import {
+  NON_VERSION_TAGS,
+  isNonVersionTag,
+  isVersionShapedTag,
+} from './version.mjs';
+import { parseImageReference } from './image-ref.mjs';
 
 // ---------------------------------------------------------------------------
 // 常量
 // ---------------------------------------------------------------------------
 
 /**
- * 明确禁止作为镜像 tag / 版本号使用的“非版本词”
+ * 明确禁止作为镜像 tag / 版本号使用的"非版本词"
  * （AGENTS.md：禁止使用 latest 作为版本目录名或镜像 tag）
+ *
+ * ⚠️ 实现已收敛到 lib/version.mjs（唯一事实来源），此处仅做转发导出。
  */
-export const NON_VERSION_TAGS = new Set([
-  'latest', 'nightly', 'dev', 'edge', 'alpha', 'beta', 'rc', 'main', 'master',
-]);
+export { NON_VERSION_TAGS, isNonVersionTag };
 
 /** 仓库统一的外部网络名 */
 export const PANEL_NETWORK = '1panel-network';
@@ -102,15 +109,6 @@ export function loadAliasByDir(root) {
 // ---------------------------------------------------------------------------
 
 /**
- * 判断一个字符串是否是“非版本词”（latest / nightly / dev / edge …）
- * @param {string} tag
- * @returns {boolean}
- */
-export function isNonVersionTag(tag) {
-  return typeof tag === 'string' && NON_VERSION_TAGS.has(tag.toLowerCase());
-}
-
-/**
  * 判断镜像 tag 是否是**可识别的版本形态**
  *
  * 本仓出现过的合法形态（见 AGENTS.md）：
@@ -130,15 +128,8 @@ export function isNonVersionTag(tag) {
  * @returns {boolean}
  */
 export function isRecognisableVersionTag(tag) {
-  if (typeof tag !== 'string' || tag.length === 0) return false;
-  if (isNonVersionTag(tag)) return false;
-  if (!/\d/.test(tag)) return false;
-  if (isValidSemver(tag)) return true;
-  // 数字 / v+数字 起头，后续段可带字母
-  if (/^v?\d+(?:[.-][0-9A-Za-z][0-9A-Za-z.-]*)*$/.test(tag)) return true;
-  // 字母起头，形如 a2b-stable-25-08-12 / full-v1.12.2-arm64
-  if (/^[A-Za-z][0-9A-Za-z]*(?:-[0-9A-Za-z][0-9A-Za-z.-]*)+$/.test(tag)) return true;
-  return false;
+  // ⚠️ 实现已收敛到 lib/version.mjs（唯一事实来源）：这里只做转发。
+  return isVersionShapedTag(tag);
 }
 
 /**
@@ -157,12 +148,12 @@ export function parseImageRef(image) {
   // digest 固定摘要（nginx@sha256:…）自带版本，跳过
   if (s.includes('@')) return null;
 
-  const slash = s.lastIndexOf('/');
-  const colon = s.lastIndexOf(':');
-  if (colon > slash) {
-    return { repo: s.slice(0, colon), tag: s.slice(colon + 1) };
-  }
-  return { repo: s, tag: null };
+  // ⚠️ 解析统一走 lib/image-ref.mjs（唯一事实来源），不再手写 lastIndexOf 拆分。
+  const ref = parseImageReference(image);
+  if (!ref) return null;
+  // 旧契约：repo 保留**原始写法**的 registry 前缀（显式写了才带）
+  const prefix = ref.original.startsWith(`${ref.registry}/`) ? `${ref.registry}/` : '';
+  return { repo: `${prefix}${ref.repo}`, tag: ref.tag };
 }
 
 /**

@@ -22,6 +22,7 @@
 //   - meta.i18n-coverage  → 根级 description/en 缺失按 P2 提示（阶段 4 决定豁免或补齐）。
 
 import { parseImage } from './registry.mjs';
+import * as versionEngine from './version.mjs';
 
 // ─── 1Panel 内置/系统注入变量（T1 白名单，compose 引用免声明）──────────────
 // 与 AGENTS.md §6 的 6 变量清单一致；lint-exemptions.yml 之外只允许这一处硬白名单。
@@ -96,33 +97,11 @@ export function collectVarRefs(text) {
   return out;
 }
 
-// ─── 主服务识别与镜像归一化 ────────────────────────────────────────────────
-// 归一化目标：让 `${repo}:{tag}` 与「版本目录名」在同样归一化下可直接判定。
-// 两侧归一化函数**必须一致**（同一函数对 dir 与 tag 各跑一次）。
-const TAG_STRIP_TAIL_RE = /-(ls\d+|arm32v\d|arm64v\d|amd64|aarch64|alpine|slim|fon|nvidia|cuda[\d.a-z]*|cu\d+|vulkan|apache|py\d\.\d+)$/i;
+// ─── 主服务识别与镜像归一化 ────────────────────────────────────────────────────────────
+// ⚠️ 版本归一化与「是否版本目录」的判定已收敛到 lib/version.mjs（唯一事实来源）。
+//    本模块只做转发，避免 lint 路径与 detect 路径各写一套版本词汇表。
+const { normalizeVersionToken, isVersionShapedDir } = versionEngine;
 
-function normalizeVersionToken(str) {
-  let s = String(str);
-  // 功能前缀（anythingllm 的 pg-1.16.0 是 postgres 打包变体，主线版本就是 1.16.0）
-  s = s.replace(/^(pg-|server-)/i, '');
-  // 版本前缀 v（后随数字才剥离，避免把 v-name 撞成空）
-  s = s.replace(/^v(?=[0-9])/, '');
-  // 变体尾巴：-ls36 / -arm32v7 / -alpine / -cu124 / -vulkan / -fon …
-  s = s.replace(TAG_STRIP_TAIL_RE, '');
-  // 变体尾巴可能连缀（如 26.08.2-1-fon → 剥 -fon 后仍是 26.08.2-1，不再继续剥）
-  s = s.replace(/-arm\d*v\d+|-(arm64|amd64|aarch64)$/i, '');
-  // 日期型（silo/co WJ 格式）：RELEASE.2026-08-01 → 2026-08-01；把分隔符统一为 '.' 会破坏 match，不再做
-  s = s.replace(/^RELEASE\./, '');
-  return s.toLowerCase();
-}
-
-// 版本目录是否可参与 tag.dir 校验的准入门槛：
-//   semver / 纯数字日期段 / RELEASE. /  前缀或后缀变体（剥离后有映射）才 eligible；
-//   'beta' / 'stable-*' / 'a2b-*' / 'gpu-nvidia-latest' 等非版本目录跳过（误报防线）。
-function isSemverLikeDir(dirName) {
-  const n = normalizeVersionToken(dirName);
-  return /^(?:\d+(?:[.-]\d+){0,3}|\d{4,13})$/.test(n) || /^\d{4}[.-]\d{1,2}(-\d{1,2})?/.test(n);
-}
 
 // ─── 每版本规则 ────────────────────────────────────────────────────────────
 
@@ -163,7 +142,7 @@ export function checkTagDir(ctx) {
   if (image.includes('${')) return out; // 变量型镜像由 lib/image-policy.mjs 负责
   if (ctx.version === 'latest') return out; // dir.latest 单独行
   if (!/^[A-Za-z]/.test(ctx.version)) return out;
-  if (!isSemverLikeDir(ctx.version)) return out;
+  if (!isVersionShapedDir(ctx.version)) return out;
   const parsed = parseImage(image);
   if (!parsed || typeof parsed.tag !== 'string' || !parsed.tag) return out;
   const dirNorm = normalizeVersionToken(ctx.version);

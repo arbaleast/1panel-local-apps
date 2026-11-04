@@ -112,7 +112,16 @@ export const STAGE_OUTCOME = Object.freeze({
 /**
  * 创建一个执行结果对象（补齐缺省字段，保证 schema 稳定）
  *
+ * 字段说明（目标 §七 Decision Result 的落点）：
+ *   · candidateVersion  最佳候选版本（无则 null）
+ *   · versionScheme     semver | calver | variant-semver | pinned-digest | rolling-tag | unknown
+ *   · comparisonResult  upgradable | up-to-date | incompatible | uncomparable | error
+ *   · shouldUpdate      仅当 comparisonResult === 'upgradable' 才为 true
+ *   · decisions         该应用下**每个 service** 的完整 Decision Result 列表
+ *
  * @param {{appKey?: string, currentVersion?: string|null, latestVersion?: string|null,
+ *          candidateVersion?: string|null, versionScheme?: string|null,
+ *          comparisonResult?: string|null, shouldUpdate?: boolean, decisions?: object[],
  *          status?: string, stages?: object, pr?: object|null,
  *          reason?: string|null, errorStage?: string|null}} [input]
  * @returns {object}
@@ -127,6 +136,11 @@ export function createExecutionResult(input = {}) {
     appKey: input.appKey || '',
     currentVersion: input.currentVersion ?? null,
     latestVersion: input.latestVersion ?? null,
+    candidateVersion: input.candidateVersion ?? input.latestVersion ?? null,
+    versionScheme: input.versionScheme ?? null,
+    comparisonResult: input.comparisonResult ?? null,
+    shouldUpdate: Boolean(input.shouldUpdate ?? false),
+    decisions: Array.isArray(input.decisions) ? input.decisions : [],
     status: input.status || EXEC_STATUS.NO_UPDATE,
     stages,
     pr: input.pr
@@ -199,10 +213,19 @@ export function toExecutionResults(detectResults, versions = new Map()) {
   return list.map(r => {
     const key = r?.app ?? '';
     const v = versions.get(key) || {};
+    // 每个 service 的 Decision Result（detect 产出）
+    const decisions = Array.isArray(r?.decisions) ? r.decisions : [];
+    // 应用级结论 = 第一个「可升级」的 service 决策（没有则取第一个决策的结论）
+    const updatable = decisions.find(d => d?.shouldUpdate) || null;
     return createExecutionResult({
       appKey: key,
       currentVersion: r?.currentVersion ?? v.currentVersion ?? null,
       latestVersion: r?.latestVersion ?? v.latestVersion ?? null,
+      candidateVersion: updatable?.candidateVersion ?? r?.latestVersion ?? v.latestVersion ?? null,
+      versionScheme: updatable?.versionScheme ?? decisions[0]?.versionScheme ?? null,
+      comparisonResult: updatable?.comparisonResult ?? decisions[0]?.comparisonResult ?? null,
+      shouldUpdate: Boolean(updatable),
+      decisions,
       status: statusFromDetectResult(r),
       reason: r?.reason ?? null,
       errorStage: r?.status === 'failed' ? (r?.stage || 'detect') : null,
