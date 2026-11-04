@@ -275,8 +275,14 @@ describe('registry', () => {
     assert.equal(tag, 'v3.2.29');
   });
 
-  // 16. DockerHubAdapter semver+后缀：suffix 不存在时 fallback，不误报
-  it('DockerHubAdapter: semver+suffix with no same-suffix tags falls back to pickLatest', async () => {
+  // 16. DockerHubAdapter semver+后缀：suffix 不存在时**拒绝跨轨道**，不误报
+  //
+  // ⚠️ 行为变更（版本引擎治理阶段 2-4）：
+  //    旧实现「找不到同 suffix → 走全局 pickLatest 回退」→ 返回 v3.2.29（**无后缀主轨**），
+  //    这正是目标 §四「变体同轨保护」要禁止的跨轨道升级。
+  //    新实现：同轨道（num:3@arm64v8）内没有候选 → 返回 null（需人工确认 / 跳过）。
+  //    测试意图（不误报）保持不变，只是机制从「回退到别的轨道」变成「拒绝跨轨道」。
+  it('DockerHubAdapter: semver+suffix with no same-suffix tags refuses cross-track fallback', async () => {
     const adapter = new DockerHubAdapter({
       fetchImpl: () =>
         Promise.resolve({
@@ -290,8 +296,8 @@ describe('registry', () => {
         }),
     });
     const tag = await adapter.getLatestTag('wushuo894/ani-rss:v3.2.18-arm64v8', 'v3.2.18-arm64v8');
-    // 形态 3 suffix=arm64v8 找不到同 suffix → 走 fallback
-    assert.equal(tag, 'v3.2.29');
+    // 上游没有 arm64v8 变体 → 严禁回退到无后缀主轨（那会把 arm64v8 镜像换成另一个构建）
+    assert.equal(tag, null);
   });
 
   // 16b. PR #19 复盘：arm32v7 在 page 2（被 page_size=20 截断）时仍能识别
@@ -444,7 +450,14 @@ describe('registry', () => {
   });
 
   // 20. DockerHubAdapter 形态 4：同段数 tag 不存在时走 fallback，不误报、不崩溃
-  it('DockerHubAdapter: multi-segment numeric tag falls back when no same-shape tag exists', async () => {
+  // 20. DockerHubAdapter 多段数字版本：没有同形态候选时**拒绝跨形态**，不误报
+  //
+  // ⚠️ 行为变更（版本引擎治理阶段 2-4）：
+  //    旧实现「没有同段数候选 → 回退全局 pickLatest」→ 返回 1.2.4（**3 段**），
+  //    而当前是 1.2.3.4.5（**5 段**）—— 这与 docs/postmortems.md 记录的
+  //    「collabora 降级到 2017 年 2.1.5」是同一类缺陷（跨形态 / 跨方案混排）。
+  //    新实现：同形态轨道（num:5）内没有候选 → 返回 null。
+  it('DockerHubAdapter: multi-segment numeric tag refuses cross-shape fallback', async () => {
     const adapter = new DockerHubAdapter({
       fetchImpl: () =>
         Promise.resolve({
@@ -455,7 +468,8 @@ describe('registry', () => {
         }),
     });
     const tag = await adapter.getLatestTag('org/repo:1.2.3.4.5', '1.2.3.4.5');
-    assert.equal(tag, '1.2.4');
+    // 上游只有 3 段形态 → 严禁把它当成 5 段形态的"更新"（那是跨形态降级）
+    assert.equal(tag, null);
   });
 
   // 21. GhcrAdapter 形态 4：与 DockerHubAdapter 行为一致

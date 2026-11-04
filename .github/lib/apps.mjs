@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
-import { compareVersionsLoose } from './semver.mjs';
+import { pickNewestVersionDir } from './version.mjs';
 
 // 仓库根目录（lib/ 的父级）
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -204,12 +204,10 @@ export function getCurrentVersion(root = ROOT, appDir) {
     //      （jellyfin 口径，README「当前版本」列必须保持原样）。
     //    这里**不能**改用严格 SemVer 优先级：SemVer 认为 prerelease 低于正式版，
     //    会把 `1.11.2-ls41` 变成 `1.11.2`，从而改动 README（审计要求行为不变）。
-    let best = candidates[0];
-    for (const c of candidates.slice(1)) {
-      const r = compareVersionsLoose(c, best);
-      if (r > 0 || (r === 0 && c.localeCompare(best) > 0)) best = c;
-    }
-    return best;
+    // ⚠️ 实现已收敛到 lib/version.mjs（唯一事实来源）。
+    //    mode='archive' = 历史归档口径（全候选按数字段比较，数字段相同时取目录名字典序大者），
+    //    与既有行为**逐字一致**（README「当前版本」列依赖它，见下方注释）。
+    return pickNewestVersionDir(candidates, 'archive');
   }
 
   // 无版本目录时，检查 latest/ 子目录

@@ -106,6 +106,49 @@ detect 判定「最新版本 = 10.11.11」→ `rmSync` + `cpSync` 覆盖 → **1
 **教训**：混排日期型 + semver 的应用要么统一目录形态要么进白名单；只加 maxKnown 保护不够
 （数值比较日期型永远最大）。
 
+### 副作用 service 的 tag 劫持应用版本目录（2026-11-04，镜像版本引擎治理阶段 1 审计）
+
+**事故**：审计 [lib/registry.mjs](../.github/lib/registry.mjs) 的旧「4 级形态级联 + 全局
+`pickLatest` 回退」时发现两处**活的**误判（尚未被 CI 触发，但随时可能被自动更新触发）：
+
+| 应用 | 当前镜像 | 旧实现选出 | 后果 |
+|---|---|---|---|
+| linkwarden（6 个版本目录） | `postgres:16-alpine` | `9.6.24` | **PostgreSQL 降级 12 个大版本** |
+| firecrawl（6 个版本目录） | `rabbitmq:3-management` | `3.13.7` | 丢失 management 变体 |
+
+**根因**：旧实现的形态级联要求「变体后缀形态必须是 `v<semver>-<后缀>`」（正则强制带 `v` 前缀），
+且只处理「裸变体 / 变体+版本 / semver+后缀 / 4 段以上数字」四种形态。
+`16-alpine` / `3-management` / `1.11.2-ls36` / `0.8.6-pg18-trixie` / `3.64.0-v1` 全部落空 →
+落到 `return pickLatest(allStable)` —— **该回退完全忽略当前轨道**，于是
+postgres 的纯 semver tag 里最高的是 2017 年的 `9.6.24`。
+
+**同源的第二处问题**：新版本目录名取的是「各 service tag 的宽松数字段最大值」（`maxTo`），
+于是**副作用 service** 的 tag 会劫持**应用**的版本目录名（linkwarden 生成 `linkwarden/9.6.24/`、
+firecrawl 生成 `firecrawl/3.13.7/`）。
+
+**与历史事故的关系**：这与 [jellyfin 日期型目录被跨目录覆盖](#jellyfin-日期型目录被跨目录覆盖2026-09-25)
+是**同一个根因**（形态级联落空 → 全局回退 → 跨轨道选中）。jellyfin 当时用
+`SKIP_AUTO_UPDATE_APPS` 白名单**绕过**（未修根因），于是根因留在原地，postgres / rabbitmq /
+pgvector / handbrake / losslesscut / llamacpp / photopea 全部中招。
+
+**修复**（镜像版本引擎治理阶段 2–4）：
+
+1. 新增 [lib/version.mjs](../.github/lib/version.mjs)：**唯一**版本引擎。先**分类**
+   （scheme + 轨道），再**同轨比较**。轨道 = 版本形态（`num:3` / `num:3@alpine` /
+   `calver` / `pfx:server-cuda12@num:3` …），**跨轨道一律拒绝**。
+2. [lib/registry.mjs](../.github/lib/registry.mjs) 退化为**纯传输层**（认证 / 分页 / 超时 /
+   重试 / 请求去重 / 并发上限），选型一律委托给 version.mjs。
+3. 版本目录名改由**主服务**（compose 里第一个带 image 的 service，与
+   [lib/consistency.mjs](../.github/lib/consistency.mjs) 的 tag.dir 口径一致）决定；
+   主服务未更新时保持原目录名（走「就地更新受管文件」）。
+4. 回归：[lib/regression-images.test.mjs](../.github/lib/regression-images.test.mjs)（全仓 274 处
+   存量镜像的解析与分类护栏）+ [lib/detect-updates-e2e.test.mjs](../.github/lib/detect-updates-e2e.test.mjs)
+   （本地 mock registry 驱动真实 detect 链路的离线 E2E）。
+
+**教训**：**「找不到匹配形态就回退到全局取最大」是版本选型里最危险的一行代码**。
+匹配失败应当**拒绝**（宁缺毋滥），而不是退回到一个语义不同的候选集。
+白名单是止血，不是修复。
+
 ## 脚本健壮性事故
 
 ### PR body 反引号进 shell → 批次 42 文件凭空消失（2026-10-20）

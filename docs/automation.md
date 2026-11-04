@@ -106,23 +106,108 @@
 
 ## 3. 镜像版本选型口径
 
-- **DockerHub**：`page_size=100&ordering=last_updated` 翻页（上限 5 页 = 500 tag），
-  过滤不稳定关键字（`latest|nightly|dev|edge`）后取末位。page_size 曾因多架构镜像（anirss 30+ tag）
-  单页截断漏检 arm32v7（PR #19 复盘）；翻页兜底防 5+ tag/版本被切。
-- **GHCR**：OCI Registry API + 匿名 pull token（`https://ghcr.io/token?scope=repository:<repo>:pull`）,
-  `tags/list?n=1000` 且**必须跟随 `Link: rel="next"` 翻页（MAX_PAGES=10）**。GitHub Packages API
-  对匿名返回 401，勿用。GHCR tag 是**字典序**返回（最旧在前），不翻页会误选远古版本
-  （traefik `3.0.3` 事故）；分页中途失败**必须抛错**，不许沿用半截数据。
-  黑名单额外包含 `alpha|beta|rc|main|master`。
-- **变体识别（4 种形态）**：裸变体（`pg`）、变体+版本（`pg-1.16.0`）、semver+后缀架构
-  （`v3.2.18-arm32v7` 同 suffix 末位，anirss 场景）、4 段以上纯数字 tag 同段数选取
-  （collabora `26.04.5.1.1`，防 2017 年 `2.1.5` 老镜像抢占）。同形候选不存在时 fallback，
-  **宁可不报也不误报**。
-- **SemVer 两套语义，禁止混用**：
-  - `parseSemver` / `isValidSemver` / `compareSemver` = **严格 SemVer 2.0.0**
-    （`latest` / `2024.08` / `26.04.5.1.1` 一律非法）；`parse('latest')` 返回 `null`。
-  - `parse` / `compare` / `compareVersionsLoose` = **宽松数字段比较**，只用于「已知形态 tag」
-    的排序与版本目录归档选择。
+### 3.1 分层：解析 / 判定 / 决策 / 传输（单一事实来源）
+
+| 层 | 模块 | 职责 |
+|---|---|---|
+| 解析 | [lib/image-ref.mjs](../.github/lib/image-ref.mjs) | **唯一**的镜像引用解析器 |
+| 判定 | [lib/version.mjs](../.github/lib/version.mjs) | **唯一**的版本引擎（分类 / 轨道 / 比较 / 选型） |
+| 决策 | [lib/decision.mjs](../.github/lib/decision.mjs) | 统一更新决策（Decision Result） |
+| 传输 | [lib/registry.mjs](../.github/lib/registry.mjs) | Registry 通信（**不含任何选型逻辑**） |
+
+检测链路（[detect-updates.mjs](../.github/scripts/detect-updates.mjs)）与校验链路
+（[lint-apps.mjs](../.github/bin/lint-apps.mjs) → [lib/validate-batch.mjs](../.github/lib/validate-batch.mjs) /
+[lib/consistency.mjs](../.github/lib/consistency.mjs)）**共享同一套底层解析与版本标准**。
+
+### 3.2 Registry 通信
+
+- **DockerHub**：`page_size=100&ordering=last_updated` 翻页（上限 5 页 = 500 tag）。
+  page_size 曾因多架构镜像（anirss 30+ tag）单页截断漏检 arm32v7（PR #19 复盘）；
+  翻页兜底防 5+ tag/版本被切；**翻页超限必须抛错**，不许沿用半截数据。
+- **GHCR**：OCI Registry API + 匿名 pull token（`https://ghcr.io/token?scope=repository:<repo>:pull`），
+  `tags/list?n=1000` 且**必须跟随 `Link: rel="next"` 翻页（MAX_PAGES=10）**。
+  GitHub Packages API 对匿名返回 401，勿用。GHCR tag 是**字典序**返回（最旧在前），
+  不翻页会误选远古版本（traefik `3.0.3` 事故）。
+- **韧性**：显式超时（30s）+ 429/5xx 有限退避重试（**遵从 `Retry-After`**，上限 30s）+
+  响应形状校验（字段缺失 → 抛错，不归一成空列表）+ 单仓库分页上限。
+- **请求去重**：同一运行周期内复用同一仓库的 tag 列表（[lib/registry.mjs](../.github/lib/registry.mjs)
+  的 `createTagCache`，由 detect 显式注入并跨 service 共享），避免重复请求触发限流。
+- **并发上限**：全局硬上限 4，单适配器可进一步收紧（`maxConcurrency`）。
+- **错误分级**：网络异常 / HTTP 非 2xx / JSON 解析失败 / 翻页中途失败 → **FAILED**（抛错）；
+  「请求成功但没有可用稳定 tag」→ **SKIPPED**。两者**绝不混淆**。
+- **凭证安全**：GHCR 匿名 token 只出现在请求头，**绝不**进入日志 / 错误消息 / PR body。
+
+### 3.3 版本分类与变体同轨保护
+
+版本引擎先**分类**（scheme + 轨道），再**同轨比较**。轨道 = 版本**形态**，不是主版本号：
+`1.2.0` 与 `2.0.0` 同轨（可跨大版本升级），但 `1.2.0` 与 `1.2.0-alpine` **不同轨**。
+
+| 形态 | 样例 | scheme | 轨道 | 规则 |
+|---|---|---|---|---|
+| 纯 SemVer | `1.2.3` / `v3.2.13` | `semver` | `num:3` | 严格 SemVer 2.0.0；`v`/`V` 前缀归一 |
+| 前导零版本 | `3.06.00`（tdarr） | `semver` | `num:3` | 去零后比较（存量特例） |
+| 两段式 | `2.2`（photopea） | `semver` | `num:2` | 自成一轨，**不与三段式混排** |
+| 多段式 | `26.04.5.1.1`（collabora） | `semver` | `num:5` | 按段数自成一轨 |
+| 变体后缀 | `1.11.2-ls36` / `0.8.6-pg18-trixie` / `3.64.0-v1` | `variant-semver` | `num:3@<后缀>` | **后缀不同即不同轨** |
+| 架构后缀 | `v3.2.13-arm32v7` | `variant-semver` | `num:3@arm32v7` | 主轨**不得**吸收架构专属 tag |
+| 发行版变体 | `1.2.3-alpine` / `-bookworm` / `-slim` | `variant-semver` | `num:3@<后缀>` | 同上 |
+| CalVer | `2026.10.19` / `2026-11-04` / `20261104` / `260919` | `calver` | `calver` | 按日期比较；与 SemVer **不可比** |
+| CalVer + 提交号 | `2026.10.19-d47cb96bf`（searxng） | `calver` | `calver` | 提交号视为**构建标识**，不参与轨道与比较 |
+| 预发布 | `1.0.0-rc.40` | `semver` | `num:3` | 正式版 > 同号预发布版；**正式版不得升到预发布** |
+| 变体前缀 | `pg-1.16.0` / `server-cuda12-v0.4.1` | `semver` | `pfx:<前缀>@…` | 前缀不同即不同轨（cuda ≠ vulkan） |
+| 浮动 / 分支 | `latest` / `stable` / `nightly` / `edge` / `dev` / `main` / `master` | `rolling-tag` | — | **不参与版本判定** |
+| 提交号 | `sha-abcdef1` / `a1b2c3d` | `unknown` | — | **不可比较**，严禁截数字强转 |
+| Digest 锁定 | `repo@sha256:…` / `repo:1.2.3@sha256:…` | `pinned-digest` | — | 版本由摘要决定，**不参与版本更新** |
+
+### 3.4 概念边界（四个东西必须分清）
+
+| 概念 | 例子 | 参与版本判定？ |
+|---|---|---|
+| **应用语义版本号** | `1.2.3` / `v2.16.3` / `16-alpine` | ✅ 唯一参与版本比较的东西 |
+| **Tag** | `v3.6.6` | 指向一个**顶层多架构索引**（Manifest List / OCI Image Index） |
+| **单架构子 Manifest** | 索引下 `linux/arm64` 那一份 | ❌ 其 digest 与索引不同，但**不构成新版本** |
+| **镜像内容 Digest** | `@sha256:4bcff639…` | ❌ 锁定镜像内容，与版本号无关 |
+
+两条由此推出的硬规则：
+
+1. **架构专属 Tag 自成一轨**（`1.2.0-amd64` / `1.2.0-arm64v8`）：主轨**不得**吸收它们，
+   否则主 Tag 会退化成单架构镜像。
+2. **digest 锁定的镜像不参与版本更新**（`repo@sha256:…` 与 `repo:1.2.3@sha256:…` 一律跳过），
+   且**不同架构子 Manifest 的 digest 差异从不**被当成"有新版本"—— 否则同一个多架构镜像
+   会因运行环境 / 架构差异反复误报更新。
+
+### 3.5 铁律：
+
+1. **同轨才可比**：候选必须与当前**同轨道**，跨变体 / 跨方案一律拒绝（严禁跨轨道升级）。
+2. **正式版不升预发布**：当前是正式版时，预发布候选一律拒绝。
+3. **禁止未授权降级**：候选低于当前 → 拒绝（标记需人工确认）。
+4. **构建元数据无关**：`1.2.0+build.1` 与 `1.2.0+build.2` 版本相等，**不得**触发升级。
+5. **宁缺毋滥**：无法识别 / 无法比较 / 有歧义 → 明确输出「需人工确认 / 跳过」及原因，
+   **绝不**降级为数字比较。
+
+### 3.6 SemVer 两套语义，禁止混用
+
+- `parseSemver` / `isValidSemver` / `compareSemver` = **严格 SemVer 2.0.0**
+  （`latest` / `2024.08` / `26.04.5.1.1` 一律非法）；`parse('latest')` 返回 `null`。
+  本层是 [lib/version.mjs](../.github/lib/version.mjs) 的**地基**。
+- `parse` / `compare` / `compareVersionsLoose` = **宽松数字段比较**，只用于「已知形态 tag」
+  的排序与版本目录归档选择。
+
+### 3.7 统一更新决策（Decision Result）
+
+每个检测目标产出一个标准化决策对象（[lib/decision.mjs](../.github/lib/decision.mjs)）：
+
+```json
+{ "appKey": "应用标识", "currentImage": "当前完整镜像引用", "currentVersion": "当前解析版本",
+  "candidateVersion": "最佳候选版本 (无则为 null)",
+  "versionScheme": "semver | calver | variant-semver | pinned-digest | rolling-tag | unknown",
+  "comparisonResult": "upgradable | up-to-date | incompatible | uncomparable | error",
+  "shouldUpdate": true, "reason": "明确的可读决策依据", "source": "dockerhub | ghcr | custom" }
+```
+
+**铁律**：只有 `comparisonResult === "upgradable"` 时 `shouldUpdate` 才为 `true`；
+相同版本 / 仅构建元数据不同 / 无法比较 / 跨变体不兼容 / 浮动 tag / 疑似降级
+一律 `false` 并记录精确 `reason`。
 
 ## 4. 批次校验与 PR 门禁
 
@@ -220,8 +305,11 @@ Summary 的「每应用执行轨迹」表逐项展示目标 §七.1 要求的字
 
 | 文件 | 职责 | 关键导出 |
 |---|---|---|
-| [`lib/semver.mjs`](../.github/lib/semver.mjs) | 严格 SemVer 2.0.0 解析/比较 + 宽松数字段比较（两套语义禁止混用） | `parse` / `compare` / `compareVersionsLoose` / `isStable` / `pickLatest` / `parseSemver` / `isValidSemver` / `compareSemver` / `pickNewestVersionDir` |
-| [`lib/registry.mjs`](../.github/lib/registry.mjs) | DockerHub / GHCR 适配器、唯一镜像字符串解析入口、响应形状校验与重试退避 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` / `RegistryRequestError` / `assertTagArray` / `fetchWithRetry` / `computeRetryDelay` / `isRetryableStatus` |
+| [`lib/semver.mjs`](../.github/lib/semver.mjs) | **低层**：严格 SemVer 2.0.0 原语 + 宽松数字段比较（lib/version.mjs 的地基，两套语义禁止混用） | `parseSemver` / `compareSemver` / `isValidSemver` / `isSemver` / `comparePrerelease` / `parse` / `compare` / `compareVersionsLoose` / `isStable` |
+| [`lib/registry.mjs`](../.github/lib/registry.mjs) | **传输层**：DockerHub / GHCR 适配器、认证与分页、响应形状校验、超时与重试退避、请求去重与并发上限（**不含任何选型逻辑**） | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` / `createTagCache` / `RegistryRequestError` / `assertTagArray` / `fetchWithRetry` / `computeRetryDelay` / `isRetryableStatus` / `parseRetryAfter` |
+| [`lib/image-ref.mjs`](../.github/lib/image-ref.mjs) | **唯一**镜像引用解析器（registry / namespace / repository / tag / digest；端口与 Tag 消歧、复合格式） | `parseImageReference` / `classifyRegistryHost` / `isVariableImage` / `classifyVariableOrInvalid` / `REFERENCE_KINDS` / `SOURCES` |
+| [`lib/version.mjs`](../.github/lib/version.mjs) | **唯一**版本引擎：分类器 / 轨道亲和 / 跨方案比较 / 候选选型 / 版本目录选型 | `classifyVersion` / `compareVersions` / `sameTrack` / `selectCandidate` / `pickNewestVersionDir` / `isVersionShapedTag` / `normalizeVersionToken` / `parseCalverDate` / `SCHEMES` / `COMPARISON_RESULTS` |
+| [`lib/decision.mjs`](../.github/lib/decision.mjs) | 统一更新决策（Decision Result：comparisonResult / shouldUpdate / reason） | `decideUpdate` / `createDecisionResult` / `isSameUpdateTrack` |
 | [`lib/apps.mjs`](../.github/lib/apps.mjs) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` / `loadAliases` / `buildShortToDir` |
 | [`lib/schema.mjs`](../.github/lib/schema.mjs) | data.yml 结构定义与校验规则（纯 JS） | `validateFormField` / `validateKeyMatch` / `validateUrlField` / `normalizeFormField` / `FORMFIELD_TYPE_WHITELIST` |
 | [`lib/consistency.mjs`](../.github/lib/consistency.mjs) | 跨文件一致性规则集（compose ↔ data.yml ↔ README ↔ 目录名），ruleId 单一事实来源 | `RULES` / `RULE_IDS` / `BUILTIN_VARS` / `checkVarDeclarations` / `checkFormOrphans` / `checkHighPrivilege` 等 check* |
