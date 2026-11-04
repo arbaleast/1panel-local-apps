@@ -1,5 +1,17 @@
 name: auto-update
 
+# ─── 事件隔离（2026-11 安全加固）────────────────────────────────────────────
+# 本工作流有两类完全不同的任务，必须物理隔离：
+#   1. validate     —— **只读校验**。PR 事件唯一允许执行的任务。
+#                      只跑 npm test / npm run lint，不写仓库、不发请求、不碰 Token。
+#   2. auto-update  —— **写操作**（检测 / 改 README / 推分支 / 开 PR / 合并 PR）。
+#                      只允许在 schedule / workflow_dispatch / push(受控路径) 上运行，
+#                      PR 事件一律跳过（if: github.event_name != 'pull_request'）。
+#
+# 为什么必须这样切：旧版工作流把 lint job 和 detect-and-pr job 串在一起，
+# 且 workflow 顶层直接写 `permissions: contents: write / pull-requests: write`，
+# 再叠加 `pull_request` 触发 —— 意味着**任何外部 PR 的代码都能在持有写权限的
+# job 里执行**（checkout 用的是 secrets.PAT_TOKEN），属于典型的 CI 提权漏洞。
 on:
   schedule:
     # 每周一 UTC 0 点（北京时间 08:00）
@@ -14,45 +26,63 @@ on:
   push:
     branches:
       - main
+    # push 到 main 的触发条件**只限自动更新链路自身的文件**：
+    # 改动应用配置的 push（如 auto-update PR 合并）不会重新触发检测，
+    # 从根上避免"合并 → 再检测 → 再开 PR"的递归。
     paths:
       - '.github/workflows/auto-update.yml'
-      - '.github/scripts/detect-updates.mjs'
-      - '.github/scripts/sync-readme.mjs'
+      - '.github/scripts/**'
+      - '.github/lib/**'
+      - '.github/bin/**'
       - '.github/app-aliases.yml'
-      - '.github/bin/open-update-pr.mjs'
+      - '.nvmrc'
+      - 'package.json'
+      - 'package-lock.json'
   pull_request:
+    # PR 事件只用于跑只读校验（validate job）。
     paths:
       - '.github/lib/**'
       - '.github/bin/**'
+      - '.github/scripts/**'
+      - '.github/workflows/**'
       - '**/data.yml'
+      - '**/docker-compose.yml'
 
-# 取消并发运行：避免同一天多 PR 冲突
+# 顶层不授予任何权限：每个 job 按需显式申请（最小权限原则）。
+# 未列出的 scope（如 actions、id-token、packages）一律为 none。
+permissions: {}
+
+# 并发控制：
+#   - PR 事件按 ref 分组，新 run 取消旧 run（同一 PR 的重复 push 不需要排队）
+#   - 其余事件（schedule / workflow_dispatch / push）统一进 'batch' 组，
+#     **串行执行且不取消**，避免同一天开出两个批次 PR / 两批推送互相覆盖。
 concurrency:
-  group: auto-update
-  cancel-in-progress: false
-
-permissions:
-  contents: write
-  pull-requests: write
+  group: auto-update-${{ github.event_name == 'pull_request' && github.ref || 'batch' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  lint:
-    name: 代码质量与 data.yml 校验
+  # ─── 只读校验（PR 事件唯一允许执行的任务）─────────────────────────────
+  validate:
+    name: 只读校验（单测 + data.yml schema）
     runs-on: ubuntu-latest
-    # PR 上阻止合并；schedule / workflow_dispatch 时独立运行
-    if: >
-      github.event_name == 'pull_request'
-      || github.event_name == 'push'
-      || github.event_name == 'schedule'
-      || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 20
+    permissions:
+      # 只读：不写仓库、不发 PR
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          # 不把 GITHUB_TOKEN 写进 .git/config：
+          # PR 代码会在后续步骤里被执行（npm ci / npm test），
+          # 凭据不落盘可避免被 PR 侧代码读走。
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '24'
+          # 版本约束与本地开发共用 .nvmrc（与 package.json engines 对齐）
+          node-version-file: .nvmrc
 
       - name: Install dependencies
         run: npm ci
@@ -63,39 +93,57 @@ jobs:
 
       # data.yml schema 校验
       - name: npm run lint
-        run: node .github/bin/lint-apps.mjs
+        run: npm run lint
 
-  detect-and-pr:
+  # ─── 自动更新（写操作，仅在受信任事件上运行）──────────────────────────
+  auto-update:
     name: 检测镜像更新并开 PR
     runs-on: ubuntu-latest
-    needs: [lint]
+    timeout-minutes: 90
+    needs: [validate]
+    # 写操作只允许在明确授权的事件上运行（PR 事件一律排除）：
+    #   · schedule —— 默认分支
+    #   · workflow_dispatch / push —— 仅限 main 分支（防止从任意分支以 PAT 写权限运行）
+    if: >-
+      github.event_name == 'schedule'
+      || ((github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+          && github.ref == 'refs/heads/main')
+    permissions:
+      contents: write        # 推分支
+      pull-requests: write   # 开 PR / 合并 PR
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          # 公共仓库 GITHUB_TOKEN 无权创建 PR，需配置 PAT_TOKEN
+          # 公共仓库 GITHUB_TOKEN 无权创建 PR，需配置 PAT_TOKEN；
+          # 两者都拿不到时下面的步骤会显式失败（不会静默降级）。
           token: ${{ secrets.PAT_TOKEN || github.token }}
           fetch-depth: 1
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '24'
+          node-version-file: .nvmrc
 
-      - name: Install js-yaml
-        run: npm ci --omit=dev --silent
+      - name: Install dependencies
+        run: npm ci
 
       - name: 检测更新
         id: detect
         env:
           APPS_FILTER: ${{ inputs.apps || github.event.inputs.apps || '' }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          # 显式传入事件名：脚本层据此拒绝 PR 事件的写操作（防御纵深）
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        # continue-on-error 只用于"让健康应用的批次仍能开 PR"，
+        # 失败**不会**被吞掉：steps.detect.outcome 仍为 failure，
+        # 末尾的「检测失败门禁」步骤会显式 exit 1 让整个 workflow 变红。
+        continue-on-error: true
         run: node .github/scripts/detect-updates.mjs
 
       - name: 输出检测结果
         if: always()
         run: |
-          echo "## 检测结果" >> $GITHUB_STEP_SUMMARY
           if [[ -f updates.json ]]; then
             # 不直接 cat updates.json —— 单次 run 命中 30+ 应用时 changes[].content
             # 内嵌完整 data.yml 会让 step summary 超过 GitHub 1 MiB 硬限制。
@@ -111,12 +159,18 @@ jobs:
               });
               process.stdout.write(md);
             " >> $GITHUB_STEP_SUMMARY
+            # 每应用检测结果（success / skipped / failed）由 lib/report.mjs 统一渲染，
+            # 检测脚本与 CI 共用同一份实现，不再各写一份。
+            node -e "import('./.github/lib/report.mjs').then(m=>{const d=require('./updates.json');process.stdout.write(m.renderMarkdown(d.results||[],{title:'detect-updates 检测汇总',timestamp:d.timestamp}))})" >> $GITHUB_STEP_SUMMARY
           else
             echo "无 updates.json 生成" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: 检查是否有更新
         id: check
+        # always()：即使部分应用检测失败，也要让健康应用的批次走完开 PR 流程，
+        # 最终由末尾的「检测失败门禁」把整个 workflow 标红（不吞错误，也不放弃整批）。
+        if: always()
         run: |
           if [[ -f updates.json ]] && [[ $(node -e "const d=require('./updates.json');console.log(d.updates.length>0?'y':'n')") == "y" ]]; then
             echo "has-updates=true" >> $GITHUB_OUTPUT
@@ -128,9 +182,32 @@ jobs:
         if: steps.check.outputs.has-updates == 'true'
         run: node .github/scripts/sync-readme.mjs
 
-      - name: 开 PR 并合并
+      # 生成批次后必须重新校验一遍仓库：
+      # validate job 校验的是**变更前**的代码，这里校验的是 detect 生成的
+      # 新版本目录 / data.yml / compose（lint + 批次校验）。
+      - name: 校验生成的配置（data.yml schema + 批次一致性）
+        if: steps.check.outputs.has-updates == 'true'
+        run: |
+          npm run lint
+          node .github/bin/validate-update-batch.mjs
+
+      # 开 PR + 等待必需检查通过后再合并（检查未通过 / 状态未知一律不合并）
+      - name: 开 PR 并在检查通过后合并
         if: steps.check.outputs.has-updates == 'true'
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
           PAT_TOKEN: ${{ secrets.PAT_TOKEN || github.token }}
+          # 等待必需检查的窗口：15 分钟 / 20 秒轮询一次。
+          # 超时或状态未知 → 保留 PR 与远程分支，不合并（脚本内默认 30 分钟，这里收紧）。
+          MERGE_TIMEOUT_MS: '900000'
+          CHECK_POLL_INTERVAL_MS: '20000'
         run: node .github/bin/open-update-pr.mjs
+
+      # ─── 门禁：任一应用检测失败 → 整个 workflow 明确失败 ──────────────────
+      # 放在最后：既让健康应用的批次能正常开 PR，又保证 workflow 不会绿灯。
+      - name: 检测失败门禁
+        if: always() && steps.detect.outcome == 'failure'
+        run: |
+          echo "::error::检测阶段存在失败的应用（明细见 updates.json 与上方的检测结果表）"
+          exit 1

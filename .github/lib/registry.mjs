@@ -1,42 +1,149 @@
 // lib/registry.mjs — 镜像解析与版本适配器
 import { pickLatest } from './semver.mjs';
 
+// 默认请求超时（~30s）。测试可通过构造参数注入更短的超时。
+const DEFAULT_TIMEOUT_MS = 30000;
+
+/**
+ * Registry 请求失败错误。
+ *
+ * 语义（task-2）：网络异常 / HTTP 非 2xx / JSON 解析失败 / 翻页中途失败
+ * 一律抛此错误，**禁止**吞成 null。只有"请求成功但没有可用稳定 tag"
+ * 或 "pickLatest 返回 null" 才返回 null。
+ */
+export class RegistryRequestError extends Error {
+  /**
+   * @param {string} message
+   * @param {{ status?: number, url?: string, cause?: unknown, partial?: { page: number, tags: number } }} [info]
+   */
+  constructor(message, { status, url, cause, partial } = {}) {
+    super(message);
+    this.name = 'RegistryRequestError';
+    this.status = status;
+    this.url = url;
+    if (cause !== undefined) this.cause = cause;
+    if (partial !== undefined) this.partial = partial;
+  }
+}
+
+/**
+ * 给翻页失败补充"已拿到多少 tag"的诊断信息。
+ *
+ * 动机（task-2）：GHCR 的 tags/list 返回顺序是 **字典序**（不是"最新在前"），
+ * 第一页装的是**最旧**的 tag。翻页中途失败时若静默沿用半截数据算"最新版本"，
+ * 必然选到远古版本——这正是 AGENTS.md 记录的 traefik 3.0.3 事故。
+ * 因此翻页失败必须抛错，同时把"第几页失败 / 已经拿到多少 tag"附在错误上，
+ * 供调用方（detect-updates.mjs）写进失败日志。
+ *
+ * @param {unknown} err
+ * @param {number} page 当前页号（从 1 开始）
+ * @param {number} tags 已累计拿到的 tag 数量
+ * @returns {Error}
+ */
+function withPartial(err, page, tags) {
+  if (err instanceof RegistryRequestError) {
+    if (err.partial === undefined) {
+      err.partial = { page, tags };
+    }
+    return err;
+  }
+  const wrapped = new RegistryRequestError(
+    `Registry 请求失败: ${err instanceof Error ? err.message : String(err)}`,
+    { url: undefined, cause: err },
+  );
+  wrapped.partial = { page, tags };
+  return wrapped;
+}
+
 /**
  * 解析镜像字符串，返回结构化信息
+ *
+ * 形态覆盖：
+ *   - 'nginx'                       → { registry: 'dockerhub', repo: 'nginx' }
+ *   - 'nginx:1.25'                  → + tag
+ *   - 'kragleer/anirss:v1.2.3'      → + tag
+ *   - 'ghcr.io/org/repo:v1.2.3'     → { registry: 'ghcr.io' }
+ *   - 'docker.io/library/nginx:1.25'→ { registry: 'dockerhub', repo: 'library/nginx' }
+ *   - 'localhost:5000/app:1.0'      → { registry: 'localhost:5000', kind: 'custom' }
+ *   - 'nginx@sha256:abc'            → + digest（无 tag）
+ *   - 'nginx:1.25@sha256:abc'       → + tag + digest
+ *
+ * 非法输入（空串 / 含空白 / 含 '$' / repo 为空 / tag 为空）→ null
+ *
  * @param {string} image 完整镜像字符串
- * @returns {{ registry: string, repo: string, tag?: string, digest?: string }}
+ * @returns {{ registry: string, repo: string, tag?: string, digest?: string, kind: string }|null}
  */
 export function parseImage(image) {
-  // 提取 digest（@sha256:xxx）
-  const atSha = image.indexOf('@');
-  const digestPart = atSha !== -1 ? image.slice(atSha + 1) : undefined;
-  const base = atSha !== -1 ? image.slice(0, atSha) : image;
+  if (typeof image !== 'string') return null;
+  // 前后空白 / 内部空白 → 非法（compose 模板里出现空白说明拼接出错）
+  if (image.trim() !== image) return null;
+  if (image.length === 0) return null;
+  if (/[\s$]/.test(image)) return null;
+  if (image.includes('?') || image.includes('#')) return null;
 
-  // 提取 tag（:tag）
-  const lastColon = base.lastIndexOf(':');
-  const firstSlash = base.indexOf('/');
-  // 无 slash 时有冒号即为 tag；有 slash 时需冒号在 slash 之后（排除 registry:port）
-  const hasTag = firstSlash === -1 ? lastColon !== -1 : lastColon > firstSlash;
-  const tag = hasTag ? base.slice(lastColon + 1) : undefined;
-  const repoPart = hasTag ? base.slice(0, lastColon) : base;
-
-  // 判断 registry
-  if (repoPart.startsWith('ghcr.io/')) {
-    return {
-      registry: 'ghcr.io',
-      repo: repoPart.slice('ghcr.io/'.length),
-      tag,
-      digest: digestPart,
-    };
+  let base = image;
+  let digest;
+  const atIdx = image.indexOf('@');
+  if (atIdx !== -1) {
+    digest = image.slice(atIdx + 1);
+    base = image.slice(0, atIdx);
+    if (!/^[A-Za-z0-9_+.-]+:[A-Za-z0-9]+$/.test(digest)) return null;
   }
 
-  // DockerHub
-  return {
-    registry: 'dockerhub',
-    repo: repoPart,
-    tag,
-    digest: digestPart,
-  };
+  // registry 前缀：首个路径段含 '.' 或 ':'，或等于 localhost
+  let registryHost = null;
+  let rest = base;
+  const firstSlash = base.indexOf('/');
+  if (firstSlash !== -1) {
+    const first = base.slice(0, firstSlash);
+    if (first.includes('.') || first.includes(':') || first === 'localhost') {
+      registryHost = first;
+      rest = base.slice(firstSlash + 1);
+    }
+  }
+
+  // tag：最后一个 ':' 必须出现在最后一个 '/' 之后（否则是 registry 端口）
+  let tag;
+  const lastColon = rest.lastIndexOf(':');
+  const lastSlash = rest.lastIndexOf('/');
+  if (lastColon > lastSlash) {
+    tag = rest.slice(lastColon + 1);
+    rest = rest.slice(0, lastColon);
+    if (!tag) return null;
+  }
+
+  // repo 校验
+  if (!rest) return null;
+  if (rest.startsWith('/') || rest.endsWith('/')) return null;
+  if (rest.includes('//')) return null;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*(\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(rest)) return null;
+
+  // registry 归一
+  let registry;
+  let kind;
+  if (registryHost === null) {
+    registry = 'dockerhub';
+    kind = 'dockerhub';
+  } else if (registryHost === 'docker.io' || registryHost === 'index.docker.io' || registryHost === 'registry-1.docker.io') {
+    registry = 'dockerhub';
+    kind = 'dockerhub';
+  } else if (registryHost === 'ghcr.io') {
+    registry = 'ghcr.io';
+    kind = 'ghcr';
+  } else {
+    registry = registryHost;
+    kind = 'custom';
+  }
+
+  return { registry, repo: rest, tag, digest, kind };
+}
+
+/**
+ * 判断镜像是否带 tag（不含 digest 也不算 tag）
+ * @param {{tag?: string}} parsed
+ */
+function hasTag(parsed) {
+  return typeof parsed.tag === 'string' && parsed.tag.length > 0;
 }
 
 /**
@@ -46,22 +153,46 @@ export class DockerHubAdapter {
   // DockerHub 不稳定标签黑名单（比 GHCR 少 alpha/beta/rc/main/master）
   UNSTABLE_RE = /^(latest|nightly|dev|edge)$/i;
 
-  constructor({ fetchImpl = globalThis.fetch } = {}) {
+  constructor({ fetchImpl = globalThis.fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
     this.fetchImpl = fetchImpl;
+    this.timeoutMs = timeoutMs;
   }
 
   canHandle(image) {
-    return !image.startsWith('ghcr.io/');
+    const parsed = parseImage(image);
+    return !!parsed && parsed.registry === 'dockerhub';
+  }
+
+  /**
+   * 带超时的 fetch 包装
+   * @param {string} url
+   * @param {object} [opts]
+   * @returns {Promise<Response>}
+   */
+  async request(url, opts = {}) {
+    const options = { ...opts };
+    if (!options.signal && typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+      options.signal = AbortSignal.timeout(this.timeoutMs);
+    }
+    try {
+      return await this.fetchImpl(url, options);
+    } catch (e) {
+      throw new RegistryRequestError(`Registry 请求失败: ${e.message}`, { url, cause: e });
+    }
   }
 
   /**
    * 获取最新稳定 tag
    * @param {string} image 完整镜像字符串
    * @param {string} [currentTag] 当前使用的 tag（用于变体匹配，如 pg -> pg-1.16.0）
-   * @returns {Promise<string|null>}
+   * @returns {Promise<string|null>} null = 请求成功但没有可用稳定 tag
    */
   async getLatestTag(image, currentTag) {
-    const { repo } = parseImage(image);
+    const parsed = parseImage(image);
+    if (!parsed) {
+      throw new RegistryRequestError(`镜像字符串无法解析: ${image}`);
+    }
+    const { repo } = parsed;
     // DockerHub API v2
     // page_size=100 + 翻页兜底：anirss/handbrake/scrob/syncthing 等 hardcode 应用
     // 单个镜像 30+ tag（每个 semver 配多架构后缀），page_size=20 会把 arm32v7 等变体截断到 page 1 之外，
@@ -76,19 +207,37 @@ export class DockerHubAdapter {
     const allResults = [];
     let nextUrl = baseUrl;
     for (let page = 0; page < MAX_PAGES && nextUrl; page++) {
+      const currentPage = page + 1;
       let res;
       try {
-        res = await this.fetchImpl(nextUrl);
-      } catch (_) {
-        return null;
+        res = await this.request(nextUrl);
+      } catch (e) {
+        throw withPartial(e, currentPage, allResults.length);
       }
-      if (!res.ok) return null;
+
+      if (!res.ok) {
+        throw withPartial(
+          new RegistryRequestError(
+            `DockerHub 返回 HTTP ${res.status}`,
+            { status: res.status, url: nextUrl },
+          ),
+          currentPage,
+          allResults.length,
+        );
+      }
 
       let data;
       try {
         data = await res.json();
-      } catch (_) {
-        return null;
+      } catch (e) {
+        throw withPartial(
+          new RegistryRequestError(`DockerHub 响应 JSON 解析失败: ${e.message}`, {
+            url: nextUrl,
+            cause: e,
+          }),
+          currentPage,
+          allResults.length,
+        );
       }
 
       const results = data?.results ?? [];
@@ -143,6 +292,19 @@ export class DockerHubAdapter {
         // 同 suffix 的版本不存在（如上游删了 arm32v7）→ 走 fallback，避免误报
       }
 
+      // 形态 0：当前 tag 是纯 semver（vX.Y.Z）→ 只在"同为纯 semver"的 tag 里选。
+      // 动机：上游仓库常同时存在纯 semver tag 与多段数字 / 字母前缀 tag，
+      // semver.mjs 的 pickLatest 会判定形态冲突并返回 null（保守不报）。
+      // 先按形态收敛候选集，既保留"不误报"的保守性，又不漏掉正常更新。
+      const pureSemverMatch = currentTag.match(/^v?\d+\.\d+\.\d+$/i);
+      if (pureSemverMatch) {
+        const sameShape = stable.filter(t => /^v?\d+\.\d+\.\d+$/i.test(t.name));
+        if (sameShape.length > 0) {
+          return pickLatest(sameShape.map(t => t.name));
+        }
+        // 同形态候选不存在 → 走 fallback，避免误报
+      }
+
       // 形态 1/2：字母开头的变体（pg / railway / pg-1.16.0）
       const variantMatch = currentTag.match(/^([a-zA-Z][a-zA-Z0-9]*)(?:-|$)/);
       if (variantMatch) {
@@ -170,27 +332,52 @@ export class GhcrAdapter {
   // GHCR 不稳定标签黑名单（全量）
   UNSTABLE_RE = /^(latest|nightly|dev|edge|alpha|beta|rc|main|master)$/i;
 
-  constructor({ fetchImpl = globalThis.fetch } = {}) {
+  constructor({ fetchImpl = globalThis.fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
     this.fetchImpl = fetchImpl;
+    this.timeoutMs = timeoutMs;
   }
 
   canHandle(image) {
-    return image.startsWith('ghcr.io/');
+    const parsed = parseImage(image);
+    return !!parsed && parsed.registry === 'ghcr.io';
+  }
+
+  /**
+   * 带超时的 fetch 包装
+   * @param {string} url
+   * @param {object} [opts]
+   * @returns {Promise<Response>}
+   */
+  async request(url, opts = {}) {
+    const options = { ...opts };
+    if (!options.signal && typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+      options.signal = AbortSignal.timeout(this.timeoutMs);
+    }
+    try {
+      return await this.fetchImpl(url, options);
+    } catch (e) {
+      throw new RegistryRequestError(`Registry 请求失败: ${e.message}`, { url, cause: e });
+    }
   }
 
   /**
    * 获取最新稳定 tag
    * @param {string} image 完整镜像字符串
    * @param {string} [currentTag] 当前使用的 tag（用于变体匹配，如 pg -> pg-1.16.0）
-   * @returns {Promise<string|null>}
+   * @returns {Promise<string|null>} null = 请求成功但没有可用稳定 tag
    */
   async getLatestTag(image, currentTag) {
-    const { repo } = parseImage(image);
+    const parsed = parseImage(image);
+    if (!parsed) {
+      throw new RegistryRequestError(`镜像字符串无法解析: ${image}`);
+    }
+    const { repo } = parsed;
     let token = null;
 
-    // 优先尝试获取匿名 pull token（无需认证）
+    // 优先尝试获取匿名 pull token（无需认证）。
+    // token 端点失败 → 降级为匿名调用（不视为失败）。
     try {
-      const tokenRes = await this.fetchImpl(
+      const tokenRes = await this.request(
         `https://ghcr.io/token?scope=repository:${repo}:pull`
       );
       if (tokenRes.ok) {
@@ -199,6 +386,7 @@ export class GhcrAdapter {
       }
     } catch (_) {
       // token 获取失败，降级为匿名调用
+      token = null;
     }
 
     // 构建请求头
@@ -219,24 +407,37 @@ export class GhcrAdapter {
     const allTags = [];
     let nextUrl = `https://ghcr.io/v2/${repo}/tags/list?n=${PAGE_SIZE}`;
     for (let page = 0; page < MAX_PAGES && nextUrl; page++) {
+      const currentPage = page + 1;
       let res;
       try {
-        res = await this.fetchImpl(nextUrl, { headers });
-      } catch (_) {
-        if (page === 0) return null;
-        break;
+        res = await this.request(nextUrl, { headers });
+      } catch (e) {
+        throw withPartial(e, currentPage, allTags.length);
       }
+
       if (!res.ok) {
-        if (page === 0) return null;
-        break;
+        throw withPartial(
+          new RegistryRequestError(
+            `GHCR 返回 HTTP ${res.status}`,
+            { status: res.status, url: nextUrl },
+          ),
+          currentPage,
+          allTags.length,
+        );
       }
 
       let data;
       try {
         data = await res.json();
-      } catch (_) {
-        if (page === 0) return null;
-        break;
+      } catch (e) {
+        throw withPartial(
+          new RegistryRequestError(`GHCR 响应 JSON 解析失败: ${e.message}`, {
+            url: nextUrl,
+            cause: e,
+          }),
+          currentPage,
+          allTags.length,
+        );
       }
       allTags.push(...(data?.tags ?? []));
 
@@ -282,6 +483,17 @@ export class GhcrAdapter {
         // 同 suffix 的版本不存在 → 走 fallback
       }
 
+      // 形态 0：当前 tag 是纯 semver（vX.Y.Z）→ 只在"同为纯 semver"的 tag 里选
+      // （与 DockerHubAdapter 对称；避免 pickLatest 因形态冲突返回 null 而漏检）
+      const pureSemverMatch = currentTag.match(/^v?\d+\.\d+\.\d+$/i);
+      if (pureSemverMatch) {
+        const sameShape = stable.filter(t => /^v?\d+\.\d+\.\d+$/i.test(t));
+        if (sameShape.length > 0) {
+          return pickLatest(sameShape);
+        }
+        // 同形态候选不存在 → 走 fallback，避免误报
+      }
+
       // 形态 1/2：字母开头的变体
       const variantMatch = currentTag.match(/^([a-zA-Z][a-zA-Z0-9]*)(?:-|$)/);
       if (variantMatch) {
@@ -302,14 +514,24 @@ export class GhcrAdapter {
 
 /**
  * 工厂函数：根据镜像名自动选择适配器
+ *
+ * 语义（task-2）：
+ *   - 镜像字符串解析失败 → null
+ *   - 不支持的 registry（如自建 harbor）→ null（**不得**误用 DockerHub API）
+ *   - docker.io / 无前缀 → DockerHubAdapter；ghcr.io → GhcrAdapter
+ *
  * @param {string} image
- * @param {{ fetchImpl?: Function }} [opts]
- * @returns {DockerHubAdapter|GhcrAdapter}
+ * @param {{ fetchImpl?: Function, timeoutMs?: number }} [opts]
+ * @returns {DockerHubAdapter|GhcrAdapter|null}
  */
 export function createAdapter(image, opts = {}) {
-  // 按 canHandle 分流
-  if (new GhcrAdapter(opts).canHandle(image)) {
+  const parsed = parseImage(image);
+  if (!parsed) return null;
+  if (parsed.registry === 'ghcr.io') {
     return new GhcrAdapter(opts);
   }
-  return new DockerHubAdapter(opts);
+  if (parsed.registry === 'dockerhub') {
+    return new DockerHubAdapter(opts);
+  }
+  return null;
 }

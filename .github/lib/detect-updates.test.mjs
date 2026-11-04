@@ -9,7 +9,25 @@
 // 跨 case 的状态泄漏由模块本身保证（CLI 入口只调用一次）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { shouldSkipAutoUpdate, parseCliArgs, canCopyVersionDir } from '../scripts/detect-updates.mjs';
+import {
+  shouldSkipAutoUpdate,
+  parseCliArgs,
+  canCopyVersionDir,
+  classifyImage,
+  determineExitCode,
+  pickPrimaryReason,
+  compareVersionsLoose,
+  looseVersionChunks,
+  findFormFieldForImage,
+  parseCompose,
+  parseDataYml,
+  classifyServiceImage,
+  buildResultSummary,
+  formatResultReport,
+  overallExitCode,
+  formatReason,
+  stageForReason,
+} from '../scripts/detect-updates.mjs';
 
 describe('detect-updates 白名单', () => {
   // 1. 白名单内应用 → true（被跳过）
@@ -127,5 +145,381 @@ describe('parseCliArgs', () => {
   it('短名 + 位置参数: 完整命令模拟', () => {
     const { positional } = parseCliArgs(['-n', 'bookorbit', 'photoprism']);
     assert.deepEqual(positional, ['bookorbit', 'photoprism']);
+  });
+});
+
+describe('classifyImage（镜像分类）', () => {
+  // 普通镜像（无 registry 前缀）
+  it('普通镜像 + tag → ok', () => {
+    const r = classifyImage('kragleer/anirss:v3.2.18');
+    assert.equal(r.status, 'ok');
+    assert.equal(r.registry, 'dockerhub');
+    assert.equal(r.repo, 'kragleer/anirss');
+    assert.equal(r.imageRef, 'kragleer/anirss');
+    assert.equal(r.tag, 'v3.2.18');
+  });
+
+  // ghcr.io 镜像：repo 不含 registry，imageRef 含 registry
+  it('ghcr.io 镜像 → ok，repo/imageRef 分离', () => {
+    const r = classifyImage('ghcr.io/traefik/traefik:v3.6.6');
+    assert.equal(r.status, 'ok');
+    assert.equal(r.registry, 'ghcr.io');
+    assert.equal(r.repo, 'traefik/traefik');
+    assert.equal(r.imageRef, 'ghcr.io/traefik/traefik');
+    assert.equal(r.tag, 'v3.6.6');
+  });
+
+  // registry 带端口
+  it('registry 带端口 → unsupported-registry', () => {
+    const r = classifyImage('localhost:5000/app:1.0');
+    assert.equal(r.status, 'skipped');
+    assert.equal(r.reason, 'unsupported-registry');
+  });
+
+  // 自定义 registry
+  it('自定义 registry → unsupported-registry', () => {
+    const r = classifyImage('registry.example.com/org/app:1.2.3');
+    assert.equal(r.status, 'skipped');
+    assert.equal(r.reason, 'unsupported-registry');
+  });
+
+  // 解析失败
+  it('无法解析的镜像 → image-unresolved', () => {
+    assert.equal(classifyImage('${IMAGE}:${TAG}').reason, 'image-unresolved');
+    assert.equal(classifyImage('').reason, 'image-unresolved');
+    assert.equal(classifyImage('ng inx:1.0').reason, 'image-unresolved');
+  });
+
+  // digest 镜像不可更新
+  it('digest 镜像 → digest-image', () => {
+    const r = classifyImage('nginx@sha256:abcdef');
+    assert.equal(r.status, 'skipped');
+    assert.equal(r.reason, 'digest-image');
+  });
+
+  // 无 tag
+  it('无 tag 无 digest → no-tag', () => {
+    const r = classifyImage('kragleer/anirss');
+    assert.equal(r.status, 'skipped');
+    assert.equal(r.reason, 'no-tag');
+  });
+
+  // tag=latest
+  it('tag=latest → tag-latest', () => {
+    const r = classifyImage('kragleer/anirss:latest');
+    assert.equal(r.status, 'skipped');
+    assert.equal(r.reason, 'tag-latest');
+  });
+
+  // 不稳定 tag
+  it('nightly / dev / beta 等不稳定 tag → tag-unstable', () => {
+    assert.equal(classifyImage('a/b:nightly').reason, 'tag-unstable');
+    assert.equal(classifyImage('a/b:dev').reason, 'tag-unstable');
+    assert.equal(classifyImage('a/b:beta').reason, 'tag-unstable');
+    assert.equal(classifyImage('a/b:rc1').status, 'ok', 'rc1 不是整词黑名单命中');
+  });
+});
+
+describe('determineExitCode（退出码）', () => {
+  // 无失败 → 0
+  it('全部成功 → 退出码 0', () => {
+    assert.equal(determineExitCode([{ status: 'success' }, { status: 'skipped' }]), 0);
+  });
+
+  // 存在失败 → 2（Registry 失败必须非零退出）
+  it('存在 failed → 退出码 2', () => {
+    assert.equal(
+      determineExitCode([
+        { status: 'success' },
+        { status: 'failed', stage: 'registry', reason: 'registry-request-failed' },
+      ]),
+      2,
+    );
+  });
+
+  // 空结果 → 0
+  it('空结果 → 退出码 0', () => {
+    assert.equal(determineExitCode([]), 0);
+    assert.equal(determineExitCode(undefined), 0);
+  });
+
+  // skipped 不影响退出码（跳过 ≠ 失败）
+  it('只有 skipped 不影响退出码', () => {
+    assert.equal(determineExitCode([{ status: 'skipped' }, { status: 'skipped' }]), 0);
+  });
+});
+
+describe('pickPrimaryReason（app 级 reason 汇总）', () => {
+  it('优先返回更严重的 reason', () => {
+    assert.equal(pickPrimaryReason(['no-services', 'tag-latest']), 'tag-latest');
+    assert.equal(pickPrimaryReason(['no-services', 'registry-request-failed']), 'registry-request-failed');
+  });
+
+  it('单个 reason 原样返回', () => {
+    assert.equal(pickPrimaryReason(['whitelisted']), 'whitelisted');
+  });
+
+  it('空输入 → no-update', () => {
+    assert.equal(pickPrimaryReason([]), 'no-update');
+  });
+});
+
+describe('compareVersionsLoose / looseVersionChunks', () => {
+  it('比较数值段', () => {
+    assert.ok(compareVersionsLoose('3.2.18', '3.2.9') > 0);
+    assert.ok(compareVersionsLoose('3.2.9', '3.2.18') < 0);
+    assert.equal(compareVersionsLoose('3.2.18', '3.2.18'), 0);
+  });
+
+  it('日期型版本目录可比较', () => {
+    assert.ok(compareVersionsLoose('2026091410-arm64', '10.11.11') > 0);
+  });
+
+  it('多段数字版本可比较', () => {
+    assert.ok(compareVersionsLoose('26.04.5.1.1', '2.1.5') > 0);
+  });
+
+  it('无法识别的版本 → 空 chunks', () => {
+    assert.deepEqual(looseVersionChunks('foo'), []);
+    assert.deepEqual(looseVersionChunks(''), []);
+    assert.deepEqual(looseVersionChunks('v3.2.18'), [3, 2, 18]);
+  });
+});
+
+describe('parseCompose / parseDataYml（解析失败可识别）', () => {
+  it('compose 解析出 services', () => {
+    const services = parseCompose('services:\n  app:\n    image: nginx:1.25\n');
+    assert.equal(services.length, 1);
+    assert.equal(services[0].image, 'nginx:1.25');
+  });
+
+  it('非法 YAML 抛错（由 detect 归类为 failed）', () => {
+    assert.throws(() => parseCompose('services:\n  - a\n   bad: [unclosed'));
+    assert.throws(() => parseDataYml('key: [unclosed'));
+  });
+
+  it('data.yml 解析出 formFields', () => {
+    const obj = parseDataYml('additionalProperties:\n  formFields:\n    - envKey: APP_VERSION\n      default: "3.2.0"\n');
+    assert.equal(obj.additionalProperties.formFields[0].envKey, 'APP_VERSION');
+  });
+});
+
+describe('findFormFieldForImage（统一用 parseImage 解析 default）', () => {
+  it('匹配 default 为完整镜像字符串的字段', () => {
+    const obj = {
+      additionalProperties: {
+        formFields: [
+          { envKey: 'IMAGE', default: 'kragleer/anirss:v3.2.18' },
+        ],
+      },
+    };
+    const found = findFormFieldForImage(obj, 'kragleer/anirss');
+    assert.ok(found);
+    assert.equal(found.index, 0);
+  });
+
+  it('ghcr.io 镜像：default 含 registry 时按 repo（不含 registry）匹配', () => {
+    const obj = {
+      additionalProperties: {
+        formFields: [
+          { envKey: 'IMAGE', default: 'ghcr.io/traefik/traefik:v3.6.6' },
+        ],
+      },
+    };
+    const found = findFormFieldForImage(obj, 'traefik/traefik');
+    assert.ok(found);
+    assert.equal(found.index, 0);
+  });
+
+  it('无匹配返回 null', () => {
+    const obj = {
+      additionalProperties: {
+        formFields: [{ envKey: 'IMAGE', default: 'other/repo:1.0' }],
+      },
+    };
+    assert.equal(findFormFieldForImage(obj, 'kragleer/anirss'), null);
+  });
+
+  it('非法 default（空串）跳过，不抛错', () => {
+    const obj = {
+      additionalProperties: {
+        formFields: [{ envKey: 'IMAGE', default: '' }],
+      },
+    };
+    assert.equal(findFormFieldForImage(obj, 'kragleer/anirss'), null);
+  });
+});
+
+describe('classifyServiceImage（集中化镜像分类）', () => {
+  it('变量型镜像 → kind=variable', () => {
+    const r = classifyServiceImage('${IMAGE}:${APP_VERSION}');
+    assert.equal(r.kind, 'variable');
+  });
+
+  it('普通硬编码镜像 → kind=hardcoded，带 repo/tag', () => {
+    const r = classifyServiceImage('kragleer/anirss:v3.2.18');
+    assert.equal(r.kind, 'hardcoded');
+    assert.equal(r.repo, 'kragleer/anirss');
+    assert.equal(r.tag, 'v3.2.18');
+    assert.equal(r.registry, 'dockerhub');
+  });
+
+  it('ghcr.io 硬编码镜像 → kind=hardcoded，repo 不含 registry', () => {
+    const r = classifyServiceImage('ghcr.io/traefik/traefik:v3.6.6');
+    assert.equal(r.kind, 'hardcoded');
+    assert.equal(r.registry, 'ghcr.io');
+    assert.equal(r.repo, 'traefik/traefik');
+    assert.equal(r.tag, 'v3.6.6');
+  });
+
+  it('带端口的 registry（localhost:5000/app:1.0）→ 正确拆出 repo/tag', () => {
+    const r = classifyServiceImage('localhost:5000/app:1.0');
+    assert.equal(r.kind, 'hardcoded');
+    assert.equal(r.registry, 'localhost:5000');
+    assert.equal(r.repo, 'app');
+    assert.equal(r.tag, '1.0');
+  });
+
+  it('digest-only 镜像 → kind=digest（skipped，不是失败）', () => {
+    const r = classifyServiceImage('nginx@sha256:abcdef');
+    assert.equal(r.kind, 'digest');
+    assert.equal(r.code, 'digest-image');
+  });
+
+  it('无 tag 镜像 → kind=no-tag', () => {
+    const r = classifyServiceImage('kragleer/anirss');
+    assert.equal(r.kind, 'no-tag');
+    assert.equal(r.code, 'no-tag');
+  });
+
+  it('非法镜像串 → kind=invalid（必须记为 failed）', () => {
+    assert.equal(classifyServiceImage('ng inx:1.0').kind, 'invalid');
+    assert.equal(classifyServiceImage('').kind, 'invalid');
+    assert.equal(classifyServiceImage('   ').kind, 'invalid');
+    assert.equal(classifyServiceImage('repo:').kind, 'invalid');
+  });
+});
+
+describe('buildResultSummary（结果聚合）', () => {
+  it('统计 success / skipped / failed / updates', () => {
+    const s = buildResultSummary([
+      { app: 'a', status: 'success', updates: 2 },
+      { app: 'b', status: 'success', updates: 0 },
+      { app: 'c', status: 'skipped', updates: 0 },
+      { app: 'd', status: 'failed', updates: 0 },
+    ]);
+    assert.equal(s.total, 4);
+    assert.equal(s.success, 2);
+    assert.equal(s.skipped, 1);
+    assert.equal(s.failed, 1);
+    assert.equal(s.updates, 2);
+  });
+
+  it('skipped 不计入 failed', () => {
+    const s = buildResultSummary([
+      { app: 'a', status: 'skipped' },
+      { app: 'b', status: 'skipped' },
+    ]);
+    assert.equal(s.failed, 0);
+    assert.equal(s.skipped, 2);
+  });
+
+  it('空结果 → 全 0', () => {
+    assert.deepEqual(buildResultSummary([]), {
+      total: 0, success: 0, skipped: 0, failed: 0, updates: 0,
+    });
+    assert.deepEqual(buildResultSummary(undefined), {
+      total: 0, success: 0, skipped: 0, failed: 0, updates: 0,
+    });
+  });
+});
+
+describe('formatResultReport（每应用结果表）', () => {
+  const results = [
+    { app: 'anirss', status: 'success', stage: 'scan', reason: '检测到新版本 1.2.3', updates: 1 },
+    { app: 'jellyfin', status: 'skipped', stage: 'whitelist', reason: '已在白名单，手维护', updates: 0 },
+    {
+      app: 'brokenapp',
+      status: 'failed',
+      stage: 'registry',
+      reason: 'Registry 请求失败',
+      error: 'Registry 请求失败: fetch failed',
+      updates: 0,
+    },
+  ];
+
+  it('包含每个应用名 / 状态 / 阶段 / 原因', () => {
+    const text = formatResultReport(results);
+    assert.match(text, /anirss/);
+    assert.match(text, /jellyfin/);
+    assert.match(text, /brokenapp/);
+    assert.match(text, /success/);
+    assert.match(text, /skipped/);
+    assert.match(text, /failed/);
+    assert.match(text, /whitelist/);
+    assert.match(text, /registry/);
+  });
+
+  it('失败应用名与原因出现在报告中', () => {
+    const text = formatResultReport(results);
+    assert.match(text, /brokenapp/);
+    assert.match(text, /Registry 请求失败/);
+  });
+
+  it('包含失败底层错误信息', () => {
+    const text = formatResultReport(results);
+    assert.match(text, /fetch failed/);
+  });
+
+  it('包含汇总行（success/skipped/failed/总数）', () => {
+    const text = formatResultReport(results);
+    assert.match(text, /共 3 个应用/);
+    assert.match(text, /success 1/);
+    assert.match(text, /skipped 1/);
+    assert.match(text, /failed 1/);
+  });
+});
+
+describe('overallExitCode（退出码契约）', () => {
+  it('存在 failed → 2', () => {
+    assert.equal(
+      overallExitCode([
+        { status: 'success' },
+        { status: 'failed', stage: 'registry', reason: 'Registry 请求失败' },
+      ]),
+      2,
+    );
+  });
+
+  it('无 failed（含全部 skipped / success）→ 0', () => {
+    assert.equal(overallExitCode([{ status: 'success' }, { status: 'skipped' }]), 0);
+    assert.equal(overallExitCode([{ status: 'skipped' }]), 0);
+    assert.equal(overallExitCode([]), 0);
+    assert.equal(overallExitCode(undefined), 0);
+  });
+});
+
+describe('formatReason / stageForReason', () => {
+  it('reason 码 → 人读说明', () => {
+    assert.equal(formatReason('whitelisted'), '已在白名单，手维护');
+    assert.equal(formatReason('no-services'), 'compose 无 services');
+    assert.equal(formatReason('image-unresolved'), '镜像字符串无法解析');
+    assert.equal(formatReason('registry-request-failed'), 'Registry 请求失败');
+    assert.equal(formatReason('no-update'), '已是最新');
+    assert.match(formatReason('update-found', { to: '1.2.3' }), /1\.2\.3/);
+  });
+
+  it('unsupported-registry 说明里带 registry 名', () => {
+    assert.match(formatReason('unsupported-registry', { registry: 'harbor.local' }), /harbor\.local/);
+  });
+
+  it('reason 码 → 阶段', () => {
+    assert.equal(stageForReason('whitelisted'), 'whitelist');
+    assert.equal(stageForReason('compose-invalid'), 'compose');
+    assert.equal(stageForReason('data-yml-invalid'), 'data-yml');
+    assert.equal(stageForReason('image-unresolved'), 'image-parse');
+    assert.equal(stageForReason('registry-request-failed'), 'registry');
+    assert.equal(stageForReason('version-unrecognized'), 'version');
+    assert.equal(stageForReason('write-failed'), 'write');
   });
 });

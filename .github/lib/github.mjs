@@ -43,10 +43,42 @@ export class GitHubApiError extends Error {
 }
 
 /**
+ * 会被判定为「检查失败」的 conclusion 集合
+ * （注意：`skipped` / `neutral` 也按失败处理——不通过就等于没通过）
+ */
+export const FAILING_CONCLUSIONS = new Set([
+  'failure', 'cancelled', 'timed_out', 'action_required', 'neutral', 'skipped',
+]);
+
+/**
+ * 允许执行「自动更新写操作」的 GitHub 事件白名单。
+ * `pull_request` / `pull_request_target` 永远不在白名单里：
+ * 这两个事件会执行 PR 作者的代码，绝不能拿到 PAT 写权限。
+ */
+export const AUTHORIZED_WRITE_EVENTS = new Set(['schedule', 'workflow_dispatch', 'push']);
+
+/**
+ * 判断当前事件是否允许执行自动更新写操作（脚本层防御纵深）
+ *
+ * 工作流的 `if:` 是第一道防线；本函数是第二道——即使工作流配置被改错，
+ * 写脚本在 PR 事件下也会直接拒绝执行（不碰 git、不发写请求）。
+ *
+ * 注意：`eventName` 为空视为本地手动运行（无 GITHUB_EVENT_NAME 环境变量），允许执行。
+ *
+ * @param {string|undefined|null} eventName
+ * @returns {boolean}
+ */
+export function isAuthorizedWriteEvent(eventName) {
+  if (!eventName) return true;
+  return AUTHORIZED_WRITE_EVENTS.has(String(eventName));
+}
+
+/**
  * 创建 GitHub REST 客户端
  * @param {{token: string, baseUrl?: string, fetchImpl?: typeof fetch}} [options]
  * @returns {{request: Function, listOpenPullRequests: Function, createPullRequest: Function,
- *            mergePullRequest: Function, deleteBranch: Function}}
+ *            mergePullRequest: Function, deleteBranch: Function,
+ *            listCheckRuns: Function, getCombinedStatus: Function, waitForChecks: Function}}
  */
 export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl } = {}) {
   if (!token) throw new Error('createGitHubClient: 缺少 token');
@@ -147,7 +179,125 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
     return true;
   }
 
-  return { request, listOpenPullRequests, createPullRequest, mergePullRequest, deleteBranch };
+  /**
+   * 列出某个 ref（commit / 分支）上的 check runs
+   *
+   * @param {{owner: string, repo: string, ref: string}} params
+   * @returns {Promise<Array<{name: string, status: string, conclusion: string|null}>>}
+   */
+  async function listCheckRuns({ owner, repo, ref }) {
+    const data = await request(
+      'GET',
+      `/repos/${owner}/${repo}/commits/${encodeURIComponent(ref)}/check-runs?per_page=100`,
+    );
+    const runs = (data && data.check_runs) || [];
+    if (!Array.isArray(runs)) return [];
+    return runs.map(r => ({
+      name: r.name || '',
+      status: r.status || '',
+      conclusion: r.conclusion === undefined ? null : r.conclusion,
+    }));
+  }
+
+  /**
+   * 获取某个 ref 的**合并 commit status**（legacy commit status API）
+   * @param {{owner: string, repo: string, ref: string}} params
+   * @returns {Promise<{state: string, statuses: Array<object>}>}
+   */
+  async function getCombinedStatus({ owner, repo, ref }) {
+    const data = await request(
+      'GET',
+      `/repos/${owner}/${repo}/commits/${encodeURIComponent(ref)}/status`,
+    );
+    return {
+      state: (data && data.state) || 'unknown',
+      statuses: (data && Array.isArray(data.statuses)) ? data.statuses : [],
+    };
+  }
+
+  /**
+   * 轮询等待某个 ref 的必需检查跑完
+   *
+   * 返回值语义（调用方必须只对 `success` 执行合并）：
+   *   · `success` —— 至少有一个 check run，且全部 completed + conclusion=success，
+   *                  同时合并状态不是 failure / pending；
+   *   · `failure` —— 任一 check run 的 conclusion 在失败集合里，或合并状态为 failure；
+   *   · `timeout` —— 超时仍有检查在跑，或**始终没有出现任何 check run**；
+   *   · `unknown` —— API 调用本身失败（网络错误 / 非 2xx）。
+   *
+   * `now` / `sleep` 可注入，便于单测（不依赖真实定时器）。
+   *
+   * @param {{owner: string, repo: string, ref: string, timeoutMs?: number,
+   *          intervalMs?: number, now?: () => number, sleep?: (ms: number) => Promise<void>}} params
+   * @returns {Promise<{status: 'success'|'failure'|'timeout'|'unknown',
+   *                    checks: Array<{name: string, status: string, conclusion: string|null}>,
+   *                    error?: string}>}
+   */
+  async function waitForChecks({
+    owner,
+    repo,
+    ref,
+    timeoutMs = 1800000,
+    intervalMs = 30000,
+    now = () => Date.now(),
+    sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms)),
+  }) {
+    const start = now();
+    let checks = [];
+
+    // 最多轮询到超时（每轮至少 sleep 一次，保证 now 能推进）
+    for (;;) {
+      let runs;
+      let combined;
+      try {
+        runs = await listCheckRuns({ owner, repo, ref });
+        combined = await getCombinedStatus({ owner, repo, ref });
+      } catch (e) {
+        // API 调用失败 → 状态未知，调用方**不得**合并
+        return { status: 'unknown', checks, error: e.message };
+      }
+
+      checks = runs;
+
+      // 1) 任一检查失败 → 立即判定失败
+      for (const c of checks) {
+        if (c.conclusion && FAILING_CONCLUSIONS.has(c.conclusion)) {
+          return { status: 'failure', checks };
+        }
+      }
+      // 2) 合并 commit status 失败 → 判定失败
+      if (combined && combined.state === 'failure') {
+        return { status: 'failure', checks };
+      }
+
+      // 3) 全部通过
+      const allPassed =
+        checks.length > 0 &&
+        checks.every(c => c.status === 'completed' && c.conclusion === 'success');
+      const combinedPending = combined && combined.state === 'pending';
+      if (allPassed && !combinedPending) {
+        return { status: 'success', checks };
+      }
+
+      // 4) 超时（检查仍在跑，或始终没有出现任何 check run）
+      if (now() - start >= timeoutMs) {
+        return { status: 'timeout', checks };
+      }
+
+      await sleep(intervalMs);
+    }
+  }
+
+  return {
+    request,
+    listOpenPullRequests,
+    createPullRequest,
+    mergePullRequest,
+    deleteBranch,
+    listCheckRuns,
+    getCombinedStatus,
+    waitForChecks,
+  };
 }
 
 /**
@@ -200,13 +350,39 @@ export function buildPullRequestBody({ updates = [], changedFiles = [], generate
     parts.push(`自动更新 ${today}`, '');
   }
 
-  parts.push('---', '🤖 由 `.github/workflows/auto-update.yml` 自动生成并自动合并。', '');
+  parts.push(
+    '---',
+    '🤖 由 `.github/workflows/auto-update.yml` 自动生成；**仅在必需检查全部通过后**才会自动合并。',
+    '',
+  );
   return parts.join('\n');
+}
+
+/**
+ * 构造自动更新 PR 的标题
+ *
+ * ⚠️ **绝不能**包含 `[skip ci]` 之类的 skip 指令：GitHub 会据此跳过该 PR 的
+ * `pull_request` workflow，导致必需检查永远不出现、合并门禁永远超时。
+ *
+ * @param {{today: string}} params
+ * @returns {string}
+ */
+export function buildPullRequestTitle({ today }) {
+  return `chore(deps): auto-update ${today}`;
 }
 
 /**
  * 构造 commit message（拆成 subject / body 两段，交给 `git commit -m`）
  * 旧实现把 "\n" 写进 shell 双引号里，git 收到的是**字面量** \n（不是换行）。
+ *
+ * ⚠️ **绝不能**在 commit message / PR title 里放 `[skip ci]` 之类 skip 指令：
+ *    GitHub 对 `pull_request` 事件判定的是 **PR 的 HEAD commit message**——
+ *    skip 指令会让自动更新 PR 的 `pull_request` workflow 整体被跳过，
+ *    于是「必需检查」永远不会出现，`waitForChecks` 只能超时 → PR 永远无法自动合并
+ *    （GitHub 文档：skip 指令命中时检查会停留在 Pending，受保护的 PR 无法合并）。
+ *    合并后的「push 递归触发」由工作流 `on.push.paths` 过滤防住
+ *    （push 只对 `.github/**` 等自动更新链路自身文件触发，应用配置 / README 不在其中），
+ *    因此不需要 skip 指令。
  *
  * @param {{today: string}} params
  * @returns {{subject: string, body: string}}
@@ -214,11 +390,11 @@ export function buildPullRequestBody({ updates = [], changedFiles = [], generate
 export function buildCommitMessage({ today }) {
   return {
     subject: `chore(deps): auto-update ${today}`,
-    // [skip ci] 放 body 首行：GitHub Actions 按整条 commit message 判定跳过
     body: [
-      '[skip ci]',
-      '',
       '本批次自动检测到的更新（含 README 同步）。',
+      '',
+      // 说明合并门禁，便于人工 reviewing 时理解为什么 PR 不会立刻合并
+      '仅在必需 GitHub Checks 全部通过后由 workflow 自动合并。',
       '',
       '🤖 Generated by .github/workflows/auto-update.yml',
     ].join('\n'),

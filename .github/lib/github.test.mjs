@@ -12,6 +12,9 @@ import {
   createGitHubClient,
   buildPullRequestBody,
   buildCommitMessage,
+  buildPullRequestTitle,
+  isAuthorizedWriteEvent,
+  AUTHORIZED_WRITE_EVENTS,
   GitHubApiError,
 } from './github.mjs';
 
@@ -97,17 +100,34 @@ describe('buildPullRequestBody', () => {
 });
 
 describe('buildCommitMessage', () => {
-  it('subject 与 body 分开，body 首行是 [skip ci]', () => {
+  // 核心回归点：skip 指令（[skip ci] 等）不能出现在自动更新 commit 的 HEAD message 里。
+  // GitHub 对 pull_request 事件判定的是 PR 的 HEAD commit message —— 一旦命中 skip，
+  // 自动更新 PR 的 validate workflow 会被整体跳过 → 必需检查永远不出现 →
+  // waitForChecks 只能超时 → PR 永远无法自动合并（合并门禁变死锁）。
+  const SKIP_INSTRUCTION_RE = /\[(?:skip[ _-]?ci|ci[ _-]?skip|no[ _-]?ci|skip[ _-]?actions|actions[ _-]?skip)\]/i;
+
+  it('subject 与 body 分开，且不含任何 skip 指令', () => {
     const { subject, body } = buildCommitMessage({ today: '2026-10-20' });
     assert.equal(subject, 'chore(deps): auto-update 2026-10-20');
-    assert.equal(body.split('\n')[0], '[skip ci]');
     assert.ok(body.includes('.github/workflows/auto-update.yml'));
+    assert.doesNotMatch(subject, SKIP_INSTRUCTION_RE, 'commit subject 不得含 skip 指令');
+    assert.doesNotMatch(body, SKIP_INSTRUCTION_RE, 'commit body 不得含 skip 指令（会跳过 PR 的必需检查）');
   });
 
   it('不含字面量 \\n 序列（旧实现把换行写成了字面量）', () => {
     const { subject, body } = buildCommitMessage({ today: '2026-10-20' });
     assert.ok(!subject.includes('\\n'));
     assert.ok(!body.includes('\\n'));
+  });
+});
+
+describe('buildPullRequestTitle', () => {
+  const SKIP_INSTRUCTION_RE = /\[(?:skip[ _-]?ci|ci[ _-]?skip|no[ _-]?ci|skip[ _-]?actions|actions[ _-]?skip)\]/i;
+
+  it('title 含日期且不含任何 skip 指令', () => {
+    const title = buildPullRequestTitle({ today: '2026-10-20' });
+    assert.equal(title, 'chore(deps): auto-update 2026-10-20');
+    assert.doesNotMatch(title, SKIP_INSTRUCTION_RE, 'PR title 的 skip 指令会跳过 pull_request 检查（门禁死锁）');
   });
 });
 
@@ -241,5 +261,253 @@ describe('createGitHubClient', () => {
 
   it('缺少 token 时直接抛错', () => {
     assert.throws(() => createGitHubClient({}), /缺少 token/);
+  });
+});
+
+// ─── 检查状态（合并门禁）─────────────────────────────────────────────────
+
+/**
+ * 造一个按路径分派的假 fetch：
+ * @param {{checkRuns?: any, status?: any, fail?: boolean, throwOn?: RegExp}} spec
+ */
+function routingFetch(spec, sink = []) {
+  return async (url, init) => {
+    sink.push({ url, init });
+    if (spec.throwOn && spec.throwOn.test(url)) {
+      throw new Error('ECONNRESET');
+    }
+    if (url.includes('/check-runs')) {
+      const status = spec.checkRunsStatus || 200;
+      return new Response(JSON.stringify(spec.checkRuns ?? { check_runs: [] }), {
+        status,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url.endsWith('/status')) {
+      const status = spec.statusStatus || 200;
+      return new Response(JSON.stringify(spec.status ?? { state: 'success', statuses: [] }), {
+        status,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    return new Response('{}', { status: 404, headers: { 'content-type': 'application/json' } });
+  };
+}
+
+/** 造一个可控时钟（now / sleep 注入） */
+function fakeClock(start = 0, step = 1000) {
+  let t = start;
+  return {
+    now: () => t,
+    sleep: async (ms) => {
+      t += Math.max(ms, step);
+    },
+    advance: (ms) => {
+      t += ms;
+    },
+  };
+}
+
+describe('listCheckRuns', () => {
+  it('解析 check_runs 为 {name,status,conclusion}', async () => {
+    const sink = [];
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: routingFetch(
+        {
+          checkRuns: {
+            check_runs: [
+              { name: 'lint', status: 'completed', conclusion: 'success' },
+              { name: 'test', status: 'queued', conclusion: null },
+            ],
+          },
+        },
+        sink,
+      ),
+    });
+    const runs = await client.listCheckRuns({ owner: 'o', repo: 'r', ref: 'abc123' });
+    assert.equal(runs.length, 2);
+    assert.deepEqual(runs[0], { name: 'lint', status: 'completed', conclusion: 'success' });
+    assert.equal(runs[1].conclusion, null);
+    assert.ok(sink[0].url.includes('/commits/abc123/check-runs'));
+    assert.ok(sink[0].url.includes('per_page=100'));
+  });
+
+  it('缺少 check_runs 字段时返回空数组', async () => {
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: routingFetch({ checkRuns: {} }),
+    });
+    assert.deepEqual(await client.listCheckRuns({ owner: 'o', repo: 'r', ref: 'x' }), []);
+  });
+});
+
+describe('getCombinedStatus', () => {
+  it('返回 state 与 statuses', async () => {
+    const sink = [];
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: routingFetch(
+        { status: { state: 'success', statuses: [{ context: 'ci', state: 'success' }] } },
+        sink,
+      ),
+    });
+    const s = await client.getCombinedStatus({ owner: 'o', repo: 'r', ref: 'abc' });
+    assert.equal(s.state, 'success');
+    assert.equal(s.statuses.length, 1);
+    assert.ok(sink[0].url.includes('/commits/abc/status'));
+  });
+});
+
+describe('waitForChecks', () => {
+  it('全部检查成功 → success', async () => {
+    const clock = fakeClock();
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: routingFetch({
+        checkRuns: {
+          check_runs: [{ name: 'lint', status: 'completed', conclusion: 'success' }],
+        },
+        status: { state: 'success', statuses: [] },
+      }),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 60000, intervalMs: 1000,
+      now: clock.now, sleep: clock.sleep,
+    });
+    assert.equal(r.status, 'success');
+    assert.equal(r.checks.length, 1);
+  });
+
+  it('有一个检查失败 → failure', async () => {
+    const clock = fakeClock();
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: routingFetch({
+        checkRuns: {
+          check_runs: [
+            { name: 'lint', status: 'completed', conclusion: 'success' },
+            { name: 'test', status: 'completed', conclusion: 'failure' },
+          ],
+        },
+        status: { state: 'success', statuses: [] },
+      }),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 60000, intervalMs: 1000,
+      now: clock.now, sleep: clock.sleep,
+    });
+    assert.equal(r.status, 'failure');
+  });
+
+  it('有一个检查仍在 queued → timeout', async () => {
+    const clock = fakeClock();
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: routingFetch({
+        checkRuns: {
+          check_runs: [{ name: 'lint', status: 'queued', conclusion: null }],
+        },
+        status: { state: 'pending', statuses: [] },
+      }),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 5000, intervalMs: 1000,
+      now: clock.now, sleep: clock.sleep,
+    });
+    assert.equal(r.status, 'timeout');
+  });
+
+  it('没有任何 check run → timeout（信息缺失不合并）', async () => {
+    const clock = fakeClock();
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: routingFetch({
+        checkRuns: { check_runs: [] },
+        status: { state: 'pending', statuses: [] },
+      }),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 3000, intervalMs: 1000,
+      now: clock.now, sleep: clock.sleep,
+    });
+    assert.equal(r.status, 'timeout');
+    assert.deepEqual(r.checks, []);
+  });
+
+  it('API 调用失败 → unknown（绝不合并）', async () => {
+    const clock = fakeClock();
+    // 让 check-runs 请求抛网络错误
+    const client2 = createGitHubClient({
+      token: 't',
+      fetchImpl: async () => {
+        throw new Error('ECONNRESET');
+      },
+    });
+    const r = await client2.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 1000, intervalMs: 1000,
+      now: clock.now, sleep: clock.sleep,
+    });
+    assert.equal(r.status, 'unknown');
+    assert.match(r.error, /ECONNRESET/);
+  });
+
+  it('API 返回非 2xx → unknown', async () => {
+    const clock = fakeClock();
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: routingFetch({ checkRunsStatus: 500 }),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 1000, intervalMs: 1000,
+      now: clock.now, sleep: clock.sleep,
+    });
+    assert.equal(r.status, 'unknown');
+  });
+
+  it('合并状态为 failure → failure', async () => {
+    const clock = fakeClock();
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: routingFetch({
+        checkRuns: {
+          check_runs: [{ name: 'lint', status: 'completed', conclusion: 'success' }],
+        },
+        status: { state: 'failure', statuses: [] },
+      }),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha', timeoutMs: 60000, intervalMs: 1000,
+      now: clock.now, sleep: clock.sleep,
+    });
+    assert.equal(r.status, 'failure');
+  });
+});
+
+describe('isAuthorizedWriteEvent（脚本层事件护栏）', () => {
+  it('schedule / workflow_dispatch / push 允许执行写操作', () => {
+    for (const ev of ['schedule', 'workflow_dispatch', 'push']) {
+      assert.equal(isAuthorizedWriteEvent(ev), true, `${ev} 应允许`);
+    }
+  });
+
+  it('pull_request / pull_request_target 一律拒绝（PR 代码不得拿 PAT 写权限）', () => {
+    for (const ev of ['pull_request', 'pull_request_target']) {
+      assert.equal(isAuthorizedWriteEvent(ev), false, `${ev} 必须拒绝`);
+    }
+  });
+
+  it('未知事件默认拒绝（白名单语义，不因新事件名而放行）', () => {
+    assert.equal(isAuthorizedWriteEvent('issues'), false);
+    assert.equal(isAuthorizedWriteEvent('release'), false);
+    assert.equal(isAuthorizedWriteEvent(''), true, '空事件名 = 本地手动运行，允许');
+    assert.equal(isAuthorizedWriteEvent(undefined), true);
+  });
+
+  it('AUTHORIZED_WRITE_EVENTS 白名单不含任何 PR 事件', () => {
+    assert.ok(AUTHORIZED_WRITE_EVENTS instanceof Set);
+    assert.ok(!AUTHORIZED_WRITE_EVENTS.has('pull_request'));
+    assert.ok(!AUTHORIZED_WRITE_EVENTS.has('pull_request_target'));
+    assert.deepEqual([...AUTHORIZED_WRITE_EVENTS].sort(), ['push', 'schedule', 'workflow_dispatch']);
   });
 });

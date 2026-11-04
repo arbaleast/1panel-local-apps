@@ -5,8 +5,8 @@
 
 set -euo pipefail
 
-# 检查 node 可用
-command -v node >/dev/null 2>&1 || { echo "[ERROR] 需要 node >= 18"; exit 1; }
+# 检查 node 可用（版本约束与 package.json engines / .nvmrc / CI 保持一致）
+command -v node >/dev/null 2>&1 || { echo "[ERROR] 需要 node >= 24（见 package.json engines / .nvmrc）"; exit 1; }
 
 # 透传所有参数
 exec node "$(dirname "$0")/../.github/scripts/detect-updates.mjs" "$@"

@@ -30,16 +30,38 @@ import {
   createGitHubClient,
   buildPullRequestBody,
   buildCommitMessage,
+  buildPullRequestTitle,
+  isAuthorizedWriteEvent,
   GitHubApiError,
 } from '../lib/github.mjs';
+import { validateUpdateBatch, loadAliasByDir } from '../lib/validate-batch.mjs';
 
 // ─── 环境 ────────────────────────────────────────────────────────────────
 
 const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || '';
+const GITHUB_EVENT_NAME = process.env.GITHUB_EVENT_NAME || '';
 const PAT_TOKEN = process.env.PAT_TOKEN || process.env.GITHUB_TOKEN || '';
 const BASE_BRANCH = process.env.GITHUB_BASE_REF || 'main';
+// 等待必需检查通过的超时时间（默认 30 分钟）
+const MERGE_TIMEOUT_MS = Number(process.env.MERGE_TIMEOUT_MS || 1800000);
+// 轮询间隔（默认 30 秒）
+const CHECK_POLL_INTERVAL_MS = Number(process.env.CHECK_POLL_INTERVAL_MS || 30000);
+// PR title 前缀：用于识别「重复的批次 PR」
+const PR_TITLE_PREFIX = 'chore(deps): auto-update';
 // 仅用于本地 E2E 验证（打 mock API）；CI 不设置，走官方 api.github.com
 const API_BASE = process.env.GITHUB_API_BASE || undefined;
+
+// ─── 事件护栏（防御纵深）──────────────────────────────────────────────────
+// 工作流的 `if:` 已把 PR 事件排除在写 job 外；这里是脚本层第二道防线：
+// 即使工作流被误改成在 pull_request / pull_request_target 下运行，本脚本也拒绝
+// 执行任何 git 写操作 / GitHub 写请求（PR 代码不得间接获得 PAT 写权限）。
+if (!isAuthorizedWriteEvent(GITHUB_EVENT_NAME)) {
+  console.error(
+    `[ERROR] 事件 "${GITHUB_EVENT_NAME}" 不允许执行自动更新写操作（仅允许 schedule / workflow_dispatch / push）`
+  );
+  console.error('[ERROR] pull_request / pull_request_target 属于只读事件，拒绝推送分支 / 开 PR / 合并');
+  process.exit(1);
+}
 
 if (!/^[^/\s]+\/[^/\s]+$/.test(GITHUB_REPOSITORY)) {
   console.error('[ERROR] 缺少或非法的 GITHUB_REPOSITORY（应为 owner/repo）');
@@ -95,6 +117,27 @@ async function main() {
     console.warn(`[WARN] 查询已有 PR 失败（继续尝试创建）: ${e.message}`);
   }
 
+  // 1b) 防重复：是否已有「同 base 分支」的批次 PR（第二个批次 PR 会与第一个重复）
+  try {
+    const openPrs = await client.listOpenPullRequests({ owner, repo });
+    const duplicate = openPrs.find(
+      pr =>
+        pr &&
+        typeof pr.title === 'string' &&
+        pr.title.startsWith(PR_TITLE_PREFIX) &&
+        (pr.base && pr.base.ref ? pr.base.ref === BASE_BRANCH : true),
+    );
+    if (duplicate) {
+      console.log(
+        `[SKIP] 已存在同 base 分支 (${BASE_BRANCH}) 的批次 PR #${duplicate.number}` +
+          `（${duplicate.title}），跳过以避免重复 PR`,
+      );
+      return 0;
+    }
+  } catch (e) {
+    console.warn(`[WARN] 查询重复 PR 失败（继续尝试创建）: ${e.message}`);
+  }
+
   // 2) git 配置 + 切分支
   gitInherit(['config', 'user.name', 'github-actions[bot]']);
   gitInherit(['config', 'user.email', 'github-actions[bot]@users.noreply.github.com']);
@@ -146,8 +189,39 @@ async function main() {
     }
   }
 
-  const prTitle = `chore(deps): auto-update ${today} [skip ci]`;
+  // ⚠️ PR title / commit message **都不能**带 [skip ci] 之类 skip 指令：
+  //    GitHub 对 pull_request 事件判定的是 PR 的 HEAD commit message（以及 PR title），
+  //    命中 skip 会让本 PR 的 validate workflow 被整体跳过 → 必需检查永远不出现 →
+  //    waitForChecks 只能超时 → PR 永远无法自动合并（门禁死锁）。
+  //    合并后的 push 递归触发由 workflow 的 on.push.paths 过滤防住，不需要 skip 指令。
+  const prTitle = buildPullRequestTitle({ today });
   const prBody = buildPullRequestBody({ updates, changedFiles, generatedAt, today });
+
+  // 6) **开 PR 前**做批次配置校验（有 errors 就不开 PR）
+  //    校验失败时**保留**已推送的远程分支（与其它失败路径同一策略）。
+  //    批次模式（updates 非空）只对**本批次改动过的**内容下重判：
+  //    历史遗留债务（如 firecrawl 的 playwright-service:latest）只报 warning，
+  //    不会把合法批次永久堵死。
+  if (!updates.length) {
+    console.warn('[WARN] updates.json 中没有更新记录，跳过批次校验');
+  } else {
+    const { errors: validationErrors, warnings: validationWarnings } = validateUpdateBatch({
+      root: process.cwd(),
+      updates,
+      aliasByDir: loadAliasByDir(process.cwd()),
+    });
+    for (const w of validationWarnings) {
+      console.warn(`[WARN] ${w}`);
+    }
+    if (validationErrors.length > 0) {
+      console.error(`[ERROR] 批次校验失败（${validationErrors.length} 个错误），不开 PR：`);
+      for (const e of validationErrors) console.error(`  · ${e}`);
+      console.error(`[保留] 远程分支 ${branch} 已保留，可修复后重跑 / 手动开 PR:`);
+      console.error(`       https://github.com/${GITHUB_REPOSITORY}/compare/${BASE_BRANCH}...${branch}`);
+      return 1;
+    }
+    console.log('[OK] 批次校验通过');
+  }
 
   // 6) 开 PR —— 失败时**保留**远程分支
   let pr;
@@ -168,7 +242,45 @@ async function main() {
   }
   console.log(`[OK] PR 已开: ${pr.html_url} (#${pr.number})`);
 
-  // 7) 合并 PR
+  // 7) **等待必需检查通过**（只有 success 才允许合并）
+  //    head sha：优先取 PR 响应里的 head.sha，回退到本地 git rev-parse HEAD
+  let headSha = pr && pr.head && pr.head.sha ? pr.head.sha : '';
+  if (!headSha) {
+    try {
+      headSha = git(['rev-parse', 'HEAD']).trim();
+    } catch (e) {
+      console.warn(`[WARN] 无法确定 head SHA: ${e.message}`);
+    }
+  }
+  if (!headSha) {
+    console.error('[ERROR] 无法确定 PR head SHA，不能验证检查状态 → 不合并');
+    console.error(`[保留] PR #${pr.number} 与远程分支 ${branch} 已保留`);
+    return 1;
+  }
+
+  console.log(
+    `[WAIT] 等待必需检查通过（sha=${headSha.slice(0, 8)}，超时 ${MERGE_TIMEOUT_MS}ms，轮询 ${CHECK_POLL_INTERVAL_MS}ms）`,
+  );
+  const checkResult = await client.waitForChecks({
+    owner,
+    repo,
+    ref: headSha,
+    timeoutMs: MERGE_TIMEOUT_MS,
+    intervalMs: CHECK_POLL_INTERVAL_MS,
+  });
+
+  if (checkResult.status !== 'success') {
+    console.error(`[ERROR] 检查状态为 "${checkResult.status}" → 不合并`);
+    if (checkResult.error) console.error(`       API 调用失败: ${checkResult.error}`);
+    for (const c of checkResult.checks || []) {
+      console.error(`       - ${c.name}: ${c.status}${c.conclusion ? ` / ${c.conclusion}` : ''}`);
+    }
+    console.error(`[保留] PR #${pr.number} 与远程分支 ${branch} 已保留，可修复后手动合并`);
+    return 1;
+  }
+  console.log(`[OK] 检查全部通过（${checkResult.checks.length} 项）`);
+
+  // 8) 合并 PR
   let merged = false;
   try {
     const result = await client.mergePullRequest({

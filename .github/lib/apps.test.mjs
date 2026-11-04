@@ -151,4 +151,88 @@ describe('apps', () => {
     const ver = getCurrentVersion(tmpRoot, 'myapp');
     assert.equal(ver, 'v1.0.0', `Expected v1.0.0 but got ${ver}; hidden dirs should be skipped`);
   });
+
+  // 12. getCurrentVersion：SemVer 目录取最大（数字段比较，10 > 9）
+  it('getCurrentVersion compares semver numerically (10 > 9)', () => {
+    for (const v of ['v1.9.0', 'v1.10.0']) {
+      fs.mkdirSync(path.join(tmpRoot, 'myapp', v), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, 'myapp', v, 'data.yml'), `additionalProperties:\n  key: ${v}`);
+    }
+
+    const ver = getCurrentVersion(tmpRoot, 'myapp');
+    assert.equal(ver, 'v1.10.0');
+  });
+
+  // 13. getCurrentVersion：同号变体后缀目录并列时取字典序最大者（handbrake 归档口径）
+  it('getCurrentVersion keeps variant-suffixed dir on equal numeric version', () => {
+    for (const v of ['1.11.2', '1.11.2-ls36', '1.11.2-ls41']) {
+      fs.mkdirSync(path.join(tmpRoot, 'myapp', v), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, 'myapp', v, 'data.yml'), `additionalProperties:\n  key: ${v}`);
+    }
+
+    const ver = getCurrentVersion(tmpRoot, 'myapp');
+    assert.equal(ver, '1.11.2-ls41');
+  });
+
+  // 13b. getCurrentVersion：losslesscut 形态（3.64.0 / 3.64.0-v1）
+  it('getCurrentVersion keeps -v1 variant dir (losslesscut shape)', () => {
+    for (const v of ['3.64.0', '3.64.0-v1']) {
+      fs.mkdirSync(path.join(tmpRoot, 'myapp', v), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, 'myapp', v, 'data.yml'), `additionalProperties:\n  key: ${v}`);
+    }
+
+    const ver = getCurrentVersion(tmpRoot, 'myapp');
+    assert.equal(ver, '3.64.0-v1');
+  });
+
+  // 14. getCurrentVersion：日期型目录按数字段大小参与比较（jellyfin 归档口径）
+  it('getCurrentVersion keeps date-style dir when it is numerically larger', () => {
+    for (const v of ['10.11.11', '2026081705-arm64', '2026091410-arm64']) {
+      fs.mkdirSync(path.join(tmpRoot, 'myapp', v), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, 'myapp', v, 'data.yml'), `additionalProperties:\n  key: ${v}`);
+    }
+
+    const ver = getCurrentVersion(tmpRoot, 'myapp');
+    assert.equal(ver, '2026091410-arm64');
+  });
+
+  // 15. getCurrentVersion：纯日期型目录（无 SemVer）按数字段比较
+  it('getCurrentVersion compares date-only dirs numerically', () => {
+    for (const v of ['20220121', '260919']) {
+      fs.mkdirSync(path.join(tmpRoot, 'myapp', v), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, 'myapp', v, 'data.yml'), `additionalProperties:\n  key: ${v}`);
+    }
+
+    const ver = getCurrentVersion(tmpRoot, 'myapp');
+    assert.equal(ver, '20220121');
+  });
+
+  // 16. getCurrentVersion：非版本形态目录（beta / cu124）保留原样，不退化为 latest
+  it('getCurrentVersion keeps non-version-shaped dirs instead of falling back to latest', () => {
+    fs.mkdirSync(path.join(tmpRoot, 'myapp', 'cu124'), { recursive: true });
+    fs.writeFileSync(path.join(tmpRoot, 'myapp', 'cu124', 'data.yml'), 'additionalProperties:\n  key: cu124');
+
+    const ver = getCurrentVersion(tmpRoot, 'myapp');
+    assert.equal(ver, 'cu124');
+  });
+
+  // 17. getCurrentVersion：beta 这类自定义目录同样保留
+  it('getCurrentVersion keeps custom tag dirs (beta)', () => {
+    fs.mkdirSync(path.join(tmpRoot, 'myapp', 'beta'), { recursive: true });
+    fs.writeFileSync(path.join(tmpRoot, 'myapp', 'beta', 'data.yml'), 'additionalProperties:\n  key: beta');
+
+    const ver = getCurrentVersion(tmpRoot, 'myapp');
+    assert.equal(ver, 'beta');
+  });
+
+  // 18. getCurrentVersion：多段数字目录（collabora 形态）按数字段比较
+  it('getCurrentVersion compares multi-segment numeric dirs', () => {
+    for (const v of ['26.04.5.1.1', '26.04.5.2.1']) {
+      fs.mkdirSync(path.join(tmpRoot, 'myapp', v), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, 'myapp', v, 'data.yml'), `additionalProperties:\n  key: ${v}`);
+    }
+
+    const ver = getCurrentVersion(tmpRoot, 'myapp');
+    assert.equal(ver, '26.04.5.2.1');
+  });
 });

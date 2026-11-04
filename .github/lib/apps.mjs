@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
-import { compare } from './semver.mjs';
+import { compareVersionsLoose } from './semver.mjs';
 
 // 仓库根目录（lib/ 的父级）
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -131,9 +131,20 @@ export function getCurrentVersion(root = ROOT, appDir) {
   }
 
   if (candidates.length > 0) {
-    // 用 compare 段值后 sort 升序，取末位
-    candidates.sort(compare);
-    return candidates[candidates.length - 1];
+    // ⚠️ 历史归档口径（**必须保持行为不变**）：按数字段大小选最大，
+    //    数字段相同时取完整目录名 localeCompare 更大的那个。
+    //    - 同号变体后缀目录（`1.11.2-ls41` / `3.64.0-v1` / `v3.2.53-arm32v7`）
+    //      与同号正式版数字段相等 → 变体后缀目录胜出（handbrake / losslesscut 口径）；
+    //    - 日期型目录（`2026091410-arm64`）数字段远大于 semver 目录 → 日期型胜出
+    //      （jellyfin 口径，README「当前版本」列必须保持原样）。
+    //    这里**不能**改用严格 SemVer 优先级：SemVer 认为 prerelease 低于正式版，
+    //    会把 `1.11.2-ls41` 变成 `1.11.2`，从而改动 README（审计要求行为不变）。
+    let best = candidates[0];
+    for (const c of candidates.slice(1)) {
+      const r = compareVersionsLoose(c, best);
+      if (r > 0 || (r === 0 && c.localeCompare(best) > 0)) best = c;
+    }
+    return best;
   }
 
   // 无版本目录时，检查 latest/ 子目录

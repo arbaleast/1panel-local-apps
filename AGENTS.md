@@ -56,25 +56,30 @@
 
 ## lib/ 模块
 
-仓库根 [.github/lib/](.github/lib/) 下六个 ESM 模块为脚本层提供共享能力：
+仓库根 [.github/lib/](.github/lib/) 下八个 ESM 模块为脚本层提供共享能力：
 
 | 文件 | 职责 | 关键导出 |
 |---|---|---|
-| [`lib/semver.mjs`](.github/lib/semver.mjs:1) | 段值比较、纯 semver 选末位、黑名单过滤 | `parse` / `compare` / `isStable` / `pickLatest` |
-| [`lib/registry.mjs`](.github/lib/registry.mjs:1) | DockerHub / GHCR 适配器、镜像字符串解析 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` |
+| [`lib/semver.mjs`](.github/lib/semver.mjs:1) | **严格 SemVer 2.0.0** 解析 / 比较 + 宽松数字段比较（两套语义，禁止混用） | `parse` / `compare` / `compareVersionsLoose` / `isStable` / `pickLatest` / `parseSemver` / `isValidSemver` / `compareSemver` / `pickNewestVersionDir` |
+| [`lib/registry.mjs`](.github/lib/registry.mjs:1) | DockerHub / GHCR 适配器、**唯一**镜像字符串解析入口 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` / `RegistryRequestError` |
 | [`lib/apps.mjs`](.github/lib/apps.mjs:1) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` |
 | [`lib/schema.mjs`](.github/lib/schema.mjs:1) | data.yml 结构定义与校验规则（纯 JS，无第三方依赖） | `validateFormField` / `validateKeyMatch` / `validateUrlField` / `normalizeFormField` / `FORMFIELD_TYPE_WHITELIST` |
-| [`lib/compose.mjs`](.github/lib/compose.mjs:1) | compose image 模板解析（单/双 envKey 形态）与 formField 重组 | `resolveImageTemplate` / `rebuildImageDefault` |
-| [`lib/github.mjs`](.github/lib/github.mjs:1) | GitHub REST 客户端（内置 fetch，不经 shell）+ PR body / commit message 构造 | `createGitHubClient` / `buildPullRequestBody` / `buildCommitMessage` / `GitHubApiError` |
+| [`lib/compose.mjs`](.github/lib/compose.mjs:1) | compose image 模板解析（单/双 envKey 形态）与 formField 重组；镜像拆分统一复用 `parseImage` | `resolveImageTemplate` / `rebuildImageDefault` |
+| [`lib/github.mjs`](.github/lib/github.mjs:1) | GitHub REST 客户端（内置 fetch，不经 shell）+ PR body / commit message 构造 + **检查状态门禁** | `createGitHubClient` / `buildPullRequestBody` / `buildCommitMessage` / `GitHubApiError` |
+| [`lib/report.mjs`](.github/lib/report.mjs:1) | 检测结果聚合与渲染（stdout / GitHub Step Summary）的**唯一**实现 | `aggregateResults` / `exitCodeForResults` / `renderSummary` / `renderMarkdown` / `escapeCell` |
+| [`lib/validate-batch.mjs`](.github/lib/validate-batch.mjs:1) | 自动更新批次的全量配置校验（纯函数） | `validateUpdateBatch` / `loadAliasByDir` / `validateDataYamlDocument` / `validateComposeDocument` / `validateImageTags` / `isRecognisableVersionTag` / `readReadmeVersionTable` / `validateReadmeVersion` |
+
+> **SemVer 两套语义（2026-11 审计后）**：`parseSemver` / `isValidSemver` / `compareSemver` 是**严格 SemVer 2.0.0**（三段 + 可选 prerelease/build，`latest` / `2024.08` / `26.04.5.1.1` 一律非法）；`parse` / `compare` / `compareVersionsLoose` 是**宽松数字段比较**（日期型 tag 也能排），只用于「已知形态 tag」的排序与版本目录归档选择。`parse('latest')` 现在返回 `null`（以前被当成 `[0]` 即 0.0.0）。
 
 ### 本地跑测试
 
 ```bash
-npm test          # 等价 node --test .github/lib/，124 case（含 schema 校验 + GitHub API 回归）
-npm run lint      # 等价 node .github/bin/lint-apps.mjs，扫描全部 data.yml
+npm test             # 等价 node --test ".github/lib/*.test.mjs"，350+ case（含 schema 校验 + GitHub API 回归 + 批次校验 + 工作流不变量）
+npm run lint         # 等价 node .github/bin/lint-apps.mjs，扫描全部 data.yml
+npm run validate:batch  # 等价 node .github/bin/validate-update-batch.mjs，全仓模式审计
 ```
 
-需要 `node >= 18`（`engines` 字段已声明）。
+需要 `node >= 24`（`engines` 字段已声明，与 CI 一致；本地用 `.nvmrc` 对齐版本）。
 
 ### 新增模块规约
 
@@ -89,11 +94,21 @@ npm run lint      # 等价 node .github/bin/lint-apps.mjs，扫描全部 data.ym
 
 ## Automation
 
-- `.github/workflows/auto-update.yml` — 每周一 UTC 0 点（也可手动）检测 hardcode 类应用镜像更新
-- 命中即开 PR（分支 `auto-update/<date>`，单 PR 合并本批次全部变更），PR body 列出所有 service 变更
-- 修改 `<app>/<version>/docker-compose.yml` 与 `<app>/data.yml`
-- 变量型应用（compose 用 `${IMAGE}` / `${APP_VERSION}`）不在自动范围
-- PR title 含 `[skip ci]`，防合并时递归触发
+`.github/workflows/auto-update.yml` 分成两个**权限与事件完全隔离**的 job（2026-11 安全加固）：
+
+| Job | 触发事件 | 权限 | 职责 |
+|---|---|---|---|
+| `validate` | 所有事件（含 `pull_request`） | `contents: read` | 只读：`npm test` + `npm run lint`。**不碰 Token、不写仓库** |
+| `auto-update` | 仅 `schedule` / `workflow_dispatch` / 受控 `push`（后两者限 `main`） | `contents: write` + `pull-requests: write` | 检测 → 改 README → 校验 → 开 PR → 等检查 → 合并 |
+
+- **PR 事件只能执行只读校验**：`auto-update` job 用事件白名单 `if: schedule || ((workflow_dispatch || push) && github.ref == 'refs/heads/main')`，PR 事件永远进不了持有 `PAT_TOKEN` 的 job；`validate` job 的 checkout 用 `persist-credentials: false`，GITHUB_TOKEN 不落盘到 `.git/config`。这条配置由 [`lib/workflow.test.mjs`](.github/lib/workflow.test.mjs) 回归锁定（`npm test` 会校验 permissions / 事件隔离 / Token fallback / concurrency）。
+- 工作流顶层 `permissions: {}`（默认不给任何 scope），各 job 按需申请最小权限。
+- 每周一 UTC 0 点（也可手动）检测 hardcode 类应用镜像更新；命中即开 PR（分支 `auto-update/<date>`，单 PR 合并本批次全部变更），PR body 列出所有 service 变更。
+- 修改 `<app>/<version>/docker-compose.yml` 与 `<app>/<version>/data.yml`。
+- 变量型应用（compose 用 `${IMAGE}` / `${APP_VERSION}`）不在自动范围。
+- **自动更新 PR 的 title 与 commit message 都不含 `[skip ci]` 等 skip 指令**：GitHub 对 `pull_request` 事件按 **PR 的 HEAD commit message**（以及 PR title/body）判定 skip → 命中后 `pull_request` workflow 整体被跳过、必需检查永远停留在 Pending → 合并门禁必然超时。合并后的「push 递归触发」由工作流 `on.push.paths` 过滤防住（push 只对 `.github/**` 等自动更新链路自身文件触发，应用配置 / README 不在其中），不需要 skip 指令。回归测试：[`lib/github.test.mjs`](.github/lib/github.test.mjs) 的 `buildCommitMessage` / `buildPullRequestTitle` 用例。
+- **合并门禁**：开 PR 前跑 [`lib/validate-batch.mjs`](.github/lib/validate-batch.mjs) 的全量配置校验（data.yml YAML+schema / 目录结构 / compose 语法 / 更新后的镜像 tag / README 版本一致性）；PR 创建后轮询 GitHub Checks（[`lib/github.mjs`](.github/lib/github.mjs) 的 `waitForChecks`），**只有全部必需检查 success 才合并**；检查失败 / 超时 / 状态未知一律**保留 PR 与远程分支、不合并**。
+- **检测失败不会被吞掉**：`.github/scripts/detect-updates.mjs` 为每个应用产出 `success` / `skipped` / `failed` 三态结果（写入 `updates.json` 的 `results` + `summary`），Registry 网络错误绝不算「无更新」；存在 failed 时脚本退出码为 2，workflow 末尾的「检测失败门禁」步骤显式 `exit 1` 让整个 workflow 变红。
 - 同步更新仓库根 `README.md` 的"应用列表"表格（应用名/描述/版本）
   - 应用名映射与描述覆盖：[`.github/app-aliases.yml`](.github/app-aliases.yml)
   - 同步脚本：[`.github/scripts/sync-readme.mjs`](.github/scripts/sync-readme.mjs)
@@ -126,6 +141,23 @@ git push origin main
 > 注意：如果 SSH 密钥有密码保护，需要使用 ssh-agent 或配置 GIT_SSH_COMMAND 加载密钥。
 
 ## Common Pitfalls
+
+- **auto-update 工作流曾是 CI 提权面：`pull_request` 事件能触达持有 PAT 的 job（2026-11-01 审计）**：旧版 [`auto-update.yml`](.github/workflows/auto-update.yml) 顶层写 `permissions: contents: write / pull-requests: write`，并且 `pull_request` 事件会触发整个工作流——于是**任何外部 PR 的代码都能在持有 `secrets.PAT_TOKEN` 的 job 里执行**（`detect-and-pr` job 的 checkout 用的是 PAT），典型的 CI 提权漏洞；同时该 job 还会「检测 → 改 README → 推分支 → 开 PR → 立刻合并」，等于让 PR 代码自己给自己发写权限。**修复后的铁律**（改动本仓工作流时必须保持）：
+  1. **PR 事件只能跑只读 job**：`validate` job（`contents: read`、`persist-credentials: false`、不接触任何 secret）。
+  2. **写操作 job 必须排除 PR 事件并限定 main 分支**：`auto-update` job 用事件白名单
+     （`schedule` / `workflow_dispatch` / `push`，且后两者 `github.ref == 'refs/heads/main'`），
+     防止从任意分支以 PAT 写权限运行不可信代码。
+  3. **工作流顶层 `permissions: {}`**，各 job 按需申请最小 scope（别再在顶层给写权限）。
+  4. **PAT 只出现在写操作 job**；只读 job 连 `GITHUB_TOKEN` 都不落盘。
+  5. **脚本层再加一道护栏**：[`detect-updates.mjs`](.github/scripts/detect-updates.mjs) 与
+     [`open-update-pr.mjs`](.github/bin/open-update-pr.mjs) 开头都检查 `GITHUB_EVENT_NAME`，
+     在 `pull_request` / `pull_request_target` 下直接退出（后者用
+     [`lib/github.mjs`](.github/lib/github.mjs) 的 `isAuthorizedWriteEvent` 白名单，
+     回归测试见 [`lib/pr-flow.test.mjs`](.github/lib/pr-flow.test.mjs)）——即使工作流配错也不会写仓库。
+  **判定方法**：`grep -n "permissions\|PAT_TOKEN\|pull_request" .github/workflows/auto-update.yml` 逐条确认 PAT 与写权限没有出现在任何 PR 可达路径上。
+- **自动更新 PR 不能「开完就合」**：旧版 [`bin/open-update-pr.mjs`](.github/bin/open-update-pr.mjs) 创建 PR 后**立刻调用 merge**，既不等检查、也不校验生成内容——坏掉的 `data.yml` / 写了 `latest` 的镜像 tag / README 没同步，全部直接进主干。现在：① 开 PR 前跑 [`lib/validate-batch.mjs`](.github/lib/validate-batch.mjs) 的批次校验（data.yml YAML+schema / 目录结构 / compose 语法 / 更新后的镜像 tag / README 版本一致性），有 error 就不开 PR；② PR 创建后用 [`lib/github.mjs`](.github/lib/github.mjs) 的 `waitForChecks` 轮询 check-runs + combined status，**只有全部 success 才合并**；failure / timeout / unknown 一律**保留 PR 与远程分支**、非零退出。**注意**：用 `GITHUB_TOKEN` 而不是 PAT 开的 PR **不会触发 `pull_request` 工作流**（GitHub 的防递归机制）→ 必需检查永远不会出现 → 门禁必然超时 → PR 保留不合并（安全失败），所以本仓必须配置 `secrets.PAT_TOKEN`。
+- **PR title 或 HEAD commit message 里的 `[skip ci]` 会把合并门禁锁死**：GitHub Actions 的 skip 指令对 **PR title / body** 以及 **PR 的 HEAD commit message** 都生效 → 带 `[skip ci]` 的自动更新 PR 不会触发 `pull_request` 工作流（检查停留在 Pending）→ 必需检查永远不跑 → 合并门禁只能超时。**正确做法**：自动更新的 commit message 与 PR title 都**不带** skip 指令；防合并后 push 递归靠工作流 `on.push.paths` 白名单（只匹配 `.github/**` 等自动更新链路文件），不靠 skip。
+- **Registry 请求失败必须与「无更新」严格区分（2026-11-01 审计）**：旧版 [`lib/registry.mjs`](.github/lib/registry.mjs) 把网络错误 / HTTP 非 2xx / JSON 解析失败全部 `return null`，与「请求成功但没有稳定 tag」混为一谈 → detect 记一条日志继续跑 → **整个 workflow 绿灯**，但那个应用其实根本没检测过。现在 `getLatestTag` 只在「请求成功且没有可用稳定 tag」时返回 `null`，其余一律抛 `RegistryRequestError`；detect 把每个应用记成 `success` / `skipped` / `failed` 三态，存在 failed 时脚本退出码 2、workflow 末尾的门禁步骤 `exit 1`。**分页中途失败也必须抛错**——GHCR 的 tag 是**字典序**返回的，第一页装的是**最旧**的 tag，静默沿用半截数据会选到远古版本（traefik `3.0.3` 事故就是这么来的）。
 
 - **日期型 versionDir 会被 auto-update 跨目录覆盖（2026-09-25 jellyfin 事故，已加两道防线）**：本仓 `jellyfin/` 同时存在纯 semver 目录（`10.11.11/`）与日期型目录（`2026091410-arm64/`）。`lib/semver.mjs` 的 `parse('2026091410-arm64')` → `[2026091410]`，数值远大于 `10.11.11`，于是"跨版本保护"选出的 `maxKnown` 是**日期型目录**；而 `lib/registry.mjs` 的变体正则只认 3 种形态（裸变体 / 变体+版本 / `vX.Y.Z-suffix`），**日期型 tag（数字开头）不匹配** → fallback 到 `pickLatest` 的 pure-semver 选取 → 命中 `10.11.11` → detect 判定"最新版本 = 10.11.11" → `cpSync 2026091410-arm64/ → 10.11.11/`（rmSync + cpSync）→ **10.11.11 目录里手维护的 `name` / `CACHE_FOLDER_PATH` / 自定义 formFields 被兄弟目录整体顶掉**（该事故已实际发生：2026-09-25 的 auto-update PR 把 `name` 改回 `jellyfin 2026081705-arm64`、cache default 退回 `/dev/shm`）。**两道防线**：① `.github/scripts/detect-updates.mjs` 的 `SKIP_AUTO_UPDATE_APPS` 加入 `jellyfin`（手维护应用，镜像由用户在 1Panel UI 的 IMAGE 参数里改）；② 新增导出函数 `canCopyVersionDir(fromDir, toDir, targetExists)`——目标目录已存在且与来源目录不同时**拒绝 cpSync**（宁可漏一次更新，也不摧毁目标目录），并在 `processApp` 里 `continue` 跳过该 versionDir。**教训**：新增"日期型 + semver 混排"的应用时，要么统一版本目录形态，要么直接进白名单；只加 `maxKnown` 保护不够（它按数值大小选目录，日期型永远最大）。
 - **多段数字版本 tag 会被历史遗留的 3 段纯 semver 抢占（2026-10-19 collabora 复盘）**：`lib/semver.mjs` 的 `pickLatest` 走"纯 semver 优先"分支（`PURE_SEMVER_RE = /^v?\d+\.\d+\.\d+$/`），只要候选里**存在任意** 3 段纯 semver tag，它们就会盖过所有非纯 semver tag。`collabora/code` 正好踩中：它同时有 2017 年的 `2.1.2`~`2.1.5`（3 段）和当前的 `26.04.5.1.1`（5 段），`pickLatest` 返回 **`2.1.5`** → detect 判定"最新版本 = 2.1.5" → 新建一个 `2.1.5/` 版本目录并把镜像 tag 改写成 `collabora/code:2.1.5`（**2017 年的老镜像，应用直接降级**）。**修复**：[`lib/registry.mjs`](.github/lib/registry.mjs) 的 `DockerHubAdapter.getLatestTag` / `GhcrAdapter.getLatestTag` 新增**形态 4**——当 `currentTag` 匹配 `^\d+(?:\.\d+){3,}$`（4 段及以上纯数字）时，把候选收敛到"**同段数**"的纯数字 tag 再 `pickLatest`；同段数候选不存在时回退原逻辑（宁可不报也不误报）。**判定方法**：`node -e "import('./.github/lib/semver.mjs').then(m=>console.log(m.pickLatest(['2.1.5','26.04.5.1.1'])))"` → 返回 `2.1.5` 即命中该坑。**回归测试**：[`lib/registry.test.mjs`](.github/lib/registry.test.mjs) case 18-21（DockerHub 选型 / 检出更新 / 无同段数回退 / GHCR 对称）。**教训**：`pickLatest` 的"纯 semver 优先"是全局性偏好，对**多段数字版本**（`26.04.5.1.1` 这类 upstream 用 4 段以上的版本号）的镜像一律不适用；接入这类镜像前必须先跑一次 `pickLatest` 验证选出来的是不是想要的 tag。
@@ -208,7 +240,7 @@ git push origin main
 
 ## 沙箱中 `node` 不可见的应对
 
-本仓 lint / test 脚本依赖 `node >= 18`（`package.json` `engines` 字段已声明），但执行沙箱（Windows + fnm + `cmd.exe`）下 `node` / `npm` **经常不在 PATH 里**，体现为：
+本仓 lint / test 脚本依赖 `node >= 24`（`package.json` `engines` 字段已声明，与 CI 的 `.nvmrc` 一致），但执行沙箱（Windows + fnm + `cmd.exe`）下 `node` / `npm` **经常不在 PATH 里**，体现为：
 
 ```text
 'node' is not recognized as an internal or external command,

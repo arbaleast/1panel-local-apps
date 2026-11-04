@@ -65,12 +65,41 @@ describe('resolveImageTemplate', () => {
     assert.equal(r, null);
   });
 
-  it('形态 2：默认端口 80 在 repo 内（ghcr.io:443/foo） 也能拆（lastIndexOf）', () => {
+  it('形态 2：默认端口 80 在 repo 内（ghcr.io:443/foo） 也能拆（parseImage 识别 registry 端口）', () => {
     const r = resolveImageTemplate('${X}', [
       { envKey: 'X', default: 'ghcr.io:443/foo/bar:1.0.0' },
     ]);
     assert.equal(r.imageRepo, 'ghcr.io:443/foo/bar');
     assert.equal(r.currentTag, '1.0.0');
+  });
+
+  it('形态 2：docker.io 前缀原样保留（不归一化 repo 写法）', () => {
+    const r = resolveImageTemplate('${X}', [
+      { envKey: 'X', default: 'docker.io/library/nginx:1.25' },
+    ]);
+    assert.equal(r.imageRepo, 'docker.io/library/nginx');
+    assert.equal(r.currentTag, '1.25');
+  });
+
+  it('形态 2：digest 镜像（无 tag）→ null（版本被摘要锁定，不做自动更新）', () => {
+    const r = resolveImageTemplate('${X}', [
+      { envKey: 'X', default: 'nginx@sha256:abc123' },
+    ]);
+    assert.equal(r, null);
+  });
+
+  it('形态 2：tag+digest 镜像 → null（摘要锁定，不做自动更新）', () => {
+    const r = resolveImageTemplate('${X}', [
+      { envKey: 'X', default: 'nginx:1.25@sha256:abc123' },
+    ]);
+    assert.equal(r, null);
+  });
+
+  it('形态 2：非法镜像名（含空格）→ null', () => {
+    const r = resolveImageTemplate('${X}', [
+      { envKey: 'X', default: 'foo bar:1.0' },
+    ]);
+    assert.equal(r, null);
   });
 
   // ── 形态 3：双 envKey，repo 与 tag 拆到不同字段（核心修复场景）──
@@ -93,16 +122,31 @@ describe('resolveImageTemplate', () => {
     assert.equal(r.envKey, 'APP_VERSION');
   });
 
-  it('形态 3：envKey 顺序在 image 中无关（仍是 2 个 var）', () => {
-    // 实际极少出现（image: ${VERSION}:${IMAGE} 语义怪），但 resolveImageTemplate 应按 image 字面拼接
+  it('形态 3：registry 端口（localhost:5000/app）也能正确拆分', () => {
+    const r = resolveImageTemplate('${IMAGE}:${TAG}', [
+      { envKey: 'IMAGE', default: 'localhost:5000/app' },
+      { envKey: 'TAG', default: '1.0' },
+    ]);
+    assert.equal(r.imageRepo, 'localhost:5000/app');
+    assert.equal(r.currentTag, '1.0');
+    assert.equal(r.envKey, 'TAG');
+  });
+
+  it('形态 3：image 模板在 tag 后带额外字面量 → null（保守放弃，避免写回丢字面量）', () => {
+    const r = resolveImageTemplate('${IMAGE}:${TAG}-extra', [
+      { envKey: 'IMAGE', default: 'ghcr.io/foo/bar' },
+      { envKey: 'TAG', default: '1.0.0' },
+    ]);
+    assert.equal(r, null);
+  });
+
+  it('形态 3：envKey 顺序异常（${VERSION}:${IMAGE}）→ null（parseImage 判非法，保守放弃）', () => {
+    // 拼出 "1.0.0:foo/bar"：首个路径段含 ':' 会被当成 registry:port，整体不是合法镜像
     const r = resolveImageTemplate('${VERSION}:${IMAGE}', [
       { envKey: 'VERSION', default: '1.0.0' },
       { envKey: 'IMAGE', default: 'foo/bar' },
     ]);
-    // 拼出 "1.0.0:foo/bar"，lastIndexOf 拆出 imageRepo='1.0.0'，tag='foo/bar'——这是预期行为
-    // （这种 compose 语义本来就奇怪，测试只是锁住字面拼接语义）
-    assert.equal(r.imageRepo, '1.0.0');
-    assert.equal(r.currentTag, 'foo/bar');
+    assert.equal(r, null);
   });
 
   it('形态 3：envKey 之一缺失 → null', () => {

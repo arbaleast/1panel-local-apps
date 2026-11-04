@@ -3,6 +3,7 @@
 // zod 依赖仅在此层（bin/）引入，lib/ 层保持零第三方依赖（仅 js-yaml）
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, basename } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import { z } from 'zod';
 import { listApps, getAppMeta } from '../lib/apps.mjs';
@@ -229,7 +230,11 @@ function lintAllVersionDirs(appDir, fullPath) {
 
 // ─── 主逻辑 ─────────────────────────────────────────────────────────────────
 
-const ROOT = join(import.meta.dirname, '..', '..');
+// 仓库根目录。
+// 本文件位于 `.github/bin/`，仓库根是上两级（`../../`）；写成 `..` 会落到 `.github/`，
+// 导致 listApps() 扫到 0 个应用、lint 永远打印 "PASSED"（假绿）。
+// 用 fileURLToPath + URL 解析（Node >= 12 即可），不依赖 20.11+ 才有的 import.meta.dirname。
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const apps = listApps(ROOT);
 
 let totalErrors = 0;
