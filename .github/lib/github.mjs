@@ -44,7 +44,12 @@ export class GitHubApiError extends Error {
 
 /**
  * 会被判定为「检查失败」的 conclusion 集合
- * （注意：`skipped` / `neutral` 也按失败处理——不通过就等于没通过）
+ *
+ * 注意：`skipped` / `neutral` 的处理**依赖该检查是否必需**（见 waitForChecks 内注释）：
+ *   · **必需检查**被 skipped/neutral → 未满足合并条件 → 判失败（目标 §六.3）
+ *   · **非必需检查**被 skipped/neutral → 中性，不阻断
+ *     （GitHub 会把被自身 `if:` 跳过的 job 也记成一条 check run，
+ *      本仓写操作 job 在 `pull_request` 事件下必然被跳过 → 目标 PR 上恒有一条）
  */
 export const FAILING_CONCLUSIONS = new Set([
   'failure', 'cancelled', 'timed_out', 'action_required', 'neutral', 'skipped',
@@ -389,8 +394,28 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
       checks = runs;
 
       // 1) 任一检查失败 → 立即判定失败
+      //
+      //    `skipped` / `neutral` 需要**分必需性**处理（2026-11 实况修正）：
+      //    GitHub 会把「被自身 `if:` 条件跳过」的 job 也记成一条 check run，
+      //    conclusion = 'skipped'。本仓 auto-update.yml 的写操作 job 在
+      //    `pull_request` 事件下必然被 `if:` 跳过 → 目标 PR 的 head SHA 上
+      //    **必然**存在一条 skipped 的「检测镜像更新并开 PR」check。
+      //    若把 skipped 一律当失败，自动更新 PR 将**永远**无法通过合并门禁
+      //    （表现为门禁恒超时 / 判 failure）。
+      //    正确语义：
+      //      · **必需检查**被 skipped/neutral → 未满足合并条件 → 判 failure（目标 §六.3）
+      //      · **非必需检查**被 skipped/neutral → 中性（例如被 `if:` 跳过的写操作 job）
+      //        → 不阻断
       for (const c of checks) {
-        if (c.conclusion && FAILING_CONCLUSIONS.has(c.conclusion)) {
+        const conclusion = c.conclusion;
+        if (!conclusion) continue;
+        if (conclusion === 'skipped' || conclusion === 'neutral') {
+          if (required.includes(c.name)) {
+            return { status: 'failure', checks, missing: [c.name] };
+          }
+          continue;
+        }
+        if (FAILING_CONCLUSIONS.has(conclusion)) {
           return { status: 'failure', checks };
         }
       }
@@ -400,9 +425,17 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
       }
 
       // 3) 全部通过 —— 且**每一个必需检查都必须已经出现**（审计 P0-1 核心）
-      const allPassed =
-        checks.length > 0 &&
-        checks.every(c => c.status === 'completed' && c.conclusion === 'success');
+      //    「绿」的判定：必需检查必须 completed + success；
+      //    非必需检查允许 completed + success，或被 `if:` 跳过（skipped/neutral）。
+      const isGreen = (c) => {
+        if (c.status !== 'completed') return false;
+        if (c.conclusion === 'success') return true;
+        return (
+          (c.conclusion === 'skipped' || c.conclusion === 'neutral') &&
+          !required.includes(c.name)
+        );
+      };
+      const allPassed = checks.length > 0 && checks.every(isGreen);
       const combinedPending = combined && combined.state === 'pending';
       const missing = required.filter(name => !checks.some(c => c.name === name));
       const requiredNotGreen = required.filter(name => {

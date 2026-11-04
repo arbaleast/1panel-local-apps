@@ -779,3 +779,102 @@ describe('findAutoUpdatePullRequests（按分支前缀识别，审计 P2-9）', 
     assert.equal(found.length, 0);
   });
 });
+
+// ─── skipped / neutral 的必需性语义（2026-11 实况修正）──────────────────────
+//
+// 真实 CI 实况：目标 PR 的 workflow 里，写操作 job 在 `pull_request` 事件下被自身
+// `if:` 跳过 → GitHub 记成一条 conclusion='skipped' 的 check run。
+// 若把 skipped 一律当失败，自动更新 PR 将**永远**无法通过合并门禁。
+describe('waitForChecks：skipped / neutral 按「是否必需」区分', () => {
+  function checkFetch(checkRuns) {
+    return async (url) => {
+      if (url.includes('/check-runs')) {
+        return new Response(JSON.stringify({ check_runs: checkRuns }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (url.endsWith('/status')) {
+        return new Response(JSON.stringify({ state: 'success', statuses: [] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response('{}', { status: 404 });
+    };
+  }
+
+  it('**非必需**检查被 skipped（如被 if: 跳过的写操作 job）→ 不阻断合并', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'completed', conclusion: 'success' },
+        { name: '检测镜像更新并开 PR', status: 'completed', conclusion: 'skipped' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'success', '非必需检查被跳过不应阻断');
+  });
+
+  it('**必需**检查被 skipped → 判 failure（未满足合并条件）', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'completed', conclusion: 'skipped' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'failure', '必需检查被跳过必须阻断合并');
+  });
+
+  it('**必需**检查被 neutral → 判 failure', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'completed', conclusion: 'neutral' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'failure');
+  });
+
+  it('非必需检查被 neutral → 不阻断', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: checkFetch([
+        { name: 'lint', status: 'completed', conclusion: 'success' },
+        { name: '某个非必需检查', status: 'completed', conclusion: 'neutral' },
+      ]),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'success');
+  });
+});

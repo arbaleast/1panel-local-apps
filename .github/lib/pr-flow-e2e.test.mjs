@@ -480,6 +480,39 @@ describe('open-update-pr.mjs 隔离式本地 E2E', () => {
     });
   });
 
+  it('非必需检查被 skipped（真实 CI 实况：写操作 job 在 PR 事件下被 if: 跳过）→ 仍可合并', async () => {
+    const repo = makeLocalRepo('skipped-non-required');
+    await withMock({}, async (api) => {
+      // 追加一条**非必需**的 skipped check（复刻真实 PR 的 check 集合）
+      const orig = api.server.listeners('request')[0];
+      api.server.removeAllListeners('request');
+      api.server.on('request', async (req, res) => {
+        if ((req.url || '').includes('/check-runs')) {
+          api.calls.push({ method: 'GET', path: req.url });
+          const payload = JSON.stringify({
+            check_runs: [
+              { name: REQUIRED_CHECK, status: 'completed', conclusion: 'success' },
+              // 本仓写操作 job 在 pull_request 事件下必然被 if: 跳过
+              { name: '检测镜像更新并开 PR', status: 'completed', conclusion: 'skipped' },
+            ],
+          });
+          res.writeHead(200, { 'content-type': 'application/json' });
+          res.end(payload);
+          return;
+        }
+        return orig(req, res);
+      });
+
+      fs.writeFileSync(path.join(repo.work, 'README.md'), '# demo\n\nupdated\n');
+      const res = await runScript(repo, api);
+      assert.equal(res.status, 0, `非必需检查 skipped 不应阻断合并，stderr:\n${res.stderr}`);
+      assert.ok(
+        api.calls.some(c => c.method === 'PUT' && c.path.includes('/merge')),
+        '应正常执行合并',
+      );
+    });
+  });
+
   it('必需检查**缺失**（0 Checks）→ 严禁提前合并，保留 PR', async () => {
     const repo = makeLocalRepo('zero-checks');
     // mock 不返回任何 check run（只有别的 check），必需检查从未出现
