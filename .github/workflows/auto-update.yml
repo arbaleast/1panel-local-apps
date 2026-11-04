@@ -206,10 +206,16 @@ jobs:
       - name: 输出执行结果（PR / CI / 合并阶段）
         if: always()
         run: |
-          if [[ -f execution.json ]]; then
-            node -e "import('./.github/lib/report.mjs').then(m=>{const d=require('./execution.json');const u=require('./updates.json');process.stdout.write(m.renderExecutionMarkdown(d,{title:'自动更新执行结果',results:(u&&u.results)||[]}))})" >> $GITHUB_STEP_SUMMARY
-          elif [[ -f updates.json ]]; then
-            node -e "import('./.github/lib/report.mjs').then(m=>{const u=require('./updates.json');process.stdout.write(m.renderExecutionMarkdown({},{title:'自动更新执行结果',results:(u&&u.results)||[]}))})" >> $GITHUB_STEP_SUMMARY
+          if [[ -f execution.json ]] || [[ -f updates.json ]]; then
+            node -e "
+              const fs = require('fs');
+              const read = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return {}; } };
+              const exec = read('execution.json');
+              const updates = read('updates.json');
+              import('./.github/lib/report.mjs').then(m => {
+                process.stdout.write(m.renderExecutionMarkdown(exec, { title: '自动更新执行结果', results: updates.results || [] }));
+              });
+            " >> $GITHUB_STEP_SUMMARY
           else
             echo "无 updates.json / execution.json 生成" >> $GITHUB_STEP_SUMMARY
           fi
