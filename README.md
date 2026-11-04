@@ -22,7 +22,7 @@
 | handbrake | 视频转码 (linuxserver, 单 GUI, P620 NVENC 已验证) | 1.11.2-ls41 |
 | handbrake-web | 分布式 HandBrake 转码队列 (TheNickOfTime, ⚠️ heavy dev) | latest |
 | hindsight | AI 记忆系统 | 1.2.0 |
-| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.8.18 |
+| ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.9.0 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
 | jellyfin | 媒体服务器 | 2026091410-arm64 |
@@ -44,7 +44,7 @@
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
 | onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.3.2 |
-| open-design | Claude Design 开源替代，agent CLI 驱动 | 0.26.1 |
+| open-design | Claude Design 开源替代，agent CLI 驱动 | 0.27.0 |
 | opencloud | 开源文件管理 / 分享 / 协作平台（无数据库，内置 LDAP + OIDC） | 9.0.0 |
 | openreel-video | 浏览器端开源视频剪辑工具 | v0.5.0 |
 | openshot | 开源视频剪辑与动画制作 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速, 仅 amd64) | 4.1.1 |
