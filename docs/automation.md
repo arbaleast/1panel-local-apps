@@ -10,7 +10,7 @@
 
 | Job | 触发事件 | 权限 | 职责 |
 |---|---|---|---|
-| `validate` | 所有事件（含 `pull_request`） | `contents: read` | 只读：`npm test` + `npm run lint` + `npm run docs:check`。不碰 Token、不写仓库 |
+| `validate` | 所有事件（含 `pull_request`） | `contents: read` | 只读：`npm test` + `npm run lint` + `npm run docs:check`。lint 分级拦截：error（P0/P1）阻塞合并，warning（P2）转 `::warning::` 标注仅提示。不碰 Token、不写仓库 |
 | `auto-update` | 仅 `schedule` / `workflow_dispatch` / 受控 `push`（后两者限 `main`） | `contents: write` + `pull-requests: write` | 检测 → 改 README → 校验 → 开 PR → 等检查 → 合并 |
 
 铁律（改动本工作流时必须保持；源自 2026-11-01 CI 提权漏洞复盘，见 [postmortems.md](postmortems.md#auto-update-工作流曾是-ci-提权面2026-11-01)）：
@@ -109,7 +109,7 @@ PR 创建后 [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 的合并�
 
 ## 6. lib/ 模块一览
 
-仓库根 [`.github/lib/`](../.github/lib/) 八个 ESM 模块为脚本层共享能力（层规约见
+仓库根 [`.github/lib/`](../.github/lib/) 十个 ESM 模块为脚本层共享能力（层规约见
 [CONTRIBUTING.md](../CONTRIBUTING.md)）：
 
 | 文件 | 职责 | 关键导出 |
@@ -118,6 +118,8 @@ PR 创建后 [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 的合并�
 | [`lib/registry.mjs`](../.github/lib/registry.mjs) | DockerHub / GHCR 适配器、唯一镜像字符串解析入口 | `parseImage` / `DockerHubAdapter` / `GhcrAdapter` / `createAdapter` / `RegistryRequestError` |
 | [`lib/apps.mjs`](../.github/lib/apps.mjs) | 应用目录扫描、版本目录解析、嵌套应用补全 | `SKIP_DIRS` / `listApps` / `getAppMeta` / `getCurrentVersion` |
 | [`lib/schema.mjs`](../.github/lib/schema.mjs) | data.yml 结构定义与校验规则（纯 JS） | `validateFormField` / `validateKeyMatch` / `validateUrlField` / `normalizeFormField` / `FORMFIELD_TYPE_WHITELIST` |
+| [`lib/consistency.mjs`](../.github/lib/consistency.mjs) | 跨文件一致性规则集（compose ↔ data.yml ↔ README ↔ 目录名），ruleId 单一事实来源 | `RULES` / `RULE_IDS` / `BUILTIN_VARS` / `checkVarDeclarations` / `checkFormOrphans` / `checkHighPrivilege` 等 check* |
+| [`lib/lint-exemptions.mjs`](../.github/lib/lint-exemptions.mjs) | lint 豁免清单加载/匹配/死条目检测（数据在 `.github/lint-exemptions.yml`） | `loadExemptions` / `exemptionMatches` / `applyWaivers` / `findDeadExemptions` |
 | [`lib/compose.mjs`](../.github/lib/compose.mjs) | compose image 模板解析（单/双 envKey 形态）与 formField 重组 | `resolveImageTemplate` / `rebuildImageDefault` |
 | [`lib/github.mjs`](../.github/lib/github.mjs) | GitHub REST 客户端（内置 fetch 不经 shell）+ PR body / commit message 构造 + 检查状态门禁 | `createGitHubClient` / `buildPullRequestBody` / `buildCommitMessage` / `GitHubApiError` |
 | [`lib/report.mjs`](../.github/lib/report.mjs) | 检测结果聚合与渲染（stdout / Step Summary）唯一实现 | `aggregateResults` / `exitCodeForResults` / `renderSummary` / `renderMarkdown` / `escapeCell` |

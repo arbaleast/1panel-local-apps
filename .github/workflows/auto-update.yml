@@ -3,7 +3,9 @@ name: auto-update
 # ─── 事件隔离（2026-11 安全加固）────────────────────────────────────────────
 # 本工作流有两类完全不同的任务，必须物理隔离：
 #   1. validate     —— **只读校验**。PR 事件唯一允许执行的任务。
-#                      只跑 npm test / npm run lint，不写仓库、不发请求、不碰 Token。
+#                      只跑 npm test / npm run lint / npm run docs:check，不写仓库、不发请求、不碰 Token。
+#                      分级拦截：lint 有 error（P0/P1）→ exit 1 阻塞合并；
+#                      warning（P2）→ ::warning:: 标注，仅提示不阻塞。
 #   2. auto-update  —— **写操作**（检测 / 改 README / 推分支 / 开 PR / 合并 PR）。
 #                      只允许在 schedule / workflow_dispatch / push(受控路径) 上运行，
 #                      PR 事件一律跳过（if: github.event_name != 'pull_request'）。
@@ -47,6 +49,8 @@ on:
       - '.github/workflows/**'
       - '**/data.yml'
       - '**/docker-compose.yml'
+      # readme.vars 等规则校验 README 引用的变量，README 改动同样需要过校验
+      - '**/README.md'
 
 # 顶层不授予任何权限：每个 job 按需显式申请（最小权限原则）。
 # 未列出的 scope（如 actions、id-token、packages）一律为 none。
@@ -63,7 +67,7 @@ concurrency:
 jobs:
   # ─── 只读校验（PR 事件唯一允许执行的任务）─────────────────────────────
   validate:
-    name: 只读校验（单测 + data.yml schema）
+    name: 只读校验（单测 + 跨文件一致性 lint）
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -91,9 +95,33 @@ jobs:
       - name: npm test
         run: npm test
 
-      # data.yml schema 校验
+      # data.yml schema + 跨文件一致性校验（SSOT）
+      # 有 error（P0/P1）时 exit 1 直接阻塞 PR 合并
       - name: npm run lint
         run: npm run lint
+
+      # P2 警告标注（非阻塞）：把 lint warnings 转成 GitHub annotations 提示，
+      # 不影响 job 结论；errors 已由上一步的 exit 1 阻塞，这里用 always()
+      # 保证「errors + warnings 并存」时 warnings 也能被标注出来。
+      # GitHub 每个 step 同类型 annotation 上限 10 条，超出部分汇总一条提示。
+      - name: P2 警告标注（非阻塞）
+        if: always()
+        run: |
+          LINT_FAILED=0
+          npm run lint --silent -- --json > /tmp/lint-pr.json || LINT_FAILED=1
+          node -e "
+            const r = require('/tmp/lint-pr.json');
+            const w = (r.findings && r.findings.warnings) || [];
+            for (const f of w.slice(0, 10)) {
+              console.log('::warning file=' + f.file + (f.line ? ',line=' + f.line : '') + ',title=' + f.ruleId + '::' + f.message);
+            }
+            if (w.length > 10) {
+              console.log('::warning title=lint P2 warnings::另有 ' + (w.length - 10) + ' 条警告未逐一标注（每 step 10 条上限），完整清单见 lint 日志');
+            }
+            console.log('P2 warnings: ' + w.length + '（非阻塞，豁免 ' + (r.waived || 0) + ' 条）');
+          "
+          # lint 本身失败（存在 error）时仍然让 step 红，warnings 标注只是附加信息
+          exit $LINT_FAILED
 
       # 文档质量校验（AGENTS.md 路由 / docs 交叉引用 / 代码栅栏）
       # docs:check 是只读检查，不写仓库、不发请求，可安全在 PR 事件上运行
