@@ -49,7 +49,7 @@
 | openreel-video | 浏览器端开源视频剪辑工具 | v0.5.0 |
 | openshot | 开源视频剪辑与动画制作 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速, 仅 amd64) | 4.1.0 |
 | optimisarr | 媒体库自动转码 (FFmpeg 验证 + 回滚, Plex/Jellyfin/Emby, 仅 amd64) | 0.2.24 |
-| perplexica | AI 问答引擎（原 Perplexica） | v1.12.2 |
+| perplexica | AI 问答引擎（原 Perplexica；2026-11 应用目录已重命名为 vane） | v1.12.2 |
 | personal-todo-vault | 自托管待办与 Markdown 笔记库（SQLite + 邮件提醒 + WebDAV 备份） | latest |
 | pgvector | 向量数据库 | 0.8.7-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
@@ -72,15 +72,24 @@
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/1panel-local-apps.git
+git clone https://github.com/arbaleast/1panel-local-apps.git
 cd 1panel-local-apps
 ```
 
-### 2. 检查镜像更新
+### 2. 本地环境要求与校验
+
+需要 Node >= 24（版本约定见 `.nvmrc`）。常用校验命令（真实来源为
+[package.json](package.json) `scripts`；分层与命令说明见
+[CONTRIBUTING.md](CONTRIBUTING.md)）：
 
 ```bash
-./scripts/check-updates.sh
+npm test               # .github/lib/*.test.mjs 回归
+npm run lint           # 全仓应用配置 lint
+npm run detect:dry-run # 镜像更新检测（只报告不写仓库）
+npm run docs:check     # 文档链接 / 结构校验
 ```
+
+任务路由与硬规则入口：[AGENTS.md](AGENTS.md)；细节手册在 [docs/](docs/)。
 
 ## 目录结构
 
@@ -116,27 +125,28 @@ cd 1panel-local-apps
 - 手动触发（Actions → auto-update → Run workflow，可选 `apps` 输入指定应用列表，逗号分隔）
 
 **行为：**
-- 扫描所有应用的根 `<app>/docker-compose.yml`
+- 扫描所有应用 `<app>/<version>/docker-compose.yml` 版本子目录
 - 仅处理 hardcode 类镜像（含 `:tag` 且不含变量）；`latest` 标签跳过（2026-11 起 compose 镜像默认全仓 hardcode，仅 silo / infinity / xunlei 三个例外仍用变量、检测跳过）
 - 调 Docker Hub API（ghcr.io 用 GitHub Container Registry API）查最新 tag
-- 检测到新版本 → 自动开 PR，分支命名 `auto-update/<app>-<yyyy-mm-dd>`
+- 检测到新版本 → 自动开 PR，分支命名 `auto-update/<yyyy-mm-dd>`
 - PR body 列出所有 service 的 `before`/`after` tag
 - 同 app 同日已有 open PR → 跳过（防重复）
-- PR title 含 `[skip ci]`，防合并后再次触发
+- 合并门禁：仅当 PR 必需检查全部通过后自动合并；失败 / 超时一律保留 PR 与分支
 
 **启用方法：**
 1. 将仓库推送到 GitHub
 2. 在 Settings → Actions → General 中启用 Actions
-3. 确保 Workflow permissions 为 "Read and write permissions"
+3. 配置仓库 secrets：`PAT_TOKEN`（classic PAT，repo 写权限）—— 开 PR / 合并用它；
+   其余保持最小权限（工作流顶层已声明 `permissions: {}`，按 job 显式放权）
 
-### 手动检查
+### 手动检查（更新检测）
+
+检测链路在 CI 之外只允许 dry-run（真跑会改写仓库文件，见
+[docs/automation.md](docs/automation.md)）：
 
 ```bash
-# 检查所有应用
-./scripts/check-updates.sh
-
-# 检查指定应用
-./scripts/check-updates.sh jellyfin
+npm run detect:dry-run                          # 全量只读检测
+npm run detect:dry-run -- jellyfin              # 末尾追加应用过滤参数（APPS_FILTER）
 ```
 
 ## 添加新应用
