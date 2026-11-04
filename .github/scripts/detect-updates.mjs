@@ -63,6 +63,8 @@ import {
   renderMarkdown,
   exitCodeForResults,
 } from '../lib/report.mjs';
+// 检测阶段四态枚举（目标 §三.1）与端到端执行结果 schema
+import { detectStatusFromResult } from '../lib/execution-result.mjs';
 // 批次校验（复用 lib/validate-batch.mjs，对 staging 目录做 SSOT 校验）
 import { validateUpdateBatch, loadAliasByDir } from '../lib/validate-batch.mjs';
 
@@ -842,10 +844,23 @@ function validateStagingBatch(stagingRoot, appName, toDir) {
 
 /**
  * 处理单个应用。
+ *
+ * 目标 §三.1：检测结论严格落在四态枚举上 ——
+ * `HAS_UPDATE` / `NO_UPDATE` / `SKIPPED` / `FAILED`，
+ * 写在结果对象的 `detectStatus` 字段（由 `detectStatusFromResult` 统一推导，
+ * 避免各分支手写导致口径漂移）。
+ *
  * @param {string} appName
  * @returns {Promise<{result: object, updates: object[]}>}
  */
 async function processApp(appName) {
+  const { result, updates } = await processAppInner(appName);
+  // 四态检测结论（唯一推导点）
+  result.detectStatus = detectStatusFromResult(result);
+  return { result, updates };
+}
+
+async function processAppInner(appName) {
   const result = {
     app: appName,
     status: 'success',
@@ -854,6 +869,9 @@ async function processApp(appName) {
     code: 'no-update',
     error: null,
     updates: 0,
+    // 目标 §七.1：当前本地版本（应用版本目录名）与检测到的上游版本
+    currentVersion: null,
+    latestVersion: null,
   };
   const skipReasons = [];
   const skipCtx = new Map(); // reason 码 → 补充上下文（如 registry 名）
@@ -917,9 +935,12 @@ async function processApp(appName) {
     const maxKnown = selectNewestVersionDir(recognizable);
     if (maxKnown) {
       log(appName, `跨版本保护: maxKnown=${maxKnown}（仅处理此 versionDir，历史归档保留）`);
+      // 目标 §七.1：记录应用「当前本地版本」（版本目录名）
+      result.currentVersion = maxKnown;
     } else {
       // 无法可靠识别 → 回退到原行为：所有 versionDir 都处理（保兼容）
       log(appName, '跨版本保护: 无可解析的 semver versionDir，回退到全量 detect');
+      result.currentVersion = recognizable[0] || versionDirs[0] || null;
     }
 
     // 对每个版本目录分别处理
@@ -1293,6 +1314,9 @@ async function processApp(appName) {
       result.code = 'update-found';
       result.error = null;
       result.updates = allUpdates.length;
+      // 目标 §七.1：记录「检测到的上游版本」
+      result.latestVersion = allUpdates[0].to;
+      if (!result.currentVersion) result.currentVersion = allUpdates[0].versionDir || null;
       return { result, updates: allUpdates };
     }
     // 审计 P1-2：即使有其它 service 查询成功，只要出现「上游没给可用稳定 tag」，

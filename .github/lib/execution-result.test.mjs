@@ -12,6 +12,9 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  DETECT_STATUS,
+  DETECT_STATUSES,
+  detectStatusFromResult,
   EXEC_STATUS,
   EXEC_STATUSES,
   EXEC_STAGE,
@@ -216,5 +219,113 @@ describe('Summary 渲染（§七.2）', () => {
   it('缺 execution.json 时也不抛错（优雅降级）', () => {
     assert.doesNotThrow(() => renderExecutionMarkdown(undefined, {}));
     assert.doesNotThrow(() => renderExecutionSummary(null, {}));
+  });
+});
+
+// ─── 检测阶段四态枚举（目标 §三.1）────────────────────────────────────────
+
+describe('DETECT_STATUS / detectStatusFromResult（四态检测结论）', () => {
+  it('四态枚举严格互斥', () => {
+    assert.deepEqual(
+      [...DETECT_STATUSES],
+      ['HAS_UPDATE', 'NO_UPDATE', 'SKIPPED', 'FAILED'],
+    );
+  });
+
+  it('success + update-found → HAS_UPDATE', () => {
+    assert.equal(
+      detectStatusFromResult({ status: 'success', code: 'update-found' }),
+      DETECT_STATUS.HAS_UPDATE,
+    );
+  });
+
+  it('success + no-update → NO_UPDATE', () => {
+    assert.equal(
+      detectStatusFromResult({ status: 'success', code: 'no-update' }),
+      DETECT_STATUS.NO_UPDATE,
+    );
+  });
+
+  it('skipped → SKIPPED（白名单 / 无版本目录 / no-stable-tag / already-exists）', () => {
+    for (const code of ['whitelisted', 'no-version-dirs', 'no-stable-tag', 'already-exists']) {
+      assert.equal(
+        detectStatusFromResult({ status: 'skipped', code }),
+        DETECT_STATUS.SKIPPED,
+        `${code} 应判为 SKIPPED`,
+      );
+    }
+  });
+
+  it('failed → FAILED（网络异常 / 限流 / 解析失败绝不落到 NO_UPDATE）', () => {
+    for (const code of ['registry-request-failed', 'unexpected-error', 'compose-invalid', 'write-failed']) {
+      assert.equal(
+        detectStatusFromResult({ status: 'failed', code }),
+        DETECT_STATUS.FAILED,
+        `${code} 应判为 FAILED`,
+      );
+    }
+  });
+
+  it('未知状态 → SKIPPED（不猜）', () => {
+    assert.equal(detectStatusFromResult({ status: 'weird' }), DETECT_STATUS.SKIPPED);
+    assert.equal(detectStatusFromResult(null), DETECT_STATUS.SKIPPED);
+  });
+});
+
+describe('toExecutionResults：currentVersion / latestVersion 透传', () => {
+  it('优先取检测结果自带字段', () => {
+    const out = toExecutionResults([
+      {
+        app: 'demo',
+        status: 'success',
+        code: 'update-found',
+        detectStatus: DETECT_STATUS.HAS_UPDATE,
+        currentVersion: 'v1.0.0',
+        latestVersion: 'v2.0.0',
+      },
+    ]);
+    assert.equal(out[0].currentVersion, 'v1.0.0');
+    assert.equal(out[0].latestVersion, 'v2.0.0');
+    assert.equal(out[0].status, EXEC_STATUS.UPDATED);
+  });
+
+  it('缺字段时为 null（不臆造版本号）', () => {
+    const out = toExecutionResults([{ app: 'demo', status: 'success', code: 'no-update' }]);
+    assert.equal(out[0].currentVersion, null);
+    assert.equal(out[0].latestVersion, null);
+  });
+});
+
+describe('Summary：每应用执行轨迹表（目标 §七.1 字段可见）', () => {
+  it('markdown 含 app / 检测状态 / 当前本地版本 / 上游版本 / 最终状态', () => {
+    const md = renderExecutionMarkdown(
+      {},
+      {
+        results: [
+          {
+            app: 'anirss',
+            status: 'success',
+            code: 'update-found',
+            detectStatus: 'HAS_UPDATE',
+            reason: '检测到新版本 v3.2.99',
+            currentVersion: 'v3.2.55',
+            latestVersion: 'v3.2.99',
+          },
+          {
+            app: 'traefik',
+            status: 'failed',
+            code: 'registry-request-failed',
+            detectStatus: 'FAILED',
+            stage: 'registry',
+            reason: 'Registry 请求失败',
+            error: 'HTTP 429',
+          },
+        ],
+      },
+    );
+    assert.match(md, /### 每应用执行轨迹/);
+    assert.match(md, /\| anirss \| HAS_UPDATE \| v3\.2\.55 \| v3\.2\.99 \| UPDATED \|/);
+    assert.match(md, /\| traefik \| FAILED \|/);
+    assert.match(md, /HTTP 429/);
   });
 });

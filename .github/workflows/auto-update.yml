@@ -207,9 +207,11 @@ jobs:
         if: always()
         run: |
           if [[ -f execution.json ]]; then
-            node -e "import('./.github/lib/report.mjs').then(m=>{const d=require('./execution.json');process.stdout.write(m.renderExecutionMarkdown(d,{title:'自动更新执行结果'}))})" >> $GITHUB_STEP_SUMMARY
+            node -e "import('./.github/lib/report.mjs').then(m=>{const d=require('./execution.json');const u=require('./updates.json');process.stdout.write(m.renderExecutionMarkdown(d,{title:'自动更新执行结果',results:(u&&u.results)||[]}))})" >> $GITHUB_STEP_SUMMARY
+          elif [[ -f updates.json ]]; then
+            node -e "import('./.github/lib/report.mjs').then(m=>{const u=require('./updates.json');process.stdout.write(m.renderExecutionMarkdown({},{title:'自动更新执行结果',results:(u&&u.results)||[]}))})" >> $GITHUB_STEP_SUMMARY
           else
-            echo "无 execution.json 生成（未进入开 PR 阶段）" >> $GITHUB_STEP_SUMMARY
+            echo "无 updates.json / execution.json 生成" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: 检查是否有更新

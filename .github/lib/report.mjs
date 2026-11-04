@@ -27,9 +27,12 @@ import {
   EXEC_STATUSES,
   EXEC_STAGE,
   EXEC_STAGES,
+  DETECT_STATUS,
+  DETECT_STATUSES,
   createExecutionResult,
   withStage,
   statusFromDetectResult,
+  detectStatusFromResult,
   exitCodeForExecutionResults,
 } from './execution-result.mjs';
 
@@ -41,9 +44,12 @@ export {
   EXEC_STATUSES,
   EXEC_STAGE,
   EXEC_STAGES,
+  DETECT_STATUS,
+  DETECT_STATUSES,
   createExecutionResult,
   withStage,
   statusFromDetectResult,
+  detectStatusFromResult,
   exitCodeForExecutionResults,
 };
 
@@ -310,7 +316,8 @@ export function renderExecutionMarkdown(execution, opts = {}) {
   // 五类统计
   const results = Array.isArray(opts.results) ? opts.results : [];
   if (results.length > 0) {
-    const agg = aggregateExecutionResults(toExecutionResults(results));
+    const execResults = toExecutionResults(results);
+    const agg = aggregateExecutionResults(execResults);
     lines.push('### 分类统计');
     lines.push('');
     lines.push('| 分类 | 数量 | 应用 |');
@@ -320,6 +327,22 @@ export function renderExecutionMarkdown(execution, opts = {}) {
     lines.push(`| 幂等跳过 | ${agg.skipped} | ${escapeCell(agg.skippedApps.join(', '))} |`);
     lines.push(`| 警告 | ${agg.warning} | ${escapeCell(agg.warningApps.join(', '))} |`);
     lines.push(`| 失败 | ${agg.failed} | ${escapeCell(agg.failedApps.join(', '))} |`);
+    lines.push('');
+
+    // 单应用执行轨迹（目标 §七.1 的字段逐项可见）
+    lines.push('### 每应用执行轨迹');
+    lines.push('');
+    lines.push('| app | 检测状态 | 当前本地版本 | 上游版本 | 最终状态 | 原因 |');
+    lines.push('| --- | --- | --- | --- | --- | --- |');
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      const e = execResults[i];
+      lines.push(
+        `| ${escapeCell(e.appKey)} | ${escapeCell(r?.detectStatus || '')} | ` +
+          `${escapeCell(e.currentVersion ?? '')} | ${escapeCell(e.latestVersion ?? '')} | ` +
+          `${escapeCell(e.status)} | ${escapeCell(e.reason ?? '')} |`,
+      );
+    }
     lines.push('');
 
     if (agg.failed > 0) {

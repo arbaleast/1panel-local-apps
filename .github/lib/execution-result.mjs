@@ -27,6 +27,50 @@ export const EXEC_STATUS = Object.freeze({
   FAILED: 'FAILED',
 });
 
+/**
+ * **检测阶段**的状态枚举（目标 §三.1）
+ *
+ * 与端到端状态分开：检测阶段只回答「这次检测对某个应用得出了什么结论」，
+ * 而端到端状态还要叠加目录生成 / 校验 / PR / CI / 合并各阶段的结果。
+ *
+ * `HAS_UPDATE` / `NO_UPDATE` / `SKIPPED` / `FAILED` 四态严格互斥：
+ * 网络异常、限流、解析失败**永远**是 `FAILED`，绝不落到 `NO_UPDATE`。
+ */
+export const DETECT_STATUS = Object.freeze({
+  HAS_UPDATE: 'HAS_UPDATE',
+  NO_UPDATE: 'NO_UPDATE',
+  SKIPPED: 'SKIPPED',
+  FAILED: 'FAILED',
+});
+
+/** 检测阶段状态全集（有序） */
+export const DETECT_STATUSES = Object.freeze([
+  DETECT_STATUS.HAS_UPDATE,
+  DETECT_STATUS.NO_UPDATE,
+  DETECT_STATUS.SKIPPED,
+  DETECT_STATUS.FAILED,
+]);
+
+/**
+ * 由检测结果推导**检测阶段状态**（目标 §三.1 的四态枚举）
+ *
+ * @param {{status?: string, code?: string}} detectResult
+ * @returns {string} DETECT_STATUS 之一
+ */
+export function detectStatusFromResult(detectResult) {
+  if (!detectResult || typeof detectResult !== 'object') return DETECT_STATUS.SKIPPED;
+  const status = detectResult.status;
+  if (status === 'failed') return DETECT_STATUS.FAILED;
+  if (status === 'skipped') return DETECT_STATUS.SKIPPED;
+  if (status === 'success') {
+    return detectResult.code === 'update-found'
+      ? DETECT_STATUS.HAS_UPDATE
+      : DETECT_STATUS.NO_UPDATE;
+  }
+  return DETECT_STATUS.SKIPPED;
+}
+
+
 /** 端到端状态全集（有序，便于稳定渲染） */
 export const EXEC_STATUSES = Object.freeze([
   EXEC_STATUS.UPDATED,
@@ -142,6 +186,10 @@ export function statusFromDetectResult(detectResult) {
 /**
  * 由检测阶段结果构造执行结果数组（检测阶段之后的阶段先留空）
  *
+ * `currentVersion` / `latestVersion` 优先取检测结果自带的字段
+ * （detect-updates.mjs 记录的应用当前版本目录名与上游新 tag），
+ * 其次取 `versions` 映射兜底。
+ *
  * @param {Array<object>} detectResults
  * @param {Map<string, {currentVersion?: string, latestVersion?: string}>} [versions]
  * @returns {Array<object>}
@@ -153,8 +201,8 @@ export function toExecutionResults(detectResults, versions = new Map()) {
     const v = versions.get(key) || {};
     return createExecutionResult({
       appKey: key,
-      currentVersion: v.currentVersion ?? null,
-      latestVersion: v.latestVersion ?? null,
+      currentVersion: r?.currentVersion ?? v.currentVersion ?? null,
+      latestVersion: r?.latestVersion ?? v.latestVersion ?? null,
       status: statusFromDetectResult(r),
       reason: r?.reason ?? null,
       errorStage: r?.status === 'failed' ? (r?.stage || 'detect') : null,

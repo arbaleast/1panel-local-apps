@@ -47,6 +47,18 @@
 **Registry 网络错误绝不算「无更新」**；存在 failed 时脚本退出码 2，workflow 末尾「检测失败门禁」
 步骤显式 `exit 1` 让整个 workflow 变红。
 
+此外每条结果还带两个**显式字段**（目标 §三.1 / §七.1）：
+
+| 字段 | 取值 | 含义 |
+|---|---|---|
+| `detectStatus` | `HAS_UPDATE` / `NO_UPDATE` / `SKIPPED` / `FAILED` | 检测阶段的**四态结论**（由 [lib/execution-result.mjs](../.github/lib/execution-result.mjs) 的 `detectStatusFromResult` 统一推导，各分支不手写，避免口径漂移） |
+| `currentVersion` | 版本目录名 | 应用当前本地版本（跨版本保护选中的 `maxKnown`） |
+| `latestVersion` | 上游 tag | 本次检测到的上游版本（无更新时为 `null`） |
+
+`detectStatus` 与 `status/code` 的对应：`success`+`update-found` → `HAS_UPDATE`；
+`success`+`no-update` → `NO_UPDATE`；`skipped` → `SKIPPED`；`failed` → `FAILED`。
+**网络异常 / 限流 / 解析失败永远落在 `FAILED`**，绝不落到 `NO_UPDATE`。
+
 2026-11 可靠性治理补充的不变量：
 
 - **上游响应形状异常 = 失败**：HTTP 200 但缺少 `results` / `tags` 字段（或类型不对）时
@@ -171,6 +183,10 @@ PR 创建后 [open-update-pr.mjs](../.github/bin/open-update-pr.mjs) 的合并�
 `renderExecutionSummary` 在本地/非 Actions 环境降级为控制台结构化输出。
 Summary 必须给出**成功更新 / 无更新 / 幂等跳过 / 警告 / 失败**五类清单，
 禁止只输出一条笼统的成功或失败日志。
+
+Summary 的「每应用执行轨迹」表逐项展示目标 §七.1 要求的字段：
+应用名、检测状态（`detectStatus`）、当前本地版本、上游版本、最终状态、原因；
+失败应用另有「失败明细」表（stage / reason / error）。
 
 
 ## 5. README 同步
