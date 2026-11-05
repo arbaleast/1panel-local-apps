@@ -293,7 +293,19 @@ export function parseCliArgs(argv) {
 const SKIP_AUTO_UPDATE_APPS = new Set(['anythingllm', 'jellyfin']);
 
 // 简易日志
+//
+// 2026-11-05 输出收敛：逐应用 / 逐 service 的常规路径日志（已是最新、各类 skip、
+// 跨版本保护…）在 60 个应用的批次里会产生数百行，把 workflow log 刷得看不清重点。
+// 现在分成两级：
+//   · `log()` —— info：**有动作或有异常**（检测到更新、写盘、校验失败、幂等跳过…）
+//   · `dbg()` —— debug：常规路径明细，需要时用 `DETECT_LOG=debug` 打开
+// 信息不丢，只是默认不刷屏。
+const LOG_LEVEL = (process.env.DETECT_LOG || 'info').toLowerCase();
+const DEBUG_ENABLED = LOG_LEVEL === 'debug' || LOG_LEVEL === 'trace';
 const log = (...a) => console.log('[detect]', ...a);
+const dbg = (...a) => {
+  if (DEBUG_ENABLED) console.log('[detect]', ...a);
+};
 
 // ---------- 工具：白名单判断（导出供单测） ----------
 /**
@@ -714,10 +726,10 @@ export function applyChanges(appName, changes, versionCopy, opts = {}) {
   const dryRun = opts.dryRun !== undefined ? Boolean(opts.dryRun) : processOptions.DRY_RUN;
   if (dryRun) {
     if (changes.length > 0) {
-      log(appName, `[DRY-RUN] 跳过 ${changes.length} 个文件写盘`);
+      dbg(appName, `[DRY-RUN] 跳过 ${changes.length} 个文件写盘`);
     }
     if (versionCopy) {
-      log(appName, `[DRY-RUN] 跳过生成版本目录: ${versionCopy.fromDir}/ -> ${versionCopy.toDir}/`);
+      dbg(appName, `[DRY-RUN] 跳过生成版本目录: ${versionCopy.fromDir}/ -> ${versionCopy.toDir}/`);
     }
     return { written: false };
   }
@@ -930,7 +942,7 @@ async function processAppInner(appName) {
   const addSkip = (reason, stage, ctx = {}) => {
     skipReasons.push(reason);
     if (!skipCtx.has(reason)) skipCtx.set(reason, ctx);
-    log(appName, `skip[${stage}]: ${formatReason(reason, ctx)}`);
+    dbg(appName, `skip[${stage}]: ${formatReason(reason, ctx)}`);
   };
   const fail = (stage, reason, error, ctx = {}) => {
     result.status = 'failed';
@@ -949,7 +961,7 @@ async function processAppInner(appName) {
   try {
     // 白名单：手维护应用, 跳过整个 detect 流程, 保留现有版本目录与 compose 不变。
     if (shouldSkipAutoUpdate(appName)) {
-      log(appName, '在白名单中, 跳过 detect (手维护应用)');
+      dbg(appName, '在白名单中, 跳过 detect (手维护应用)');
       result.status = 'skipped';
       result.stage = 'whitelist';
       result.reason = formatReason('whitelisted');
@@ -960,7 +972,7 @@ async function processAppInner(appName) {
     // 获取所有版本子目录
     const versionDirs = getAllVersionDirs(REPO_ROOT, appName);
     if (versionDirs.length === 0) {
-      log(appName, '无版本目录或无 compose，跳过');
+      dbg(appName, '无版本目录或无 compose，跳过');
       result.status = 'skipped';
       result.stage = 'scan';
       result.reason = formatReason('no-version-dirs');
@@ -976,7 +988,7 @@ async function processAppInner(appName) {
     // 保留旧版"的设计哲学一致——只是把"不更新历史版本"提前到 detect 阶段。
     const recognizable = versionDirs.filter(d => looseVersionChunks(d).length > 0);
     if (recognizable.length === 0) {
-      log(appName, '所有 versionDir 的版本形态都无法识别，跳过');
+      dbg(appName, '所有 versionDir 的版本形态都无法识别，跳过');
       result.status = 'skipped';
       result.stage = 'version';
       result.reason = formatReason('version-unrecognized');
@@ -985,12 +997,12 @@ async function processAppInner(appName) {
     }
     const maxKnown = selectNewestVersionDir(recognizable);
     if (maxKnown) {
-      log(appName, `跨版本保护: maxKnown=${maxKnown}（仅处理此 versionDir，历史归档保留）`);
+      dbg(appName, `跨版本保护: maxKnown=${maxKnown}（仅处理此 versionDir，历史归档保留）`);
       // 目标 §七.1：记录应用「当前本地版本」（版本目录名）
       result.currentVersion = maxKnown;
     } else {
       // 无法可靠识别 → 回退到原行为：所有 versionDir 都处理（保兼容）
-      log(appName, '跨版本保护: 无可解析的 semver versionDir，回退到全量 detect');
+      dbg(appName, '跨版本保护: 无可解析的 semver versionDir，回退到全量 detect');
       result.currentVersion = recognizable[0] || versionDirs[0] || null;
     }
 
@@ -1002,19 +1014,19 @@ async function processAppInner(appName) {
       // detect 把 3.2.0/default 改写为 3.4.0 后 cpSync 覆盖了 3.4.0/default 刚改写的 3.4.0，
       // 互相"竞争"造成跨版本倒退。正确做法：每个 versionDir 单独维护，互不干扰。
       if (maxKnown && versionDir !== maxKnown) {
-        log(appName, `跨版本保护: ${versionDir} 非 maxKnown=${maxKnown}，跳过（历史归档保留）`);
+        dbg(appName, `跨版本保护: ${versionDir} 非 maxKnown=${maxKnown}，跳过（历史归档保留）`);
         continue;
       }
       const composePath = path.join(appDir, versionDir, 'docker-compose.yml');
       const dataPath = path.join(appDir, versionDir, 'data.yml');
 
       if (!fs.existsSync(dataPath)) {
-        log(appName, `${versionDir}/data.yml 不存在，跳过`);
+        dbg(appName, `${versionDir}/data.yml 不存在，跳过`);
         addSkip('data-yml-missing', 'data-yml');
         continue;
       }
       if (!fs.existsSync(composePath)) {
-        log(appName, `${versionDir}/docker-compose.yml 不存在，跳过`);
+        dbg(appName, `${versionDir}/docker-compose.yml 不存在，跳过`);
         addSkip('compose-missing', 'compose');
         continue;
       }
@@ -1030,7 +1042,7 @@ async function processAppInner(appName) {
         return { result, updates: [] };
       }
       if (services.length === 0) {
-        log(appName, `${versionDir} compose 无 services，跳过`);
+        dbg(appName, `${versionDir} compose 无 services，跳过`);
         addSkip('no-services', 'compose');
         continue;
       }
@@ -1062,24 +1074,24 @@ async function processAppInner(appName) {
         }
         if (cls.kind === 'digest' || cls.kind === 'no-tag') {
           // 无 tag（含 digest-only）→ skipped（不是失败，也不是更新）
-          log(appName, svc.name, `⚠ ${cls.reason}（${svc.image}），跳过该 service`);
+          dbg(appName, svc.name, `⚠ ${cls.reason}（${svc.image}），跳过该 service`);
           addSkip(cls.code, 'image-parse');
           continue;
         }
         // kind === 'hardcoded'
         if (cls.tag.toLowerCase() === 'latest') {
-          log(appName, svc.name, `⚠ tag=latest（${svc.image}），跳过该 service`);
+          dbg(appName, svc.name, `⚠ tag=latest（${svc.image}），跳过该 service`);
           addSkip('tag-latest', 'image-parse');
           continue;
         }
         if (UNSTABLE_TAG_RE.test(cls.tag)) {
-          log(appName, svc.name, `⚠ tag 不稳定（${svc.image}），跳过该 service`);
+          dbg(appName, svc.name, `⚠ tag 不稳定（${svc.image}），跳过该 service`);
           addSkip('tag-unstable', 'image-parse');
           continue;
         }
         // 不支持的 registry（自建 harbor / 带端口的私有 registry）→ skipped
         if (!createAdapter(svc.image)) {
-          log(appName, svc.name, `⚠ 不支持的 registry（${cls.registry}），跳过该 service`);
+          dbg(appName, svc.name, `⚠ 不支持的 registry（${cls.registry}），跳过该 service`);
           addSkip('unsupported-registry', 'image-parse', { registry: cls.registry });
           continue;
         }
@@ -1103,7 +1115,7 @@ async function processAppInner(appName) {
       for (const svc of variable) {
         const resolved = resolveImageTemplate(svc.image, formFields);
         if (!resolved) {
-          log(appName, svc.name, `image=${svc.image} 无法解析为 (imageRepo, currentTag)，跳过`);
+          dbg(appName, svc.name, `image=${svc.image} 无法解析为 (imageRepo, currentTag)，跳过`);
           addSkip('image-template-unresolved', 'image-parse');
           continue;
         }
@@ -1111,14 +1123,14 @@ async function processAppInner(appName) {
 
         // 检查 tag 是否为 latest（跳过）
         if (currentTag === 'latest') {
-          log(appName, svc.name, `${envKey}=${currentTag} ⚠ tag=latest，跳过`);
+          dbg(appName, svc.name, `${envKey}=${currentTag} ⚠ tag=latest，跳过`);
           addSkip('tag-latest', 'image-parse');
           continue;
         }
 
         // 过滤不稳定关键字
         if (UNSTABLE_TAG_RE.test(currentTag)) {
-          log(appName, svc.name, `${envKey}=${currentTag} ⚠ 包含不稳定关键字，跳过`);
+          dbg(appName, svc.name, `${envKey}=${currentTag} ⚠ 包含不稳定关键字，跳过`);
           addSkip('tag-unstable', 'image-parse');
           continue;
         }
@@ -1131,7 +1143,7 @@ async function processAppInner(appName) {
           return { result, updates: [] };
         }
         if (!createAdapter(fullImage)) {
-          log(appName, svc.name, `${fullImage} registry=${parsed.registry} 不受支持，跳过`);
+          dbg(appName, svc.name, `${fullImage} registry=${parsed.registry} 不受支持，跳过`);
           addSkip('unsupported-registry', 'image-parse', { registry: parsed.registry });
           continue;
         }
@@ -1155,19 +1167,19 @@ async function processAppInner(appName) {
           return { result, updates: [] };
         }
         if (decision.comparisonResult === 'uncomparable') {
-          log(appName, svc.name, `${fullImage} ${decision.reason}`);
+          dbg(appName, svc.name, `${fullImage} ${decision.reason}`);
           addSkip('no-stable-tag', 'registry');
           continue;
         }
         if (decision.comparisonResult === 'incompatible') {
-          log(appName, svc.name, `${fullImage} ${decision.reason}`);
+          dbg(appName, svc.name, `${fullImage} ${decision.reason}`);
           addSkip('version-incompatible', 'version');
           continue;
         }
         queried = true;
         const latest = decision.candidateVersion;
         if (!decision.shouldUpdate || !latest) {
-          log(appName, svc.name, `${fullImage} 已是最新`);
+          dbg(appName, svc.name, `${fullImage} 已是最新`);
           continue;
         }
 
@@ -1186,7 +1198,7 @@ async function processAppInner(appName) {
       }
 
       if (hardcoded.length === 0 && variableTagChanges.length === 0) {
-        log(appName, `${versionDir} 全为变量型或 latest（${variable.length} 个变量），跳过`);
+        dbg(appName, `${versionDir} 全为变量型或 latest（${variable.length} 个变量），跳过`);
         continue;
       }
 
@@ -1228,7 +1240,7 @@ async function processAppInner(appName) {
         queried = true;
         const latest = decision.candidateVersion;
         if (!decision.shouldUpdate || !latest) {
-          log(appName, svc.name, `已是最新 (${svc.tag})`);
+          dbg(appName, svc.name, `已是最新 (${svc.tag})`);
           continue;
         }
         log(appName, svc.name, `⚠ ${svc.tag} -> ${latest}`);
@@ -1292,7 +1304,7 @@ async function processAppInner(appName) {
       // 统一在 DRY_RUN 判定后再做（DRY_RUN 模式下只 log 不真复制，避免污染工作树）
       let versionCopy = null;
       if (oldVersionDir === newVersionDir) {
-        log(appName, `${versionDir} 目标版本与当前一致 (${newVersionDir})，就地更新受管文件`);
+        dbg(appName, `${versionDir} 目标版本与当前一致 (${newVersionDir})，就地更新受管文件`);
       } else {
         const newDir = path.join(appDir, newVersionDir);
         const newDirExists = fs.existsSync(newDir);
@@ -1306,7 +1318,7 @@ async function processAppInner(appName) {
         //   · 内容不同 → 冲突拦截（CONFLICT），报错中止，**绝不覆盖**
         // 这里只做最保守的前置拦截（同名异源的历史事故防线），其余交给 staging 判定。
         if (!canCopyVersionDir(oldVersionDir, newVersionDir, newDirExists)) {
-          log(appName, `⚠ 待判定：目标目录 ${newVersionDir}/ 已存在且不同于来源 ${oldVersionDir}/，将在 staging 中比对内容后判定幂等 / 冲突`);
+          dbg(appName, `⚠ 待判定：目标目录 ${newVersionDir}/ 已存在且不同于来源 ${oldVersionDir}/，将在 staging 中比对内容后判定幂等 / 冲突`);
         }
         // 注意：先于 staging 生成读一次源目录的 compose/data.yml 用于新版本改写
         // （这里只在内存操作，不写盘）
@@ -1317,7 +1329,7 @@ async function processAppInner(appName) {
           // exists 标记让 applyChanges 在 DRY_RUN log 时一并说明
           overwrite: newDirExists,
         };
-        log(appName, `[pending] 生成版本目录: ${oldVersionDir}/ -> ${newVersionDir}/（staging → 校验 → 原子提交）`);
+        dbg(appName, `[pending] 生成版本目录: ${oldVersionDir}/ -> ${newVersionDir}/（staging → 校验 → 原子提交）`);
       }
 
       // 内存中替换 compose / data.yml
@@ -1346,7 +1358,7 @@ async function processAppInner(appName) {
             log(appName, `data.yml formFields[${found.index}].default: ${oldDefault} -> ${newDefault}`);
           }
         } else {
-          log(appName, `data.yml 未找到 ${ch.repo} 对应 formField`);
+          dbg(appName, `data.yml 未找到 ${ch.repo} 对应 formField`);
         }
       }
       // 变量型：直接修改对应 envKey 的 formField.default
@@ -1366,7 +1378,7 @@ async function processAppInner(appName) {
       // 但 formField.default 字符串化时若带尾随空白或 yaml 顺序不同仍可能差 1 字节），
       // 此处双保险：序列化后整文对比。
       if (newData === dataContent && newCompose === composeContent) {
-        log(appName, `${versionDir} 幂等: 写入内容与现有完全一致，跳过`);
+        dbg(appName, `${versionDir} 幂等: 写入内容与现有完全一致，跳过`);
         continue;
       }
 

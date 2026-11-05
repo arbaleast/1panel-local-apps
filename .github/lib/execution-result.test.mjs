@@ -192,13 +192,29 @@ describe('Summary 渲染（§七.2）', () => {
     for (const label of ['成功更新', '无更新', '幂等跳过', '警告', '失败']) {
       assert.ok(md.includes(label), `缺分类: ${label}`);
     }
-    assert.match(md, /\| 失败 \| 1 \| d \|/);
+    // 五类计数压缩成一行（不再是一张 5 行的分类表）
+    assert.match(md, /\*\*分类\*\*：成功更新 1 ｜ 无更新 1 ｜ 幂等跳过 1 ｜ 警告 0 ｜ 失败 1/);
   });
 
-  it('markdown 含失败明细（原因可诊断）', () => {
+  it('markdown 含失败原因与底层错误（可诊断）', () => {
     const md = renderExecutionMarkdown(execution, { results });
-    assert.match(md, /### 失败明细/);
+    // 失败应用在「需要关注」表里，原因与 error 同列可见
+    assert.match(md, /\| d \|.*\| FAILED \|/);
     assert.match(md, /HTTP 429/);
+  });
+
+  it('**每个应用只渲染一次**（不再出现两张重复的表）', () => {
+    const md = renderExecutionMarkdown(execution, { results });
+    // 'a' 只应出现在「需要关注」表里一次；无更新的应用 'b' 折叠在 details 里
+    const appRows = md.split('\n').filter((l) => /^\| [abcd] \|/.test(l));
+    assert.equal(appRows.length, 3, `需要关注的行应为 3 条（有更新/幂等跳过/失败），实际 ${appRows.length}`);
+    assert.ok(!/^\| b \|/m.test(md), '无更新的应用不应逐行出现在表里');
+  });
+
+  it('无更新的应用被折叠（details），信息不丢', () => {
+    const md = renderExecutionMarkdown(execution, { results });
+    assert.match(md, /<details><summary>无更新（1）/);
+    assert.match(md, /b/);
   });
 
   it('markdown 含阶段明细表', () => {
@@ -323,7 +339,7 @@ describe('Summary：每应用执行轨迹表（目标 §七.1 字段可见）', 
         ],
       },
     );
-    assert.match(md, /### 每应用执行轨迹/);
+    assert.match(md, /### 需要关注（2）/);
     assert.match(md, /\| anirss \| HAS_UPDATE \| v3\.2\.55 \| v3\.2\.99 \| UPDATED \|/);
     assert.match(md, /\| traefik \| FAILED \|/);
     assert.match(md, /HTTP 429/);
