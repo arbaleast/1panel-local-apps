@@ -38,7 +38,7 @@
 | mediago | 媒体嗅探与下载 | 3.5.0 |
 | mihomo | 代理工具 | v1.19.18 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
-| misaka | 御坂网络弹幕服务 | v2.9.0 |
+| misaka | 御坂网络弹幕服务 | v2.9.1 |
 | moviepilot | 影视自动化 | 3.2.4 |
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.8.1 |
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
