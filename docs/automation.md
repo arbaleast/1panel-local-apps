@@ -313,6 +313,22 @@ workflow log 里另有 detect 脚本逐应用 / 逐 service 的数百行日志�
 「无更新」的几十个应用折叠进 `<details>`，只给计数与可展开的列表 ——
 信息不丢，但默认不刷屏。
 
+#### 测试不得污染 CI 输出（2026-11-05）
+
+测试进程把 `GITHUB_STEP_SUMMARY` 等 Actions 输出变量继承给子进程时，
+被测脚本会**往真的 step summary 里追加内容** —— 2026-11-05 实测：
+detect 链路的 E2E 有 6 次 `runDetect`，CI 页面上就出现 6 段「detect-updates 检测汇总」
+（扫描应用数 1/1/1/1/2/4，正好对上 6 次调用）。
+
+职责边界：**生产代码写 CI 输出，测试不得冒充生产写入。**
+
+- `.github/lib/detect-updates-e2e.test.mjs` 与 `.github/lib/pr-flow-e2e.test.mjs` 的
+  子进程 env 统一经 `childEnv()` 构造，**剔除** `GITHUB_STEP_SUMMARY` /
+  `GITHUB_OUTPUT` / `GITHUB_ENV` / `GITHUB_PATH` / `GITHUB_STATE`
+- `.github/lib/test-hygiene.test.mjs` 守卫两条不变量：
+  静态（测试文件不得把上述变量作为 env 属性传给子进程）+ 行为
+  （detect E2E 跑完，step summary 文件必须**一个字节都不写**）
+
 
 ## 5. README 同步
 

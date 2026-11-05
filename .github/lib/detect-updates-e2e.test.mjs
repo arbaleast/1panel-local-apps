@@ -91,6 +91,33 @@ after(async () => {
 });
 
 /**
+ * 构造子进程 env —— **必须剔除** GitHub Actions 的输出文件变量。
+ *
+ * 事故（2026-11-05）：本文件原先直接 `...process.env`，CI 里
+ * `GITHUB_STEP_SUMMARY` 被子进程继承 → detect 脚本把自己的检测汇总
+ * **追加进 CI 的真 step summary** → 6 个用例刷出 6 段
+ * 「detect-updates 检测汇总」（扫描应用数 1/1/1/1/2/4，正好对上 6 次 runDetect）。
+ *
+ * 职责边界：**生产代码写 CI 输出，测试不得冒充生产写入。**
+ *
+ * @param {Record<string, string>} [extra] 额外环境变量
+ * @returns {Record<string, string>}
+ */
+export function childEnv(extra = {}) {
+  const env = { ...process.env, ...extra };
+  for (const key of [
+    'GITHUB_STEP_SUMMARY',
+    'GITHUB_OUTPUT',
+    'GITHUB_ENV',
+    'GITHUB_PATH',
+    'GITHUB_STATE',
+  ]) {
+    delete env[key];
+  }
+  return env;
+}
+
+/**
  * 以 dry-run 模式跑一次 detect（不写仓库）。
  *
  * ⚠️ 必须用**异步** spawn：mock registry 跑在**同一个进程**里，
@@ -103,12 +130,11 @@ function runDetect(apps) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [DETECT, '--dry-run', ...apps], {
       cwd: REPO_ROOT,
-      env: {
-        ...process.env,
+      env: childEnv({
         DOCKERHUB_API_BASE: baseUrl,
         GHCR_API_BASE: baseUrl,
         GITHUB_EVENT_NAME: 'schedule',
-      },
+      }),
     });
     let stdout = '';
     let stderr = '';
