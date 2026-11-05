@@ -878,3 +878,88 @@ describe('waitForChecks：skipped / neutral 按「是否必需」区分', () => 
     assert.equal(r.status, 'success');
   });
 });
+
+// ─── legacy combined status 的歧义（2026-11-04 实况修正）────────────────────
+//
+// 实况：PR #50 的必需检查「只读校验（单测 + 跨文件一致性 lint）」早已 success，
+// 但合并门禁卡满 15 分钟。根因：GitHub 的 legacy combined status 接口在
+// **没有任何 legacy commit status** 时返回 state="pending"（total_count=0），
+// 而门禁把 pending 当成「还没跑完」→ 永不成立。
+// 本仓 CI 全走 check runs、legacy status 恒为 0 条 → 必须按 total_count 区分。
+describe('waitForChecks：legacy combined status 的 total_count 语义', () => {
+  /** 同时造 check-runs 与 combined status */
+  function bothFetch(checkRuns, statusBody) {
+    return async (url) => {
+      if (url.includes('/check-runs')) {
+        return new Response(JSON.stringify({ check_runs: checkRuns }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (url.endsWith('/status')) {
+        return new Response(JSON.stringify(statusBody), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response('{}', { status: 404 });
+    };
+  }
+
+  it('combined status: total_count=0 且 state=pending（无 legacy status）→ **不阻断**', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: bothFetch(
+        [{ name: 'lint', status: 'completed', conclusion: 'success' }],
+        { state: 'pending', total_count: 0, statuses: [] },
+      ),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'success', '零 legacy status 时 pending 不得阻断合并');
+  });
+
+  it('combined status: 真的有 legacy status 且 pending → 仍视为未跑完（继续等）', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: bothFetch(
+        [{ name: 'lint', status: 'completed', conclusion: 'success' }],
+        { state: 'pending', total_count: 1, statuses: [{ context: 'ci', state: 'pending' }] },
+      ),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 3000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'timeout', '存在真实 legacy status 且 pending 时应继续等待');
+  });
+
+  it('combined status: state=failure → 无条件判 failure（明确信号）', async () => {
+    let t = 0;
+    const client = createGitHubClient({
+      token: 't',
+      fetchImpl: bothFetch(
+        [{ name: 'lint', status: 'completed', conclusion: 'success' }],
+        { state: 'failure', total_count: 1, statuses: [{ context: 'ci', state: 'failure' }] },
+      ),
+    });
+    const r = await client.waitForChecks({
+      owner: 'o', repo: 'r', ref: 'sha',
+      requiredChecks: ['lint'],
+      timeoutMs: 5000, intervalMs: 1000,
+      now: () => t,
+      sleep: async (ms) => { t += Math.max(ms, 1000); },
+    });
+    assert.equal(r.status, 'failure');
+  });
+});

@@ -303,17 +303,34 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
 
   /**
    * 获取某个 ref 的**合并 commit status**（legacy commit status API）
+   *
+   * ⚠️ 关键语义（2026-11-04 实况修正）：本仓 CI 全部走 GitHub Actions **check runs**，
+   * 从不设置 legacy commit status。于是该接口恒返回：
+   *     { "state": "pending", "total_count": 0, "statuses": [] }
+   * —— 注意 `state` 是 **"pending"** 而不是 "success"：GitHub 在**没有任何 legacy status**
+   * 时把 combined state 报成 pending（total_count 为 0）。
+   *
+   * 因此调用方**不能**无条件把 `state === 'pending'` 当作「还没跑完」——
+   * 那会让合并门禁在本仓**永远**不成立（实测卡死 15 分钟直至超时）。
+   * 必须结合 `total_count` 判断：**没有任何 legacy status 时，combined state 无意义，
+   * 只以 check runs 为准**。
+   *
    * @param {{owner: string, repo: string, ref: string}} params
-   * @returns {Promise<{state: string, statuses: Array<object>}>}
+   * @returns {Promise<{state: string, total_count: number, statuses: Array<object>}>}
    */
   async function getCombinedStatus({ owner, repo, ref }) {
     const data = await request(
       'GET',
       `/repos/${owner}/${repo}/commits/${encodeURIComponent(ref)}/status`,
     );
+    const statuses = (data && Array.isArray(data.statuses)) ? data.statuses : [];
+    const totalCount = Number(
+      (data && data.total_count !== undefined ? data.total_count : statuses.length) || 0,
+    );
     return {
       state: (data && data.state) || 'unknown',
-      statuses: (data && Array.isArray(data.statuses)) ? data.statuses : [],
+      total_count: totalCount,
+      statuses,
     };
   }
 
@@ -420,6 +437,16 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
         }
       }
       // 2) 合并 commit status 失败 → 判定失败
+      //
+      //    · `failure` 是**明确信号**（GitHub 不会凭空报 failure）→ 无条件采信。
+      //    · `pending` 是**歧义信号**：legacy status 一条都没有时，GitHub 同样报
+      //      "pending"（total_count=0）。本仓 CI 全走 check runs、legacy status 恒为 0，
+      //      若无条件采信 pending，合并门禁在本仓**永远**不成立
+      //      （实测：PR #50 的必需检查早已 success，门禁仍卡满 15 分钟直至超时）。
+      //      因此 pending 只在**确实存在 legacy status** 时才算「还没跑完」。
+      const hasLegacyStatus = Boolean(
+        combined && (combined.total_count ?? combined.statuses?.length ?? 0) > 0,
+      );
       if (combined && combined.state === 'failure') {
         return { status: 'failure', checks };
       }
@@ -436,7 +463,10 @@ export function createGitHubClient({ token, baseUrl = GITHUB_API_BASE, fetchImpl
         );
       };
       const allPassed = checks.length > 0 && checks.every(isGreen);
-      const combinedPending = combined && combined.state === 'pending';
+      // combined（legacy commit status）只在**确实存在 legacy status** 时参与判定：
+      // 本仓 legacy status 恒为 0 条，而 GitHub 此时把 state 报成 "pending"，
+      // 无条件采信会让合并门禁永远卡住（见上方注释）。
+      const combinedPending = hasLegacyStatus && combined.state === 'pending';
       const missing = required.filter(name => !checks.some(c => c.name === name));
       const requiredNotGreen = required.filter(name => {
         const c = checks.find(x => x.name === name);

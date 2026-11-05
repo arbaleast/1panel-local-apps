@@ -31,6 +31,13 @@ const TMP_BASE = path.join(ROOT, '.agent_cache', 'pr-e2e');
 /** 必需检查名（必须与 workflow 的 validate job name 一致） */
 const REQUIRED_CHECK = '只读校验（单测 + 跨文件一致性 lint）';
 
+/**
+ * 自动更新分支名里的日期 —— **必须与被测脚本同口径**（UTC 日期）。
+ * 硬编码日期会让测试在跨日（UTC 00:00）后莫名其妙失败。
+ */
+const TODAY = new Date().toISOString().slice(0, 10);
+const AUTO_BRANCH = `auto-update/${TODAY}`;
+
 // ─── 本地 mock GitHub API ──────────────────────────────────────────────────
 
 /**
@@ -71,7 +78,7 @@ function startMockApi(spec = {}) {
         return json({
           number,
           html_url: `http://127.0.0.1/pr/${number}`,
-          head: { ref: spec.headRef || 'auto-update/2026-11-04', sha: spec.headSha || 'deadbeef' },
+          head: { ref: spec.headRef || AUTO_BRANCH, sha: spec.headSha || 'deadbeef' },
           base: { ref: 'main' },
         });
       }
@@ -301,13 +308,13 @@ describe('open-update-pr.mjs 隔离式本地 E2E', () => {
       // 1) 分支已推送到远程裸仓库（真实 git 行为，非 mock）
       const branches = remoteBranches(repo.remote, repo.g);
       assert.ok(
-        branches.includes('auto-update/2026-11-04'),
+        branches.includes(AUTO_BRANCH),
         '自动更新分支应已推送到远程（本地裸仓库）',
       );
 
       // 2) 分支上应拿到这次提交（mock 的 merge 不会真的改本地 main，
       //    所以校验**分支**而不是 main）
-      const log = repo.g(['log', '--oneline', 'auto-update/2026-11-04'], repo.remote).stdout;
+      const log = repo.g(['log', '--oneline', AUTO_BRANCH], repo.remote).stdout;
       assert.match(log, /chore\(deps\): auto-update/, '分支应包含自动更新提交');
 
       // 3) API 调用序列：列出 PR → 创建 PR → 读 PR（SHA 重验）→ check-runs → status → merge → 删分支
@@ -356,7 +363,7 @@ describe('open-update-pr.mjs 隔离式本地 E2E', () => {
       assert.equal(after, before, '幂等运行不得重复创建 PR');
 
       // 分支上只应有一个自动更新提交（幂等：第二次运行不产生新提交）
-      const log = repo.g(['log', '--oneline', 'auto-update/2026-11-04'], repo.remote).stdout;
+      const log = repo.g(['log', '--oneline', AUTO_BRANCH], repo.remote).stdout;
       const autoCommits = log.split('\n').filter(l => l.includes('chore(deps): auto-update'));
       assert.equal(autoCommits.length, 1, `分支上应只有 1 个自动更新提交，实际 ${autoCommits.length}`);
     });
@@ -427,7 +434,7 @@ describe('open-update-pr.mjs 隔离式本地 E2E', () => {
 
       // 批次分支上应同时含「新版本目录」与「README」
       const files = repo
-        .g(['ls-tree', '-r', '--name-only', 'auto-update/2026-11-04'], repo.remote)
+        .g(['ls-tree', '-r', '--name-only', AUTO_BRANCH], repo.remote)
         .stdout.split('\n')
         .map(s => s.trim())
         .filter(Boolean);
@@ -438,6 +445,37 @@ describe('open-update-pr.mjs 隔离式本地 E2E', () => {
       assert.ok(files.includes('README.md'), 'README 应被提交进批次');
       // 且不得把无关文件卷进来（updates.json 是 gitignore 的产物，不该进批次）
       assert.ok(!files.includes('updates.json'), 'updates.json 不应进批次提交');
+    });
+  });
+
+  it('幂等重跑：工作区无改动但已有未合并 PR → 跳过提交/推送，**仍走合并门禁**', async () => {
+    const repo = makeLocalRepo('idempotent-existing');
+    const existing = {
+      number: 7,
+      html_url: 'http://127.0.0.1/pr/7',
+      title: `chore(deps): auto-update ${TODAY}`,
+      head: { ref: AUTO_BRANCH, sha: 'deadbeef' },
+      base: { ref: 'main' },
+    };
+    await withMock({ openPrs: [existing] }, async (api) => {
+      // **不改工作区** → 无可提交内容（幂等重跑）
+      const res = await runScript(repo, api);
+      assert.equal(res.status, 0, `幂等重跑应成功，stderr:\n${res.stderr}`);
+      assert.match(res.stdout, /无文件改动/);
+      assert.match(res.stdout, /继续走检查门禁与合并/);
+      // 没有新提交 → 不得推送
+      assert.ok(
+        !api.calls.some(c => c.method === 'POST' && c.path === '/repos/o/r/pulls'),
+        '不得新建 PR',
+      );
+      assert.ok(
+        api.calls.some(c => c.method === 'PATCH' && c.path === '/repos/o/r/pulls/7'),
+        '应更新既有 PR',
+      );
+      assert.ok(
+        api.calls.some(c => c.method === 'PUT' && c.path.includes('/merge')),
+        '**必须**继续走到合并（否则 PR 永远悬着）',
+      );
     });
   });
 
@@ -474,7 +512,7 @@ describe('open-update-pr.mjs 隔离式本地 E2E', () => {
       assert.ok(!api.calls.some(c => c.method === 'DELETE'), '检查失败时不得删远程分支');
       // 远程分支保留（供人工审查）
       assert.ok(
-        remoteBranches(repo.remote, repo.g).includes('auto-update/2026-11-04'),
+        remoteBranches(repo.remote, repo.g).includes(AUTO_BRANCH),
         '检查失败时远程分支应保留',
       );
     });
@@ -531,7 +569,7 @@ describe('open-update-pr.mjs 隔离式本地 E2E', () => {
           return json({
             number: 100,
             html_url: 'http://127.0.0.1/pr/100',
-            head: { ref: 'auto-update/2026-11-04', sha: 'deadbeef' },
+            head: { ref: AUTO_BRANCH, sha: 'deadbeef' },
             base: { ref: 'main' },
           });
         }

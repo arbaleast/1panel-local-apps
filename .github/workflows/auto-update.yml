@@ -251,7 +251,12 @@ jobs:
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN || github.token }}
+          # 只传**真 PAT**，不再回退 github.token：
+          # GITHUB_TOKEN 创建的 PR 不会触发 pull_request 工作流 → 目标 PR 的
+          # 必需检查永远不会出现 → 合并门禁必然卡满超时，批次静默丢失。
+          # 缺 PAT 时让 open-update-pr.mjs **立即失败并给出可执行指引**，
+          # 而不是退化成「跑满 15 分钟才报错」。
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           # 等待必需检查的窗口：15 分钟 / 20 秒轮询一次。
           # 超时或状态未知 → 保留 PR 与远程分支，不合并（脚本内默认 30 分钟，这里收紧）。
           MERGE_TIMEOUT_MS: '900000'
