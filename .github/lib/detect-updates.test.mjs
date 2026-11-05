@@ -440,30 +440,33 @@ describe('buildResultSummary（结果聚合）', () => {
   });
 });
 
-describe('formatResultReport（每应用结果表）', () => {
+describe('formatResultReport（紧凑口径：计数 + 需要关注的应用）', () => {
   const results = [
-    { app: 'anirss', status: 'success', stage: 'scan', reason: '检测到新版本 1.2.3', updates: 1 },
-    { app: 'jellyfin', status: 'skipped', stage: 'whitelist', reason: '已在白名单，手维护', updates: 0 },
+    { app: 'anirss', status: 'success', stage: 'scan', reason: '检测到新版本 1.2.3', code: 'update-found', updates: 1 },
+    { app: 'jellyfin', status: 'skipped', stage: 'whitelist', reason: '已在白名单，手维护', code: 'whitelisted', updates: 0 },
     {
       app: 'brokenapp',
       status: 'failed',
       stage: 'registry',
       reason: 'Registry 请求失败',
+      code: 'registry-request-failed',
       error: 'Registry 请求失败: fetch failed',
       updates: 0,
     },
   ];
 
-  it('包含每个应用名 / 状态 / 阶段 / 原因', () => {
+  it('逐行列出**需要关注**的应用（更新 / 失败）及其状态、阶段、原因', () => {
     const text = formatResultReport(results);
+    // 有更新的应用 → 列出
     assert.match(text, /anirss/);
-    assert.match(text, /jellyfin/);
+    assert.match(text, /UPDATED/);
+    assert.match(text, /检测到新版本 1\.2\.3/);
+    // 失败的应用 → 列出
     assert.match(text, /brokenapp/);
-    assert.match(text, /success/);
-    assert.match(text, /skipped/);
-    assert.match(text, /failed/);
-    assert.match(text, /whitelist/);
+    assert.match(text, /FAILED/);
     assert.match(text, /registry/);
+    // 合规跳过 → 只进计数，不逐行铺开（输出收敛，2026-11-05）
+    assert.ok(!/jellyfin/.test(text), '跳过类应用不应逐行刷屏');
   });
 
   it('失败应用名与原因出现在报告中', () => {
@@ -477,12 +480,25 @@ describe('formatResultReport（每应用结果表）', () => {
     assert.match(text, /fetch failed/);
   });
 
-  it('包含汇总行（success/skipped/failed/总数）', () => {
+  it('包含汇总行（五类计数 + 总数）', () => {
     const text = formatResultReport(results);
-    assert.match(text, /共 3 个应用/);
-    assert.match(text, /success 1/);
-    assert.match(text, /skipped 1/);
-    assert.match(text, /failed 1/);
+    assert.match(text, /扫描 3/);
+    assert.match(text, /更新 1/);
+    assert.match(text, /跳过 1/);
+    assert.match(text, /失败 1/);
+  });
+
+  it('输出不随应用数线性膨胀（60 个应用 → 输出仍是常数级行数）', () => {
+    const many = Array.from({ length: 60 }, (_, i) => ({
+      app: 'app-' + i,
+      status: 'success',
+      stage: 'scan',
+      reason: '已是最新',
+      code: 'no-update',
+      updates: 0,
+    }));
+    const text = formatResultReport(many);
+    assert.ok(text.split('\n').length <= 6, `60 个无更新应用的输出应 <= 6 行，实际 ${text.split('\n').length}`);
   });
 });
 

@@ -286,9 +286,48 @@ GitHub API 是**本地 mock HTTP 服务**（`GITHUB_API_BASE` 指向 `127.0.0.1`
 Summary 必须给出**成功更新 / 无更新 / 幂等跳过 / 警告 / 失败**五类清单，
 禁止只输出一条笼统的成功或失败日志。
 
-Summary 的「每应用执行轨迹」表逐项展示目标 §七.1 要求的字段：
+Summary 的「需要关注」表逐项展示目标 §七.1 要求的字段：
 应用名、检测状态（`detectStatus`）、当前本地版本、上游版本、最终状态、原因；
-失败应用另有「失败明细」表（stage / reason / error）。
+失败应用的底层 error 并入「原因」列（同列可见，不必再开一张失败明细表）。
+
+#### 输出收敛（2026-11-05）
+
+60 个应用的批次实测：step summary 里 60 个应用被**列了两遍**（detect 汇总表 +
+执行轨迹表，共 178 行 / 8.4 KiB，内容近乎重复），stdout 还另有一张 60 行表；
+workflow log 里另有 detect 脚本逐应用 / 逐 service 的数百行日志。
+现在的口径（**信息不删，形态收敛**）：
+
+| 位置 | 内容 | 60 应用实测 |
+|---|---|---|
+| stdout（detect 脚本） | 五类计数 + **只列需要关注的应用**（有更新 / 失败）；不再逐行铺开全表 | 9 行 / 0.6 KiB（原 74 行 / 2.9 KiB） |
+| workflow log | detect 脚本的常规路径明细降级为 debug（`DETECT_LOG=debug` 打开）；**有动作 / 有异常**仍是 info | ~10 行（原 300+ 行） |
+| Summary 段①（detect 脚本写） | 「需要关注」表 + 折叠的「无更新」列表（`<details>`） | 25 行 / 1.4 KiB |
+| Summary 段②（workflow 写） | 批次概览 + 阶段明细（**不渲染**每应用表，避免与段①重复） | 15 行 / 0.3 KiB |
+| **合计** | | **39 行 / 1.6 KiB**（原 178 行 / 8.4 KiB） |
+
+分工：**detect 脚本写「每应用结果」段**（它才有 `updates.json` 的 results），
+**workflow 写「批次概览 + 阶段明细」段**（只有它有 `execution.json`）。
+同一张表**只渲染一次**（`renderExecutionMarkdown` 的 `appTable: false` 开关 +
+`workflow.test.mjs` 的静态断言锁定）。
+
+「无更新」的几十个应用折叠进 `<details>`，只给计数与可展开的列表 ——
+信息不丢，但默认不刷屏。
+
+#### 测试不得污染 CI 输出（2026-11-05）
+
+测试进程把 `GITHUB_STEP_SUMMARY` 等 Actions 输出变量继承给子进程时，
+被测脚本会**往真的 step summary 里追加内容** —— 2026-11-05 实测：
+detect 链路的 E2E 有 6 次 `runDetect`，CI 页面上就出现 6 段「detect-updates 检测汇总」
+（扫描应用数 1/1/1/1/2/4，正好对上 6 次调用）。
+
+职责边界：**生产代码写 CI 输出，测试不得冒充生产写入。**
+
+- `.github/lib/detect-updates-e2e.test.mjs` 与 `.github/lib/pr-flow-e2e.test.mjs` 的
+  子进程 env 统一经 `childEnv()` 构造，**剔除** `GITHUB_STEP_SUMMARY` /
+  `GITHUB_OUTPUT` / `GITHUB_ENV` / `GITHUB_PATH` / `GITHUB_STATE`
+- `.github/lib/test-hygiene.test.mjs` 守卫两条不变量：
+  静态（测试文件不得把上述变量作为 env 属性传给子进程）+ 行为
+  （detect E2E 跑完，step summary 文件必须**一个字节都不写**）
 
 
 ## 5. README 同步

@@ -317,3 +317,35 @@ describe('auto-update workflow：Token 传递（audit P2-12 实况确认）', ()
     );
   });
 });
+
+// ─── 2026-11-05 输出收敛：Summary 不得重复渲染同一张表 ─────────────────────
+
+describe('auto-update workflow：Summary 输出收敛', () => {
+  it('执行结果汇总步骤必须 appTable:false（每应用表已由 detect 脚本写过）', () => {
+    // detect-updates.mjs 自己写「每应用结果」段（它才有 updates.json 的 results）；
+    // workflow 再渲染一遍 → 同一张表出现在 Summary 里两次（实测 178 行 / 8.4 KiB）。
+    const [autoId, autoJob] = autoUpdateJobs[0];
+    const step = (autoJob.steps || []).find((s) =>
+      String(s?.run || '').includes('renderExecutionMarkdown'),
+    );
+    assert.ok(step, `${autoId} job 必须有渲染执行结果的 step`);
+    assert.match(
+      String(step.run),
+      /appTable:\s*false/,
+      '执行结果步骤必须关闭每应用表（避免与 detect 脚本的 Summary 重复）',
+    );
+  });
+
+  it('检测结果步骤不得再渲染每应用表（统一由 detect 脚本负责）', () => {
+    const [autoId, autoJob] = autoUpdateJobs[0];
+    const step = (autoJob.steps || []).find((s) =>
+      String(s?.run || '').includes('updates.json') &&
+      String(s?.run || '').includes('GITHUB_STEP_SUMMARY'),
+    );
+    assert.ok(step, `${autoId} job 必须有检测结果汇总步骤`);
+    assert.ok(
+      !String(step.run).includes('renderMarkdown('),
+      '检测结果步骤不得再渲染每应用表（与 detect 脚本的 Summary 重复）',
+    );
+  });
+});

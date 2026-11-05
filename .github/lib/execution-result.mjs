@@ -63,9 +63,9 @@ export function detectStatusFromResult(detectResult) {
   if (status === 'failed') return DETECT_STATUS.FAILED;
   if (status === 'skipped') return DETECT_STATUS.SKIPPED;
   if (status === 'success') {
-    return detectResult.code === 'update-found'
-      ? DETECT_STATUS.HAS_UPDATE
-      : DETECT_STATUS.NO_UPDATE;
+    // 只认机器码字段 `code`（`reason` 是人读文本，回退会误判）
+    const code = detectResult.code;
+    return code === 'update-found' ? DETECT_STATUS.HAS_UPDATE : DETECT_STATUS.NO_UPDATE;
   }
   return DETECT_STATUS.SKIPPED;
 }
@@ -191,7 +191,9 @@ export function statusFromDetectResult(detectResult) {
   if (status === 'failed') return EXEC_STATUS.FAILED;
   if (status === 'skipped') return EXEC_STATUS.SKIPPED;
   if (status === 'success') {
-    return detectResult.code === 'update-found' ? EXEC_STATUS.UPDATED : EXEC_STATUS.NO_UPDATE;
+    // 只认机器码字段 `code`（`reason` 是人读文本，回退会误判）
+    const code = detectResult.code;
+    return code === 'update-found' ? EXEC_STATUS.UPDATED : EXEC_STATUS.NO_UPDATE;
   }
   // 未知状态 → **不猜**：既不是"无更新"也不是"有更新"，按跳过处理
   return EXEC_STATUS.SKIPPED;
