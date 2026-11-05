@@ -288,3 +288,32 @@ describe('auto-update workflow：合并门禁与必需检查（2026-11 治理）
     assert.ok(!/bypass/i.test(text), 'workflow 不得出现绕过分支保护的配置');
   });
 });
+
+// ─── 2026-11-05 热修：Token 传递不得静默退化 ───────────────────────────────
+
+describe('auto-update workflow：Token 传递（audit P2-12 实况确认）', () => {
+  it('开 PR 步骤只传 secrets.PAT_TOKEN，**不得**回退 github.token', () => {
+    // GITHUB_TOKEN 创建的 PR 不触发 pull_request 工作流 → 必需检查永不到达
+    // → 合并门禁卡满超时，批次静默丢失（PR #50 实况）。
+    // 因此工作流必须只传真 PAT；PAT 缺失时由脚本立即失败并给出可执行指引。
+    const [autoId, autoJob] = autoUpdateJobs[0];
+    const prStep = (autoJob.steps || []).find((s) =>
+      String(s?.run || '').includes('open-update-pr.mjs'),
+    );
+    assert.ok(prStep, `${autoId} job 必须有开 PR 的 step`);
+    const env = prStep.env || {};
+    assert.ok(
+      Object.prototype.hasOwnProperty.call(env, 'PAT_TOKEN'),
+      '必须显式声明 PAT_TOKEN 环境变量',
+    );
+    assert.match(
+      String(env.PAT_TOKEN),
+      /secrets\.PAT_TOKEN/,
+      'PAT_TOKEN 必须取自 secrets.PAT_TOKEN',
+    );
+    assert.ok(
+      !/github\.token/.test(String(env.PAT_TOKEN)),
+      `PAT_TOKEN 不得回退 github.token（实测：${env.PAT_TOKEN}）`,
+    );
+  });
+});

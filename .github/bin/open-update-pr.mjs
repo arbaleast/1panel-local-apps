@@ -89,23 +89,25 @@ if (!/^[^/\s]+\/[^/\s]+$/.test(GITHUB_REPOSITORY)) {
   process.exit(1);
 }
 
-// ⚠️ GITHUB_TOKEN 回退必须**显式中止**（audit P2-12）：
-//    GITHUB_TOKEN 开出的 PR **不会**再触发 pull_request 工作流（GitHub 防 re-run 循环的
+// ⚠️ 缺少 PAT_TOKEN 必须**显式中止**（audit P2-12，2026-11-05 实况确认）：
+//    GITHUB_TOKEN 开出的 PR **不会**触发 pull_request 工作流（GitHub 防 re-run 循环的
 //    内置机制），必需检查永远不会出现 → 合并门禁 waitForChecks 必然超时 → 批次死锁。
 //    正确做法是配置仓库 secret PAT_TOKEN（classic PAT，勾选 repo 写权限）。
 //    放在事件护栏之后：PR 事件下的拒绝必须优先于一切其它判断。
+//
+//    为什么不能「有 GITHUB_TOKEN 就退而用之」：工作流把
+//    `secrets.PAT_TOKEN || github.token` 的**结果**塞进 PAT_TOKEN 环境变量，
+//    脚本根本分不清拿到的是真 PAT 还是 GITHUB_TOKEN —— 于是 PAT 一旦被误删，
+//    脚本会静默退化 → 门禁永不到达 → 批次丢失且日志只有一句「等待必需检查」。
+//    现在改为：工作流**只传真 PAT**，脚本在 PAT 缺失时立即失败并给出可执行指引。
 let PAT_TOKEN = process.env.PAT_TOKEN || '';
-if (!PAT_TOKEN && process.env.GITHUB_TOKEN) {
+if (!PAT_TOKEN) {
   console.error(
-    '[ERROR] 未设置 PAT_TOKEN，拒绝使用 GITHUB_TOKEN 开 PR：' +
+    '[ERROR] 缺少 PAT_TOKEN，拒绝用 GITHUB_TOKEN 开 PR：' +
       'GITHUB_TOKEN 创建的 PR 不会触发 pull_request 工作流（GitHub 防自触发机制），' +
       '本 PR 的必需检查将永远不出现 → 合并门禁必然超时，批次无法自动合并。' +
-      '请在仓库 secret 中配置 PAT_TOKEN（有 repo 写权限的 classic PAT）后重跑。',
+      '请在仓库 Settings → Secrets 配置 PAT_TOKEN（classic PAT，勾选 repo 写权限）后重跑。',
   );
-  process.exit(1);
-}
-if (!PAT_TOKEN) {
-  console.error('[ERROR] 缺少 GITHUB_TOKEN / PAT_TOKEN 环境变量');
   process.exit(1);
 }
 

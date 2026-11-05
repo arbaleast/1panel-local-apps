@@ -66,7 +66,7 @@ describe('open-update-pr.mjs 事件护栏', () => {
   it('缺少 token → 非零退出（不会静默降级）', () => {
     const r = runScript({ GITHUB_EVENT_NAME: 'schedule', PAT_TOKEN: '' });
     assert.equal(r.status, 1);
-    assert.match(r.stderr, /缺少 GITHUB_TOKEN \/ PAT_TOKEN/);
+    assert.match(r.stderr, /缺少 PAT_TOKEN/);
   });
 
   it('非法 GITHUB_REPOSITORY → 非零退出', () => {
@@ -135,15 +135,15 @@ describe('open-update-pr.mjs 安全收口（audit P2）', () => {
     assert.match(m[1], /不合并|保留|保留/);
   });
 
-  it('P2-d: GITHUB_TOKEN 回退必须**显式中止**，且不回显 token 值', () => {
+  it('P2-d: 缺少 PAT_TOKEN 必须**显式中止**（不退化到 GITHUB_TOKEN），且不回显 token 值', () => {
     const r = runScript({
       GITHUB_EVENT_NAME: 'schedule',
       PAT_TOKEN: '',
       GITHUB_TOKEN: 'gsh_secret_value',
       GITHUB_REPOSITORY: 'owner/repo',
     });
-    assert.equal(r.status, 1, '回退 GITHUB_TOKEN 必须非零退出');
-    assert.match(r.stderr, /拒绝使用 GITHUB_TOKEN/);
+    assert.equal(r.status, 1, '缺少 PAT_TOKEN 必须非零退出');
+    assert.match(r.stderr, /拒绝用 GITHUB_TOKEN/);
     assert.match(r.stderr, /PAT_TOKEN/);
     // 绝不把 token 值打进日志
     assert.doesNotMatch(r.stderr, /gsh_secret_value/);
