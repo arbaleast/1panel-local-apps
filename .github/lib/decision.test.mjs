@@ -348,3 +348,55 @@ describe('§13 真实仓库回归（P0/P1 已修 Bug）', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// §12 tag 后缀亲和（tagSuffix 透传）：photoprism CE 变体锚定
+// ---------------------------------------------------------------------------
+describe('§12 tag 后缀亲和 — decideUpdate 透传 tagSuffix', () => {
+  const POOL = ['260919', '260919-ce', '261029', '261029-ce', '261029-cuda', '261201', '261201-ce'];
+
+  it('photoprism + tagSuffix=ce：始终锁定 -ce 变体（不漂到主 tag / -cuda）', () => {
+    const d = decideUpdate({
+      appKey: 'photoprism',
+      currentImage: 'photoprism/photoprism:261029-ce',
+      candidates: POOL,
+      source: 'dockerhub',
+      tagSuffix: 'ce',
+    });
+    assert.equal(d.candidateVersion, '261201-ce');
+    assert.equal(d.comparisonResult, 'upgradable');
+    assert.equal(d.shouldUpdate, true);
+  });
+
+  it('不带 tagSuffix 时决策行为保持既有口径（CalVer 多变体同轨混选）', () => {
+    const d = decideUpdate({
+      appKey: 'photoprism',
+      currentImage: 'photoprism/photoprism:261029-ce',
+      candidates: ['261029', '261029-ce', '261029-cuda', '261201'],
+      source: 'dockerhub',
+    });
+    assert.equal(d.candidateVersion, '261201');
+    assert.equal(d.comparisonResult, 'upgradable');
+  });
+
+  it('上游没有匹配后缀的候选 → 不产出更新（绝不漂移到其他变体）', () => {
+    const d = decideUpdate({
+      appKey: 'photoprism',
+      currentImage: 'photoprism/photoprism:261029-ce',
+      candidates: ['261201', '261201-cuda', 'latest'],
+      source: 'dockerhub',
+      tagSuffix: 'ce',
+    });
+    assert.equal(d.shouldUpdate, false);
+    assert.equal(d.comparisonResult, 'up-to-date');
+  });
+
+  it('带 tagSuffix 的输入同样遵守 §1 字段契约（恒为 9 个字段）', () => {
+    const d = decideUpdate({
+      currentImage: 'photoprism/photoprism:261029-ce',
+      candidates: POOL,
+      tagSuffix: 'ce',
+    });
+    assert.deepEqual(Object.keys(d).sort(), [...CONTRACT_KEYS].sort());
+  });
+});

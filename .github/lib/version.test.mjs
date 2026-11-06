@@ -426,3 +426,56 @@ describe('version：版本目录选型', () => {
     assert.equal(compareVersionsLooseNumeric('1.0.0', '1.0.0.0'), 0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// §13 tag 后缀亲和（R6）：CalVer 多变体同轨判等场景下的显式锚定
+// ---------------------------------------------------------------------------
+describe('version：tag 后缀亲和（selectCandidate tagSuffix）', () => {
+  const POOL = [
+    '20220121', '260919', '260919-ce', '261029', '261029-ce', '261029-cuda',
+    '261201', '261201-ce', 'latest', 'stable',
+  ];
+
+  it('亲和把选型锁进 -ce 变体（photoprism 场景：不得漂到主 tag / -cuda）', () => {
+    const r = selectCandidate('261029-ce', POOL, { tagSuffix: 'ce' });
+    assert.equal(r.tag, '261201-ce');
+    assert.equal(r.comparison, COMPARISON_RESULTS.UPGRADABLE);
+  });
+
+  it('同版本多变体并列判等时（无净升级），亲和仍只交 -ce', () => {
+    const r = selectCandidate('261201', ['261201', '261201-cuda', '261201-ce'], { tagSuffix: 'ce' });
+    assert.equal(r.tag, '261201-ce');
+    assert.equal(r.comparison, COMPARISON_RESULTS.UP_TO_DATE);
+  });
+
+  it('当前在主 tag 而亲和为 -ce 时：升向 -ce 变体，不回主轨道', () => {
+    const r = selectCandidate('20220121', POOL, { tagSuffix: 'ce' });
+    assert.equal(r.tag, '261201-ce');
+    assert.equal(r.comparison, COMPARISON_RESULTS.UPGRADABLE);
+  });
+
+  it('上游没有匹配后缀的可比候选 → 保持现状，绝不漂移', () => {
+    const r = selectCandidate('261029-ce', ['261029', '261029-cuda', '261201', 'latest'],
+      { tagSuffix: 'ce' });
+    assert.equal(r.tag, '261029-ce');
+    assert.equal(r.comparison, COMPARISON_RESULTS.UP_TO_DATE);
+    assert.equal(r.candidate, null);
+  });
+
+  it('后缀匹配大小写不敏感', () => {
+    const r = selectCandidate('261029-CE', ['261029-CE', '261201-CE'], { tagSuffix: 'CE' });
+    assert.equal(r.tag, '261201-CE');
+    assert.equal(r.comparison, COMPARISON_RESULTS.UPGRADABLE);
+  });
+
+  it('不带 tagSuffix 选项时行为不变（CalVer 多变体同轨混选的既有口径）', () => {
+    const r = selectCandidate('261029-ce', ['261029', '261029-ce', '261029-cuda', '261201']);
+    assert.equal(r.tag, '261201');
+    assert.equal(r.comparison, COMPARISON_RESULTS.UPGRADABLE);
+  });
+
+  it('亲和不改变降级等既有铁律', () => {
+    const r = selectCandidate('261201-ce', ['261029-ce'], { tagSuffix: 'ce' });
+    assert.equal(r.comparison, COMPARISON_RESULTS.INCOMPATIBLE, '拒绝未授权降级');
+  });
+});

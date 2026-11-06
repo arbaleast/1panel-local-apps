@@ -67,6 +67,7 @@ export function createDecisionResult(init = {}) {
  *   candidates?: string[],      // 上游候选 tag 列表
  *   source?: string,           // 'dockerhub' | 'ghcr' | 'custom'
  *   error?: Error|string|null, // 上游故障（Registry 报错等）
+ *   tagSuffix?: string,        // per-app tag 后缀亲和（如 'ce' → 只在 -ce 变体内选型；透传给 selectCandidate R6）
  * }} input
  * @returns {object} Decision Result
  */
@@ -154,7 +155,11 @@ export function decideUpdate(input = {}) {
     });
   }
 
-  const selection = selectCandidate(currentTag, candidates);
+  const selection = selectCandidate(
+    currentTag,
+    candidates,
+    input.tagSuffix != null ? { tagSuffix: input.tagSuffix } : {},
+  );
 
   const decision = createDecisionResult({
     appKey,
