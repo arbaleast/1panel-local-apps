@@ -5,7 +5,8 @@
 // 这样规则层可以被单测直接喂入合成 fixture，也便于豁免机制在 bin 层统一套用。
 //
 // 严重等级约定（Gate 1 获批矩阵）：
-//   P0/P1 → error（exit 1）；P2 → warning（exit 0，GA annotation 提示）。
+//   P0/P1 → error（exit 1）；P2 → warning（exit 0，GA annotation 提示）；
+//   P3    → UNVERIFIED（单列展示，**不影响 exit code**）——「没查到」≠「查过且通过」。
 //
 // 零误杀（Zero False Positives）基线来自阶段 1/2 全仓只读审计 + 逐规则边界实证：
 //   - var.undeclared      → 21 实例（scrob×18 / jellystat×2 / llmwiki×1）；
@@ -23,6 +24,7 @@
 
 import { parseImage } from './registry.mjs';
 import * as versionEngine from './version.mjs';
+import { DEPLOY_COMPAT_RULES } from './deploy-compat.mjs';
 
 // ─── 1Panel 内置/系统注入变量（T1 白名单，compose 引用免声明）──────────────
 // 与 AGENTS.md §6 的 6 变量清单一致；lint-exemptions.yml 之外只允许这一处硬白名单。
@@ -51,6 +53,18 @@ export const RULES = Object.freeze({
   'readme.vars':            { severity: 'P2', ssot: 'README.md', desc: 'README 中 ${VAR} 应指向真实存在的变量（PANEL_ 注入位除外）' },
   'meta.name-drift':        { severity: 'P2', ssot: '根目录 data.yml', desc: '版本级 additionalProperties.name 应与根目录一致' },
   'meta.i18n-coverage':     { severity: 'P2', ssot: '根目录 data.yml', desc: '根级 description 若存在须含 en 与 zh' },
+  // ── 部署兼容性规则（阶段 2–6）：元数据由 lib/deploy-compat.mjs 提供 ──────
+  //   规则实现与本模块共用同一套 finding 形状 / 豁免机制 / 输出格式，
+  //   **不另起第二套静态校验器**（目标「直接复用 SSOT 校验体系」）。
+  ...DEPLOY_COMPAT_RULES,
+  // runtime.high-privilege 同时被既有规则与部署兼容性规则产出 → 合并为一条，
+  // 元数据取并集（既有 desc 覆盖 privileged/cap_add/devices/GPU，部署侧补 pid·ipc/security_opt/敏感挂载）。
+  'runtime.high-privilege': {
+    severity: 'P2',
+    escalationSeverity: 'P0',
+    ssot: 'docker-compose.yml',
+    desc: 'privileged/cap_add/devices/GPU/pid·ipc host/security_opt/敏感 bind 挂载等高权限配置须豁免登记原因或补降权方案；privileged 与 host 网络叠加升级为 P0',
+  },
 });
 export const RULE_IDS = Object.freeze(new Set(Object.keys(RULES)));
 

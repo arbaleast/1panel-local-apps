@@ -12,12 +12,10 @@ services:
                 limits:
                     cpus: ${CPUS}
                     memory: ${MEMORY_LIMIT}
-        devices:
-            - /dev/dri:/dev/dri
         environment:
             - NVIDIA_VISIBLE_DEVICES=all
             - NVIDIA_DRIVER_CAPABILITIES=all
-        runtime: nvidia
+        runtime: ${GPU_RUNTIME}
         image: jellyfin/jellyfin:2026081705-arm64
         labels:
             createdBy: Apps

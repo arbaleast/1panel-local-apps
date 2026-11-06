@@ -94,6 +94,20 @@ docker logs -f <CONTAINER_NAME>-worker 2>&1 | grep -iE "nvenc|qsv|vce|handbrake"
 - 官方 compose 模板: https://github.com/TheNickOfTime/handbrake-web/tree/main/compose
 - NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
+
+## GPU 加速（可选，默认关闭）
+
+worker 的 `deploy.resources.reservations.devices` **默认整块注释掉** ——
+宿主机没有 NVIDIA Container Toolkit 时，预约 nvidia 设备会让 `docker compose up` **直接失败**。
+
+需要 NVENC / NVENC 硬件转码时：
+
+1. 宿主机安装 NVIDIA 驱动 + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+   （`nvidia-ctk runtime configure --runtime=docker` 后重启 docker）；
+2. 取消本目录 `docker-compose.yml` 中 worker 服务下 `deploy.resources.reservations.devices` 段的注释。
+
+> 未做上述准备时，请保持默认（注释状态）—— 无 NVIDIA 的机器也能正常启动（CPU 转码）。
+
 ## 运行用户 UID / GID
 
 安装参数 `UID` / `GID` 通过 compose 的 `user:` 指定容器内进程身份，默认 `99` / `100`。

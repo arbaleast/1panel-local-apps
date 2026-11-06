@@ -37,7 +37,7 @@ services:
         # NVIDIA_ENABLE=true 时该 runtime 方会拉起 nvidia-container-cli; 留 false 也不影响 s6 启动
         device_cgroup_rules:
             - 'c 195:* rw'
-        runtime: nvidia
+        runtime: ${GPU_RUNTIME}
         image: ghcr.io/linuxserver/openshot:4.0.0
         labels:
             createdBy: Apps

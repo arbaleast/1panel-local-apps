@@ -32,7 +32,7 @@ services:
         # 导致 Xvfb 不起 → Selkies WebRTC 推流断流 → 浏览器看到黑屏; HandBrake + Selkies 走 X11/Xvfb 路径, 不要走 Wayland
         device_cgroup_rules:
             - 'c 195:* rw'
-        runtime: nvidia
+        runtime: ${GPU_RUNTIME}
         image: ghcr.io/linuxserver/handbrake:1.11.2-ls41
         labels:
             createdBy: Apps
