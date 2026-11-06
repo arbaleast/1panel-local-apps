@@ -184,6 +184,19 @@
 4. **构建元数据无关**：`1.2.0+build.1` 与 `1.2.0+build.2` 版本相等，**不得**触发升级。
 5. **宁缺毋滥**：无法识别 / 无法比较 / 有歧义 → 明确输出「需人工确认 / 跳过」及原因，
    **绝不**降级为数字比较。
+6. **tag 后缀亲和（per-app）**：CalVer 家族的多变体 tag（`261029` / `261029-ce` /
+   `261029-cuda`）在版本引擎里同轨且比较判等（两侧 variant 均为 null），不带约束时
+   选型「谁先进候选池谁当选」，存量版本会随候选顺序在不同变体间漂移
+   （photoprism 曾从主 tag 漂到 `-cuda`）。入口在
+   [scripts/detect-updates.mjs](../.github/scripts/detect-updates.mjs) 的
+   `TAG_SUFFIX_AFFINITY_APPS`（如 `photoprism: 'ce'`），经
+   [lib/decision.mjs](../.github/lib/decision.mjs) 透传到
+   `selectCandidate(candidates, { tagSuffix })`（铁律 R6，见
+   [lib/version.mjs](../.github/lib/version.mjs)）：候选池**锁死**在末尾
+   `-<后缀>`（大小写不敏感）内；上游没有匹配后缀的可比候选 → 保持现状，
+   绝不漂移到其他变体。
+   适用边界：SemVer 变体（`-alpine` / `-ls36` 等）本身已成独立轨道（铁律 1），
+   亲和只补 CalVer 家族后缀不成轨道的缺口。
 
 ### 3.6 SemVer 两套语义，禁止混用
 

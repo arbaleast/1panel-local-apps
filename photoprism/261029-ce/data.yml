@@ -1,6 +1,6 @@
 additionalProperties:
   key: photoprism
-  name: photoprism 260919
+  name: photoprism 261029-ce
   tags:
     - Photo
     - Gallery
@@ -9,8 +9,8 @@ additionalProperties:
   shortDescZh: PhotoPrism 自托管 AI 照片管理（人脸/场景识别）
   shortDescEn: PhotoPrism self-hosted AI photo management (face/scene recognition)
   description:
-    zh: PhotoPrism 260919（2026-09-19 release）— 上游 [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker 镜像，多架构 linux/amd64 + linux/arm64。本应用不捆绑数据库；默认 sqlite 零依赖启动，可选切到 1Panel 应用商店已部署的 MariaDB / MySQL / PostgreSQL 走外部库（按容器名互通）。支持人脸识别、场景识别、地图、WebDAV、移动端 PWA 等。
-    en: PhotoPrism 260919 (2026-09-19 release) — upstream [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker image (multi-arch linux/amd64 + linux/arm64). This app bundles no database; defaults to SQLite for zero-dep start, with an option to switch to 1Panel app-store MariaDB / MySQL / PostgreSQL via container name. Includes face recognition, scene detection, maps, WebDAV and mobile PWA.
+    zh: 'PhotoPrism 261029（2026-10-29 release，社区版 CE tag: photoprism/photoprism:261029-ce）— 上游 [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker 镜像，多架构 linux/amd64 + linux/arm64。本应用不捆绑数据库；默认 sqlite 零依赖启动，可选切到 1Panel 应用商店已部署的 MariaDB / MySQL / PostgreSQL 走外部库（按容器名互通）。支持人脸识别、场景识别、地图、WebDAV、移动端 PWA 等。'
+    en: 'PhotoPrism 261029 (2026-10-29 release, community-edition CE tag: photoprism/photoprism:261029-ce) — upstream [photoprism/photoprism](https://github.com/photoprism/photoprism) Docker image (multi-arch linux/amd64 + linux/arm64). This app bundles no database; defaults to SQLite for zero-dep start, with an option to switch to 1Panel app-store MariaDB / MySQL / PostgreSQL via container name. Includes face recognition, scene detection, maps, WebDAV and mobile PWA.'
   type: media
   architectures:
     - amd64

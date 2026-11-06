@@ -482,10 +482,12 @@ export function compareVersions(a, b) {
  *   R3 正式版不升预发布
  *   R4 禁止降级
  *   R5 构建元数据不触发升级（比较只看 SemVer 优先级）
+ *   R6 tag 后缀亲和（options.tagSuffix 非空时：候选池只保留末尾 `-<后缀>`
+ *      的 tag；上游没有匹配候选 → 保持现状不漂移。仅主轨路径生效）
  *
  * @param {string} currentTag 当前使用的 tag
  * @param {string[]} candidates 上游候选 tag 列表
- * @param {{exclude?:(t:string)=>boolean, include?:(t:string)=>boolean}} [options]
+ * @param {{exclude?:(t:string)=>boolean, include?:(t:string)=>boolean, tagSuffix?:string}} [options]
  * @returns {{
  *   tag: string|null,
  *   comparison: 'upgradable'|'up-to-date'|'incompatible'|'uncomparable',
@@ -628,9 +630,32 @@ export function selectCandidate(currentTag, candidates, options = {}) {
     };
   }
 
+  // ── per-app tag 后缀亲和（options.tagSuffix）────────────────────────
+  // 动机：CalVer 家族的多变体 tag（`261029` / `261029-ce` / `261029-cuda`）在
+  // 分类上 variant 均为 null → 同轨同优先级，比较判等时**谁先进候选池谁当选**，
+  // 存量版本会随候选顺序在不同变体间漂移（photoprism 自动更新曾从主 tag 漂到 -cuda）。
+  // 亲和约束把候选池**锁死**在「tag 末尾为 -<后缀>」（大小写不敏感）内；
+  // 上游没有匹配后缀的可比候选 → 保持现状（绝不漂移到其他变体）。
+  const affinity = typeof options.tagSuffix === 'string' && options.tagSuffix.length > 0
+    ? options.tagSuffix.toLowerCase()
+    : null;
+  let pool = eligible;
+  if (affinity) {
+    pool = eligible.filter(c => c.original.toLowerCase().endsWith(`-${affinity}`));
+    if (pool.length === 0) {
+      return {
+        tag: current.original,
+        comparison: COMPARISON_RESULTS.UP_TO_DATE,
+        reason: `上游没有 -${affinity} 后缀的可比候选，遵守 tag 后缀亲和（保持 ${current.original}）`,
+        current,
+        candidate: null,
+      };
+    }
+  }
+
   // 同轨道内取最大（比较只看 SemVer 优先级，构建元数据不参与 → R5）
-  let best = eligible[0];
-  for (const c of eligible.slice(1)) {
+  let best = pool[0];
+  for (const c of pool.slice(1)) {
     const r = compareVersions(c, best);
     if (r === null) continue;
     if (r > 0) best = c;

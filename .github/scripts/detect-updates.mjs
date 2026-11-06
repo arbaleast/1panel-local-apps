@@ -292,6 +292,14 @@ export function parseCliArgs(argv) {
 // 任何新加进白名单的应用都需在 AGENTS.md / README.md 中说明 '手维护, 不走 auto-update'。
 const SKIP_AUTO_UPDATE_APPS = new Set(['anythingllm', 'jellyfin']);
 
+// per-app 更新轨道收敛（tag 后缀亲和，透传给 decision.selectCandidate 的 tagSuffix）。
+// 动机：CalVer 家族的多变体 tag（`261029` / `261029-ce` / `261029-cuda`）在版本引擎里
+// 同轨且比较判等（variant 均为 null），选型时谁先进候选池谁当选 → 存量版本会随候选
+// 顺序在不同变体间漂移（photoprism 曾从主 tag 漂到 -cuda）。
+//   photoprism: 2026-11 决策固定使用社区版 CE tag（`photoprism/photoprism:<日期>-ce`，
+//   多架构 amd64+arm64；主 tag / -cuda Plus 构建不收录）。
+const TAG_SUFFIX_AFFINITY_APPS = { photoprism: 'ce' };
+
 // 简易日志
 //
 // 2026-11-05 输出收敛：逐应用 / 逐 service 的常规路径日志（已是最新、各类 skip、
@@ -658,7 +666,14 @@ async function decideService(appKey, image, currentTag, source) {
   }
   // 传输层：取回上游 tag 列表（失败一律抛错，**绝不**吞成无更新）
   const candidates = await adapter.fetchAllTags(image);
-  return decideUpdate({ appKey, currentImage: image, currentTag, candidates, source });
+  return decideUpdate({
+    appKey,
+    currentImage: image,
+    currentTag,
+    candidates,
+    source,
+    tagSuffix: TAG_SUFFIX_AFFINITY_APPS[appKey],
+  });
 }
 
 /**
