@@ -55,7 +55,7 @@
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 20220121 |
 | qdrant | 向量搜索引擎 | v1.20.0 |
 | scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.37.0 |
-| searxng | 隐私搜索引擎 | 2026.11.2-d138f443b |
+| searxng | 隐私搜索引擎 | 2026.11.5-adbf160ff |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.3.1 |
 | syncthing | 文件同步 | 2.1.7 |
