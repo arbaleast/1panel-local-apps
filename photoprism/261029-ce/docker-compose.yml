@@ -1,5 +1,6 @@
 # ============================================================
-# PhotoPrism (260919) — Self-hosted AI photo manager
+# PhotoPrism (261029) — Self-hosted AI photo manager
+#   版本 tag: photoprism/photoprism:261029-ce（社区版 CE，多架构 amd64 + arm64；CUDA/GPU 变体不收录）
 #   上游项目: <https://github.com/photoprism/photoprism>
 #   上游 Docker 镜像: photoprism/photoprism (多架构 linux/amd64 + linux/arm64)
 #   上游 docker-compose 模板: <https://github.com/photoprism/photoprism/blob/release/docker-compose.yml>
@@ -39,7 +40,7 @@ services:
     container_name: ${CONTAINER_NAME}
     # 以指定 UID/GID 运行（宿主机挂载目录需 chown 到同一属主，否则容器内无法写入）
     user: "${UID}:${GID}"
-    image: photoprism/photoprism:261029-cuda
+    image: photoprism/photoprism:261029-ce
     restart: always
     # 注意：不要加 init: true。
     # 镜像内置 s6-overlay 作为 init 系统，要求自身就是容器的 PID 1；
