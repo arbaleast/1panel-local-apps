@@ -31,6 +31,7 @@ docs/                       # 手册（本路由器的下游）
 | data.yml 字段、formField、校验报错 | [docs/data-yml-schema.md](docs/data-yml-schema.md) |
 | docker-compose 规则、运行身份、init.sh | [docs/compose-conventions.md](docs/compose-conventions.md) |
 | 自动更新 / GitHub Actions / registry 选型 | [docs/automation.md](docs/automation.md) |
+| 部署兼容性校验 / 架构核验 / GPU / 冒烟测试 / CI 分级 | [docs/deploy-compat.md](docs/deploy-compat.md) |
 | Git 分支 / commit / push / PR / 回滚 | [docs/git-workflow.md](docs/git-workflow.md) |
 | 环境、SSH、node 可见性、故障速判 | [docs/troubleshooting.md](docs/troubleshooting.md) |
 | 历史事故与教训（写代码前先查相关复盘） | [docs/postmortems.md](docs/postmortems.md) |
@@ -83,6 +84,8 @@ docs/                       # 手册（本路由器的下游）
 ```bash
 npm test              # node --test ".github/lib/*.test.mjs"（约 500 case）
 npm run lint          # node .github/bin/lint-apps.mjs（含 warning 时 PASSED (with warnings)，exit 0）
+npm run lint:deploy   # 同上 + manifest 模式：额外核验镜像架构（需外网，只读 registry 元数据）
+npm run smoke -- --app <应用名>  # 隔离沙箱冒烟测试（需 docker；详见 deploy-compat §7）
 npm run validate:batch  # node .github/bin/validate-update-batch.mjs
 npm run docs:check    # node .github/bin/check-docs.mjs
 ```

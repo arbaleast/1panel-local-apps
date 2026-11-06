@@ -35,6 +35,8 @@ npm run lint         # 全仓 data.yml 静态校验
 |---|---|---|
 | `npm test` | `node --test ".github/lib/*.test.mjs"` | 全部 `.github/lib/*.test.mjs` 回归（schema / registry / semver / compose / github / report / validate-batch / workflow / pr-flow / docs / image-policy） |
 | `npm run lint` | `node .github/bin/lint-apps.mjs` | 扫描全仓 data.yml + compose 静态校验 + 镜像 hardcode 策略（变量型镜像只允许在 AGENTS.md §6 的例外清单内）；有 error 退出 1；只有 warning 显示 `PASSED (with warnings)` 且退出 0 |
+| `npm run lint:deploy` | `node .github/bin/lint-apps.mjs --manifest` | 同上 **+ manifest 模式**：额外核验镜像真实发布的架构与 `data.yml` 声明是否对齐（只读 registry 元数据，**不 pull 镜像层**）；查不到的镜像标 UNVERIFIED 不阻塞。详见 [docs/deploy-compat.md](docs/deploy-compat.md) |
+| `npm run smoke -- --app <应用名>` | `node .github/bin/smoke-test.mjs --app <应用名>` | 隔离沙箱冒烟测试：独立 project / 独立网络 / 随机端口 / 临时目录挂载，9 步实机验证后强制清理。**需要 docker**；无 docker 或命中条件跳过（GPU / 外部 DB / host 网络）→ UNVERIFIED |
 | `npm run validate:batch` | `node .github/bin/validate-update-batch.mjs` | 全仓批次校验模式 |
 | `npm run docs:check` | `node .github/bin/check-docs.mjs` | 全仓文档校验：根 README/AGENTS/CONTRIBUTING + `docs/*.md` + **各应用根 README** 的交叉引用 / 锚点 / 代码栅栏；文档里 `data.yml` 示例的真实 schema 一致性；仓库级文档里的 `npm run` 幽灵脚本；AGENTS 路由有效性 |
 

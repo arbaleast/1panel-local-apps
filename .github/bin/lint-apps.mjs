@@ -29,6 +29,9 @@ import {
   applyWaivers,
   EXEMPTIONS_FILE,
 } from '../lib/lint-exemptions.mjs';
+import { runDeployCompatChecks, panelEnvOf } from '../lib/deploy-compat.mjs';
+import { collectManifests } from './manifest-collector.mjs';
+import { detectComposeCli, checkComposeWithCli } from './compose-cli-check.mjs';
 
 // ─── Zod schema（bin/ 层可用 zod，lib/ 层禁止引入）──────────────────────────
 
@@ -277,8 +280,36 @@ const IS_PARTIAL_SCAN = SCAN_ROOT !== REPO_ROOT;
 
 const apps = listApps(SCAN_ROOT);
 
+// ─── 镜像 manifest 采集（可选，--manifest）────────────────────────────────
+// 阶段 3 的 CPU 架构核验需要外部 registry 的 OCI 元数据。
+// 默认**不启用**：保持 `npm run lint` 完全离线、秒级、无外部请求（PR 上可无脑跑）。
+// `--manifest` 才发起**只读** HTTP 请求（只拉 JSON 元数据，绝不 pull 镜像层）。
+const useManifest = process.argv.includes('--manifest');
+/** @type {Map<string, object>|null} 镜像 → manifest 结果；null = 离线模式 */
+let manifestMap = null;
+if (useManifest) {
+  const cacheFile = process.env.MANIFEST_CACHE_FILE
+    || join(REPO_ROOT, '.agent_cache', 'manifest-cache.json');
+  const collected = await collectManifests(SCAN_ROOT, {
+    cacheFile,
+    log: (m) => console.error(`manifest: ${m}`),
+  });
+  manifestMap = collected.manifests;
+}
+
 let totalErrors = 0;
 let totalWarnings = 0;
+let totalUnverified = 0;
+
+// ─── `docker compose config` 真实渲染校验（可选，--compose-cli）──────────
+// 阶段 2 的第二条腿：把**原始 compose + 1Panel 上下文 .env** 交给真实的 compose CLI 解析。
+// CLI 不可用时**降级**为静态 AST 校验，并把降级事实写进摘要 —— 绝不把降级说成「compose config 通过」。
+const useComposeCli = process.argv.includes('--compose-cli');
+const composeCli = useComposeCli ? detectComposeCli() : { available: false, version: null, reason: '未启用（--compose-cli）' };
+if (useComposeCli) {
+  if (composeCli.available) console.error(`compose-cli: ${composeCli.version}`);
+  else console.error(`compose-cli: 不可用（${composeCli.reason}）→ 已降级为静态 AST 校验`);
+}
 
 for (const app of apps) {
   const fullPath = join(SCAN_ROOT, app.dir);
@@ -330,6 +361,15 @@ for (const app of apps) {
     e.isDirectory() && e.name !== 'data' && e.name !== 'scripts' && !e.name.startsWith('.'));
 
   const versionDocs = [];
+  // README（应用级）：部署兼容性规则（GPU 前置条件说明 / 权限说明漂移）需要读它，
+  // 故在版本循环**之前**读一次，避免每个版本目录重复读盘。
+  const readmeAbs = join(appPath, 'README.md');
+  let readmeRaw = null;
+  if (existsSync(readmeAbs)) {
+    try { readmeRaw = readFileSync(readmeAbs, 'utf8'); } catch { /* 由 checkReadmeVars 段负责 */ }
+  }
+  const readmePath = `${app.dir}/README.md`;
+
   for (const ve of versionDirs) {
     const versionPath = join(appPath, ve.name);
     const hasDataYml  = existsSync(join(versionPath, 'data.yml'));
@@ -337,8 +377,10 @@ for (const app of apps) {
     if (!hasDataYml && !hasCompose) continue;
 
     let versionDoc = null;
+    let versionRaw = '';
     if (hasDataYml) {
-      try { versionDoc = yaml.load(readFileSync(join(versionPath, 'data.yml'), 'utf8')); } catch { /* 由 zod 段报 */ }
+      try { versionRaw = readFileSync(join(versionPath, 'data.yml'), 'utf8'); } catch { /* 由 zod 段报 */ }
+      try { versionDoc = yaml.load(versionRaw); } catch { /* 由 zod 段报 */ }
     }
     let composeRaw = '';
     if (hasCompose) {
@@ -364,27 +406,56 @@ for (const app of apps) {
       version: ve.name,
       dataPath: `${app.dir}/${ve.name}/data.yml`,
       composePath: `${app.dir}/${ve.name}/docker-compose.yml`,
-      rootDoc, versionDoc, composeRaw, composeDoc, scriptsText,
+      readmePath,
+      rootDoc, versionDoc, composeRaw, versionRaw, composeDoc, scriptsText, readmeRaw,
+      // 阶段 3 架构核验的镜像元数据；离线模式（默认）为 null → 相关规则不产出 finding
+      manifests: manifestMap,
     };
     findings.push(...runVersionChecks(ctx));
+    // 阶段 2 / 4 / 5 / 6 的部署兼容性规则（与既有规则共用 finding 形状与豁免机制）
+    findings.push(...runDeployCompatChecks(ctx));
+    // 阶段 2 第二条腿：真实 `docker compose config` 校验（CLI 可用时）
+    if (composeCli.available && composeRaw) {
+      const cli = checkComposeWithCli({
+        composeRaw,
+        env: panelEnvOf(ctx),
+        label: `${app.dir}/${ve.name}/docker-compose.yml`,
+      });
+      if (!cli.ok) {
+        findings.push({
+          severity: 'P0',
+          ruleId: 'compose.render',
+          app: app.dir,
+          version: ve.name,
+          file: `${app.dir}/${ve.name}/docker-compose.yml`,
+          line: null,
+          message: `docker compose config 校验失败：${cli.error}`,
+          actual: String(cli.error).split('\n').slice(0, 3).join(' | '),
+          expected: 'compose 在 1Panel 变量上下文下可被 docker compose 零错误解析',
+        });
+      }
+    }
     versionDocs.push(versionDoc);
   }
 
   // README（应用级，version=null）
-  const readmeAbs = join(appPath, 'README.md');
-  if (existsSync(readmeAbs)) {
+  if (readmeRaw !== null) {
     findings.push(...checkReadmeVars({
       app: app.dir,
       version: null,
-      readmePath: `${app.dir}/README.md`,
-      readmeRaw: readFileSync(readmeAbs, 'utf8'),
+      readmePath,
+      readmeRaw,
       versionDocs,
     }));
   }
 }
 
 // 死亡条目观察表（豁免前全量）
+// ⚠️ **P3（UNVERIFIED）不参与死亡条目判定**：UNVERIFIED 是「环境查不到」的瞬时状态
+//    （网络波动 / 限流 / 私有源），不是稳定的「规则被触发」信号。
+//    否则离线扫描（无 --manifest）会把 arch.unverified 类的豁免误判成死条目并报 error。
 for (const f of findings) {
+  if (f.severity === 'P3') continue;
   if (!observed.has(f.app)) observed.set(f.app, new Map());
   const byRule = observed.get(f.app);
   if (!byRule.has(f.ruleId)) byRule.set(f.ruleId, new Set());
@@ -411,26 +482,30 @@ if (!IS_PARTIAL_SCAN) {
 const { active, waived } = applyWaivers(findings, exemptionList);
 for (const f of active) {
   const loc  = `${f.file}${f.line ? `:${f.line}` : ''}`;
-  const head = f.severity === 'P2' ? 'WARN    ' : 'ERROR   ';
   const tail = f.actual != null ? ` | actual=${f.actual}${f.expected != null ? ` ⇨ expected=${f.expected}` : ''}` : '';
+  // 三态分级：P0/P1 → ERROR（阻塞）；P2 → WARN（不阻塞）；P3 → UNVERIFIED（单列，不影响 exit code）
   if (f.severity === 'P2') { console.warn(`WARN    [${f.ruleId}] ${loc} - ${f.message}${tail}`); totalWarnings += 1; }
+  else if (f.severity === 'P3') { console.warn(`UNVERIF [${f.ruleId}] ${loc} - ${f.message}${tail}`); totalUnverified += 1; }
   else                     { console.error(`ERROR   [${f.ruleId}] ${loc} - ${f.message}${tail}`); totalErrors   += 1; }
 }
 
 if (showJson) {
-  // 机器可读视图：P0/P1 为 errors，P2 为 warnings；waived 单列出豁免命中
+  // 机器可读视图：P0/P1 为 errors，P2 为 warnings，P3 为 unverified；waived 单列出豁免命中
   const pick = ({ ruleId, app, version, file, line, message, actual, expected }) =>
     ({ ruleId, app, version, file, line, message, actual, expected });
   console.log(JSON.stringify({
     apps: apps.length,
     scanRoot: SCAN_ROOT,
     partialScan: IS_PARTIAL_SCAN,
+    manifestMode: useManifest,
     errors: totalErrors,
     warnings: totalWarnings,
+    unverified: totalUnverified,
     waived: waived.length,
     findings: {
-      errors: active.filter((f) => f.severity !== 'P2').map(pick),
+      errors: active.filter((f) => f.severity !== 'P2' && f.severity !== 'P3').map(pick),
       warnings: active.filter((f) => f.severity === 'P2').map(pick),
+      unverified: active.filter((f) => f.severity === 'P3').map(pick),
       waived: waived.map((f) => ({ ...pick(f), waivedBy: f.waivedBy.reason })),
     },
   }, null, 2));
@@ -443,7 +518,10 @@ if (!showJson) {
   console.log(`apps scanned : ${apps.length}`);
   console.log(`errors       : ${totalErrors}`);
   console.log(`warnings     : ${totalWarnings}`);
+  console.log(`unverified   : ${totalUnverified}`);
   console.log(`waived       : ${waived.length}`);
+  console.log(`manifest     : ${useManifest ? 'enabled' : 'disabled (offline)'}`);
+  console.log(`compose-cli  : ${useComposeCli ? (composeCli.available ? composeCli.version : `unavailable (${composeCli.reason}) → 静态 AST 降级`) : 'disabled'}`);
 }
 
 // 用 exitCode 而非 process.exit()：后者会在管道输出未刷新时截断 --json（文件重定向不受影响）

@@ -99,5 +99,22 @@ docker exec -it <容器名> fc-list :lang=zh | head    # 容器内
 5. `chown -R 99:100` 上述 config 目录（UID/GID 默认为 99/100，容器以该身份运行）
 6. 触发「扫描媒体库」让 Jellyfin 重新识别 `/media/movies/` 下整理好的条目
 
+
+## GPU 加速（可选，默认关闭）
+
+本应用的默认 Compose **不启用**任何 GPU 设备映射与 `runtime: nvidia`，
+因此在**没有显卡 / 没有 NVIDIA 驱动**的宿主机上也能正常启动（纯 CPU 转码）。
+
+需要硬件加速时，请先在**宿主机**准备：
+
+1. **NVIDIA 路线**：安装 NVIDIA 驱动 + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+   （`nvidia-ctk runtime configure --runtime=docker` 后重启 docker），再把 Compose 的
+   `runtime` 设为 `nvidia`、环境变量 `NVIDIA_VISIBLE_DEVICES` 设为 `all`。
+2. **Intel / AMD 路线（VAAPI / QSV）**：需要把宿主机 `/dev/dri` 映射进容器
+   （例如在 1Panel 的 Compose 编辑器里加一行 `devices: ["/dev/dri:/dev/dri"]`），
+   并保证**容器内运行用户**属于宿主机 `render` 与 `video` 组，否则无法访问渲染设备。
+
+> 未做上述准备时，请不要开启 GPU 相关配置 —— 宿主机缺少对应设备会导致**容器创建失败**。
+
 ## Cache 路径说明
 1Panel UI 默认 cache 挂载为 `/dev/shm`，但宿主机 `/dev/shm` 是 tmpfs（默认 7.8 GiB），其他容器吃满后 Jellyfin 启动会因 ≥ 2 GiB 空间检查失败。`10.11.11/` 目录的 default 改为 `/data/dsh/home/日常/1panel-local-apps/jellyfin-cache`（宿主磁盘，171 GiB 可用），新装直接生效；旧版本目录的 default 仍是 `/dev/shm`，需手动在「参数」中改写。

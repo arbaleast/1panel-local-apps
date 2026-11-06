@@ -1116,3 +1116,292 @@ describe('重试与退避（审计 P2-3）', () => {
     assert.equal(calls, 2);
   });
 });
+
+// ───────────────────────────────────────────────────────────────────────────
+// 阶段 3：CPU 多架构兼容性核验 —— manifest 拉取能力
+// （新增导出：fetchManifest / createManifestCache / MANIFEST_ACCEPT）
+//
+// ⚠️ 全部用例通过**注入的 fetchImpl** 完成，不发起任何真实网络请求。
+// ───────────────────────────────────────────────────────────────────────────
+import {
+  fetchManifest,
+  createManifestCache,
+  MANIFEST_ACCEPT,
+} from './registry.mjs';
+
+describe('registry：fetchManifest（多架构 index）', () => {
+  it('成功拉取 index：断言 Accept / Authorization / URL / platforms / digest', async () => {
+    const calls = [];
+    const fetchImpl = async (url, opts) => {
+      calls.push({ url, opts });
+      if (url.startsWith('https://auth.docker.io/token')) {
+        return new Response(JSON.stringify({ token: 'tok-123' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      assert.equal(url, 'https://registry-1.docker.io/v2/library/nginx/manifests/1.27');
+      return new Response(JSON.stringify({
+        schemaVersion: 2,
+        manifests: [
+          { digest: 'sha256:a', platform: { os: 'linux', architecture: 'amd64' } },
+          { digest: 'sha256:b', platform: { os: 'linux', architecture: 'arm64' } },
+          { digest: 'sha256:c', platform: { os: 'linux', architecture: 'arm', variant: 'v7' } },
+          { digest: 'sha256:u', platform: { os: 'unknown', architecture: 'unknown' } },
+          { digest: 'sha256:x', platform: { os: 'unknown', architecture: 'attestation-manifest' } },
+        ],
+      }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/vnd.oci.image.index.v1+json',
+          'docker-content-digest': 'sha256:index-digest',
+        },
+      });
+    };
+
+    const r = await fetchManifest('nginx:1.27', { fetchImpl, sleep: async () => {} });
+    assert.equal(r.status, 'ok');
+    assert.equal(r.kind, 'index');
+    assert.deepEqual(r.platforms, ['amd64', 'arm/v7', 'arm64']);
+    assert.equal(r.digest, 'sha256:index-digest');
+    assert.equal(r.mediaType, 'application/vnd.oci.image.index.v1+json');
+
+    const manifestCall = calls.find(c => c.url.includes('/manifests/'));
+    assert.ok(manifestCall, '应发起 manifest 请求');
+    assert.equal(manifestCall.opts.headers.Accept, MANIFEST_ACCEPT);
+    assert.equal(manifestCall.opts.headers.Authorization, 'Bearer tok-123');
+    // 绝不请求镜像层
+    assert.ok(!calls.some(c => /\/blobs\/sha256:[0-9a-f]{64}/.test(c.url)), '不得请求镜像层 blob');
+  });
+
+  it('GHCR：token / manifest URL 形状正确', async () => {
+    const calls = [];
+    const fetchImpl = async (url, opts) => {
+      calls.push({ url, opts });
+      if (url.includes('/token')) {
+        return new Response(JSON.stringify({ token: 'ghcr-tok' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({
+        manifests: [{ platform: { os: 'linux', architecture: 'amd64' } }],
+      }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/vnd.oci.image.index.v1+json',
+          'docker-content-digest': 'sha256:ghcr-index',
+        },
+      });
+    };
+
+    const r = await fetchManifest('ghcr.io/org/app:1.0', { fetchImpl, sleep: async () => {} });
+    assert.equal(r.status, 'ok');
+    assert.deepEqual(r.platforms, ['amd64']);
+    const tokenCall = calls.find(c => c.url.includes('/token'));
+    assert.ok(tokenCall.url.includes('scope=repository:org/app:pull'));
+    assert.ok(tokenCall.url.includes('service=ghcr.io'));
+    const manifestCall = calls.find(c => c.url.includes('/manifests/'));
+    assert.equal(manifestCall.url, 'https://ghcr.io/v2/org/app/manifests/1.0');
+    assert.equal(manifestCall.opts.headers.Authorization, 'Bearer ghcr-tok');
+  });
+});
+
+describe('registry：fetchManifest（单架构 manifest → image config）', () => {
+  it('再取一次 config blob 并解析出 imageConfig 与 platforms', async () => {
+    const calls = [];
+    const fetchImpl = async (url, opts) => {
+      calls.push({ url, opts });
+      if (url.startsWith('https://auth.docker.io/token')) {
+        return new Response(JSON.stringify({ token: 'tok-123' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (url.endsWith('/manifests/2.0')) {
+        return new Response(JSON.stringify({
+          schemaVersion: 2,
+          config: { mediaType: 'application/vnd.docker.container.image.v1+json', digest: 'sha256:cfgdigest' },
+          layers: [{ digest: 'sha256:layerdigest' }],
+        }), {
+          status: 200,
+          headers: {
+            'content-type': 'application/vnd.docker.distribution.manifest.v2+json',
+            'docker-content-digest': 'sha256:manifest-digest',
+          },
+        });
+      }
+      if (url.endsWith('/blobs/sha256:cfgdigest')) {
+        return new Response(JSON.stringify({
+          os: 'linux',
+          architecture: 'arm',
+          variant: 'v7',
+          config: { User: '1000:1000', Env: ['PATH=/usr/bin'] },
+        }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      throw new Error(`不应请求该 URL: ${url}`);
+    };
+
+    const r = await fetchManifest('nginx:2.0', { fetchImpl, sleep: async () => {} });
+    assert.equal(r.status, 'ok');
+    assert.equal(r.kind, 'manifest');
+    assert.equal(r.configDigest, 'sha256:cfgdigest');
+    assert.deepEqual(r.platforms, ['arm/v7']);
+    assert.deepEqual(r.imageConfig, {
+      os: 'linux', architecture: 'arm', variant: 'v7', user: '1000:1000', env: ['PATH=/usr/bin'],
+    });
+    // 确实额外取了一次 blob（且只取 config blob，不取层）
+    assert.ok(calls.some(c => c.url.endsWith('/blobs/sha256:cfgdigest')));
+    assert.ok(!calls.some(c => c.url.includes('layerdigest')));
+  });
+
+  it('config blob 取不到 → 仍 status=ok，platforms=[]、imageConfig=null', async () => {
+    const fetchImpl = async (url) => {
+      if (url.startsWith('https://auth.docker.io/token')) {
+        return new Response(JSON.stringify({ token: 'tok' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (url.endsWith('/manifests/2.0')) {
+        return new Response(JSON.stringify({
+          config: { digest: 'sha256:cfgdigest' },
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response('{}', { status: 404 });
+    };
+
+    const r = await fetchManifest('nginx:2.0', { fetchImpl, sleep: async () => {} });
+    assert.equal(r.status, 'ok');
+    assert.deepEqual(r.platforms, []);
+    assert.equal(r.imageConfig, null);
+  });
+});
+
+describe('registry：fetchManifest 失败一律 unverified', () => {
+  it('401 → unverified（reason 含状态码）', async () => {
+    const fetchImpl = async (url) => {
+      if (url.startsWith('https://auth.docker.io/token')) {
+        return new Response(JSON.stringify({ token: 'tok' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response('{}', { status: 401 });
+    };
+    const r = await fetchManifest('nginx:1.0', { fetchImpl, sleep: async () => {} });
+    assert.equal(r.status, 'unverified');
+    assert.ok(r.reason && r.reason.length > 0);
+    assert.match(r.reason, /401/);
+  });
+
+  it('404 → unverified', async () => {
+    const fetchImpl = async (url) => {
+      if (url.startsWith('https://auth.docker.io/token')) {
+        return new Response(JSON.stringify({ token: 'tok' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response('{}', { status: 404 });
+    };
+    const r = await fetchManifest('nginx:1.0', { fetchImpl, sleep: async () => {} });
+    assert.equal(r.status, 'unverified');
+    assert.ok(r.reason && r.reason.length > 0);
+    assert.match(r.reason, /404/);
+  });
+
+  it('网络异常 → unverified', async () => {
+    const fetchImpl = async (url) => {
+      if (url.startsWith('https://auth.docker.io/token')) {
+        return new Response(JSON.stringify({ token: 'tok' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      throw new Error('ECONNRESET');
+    };
+    const r = await fetchManifest('nginx:1.0', { fetchImpl, sleep: async () => {}, retries: 1 });
+    assert.equal(r.status, 'unverified');
+    assert.ok(r.reason && r.reason.length > 0);
+  });
+
+  it('不支持的 registry → unverified（reason 含「不支持的 registry」）', async () => {
+    const fetchImpl = async () => { throw new Error('不应发起任何请求'); };
+    const r = await fetchManifest('registry.example.com/team/app:1.0', { fetchImpl, sleep: async () => {} });
+    assert.equal(r.status, 'unverified');
+    assert.match(r.reason, /不支持的 registry/);
+  });
+
+  it('无 tag → unverified', async () => {
+    const fetchImpl = async () => { throw new Error('不应发起任何请求'); };
+    const r = await fetchManifest('nginx', { fetchImpl, sleep: async () => {} });
+    assert.equal(r.status, 'unverified');
+    assert.ok(r.reason && r.reason.length > 0);
+  });
+
+  it('JSON 解析失败 → unverified', async () => {
+    const fetchImpl = async (url) => {
+      if (url.startsWith('https://auth.docker.io/token')) {
+        return new Response(JSON.stringify({ token: 'tok' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response('not-json', { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const r = await fetchManifest('nginx:1.0', { fetchImpl, sleep: async () => {} });
+    assert.equal(r.status, 'unverified');
+    assert.ok(r.reason && r.reason.length > 0);
+  });
+});
+
+describe('registry：createManifestCache 缓存语义', () => {
+  it('同一镜像连续两次只请求一次', async () => {
+    let manifestCalls = 0;
+    const fetchImpl = async (url) => {
+      if (url.startsWith('https://auth.docker.io/token')) {
+        return new Response(JSON.stringify({ token: 'tok' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      manifestCalls++;
+      return new Response(JSON.stringify({
+        manifests: [{ platform: { os: 'linux', architecture: 'amd64' } }],
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+
+    const cache = createManifestCache();
+    const a = await fetchManifest('nginx:1.0', { fetchImpl, sleep: async () => {}, cache });
+    const b = await fetchManifest('nginx:1.0', { fetchImpl, sleep: async () => {}, cache });
+    assert.equal(a.status, 'ok');
+    assert.equal(b.status, 'ok');
+    assert.equal(manifestCalls, 1, '命中缓存时不应重复请求 manifest');
+    assert.equal(cache.size, 1);
+  });
+
+  it('失败不缓存：失败后再试会重新请求', async () => {
+    let manifestCalls = 0;
+    const fetchImpl = async (url) => {
+      if (url.startsWith('https://auth.docker.io/token')) {
+        return new Response(JSON.stringify({ token: 'tok' }), {
+          status: 200, headers: { 'content-type': 'application/json' },
+        });
+      }
+      manifestCalls++;
+      return new Response('{}', { status: 404 });
+    };
+
+    const cache = createManifestCache();
+    const first = await fetchManifest('nginx:1.0', { fetchImpl, sleep: async () => {}, cache });
+    assert.equal(first.status, 'unverified');
+    assert.equal(manifestCalls, 1);
+    const second = await fetchManifest('nginx:1.0', { fetchImpl, sleep: async () => {}, cache });
+    assert.equal(second.status, 'unverified');
+    assert.equal(manifestCalls, 2, '失败结果不得被缓存，必须重新请求');
+    assert.equal(cache.size, 0);
+  });
+
+  it('clear() 清空缓存', async () => {
+    const cache = createManifestCache();
+    cache.get('k', async () => 'v');
+    await Promise.resolve();
+    assert.equal(cache.size, 1);
+    cache.clear();
+    assert.equal(cache.size, 0);
+  });
+});

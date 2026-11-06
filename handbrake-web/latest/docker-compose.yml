@@ -88,15 +88,28 @@ services:
       createdBy: Apps
     depends_on:
       - handbrake-web-server
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities:
-                - gpu
-                - compute
-                - video
+    # GPU 预约默认关闭（宿主机无 NVIDIA Container Toolkit 时 compose up 会直接失败）；
+
+    # 需要硬件加速时，取消下面注释并确认宿主机已装 nvidia-container-toolkit。
+
+    # deploy:
+
+    #   resources:
+
+    #     reservations:
+
+    #       devices:
+
+    #         - driver: nvidia
+
+    #           count: 1
+
+    #           capabilities:
+
+    #             - gpu
+
+    #             - compute
+
+    #             - video
     # ⚠️ 顶层 volumes 块: AGENTS.md 明确禁止 ${...} 插值命名卷, 全部改 ./data/... 或 formField 相对路径.
     # 本应用 server+worker 共享 /video 通过 ${MEDIA_PATH} formField 实现, 不需要任何顶层 named volume 块.

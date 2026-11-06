@@ -124,7 +124,7 @@ additionalProperties:
         pt-br: NVIDIA_VISIBLE_DEVICES (GPUs visíveis; só efetiva quando GPU está habilitada)
       required: false
       type: text
-    - default: nvidia
+    - default: ""
       edit: true
       envKey: GPU_RUNTIME
       label:

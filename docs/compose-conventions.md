@@ -87,3 +87,4 @@
 - [data-yml-schema.md](data-yml-schema.md) — formField / rule / values 约束
 - [app-structure.md](app-structure.md) — 版本目录与部署链路
 - [automation.md](automation.md) — compose 变更进入自动校验
+- [deploy-compat.md](deploy-compat.md) — 部署兼容性校验规则、架构核验、GPU 默认可用性、隔离沙箱冒烟测试

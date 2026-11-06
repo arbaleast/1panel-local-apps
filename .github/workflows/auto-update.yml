@@ -127,6 +127,72 @@ jobs:
       - name: npm run docs:check
         run: npm run docs:check
 
+      # ─── Level 1 + Level 2：部署兼容性核验（架构 / GPU / 权限 / 依赖就绪）──
+      # 与上面的 `npm run lint` 同属 Level 1 阻塞门禁，但**开启 manifest 模式**：
+      #   · Level 1（阻塞，exit 1 阻止 PR 合并）：
+      #       compose 模拟渲染、必填变量闭环、端口/卷配置合法性、SSOT 一致性、
+      #       **镜像 manifest 与 data.yml 架构声明的对齐**（阶段 3）
+      #   · Level 2（不阻塞）：特权容器 / host 网络 / docker socket / 未说明的 GPU 配置
+      #       → ::warning:: 注解 + Step Summary
+      #   · UNVERIFIED（不阻塞）：因网络受限/限流/私有源查不到的 manifest
+      #       → ::notice:: 注解 + Step Summary，**明确标注「未验证」而不是「通过」**
+      #
+      # manifest 结果落 cache，避免每次 PR 都全量打 registry（防限流）。
+      - name: 缓存 manifest 元数据
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/manifest-cache.json
+          key: manifest-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            manifest-${{ runner.os }}-
+
+      - name: 部署兼容性核验（Level 1 阻塞 + Level 2 警告 + UNVERIFIED 标注）
+        if: always()
+        env:
+          MANIFEST_CACHE_FILE: ${{ runner.temp }}/manifest-cache.json
+        run: |
+          LINT_FAILED=0
+          npm run lint:deploy --silent -- --json > /tmp/deploy-compat.json || LINT_FAILED=1
+          node .github/bin/render-deploy-compat-report.mjs /tmp/deploy-compat.json || LINT_FAILED=1
+          exit $LINT_FAILED
+
+  # ─── Level 3：隔离沙箱冒烟测试（条件测试，**不阻塞** PR 合并）─────────────
+  # 真实拉起容器验证「装得上、起得来、挂载写得了、日志没崩」。
+  # 三态显式呈现：PASSED / FAILED / UNVERIFIED（Skipped due to environment）。
+  # 按目标 §十，Level 3 **不作为合并门禁**，只提示。
+  smoke:
+    name: 隔离沙箱冒烟测试（Level 3 条件测试）
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [validate]
+    # Level 3 失败**不阻塞**（continue-on-error 只影响本 job 的结论，不影响 validate）
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          # 需要 `git diff base...HEAD` 才能定位「本次变更涉及的应用」→ 必须完整历史
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: 冒烟测试（本次变更涉及的应用）
+        env:
+          # PR 事件用 base ref；其它事件退化为 origin/main
+          SMOKE_BASE: ${{ github.event.pull_request.base.ref && format('origin/{0}', github.event.pull_request.base.ref) || 'origin/main' }}
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.event.pull_request.base.ref || 'main' }}" || true
+          node .github/bin/smoke-test.mjs --changed "$SMOKE_BASE"
+
   # ─── 自动更新（写操作，仅在受信任事件上运行）──────────────────────────
   auto-update:
     name: 检测镜像更新并开 PR

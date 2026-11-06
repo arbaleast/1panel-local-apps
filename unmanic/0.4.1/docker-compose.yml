@@ -30,7 +30,7 @@ services:
     # ----------------------------------------------------------------------
     device_cgroup_rules:
       - 'c 195:* rw'
-    runtime: nvidia
+    runtime: ${GPU_RUNTIME}
     deploy:
       resources:
         limits:

@@ -8,6 +8,8 @@
   "scripts": {
     "test": "node --test \".github/lib/*.test.mjs\"",
     "lint": "node .github/bin/lint-apps.mjs",
+    "lint:deploy": "node .github/bin/lint-apps.mjs --manifest",
+    "smoke": "node .github/bin/smoke-test.mjs",
     "validate:batch": "node .github/bin/validate-update-batch.mjs",
     "docs:check": "node .github/bin/check-docs.mjs",
     "open-pr": "node .github/bin/open-update-pr.mjs",

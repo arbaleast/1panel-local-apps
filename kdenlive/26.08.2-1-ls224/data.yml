@@ -244,6 +244,25 @@ additionalProperties:
               value: "false"
             - label: "true"
               value: "true"
+        - default: ""
+          edit: true
+          envKey: GPU_RUNTIME
+          label:
+            en: GPU Runtime (leave empty for CPU-only)
+            zh: GPU 运行时（留空 = 仅 CPU）
+            zh-Hant: GPU 執行時（留空 = 僅 CPU）
+            ja: GPU ランタイム（空欄 = CPU のみ）
+            ko: GPU 런타임（비어 있으면 CPU 전용）
+            ru: Среда выполнения GPU (пусто = только CPU)
+            ms: Runtime GPU (kosong = CPU sahaja)
+            pt-br: Runtime de GPU (vazio = somente CPU)
+          required: false
+          type: select
+          values:
+            - label: ""
+              value: ""
+            - label: nvidia
+              value: nvidia
     key: kdenlive
     name: kdenlive 26.08.2-1-ls224
     tags:

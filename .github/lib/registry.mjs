@@ -13,6 +13,7 @@
 
 import { parseImageReference } from './image-ref.mjs';
 import { selectCandidate, isNonVersionTag } from './version.mjs';
+import { extractPlatforms, extractConfigDigest, extractImageConfig, toRepoArch } from './manifest.mjs';
 
 // 默认请求超时（~30s）。测试可通过构造参数注入更短的超时。
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -733,4 +734,280 @@ export function createAdapter(image, opts = {}) {
     return new DockerHubAdapter(opts);
   }
   return null;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Manifest 能力（阶段 3：CPU 多架构兼容性核验）
+//
+// ⚠️ 边界：**只取 JSON 元数据，绝不 pull 镜像层**。
+//    只请求 /manifests/<tag> 与 /blobs/<image-config digest>，
+//    永远不会请求 /blobs/<layer digest>。
+// ───────────────────────────────────────────────────────────────────────────
+
+/** 拉取 manifest 所需的 Accept 头（OCI index + Docker manifest list + 两种单架构 manifest） */
+export const MANIFEST_ACCEPT = 'application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json';
+
+/** Docker Hub registry 基址（可用环境变量覆盖，供离线测试指向本地 mock） */
+const DOCKERHUB_REGISTRY_BASE = () => process.env.DOCKERHUB_REGISTRY_BASE || 'https://registry-1.docker.io';
+/** Docker Hub token 端点 */
+const DOCKERHUB_TOKEN_BASE = () => process.env.DOCKERHUB_TOKEN_BASE || 'https://auth.docker.io';
+
+/**
+ * manifest 拉取失败（内部异常载体）。
+ *
+ * 语义：对外一律转成 `status:'unverified'`，**不抛给调用方**；
+ * 内部抛出只是为了让「失败不缓存」的缓存语义成立（promise reject → 缓存条目移除）。
+ */
+class ManifestFetchError extends Error {
+  /**
+   * @param {string} reason 人类可读原因
+   * @param {{status?: number, url?: string, cause?: unknown}} [info]
+   */
+  constructor(reason, { status, url, cause } = {}) {
+    super(reason);
+    this.name = 'ManifestFetchError';
+    this.reason = reason;
+    if (status !== undefined) this.status = status;
+    if (url !== undefined) this.url = url;
+    if (cause !== undefined) this.cause = cause;
+  }
+}
+
+/**
+ * 创建一个 manifest 结果缓存（与 `createTagCache` 同构：**失败不缓存**）。
+ *
+ * 语义：
+ *   · `get(key, factory)` → 命中返回同一个 promise；未命中则调用 factory 并登记
+ *   · factory **reject**（拉取失败）→ 该条目立即移除，下次会重新请求
+ *     （一次网络抖动不能毒化整轮核验）
+ *   · `clear()` 清空；`size` 当前条目数
+ *
+ * @param {{ttlMs?: number}} [opts]
+ * @returns {{ttlMs: number, get: Function, clear: Function, size: number}}
+ */
+export function createManifestCache({ ttlMs = 10 * 60 * 1000 } = {}) {
+  /** @type {Map<string, {promise: Promise<unknown>, at: number}>} */
+  const entries = new Map();
+  return {
+    ttlMs,
+    /**
+     * 取（并登记）某 key 的 manifest 结果 promise。
+     * @param {string} key
+     * @param {() => Promise<unknown>} factory
+     * @returns {Promise<unknown>}
+     */
+    get(key, factory) {
+      const hit = entries.get(key);
+      const now = Date.now();
+      if (hit && (now - hit.at) < ttlMs) return hit.promise;
+      const promise = factory();
+      entries.set(key, { promise, at: now });
+      // 失败不缓存（否则一次网络抖动会毒化整轮核验）
+      promise.catch(() => { if (entries.get(key)?.promise === promise) entries.delete(key); });
+      return promise;
+    },
+    /** 清空缓存 */
+    clear() { entries.clear(); },
+    /** 当前缓存条目数（诊断用） */
+    get size() { return entries.size; },
+  };
+}
+
+/**
+ * 依据 registry 来源给出 token / manifest / blob 三个端点。
+ *
+ * @param {{source: string, repoPath: string}} ctx
+ * @returns {{tokenUrl: string, manifestUrl: string, blobUrl: (digest: string) => string}}
+ */
+function manifestEndpoints({ source, repoPath }) {
+  if (source === 'ghcr') {
+    const base = GHCR_API_BASE();
+    return {
+      tokenUrl: `${base}/token?scope=repository:${repoPath}:pull&service=ghcr.io`,
+      manifestUrl: `${base}/v2/${repoPath}/manifests/`,
+      blobUrl: (digest) => `${base}/v2/${repoPath}/blobs/${digest}`,
+    };
+  }
+  const base = DOCKERHUB_REGISTRY_BASE();
+  return {
+    tokenUrl: `${DOCKERHUB_TOKEN_BASE()}/token?service=registry.docker.io&scope=repository:${repoPath}:pull`,
+    manifestUrl: `${base}/v2/${repoPath}/manifests/`,
+    blobUrl: (digest) => `${base}/v2/${repoPath}/blobs/${digest}`,
+  };
+}
+
+/**
+ * 轻量拉取镜像 tag 的 manifest（**只取 JSON 元数据，绝不 pull 镜像层**）。
+ *
+ * 行为：
+ *   · 多架构 index（manifest list）→ 返回平台集合（来自 `manifests[].platform`）
+ *   · 单架构 manifest → 再取一次 image config blob，给出平台与默认运行身份
+ *   · 任何失败（401/403/404/其它非 2xx/网络异常/JSON 解析失败/不支持的 registry）
+ *     → 返回 `status:'unverified'` 并给出原因，**不抛错**
+ *
+ * ⚠️ `digest` 取的是响应头 `docker-content-digest`，即 **index digest**，
+ *    **不是**子 manifest 的 digest（见 lib/manifest.mjs 文件头说明）。
+ *
+ * @param {string} image 完整镜像引用（repo:tag）
+ * @param {{fetchImpl?: Function, timeoutMs?: number, retries?: number, sleep?: Function, cache?: object, maxConcurrency?: number}} [opts]
+ * @returns {Promise<{
+ *   status: 'ok'|'unverified',
+ *   kind?: 'index'|'manifest',
+ *   platforms?: string[],
+ *   rawPlatforms?: Array<object>,
+ *   digest?: string|null,
+ *   configDigest?: string|null,
+ *   imageConfig?: {os: string|null, architecture: string|null, variant: string|null, user: string|null, env: string[]}|null,
+ *   mediaType?: string|null,
+ *   reason?: string,
+ * }>}
+ */
+export async function fetchManifest(image, opts = {}) {
+  const {
+    fetchImpl = globalThis.fetch,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    retries = DEFAULT_RETRIES,
+    sleep,
+    cache = null,
+    maxConcurrency = DEFAULT_MAX_CONCURRENCY,
+  } = opts;
+
+  const parsed = parseImageReference(image);
+  if (!parsed) {
+    return { status: 'unverified', reason: `镜像引用无法解析: ${image}` };
+  }
+  if (parsed.source === 'custom') {
+    return { status: 'unverified', reason: `不支持的 registry（${parsed.registry}）：仅支持 DockerHub 与 GHCR` };
+  }
+  if (!parsed.tag) {
+    return { status: 'unverified', reason: `镜像未指定 tag，无法定位 manifest: ${image}` };
+  }
+
+  // registry 路径：DockerHub 官方镜像需补 library/ 命名空间
+  const repoPath = parsed.namespace ? `${parsed.namespace}/${parsed.repository}` : parsed.repository;
+  const key = `${parsed.registry}/${parsed.repo}:${parsed.tag}`;
+
+  const limiter = createLimiter(maxConcurrency);
+  const request = async (url, headers) => {
+    const options = { headers };
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+      options.signal = AbortSignal.timeout(timeoutMs);
+    }
+    try {
+      return await globalLimiter(() => limiter(() => fetchWithRetry(fetchImpl, url, options, {
+        retries,
+        sleep: sleep || defaultSleep,
+      })));
+    } catch (e) {
+      throw new ManifestFetchError(`请求失败：${e instanceof Error ? e.message : String(e)}`, { url, cause: e });
+    }
+  };
+
+  /** 取匿名 pull token（失败降级为不带 Authorization 匿名访问） */
+  const fetchToken = async (tokenUrl) => {
+    try {
+      const res = await request(tokenUrl, {});
+      if (!res.ok) return null;
+      const data = await res.json();
+      return typeof data?.token === 'string' && data.token !== '' ? data.token : null;
+    } catch (_) {
+      return null; // token 获取失败 → 降级匿名
+    }
+  };
+
+  const doFetch = async () => {
+    const { tokenUrl, manifestUrl, blobUrl } = manifestEndpoints({ source: parsed.source, repoPath });
+    const token = await fetchToken(tokenUrl);
+
+    const buildHeaders = (withToken) => {
+      const headers = { Accept: MANIFEST_ACCEPT };
+      if (withToken && token) headers.Authorization = `Bearer ${token}`;
+      return headers;
+    };
+
+    const url = `${manifestUrl}${parsed.tag}`;
+    let res = await request(url, buildHeaders(true));
+
+    // 拿到 token 仍被拒（401/403）→ 退回匿名再试一次
+    if (token && (res.status === 401 || res.status === 403)) {
+      res = await request(url, buildHeaders(false));
+    }
+
+    if (res.status === 401 || res.status === 403) {
+      throw new ManifestFetchError(`registry 拒绝访问（HTTP ${res.status}）`, { status: res.status, url });
+    }
+    if (res.status === 404) {
+      throw new ManifestFetchError(`registry 未找到该 tag（HTTP 404）`, { status: 404, url });
+    }
+    if (!res.ok) {
+      throw new ManifestFetchError(`registry 返回 HTTP ${res.status}`, { status: res.status, url });
+    }
+
+    let body;
+    try {
+      body = await res.json();
+    } catch (e) {
+      throw new ManifestFetchError(`manifest JSON 解析失败：${e instanceof Error ? e.message : String(e)}`, { url, cause: e });
+    }
+
+    const digest = res.headers?.get?.('docker-content-digest') ?? null;
+    const mediaType = res.headers?.get?.('content-type') ?? null;
+    const platforms = extractPlatforms(body);
+
+    if (platforms.kind === 'index') {
+      return {
+        status: 'ok',
+        kind: 'index',
+        platforms: platforms.platforms,
+        rawPlatforms: platforms.rawPlatforms,
+        digest,
+        configDigest: extractConfigDigest(body),
+        imageConfig: null,
+        mediaType,
+      };
+    }
+
+    // 单架构 manifest：架构信息在 image config 里 → 再取一次 config blob
+    const configDigest = extractConfigDigest(body);
+    let imageConfig = null;
+    let archPlatforms = [];
+    if (configDigest) {
+      try {
+        const blobRes = await request(blobUrl(configDigest), buildHeaders(true));
+        if (blobRes.ok) {
+          const configBody = await blobRes.json();
+          imageConfig = extractImageConfig(configBody);
+          const repoArch = toRepoArch(imageConfig);
+          archPlatforms = repoArch ? [repoArch] : [];
+        }
+      } catch (_) {
+        // config blob 取不到 → 仍然算成功，只是平台信息未知
+        imageConfig = null;
+        archPlatforms = [];
+      }
+    }
+
+    return {
+      status: 'ok',
+      kind: 'manifest',
+      platforms: archPlatforms,
+      rawPlatforms: [],
+      digest,
+      configDigest,
+      imageConfig,
+      mediaType,
+    };
+  };
+
+  try {
+    if (cache) {
+      return await cache.get(key, doFetch);
+    }
+    return await doFetch();
+  } catch (e) {
+    if (e instanceof ManifestFetchError) {
+      return { status: 'unverified', reason: e.reason };
+    }
+    return { status: 'unverified', reason: e instanceof Error ? e.message : String(e) };
+  }
 }
