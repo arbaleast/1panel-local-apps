@@ -60,8 +60,9 @@ docs/                       # 手册（本路由器的下游）
 - 主服务 `container_name: ${CONTAINER_NAME}`；所有服务 `restart: always`、
   `networks: [1panel-network]`（须声明 external）、`labels: {createdBy: "Apps"}`。
 - 公开端口用 `PANEL_APP_PORT_*`；持久化优先 `./data/...` 相对路径。
-- 镜像一律 hardcode `image: tag`，由自动更新守护；**仅 3 个变量型例外**：
-  `silo`、`infinity/cu124`、`xunlei`（不入自动更新范围，见 automation §2）。
+- 镜像一律 hardcode `image: tag`，由自动更新守护；**仅 4 个变量型例外**：
+  `silo`、`infinity/cu124`、`xunlei`、`immich/v3.0.3`（前三个不入自动更新范围；
+  `immich/v3.0.3` 是 CPU/CUDA 镜像变体选择，tag 段仍由自动更新守护，见 automation §2）。
 - 上述例外清单由 `npm run lint` 校验：例外之外出现变量型镜像即报 error；
   清单单一事实来源在 `.github/lib/image-policy.mjs`（与本节内容由测试锁定一致）。
 - compose 中每个 `${VAR}` 必须在版本 `data.yml` formFields 声明；豁免变量仅 6 个：

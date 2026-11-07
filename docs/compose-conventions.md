@@ -11,8 +11,10 @@
 - 公开端口: 使用 `PANEL_APP_PORT_*` 变量（命名按语义：`PANEL_APP_PORT_HTTP` / `HTTPS` / `API` 等）
 - 持久化挂载: 优先使用 `./data/...` 相对路径
 - 镜像引用: 一律 hardcode 直接写 `image: <repo>:<tag>`，由自动更新守护（见 [automation.md](automation.md)）。
-  例外清单（变量型、不入自动范围）：`silo`（RELEASE 时间戳 tag 超出版本识别能力）、
-  `infinity/cu124`（`cu124` 功能型 tag 单段、无法用版本比较选型）、`xunlei`（上游仅 `beta` 浮动 tag）。
+  例外清单（变量型）：`silo`（RELEASE 时间戳 tag 超出版本识别能力）、
+  `infinity/cu124`（`cu124` 功能型 tag 单段、无法用版本比较选型）、`xunlei`（上游仅 `beta` 浮动 tag）、
+  `immich/v3.0.3`（机器学习镜像按安装表单在 CPU 版 `v3.0.3` 与 CUDA 版 `v3.0.3-cuda` 间切换，
+  写成 `${ML_IMAGE}:${ML_IMAGE_TAG}`；tag 段仍是常规版本号，自动更新照常守护）。
 
 ## 2. 环境变量声明
 

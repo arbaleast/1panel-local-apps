@@ -101,7 +101,8 @@
 - `SKIP_AUTO_UPDATE_APPS = ['anythingllm', 'jellyfin']`（手维护；混排日期型目录，防跨目录覆盖，
   见 [postmortems.md](postmortems.md#jellyfin-日期型目录被跨目录覆盖2026-09-25)）。
 - 变量型应用（compose 用 `${IMAGE}` / `${APP_VERSION}`）不入自动范围，存量例外见
-  [compose-conventions.md §1](compose-conventions.md#1-compose-硬规则红线)（silo / infinity/cu124 / xunlei）。
+  [compose-conventions.md §1](compose-conventions.md#1-compose-硬规则红线)（silo / infinity/cu124 / xunlei；
+  `immich/v3.0.3` 虽为变量型，但 tag 段是常规版本号，仍走自动更新守护）。
 - `latest` 作镜像 tag 的应用跳过（版本漂移语义，见 [app-structure.md §2](app-structure.md#2-版本目录规则)）。
 
 ## 3. 镜像版本选型口径

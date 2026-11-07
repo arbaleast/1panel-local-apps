@@ -126,7 +126,7 @@ npm run docs:check     # 文档链接 / 结构校验
 
 **行为：**
 - 扫描所有应用 `<app>/<version>/docker-compose.yml` 版本子目录
-- 仅处理 hardcode 类镜像（含 `:tag` 且不含变量）；`latest` 标签跳过（2026-11 起 compose 镜像默认全仓 hardcode，仅 silo / infinity / xunlei 三个例外仍用变量、检测跳过）
+- 仅处理 hardcode 类镜像（含 `:tag` 且不含变量）；`latest` 标签跳过（2026-11 起 compose 镜像默认全仓 hardcode，仅 silo / infinity / xunlei 三个例外仍用变量、检测跳过；`immich/v3.0.3` 的机器学习镜像虽为变量型，但 tag 段是常规版本号，照常检测更新）
 - 调 Docker Hub API（ghcr.io 用 GitHub Container Registry API）查最新 tag
 - 检测到新版本 → 自动开 PR，分支命名 `auto-update/<yyyy-mm-dd>`
 - PR body 列出所有 service 的 `before`/`after` tag
