@@ -61,9 +61,12 @@ GPU 能力拆成两块，**各自独立开关**：
 
 **1. NVIDIA 专有驱动**
 
-- 上游 Immich 对 CUDA 机器学习的官方要求是**驱动 ≥ 545**（需支持 CUDA 12.3）。
-- ⚠️ Pascal（Quadro P620 属于这一代）**只被 CUDA 12.x 支持**：CUDA 13 起 NVIDIA 官方移除了
-  Maxwell / Pascal / Volta 架构的支持。若装上过新的驱动分支后 CUDA 调用报
+- 上游 Immich 对 CUDA 机器学习的官方要求是**驱动 ≥ 545**（需支持 CUDA 12.3）；
+  按 NVIDIA 的 CUDA minor version compatibility 表，CUDA 12.x runtime 的**最低驱动是 525.60.13**
+  （两条不冲突，上游取的是更保守的值）。
+- ⚠️ Pascal（Quadro P620 属于这一代）**只被 CUDA 12.x 支持**：CUDA Toolkit 13.0 已移除
+  Maxwell / Pascal / Volta 的离线编译与库支持（CUDA 13.0 对应驱动分支 R580），12.x 系列会继续支持。
+  若装上过新的驱动分支后 CUDA 调用报
   `no kernel image is available for execution on the device`，把驱动回退到仍支持 Pascal 的分支
   （具体分支以 NVIDIA 官方 driver release notes 为准）。
 - 验证：
@@ -157,8 +160,9 @@ watch -n 1 nvidia-smi
 **编解码能力**
 
 - 支持 H.264 / HEVC(H.265) 硬件编解码；**不支持 AV1**（Pascal 世代没有 AV1 硬件编解码单元）。
-- GP107 只有 **1 个 NVENC + 1 个 NVDEC** 引擎，硬件并发会话数有限（消费级 Pascal 驱动通常限制在
-  2–3 路，具体上限以 `nvidia-smi` 输出与实机压测为准）→ Immich 端**并发转码数建议设为 1**。
+- Pascal 消费卡为 **1 个 NVENC + 1 个 NVDEC** 引擎，硬件并发会话数有限（NVIDIA 官方
+  video-codec support matrix 页面已下线，具体上限以 `nvidia-smi` 输出与实机压测为准）
+  → Immich 端**并发转码数建议设为 1**。
 - 上游说明：默认只有编码走 GPU，解码与色调映射仍在 CPU 上；开启「硬件解码」可进一步降 CPU。
 
 **精度与架构**
