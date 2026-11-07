@@ -181,17 +181,17 @@ additionalProperties:
   - default: v3.0.3
     edit: true
     envKey: ML_IMAGE_TAG
-    labelEn: "ML Image Tag (CPU: same version as server / NVIDIA CUDA: append -cuda)"
-    labelZh: "机器学习镜像 Tag（CPU：与服务器同版本号 / NVIDIA CUDA：同版本号后加 -cuda）"
+    labelEn: "ML Image Tag (CUDA: add -cuda)"
+    labelZh: "机器学习镜像 Tag（CUDA 加 -cuda）"
     label:
-      en: "ML Image Tag (CPU: same version as server / NVIDIA CUDA: append -cuda)"
-      zh: "机器学习镜像 Tag（CPU：与服务器同版本号 / NVIDIA CUDA：同版本号后加 -cuda）"
-      zh-Hant: "機器學習映像 Tag（CPU：與伺服器同版本號／NVIDIA CUDA：同版本號後加 -cuda）"
-      ja: "ML イメージ Tag（CPU: サーバーと同じバージョン／NVIDIA CUDA: 同じバージョンに -cuda を付与）"
-      ko: "ML 이미지 Tag(CPU: 서버와 동일한 버전 / NVIDIA CUDA: 동일 버전 뒤에 -cuda)"
-      ru: "Tag образа ML (CPU: та же версия, что и у сервера / NVIDIA CUDA: та же версия с суффиксом -cuda)"
-      ms: "Tag imej ML (CPU: versi sama seperti pelayan / NVIDIA CUDA: tambah -cuda pada versi yang sama)"
-      pt-br: "Tag da imagem ML (CPU: mesma versão do servidor / NVIDIA CUDA: acrescente -cuda à mesma versão)"
+      en: "ML Image Tag (CUDA: add -cuda)"
+      zh: "机器学习镜像 Tag（CUDA 加 -cuda）"
+      zh-Hant: "機器學習映像 Tag（CUDA 加 -cuda）"
+      ja: "ML イメージ Tag（CUDA: -cuda を付与）"
+      ko: "ML 이미지 Tag(CUDA: -cuda 추가)"
+      ru: "Tag образа ML (CUDA: добавить -cuda)"
+      ms: "Tag imej ML (CUDA: tambah -cuda)"
+      pt-br: "Tag da imagem ML (CUDA: adicione -cuda)"
     required: true
     rule: paramImageTag
     type: text
@@ -210,7 +210,7 @@ additionalProperties:
       ru: TTL простоя модели (секунды)
       ms: TTL model terbiaru (saat)
       pt-br: TTL de ociosidade do modelo (segundos)
-    required: false
+    required: true
     rule: paramCommon
     type: number
 
