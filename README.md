@@ -36,7 +36,7 @@
 | losslesscut | 浏览器内视频/音频无损剪辑 | 3.64.0-v1 |
 | marginalia | 本地优先的私人知识库 + LLM 研究代理 | v0.3.8 |
 | mediago | 媒体嗅探与下载 | 3.5.0 |
-| mihomo | 代理工具 | v1.19.18 |
+| mihomo | 代理工具 | v1.19.33 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
 | misaka | 御坂网络弹幕服务 | v2.9.1 |
 | moviepilot | 影视自动化 | 3.2.4 |

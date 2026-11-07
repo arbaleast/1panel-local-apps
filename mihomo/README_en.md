@@ -1,49 +1,63 @@
-# Mihomo (glash) — 1Panel Local App
+# Mihomo — 1Panel Local App
 
-Wraps the [gangz1o/clash4docker](https://github.com/gangz1o/clash4docker) `gangz1o/glash` image:
-- Latest Mihomo (Clash Meta) kernel
-- Bundled [MetacubexD](https://github.com/MetaCubeX/metacubexd) Dashboard (no separate UI deploy needed)
-- Pre-packaged GeoIP / GeoSite / Country.mmdb
-- **Subscription auto-download + scheduled update** (the main draw)
-- Optional TUN mode (transparent proxy)
+Wraps the [daitcl/mihomo](https://github.com/daitcl/mihomo) image (version dir `v1.19.33` = image tag `v1.19.33`):
+- Mihomo (Clash Meta) kernel + pre-packaged GeoIP / GeoSite
+- Bundled [MetacubexD](https://github.com/MetaCubeX/metacubexd) Dashboard, served by Caddy inside the image
+- `config.yaml` generated from your subscription URL on first start (subscription mode)
+- TUN transparent proxy on by default (image config template)
+- **amd64 only** (the upstream image publishes amd64 only)
+
+The old `v1.19.18` version (gangz1o/glash image, with arm64) is kept as an archived snapshot, unmaintained.
 
 ## Ports
 
-| Port | Purpose |
-|------|---------|
-| 7890 | HTTP proxy |
+| Container port | Purpose |
+|------|------|
+| 7890 | Mixed proxy (HTTP + SOCKS) |
 | 7891 | SOCKS5 proxy |
-| 7892 | Mixed (HTTP + SOCKS) |
-| 9090 | REST API + Dashboard |
+| 7892 | HTTP proxy |
+| 9090 | REST API (external-controller) |
+| 8080 | MetacubexD Dashboard (Caddy) |
 
-## Quick start (Subscription mode — recommended)
+> Port semantics differ from v1.19.18: there 7890 was HTTP and 7892 mixed; here (upstream template) 7890 is mixed and 7892 is HTTP.
 
-1. 1Panel App Store → Local → find **Mihomo (glash)** → Install
-2. Install form:
-   - **Subscription URL**: your Clash / clash.meta subscription link
-   - **Dashboard Secret**: a strong password (for Dashboard login)
-   - **Subscription Cron**: default `0 */6 * * *` (update every 6 hours)
-   - Other fields can stay at default
-3. Visit `http://<host>:9090/ui/`, backend URL = `http://<host>:9090`, secret = your SECRET
+## Install form
 
-## How subscription mode works
+| Field | Meaning |
+|------|------|
+| Mixed / SOCKS / HTTP proxy ports | Host-side port mappings, default 7890 / 7891 / 7892 |
+| Controller port | REST API (9090) |
+| Dashboard port | MetacubexD web UI (8080) |
+| Config folder path | Default `./data`, persistence directory |
+| Timezone | Default `Asia/Shanghai` |
+| Subscription URL | Clash / clash.meta subscription link; leave empty to supply your own `config.yaml` (see below) |
+| Subscription Name | Proxy-provider name, default `default`, alphanumeric only |
+| Dashboard Secret | REST API / Dashboard login secret; empty disables auth |
+| Log Level | `info` / `silent`, default `info` |
 
-`start.sh` on container boot:
+## First-start behavior (important)
 
-1. If `DATA_PATH` (default `./data`) already has `config.yaml` → use local config
-2. Otherwise download from `SUB_URL`
-3. Inject `SECRET`, `ALLOW_LAN`, `AUTHENTICATION` into config
-4. If `SUB_CRON` is set, schedule auto-update + hot-restart
+The entrypoint generates a config from the install params **only when `./data/config.yaml` does not exist**. Afterwards the env vars no longer take effect:
 
-> **Important:** With subscription mode, the config dir **must be writable** (don't bind-mount a single file as `:ro`).
+- To change the subscription URL / secret / log level, **delete `./data/config.yaml` and restart** (or edit the file directly and restart).
+- Subscription refresh is driven by Mihomo's own `proxy-providers` interval (default 86400 s = once a day; edit `interval` in `config.yaml`). There is no extra cron inside the image.
+- If the subscription URL is empty **and** `./data/config.yaml` doesn't exist, the generated config has an empty provider URL and Mihomo fails to start (restart loop). Pick one: fill in the subscription URL, or place your own `config.yaml` before starting.
+
+## Subscription mode (recommended)
+
+1. 1Panel App Store → Local → find **Mihomo** → Install
+2. Fill in **Subscription URL** (Clash / clash.meta format); set a **Dashboard Secret** too
+3. Open `http://<host>:8080` (Dashboard), backend = `http://<host>:9090`, secret = your Dashboard Secret
+
+Nodes in subscription mode are managed by `proxy-providers`; manual `proxies` edits get overwritten. To hand-edit nodes, edit `./data/config.yaml` directly.
 
 ## Local-config mode
 
-If you don't set `SUB_URL`, you need to provide a `config.yaml` yourself:
+If you don't fill in a subscription URL, place your own `config.yaml` in `./data` **before** starting — the entrypoint will use it as-is:
 
 ```bash
-cat > /opt/1panel/apps/local/mihomo/mihomo/data/config.yaml << 'EOF'
-mixed-port: 7892
+cat > /opt/1panel/apps/local/mihomo/mihomo/v1.19.33/data/config.yaml << 'EOF'
+mixed-port: 7890
 allow-lan: true
 mode: rule
 log-level: info
@@ -61,47 +75,54 @@ rules:
 EOF
 ```
 
-## TUN mode (transparent proxy)
+## TUN mode (on by default)
 
-TUN mode makes **all traffic inside the container** go through the proxy — no client config needed.
+The image template defaults to `tun.enable: true`; compose already grants `NET_ADMIN` and maps `/dev/net/tun`.
+The host must provide `/dev/net/tun` (present on most Linux hosts). To disable TUN, edit `./data/config.yaml`,
+set `tun.enable: false` and restart.
 
-- The image supports `NET_ADMIN` + `/dev/net/tun` (already declared in compose)
-- Set **Enable TUN** = "启用" in the 1Panel UI form and restart
-- Verify: `docker exec <container> cat /proc/sys/net/ipv4/ip_forward`
+## Data persistence
+
+`./data` (under the app install dir) → `/root/.config/mihomo` in the container: `config.yaml`, cache and geo files live here.
+The image runs as root (no `user:` mapping) — **no** chown needed and there are no UID / GID install params.
+
+## Upgrading from v1.19.18
+
+- The `data/` directory is kept across versions; an existing `config.yaml` keeps being used as-is → the new install params (subscription URL etc.) will not take effect. To switch subscriptions, delete the old `config.yaml` and restart.
+- Port semantics changed (see table above): if external scripts / reverse proxies assumed 7890 = HTTP, point them at mixed (7890) or HTTP (7892) instead.
+- UID / GID params are gone (the image runs as root); previous ownership of the data dir does not affect operation.
+- v1.19.18 used the gangz1o/glash image — a different upstream repo. Rollback = switch back to version `v1.19.18` in 1Panel.
 
 ## Image pull
 
-Default `gangz1o/glash:latest` (Mihomo v1.19.x + MetacubexD v1.26x). If .246 mirror doesn't include gangz1o:
-
 ```bash
-# Use any mirror from the upstream README
-docker pull docker.1ms.run/gangz1o/glash:latest
-docker tag docker.1ms.run/gangz1o/glash:latest gangz1o/glash:latest
+docker pull ghcr.io/daitcl/mihomo:v1.19.33
 ```
+
+If your mirror doesn't carry ghcr/daitcl, pull via any ghcr accelerator from the upstream README and retag.
 
 ## Troubleshooting
 
-**Q: Dashboard Mixed Content error?**
-Reverse-proxy the entire 9090 port with HTTPS, or use `http://<host>:9090/ui/` directly.
+**Q: Dashboard won't open / Mixed Content error?**
+The dashboard is plain HTTP on 8080; front it with HTTPS by reverse-proxying the whole port, or use `http://<host>:8080` directly. Connect it to the backend `http://<host>:9090` + your secret.
+
+**Q: Install-param change has no effect?**
+See "First-start behavior": delete `./data/config.yaml` and restart the app (back up your custom edits first).
 
 **Q: Subscription download fails?**
-```bash
-docker logs <container>                 # start.sh output
-docker exec <container> cat /var/log/subscription.log   # subscription-specific log
-```
-
-**Q: How do I add nodes?**
-In subscription mode, nodes come from the subscription URL — the local `config.yaml` gets overwritten. Change your subscription URL or disable subscription mode.
+`docker logs <container>` for entrypoint and Mihomo logs; make sure the subscription URL is reachable from inside the container (the provider is fetched by the Mihomo kernel itself).
 
 ## Files
 
 ```
 mihomo/
-├── data.yml           # Root metadata + full formFields
-├── logo.png           # clash.png icon
-├── README.md          # this file (zh)
-├── README_en.md       # English
-└── latest/
-    ├── data.yml       # Install form (16 fields)
-    └── docker-compose.yml
+├── data.yml           # Root metadata
+├── logo.png
+├── README.md          # Chinese
+├── README_en.md       # this file
+├── v1.19.33/          # current version (daitcl/mihomo)
+│   ├── data.yml       # Install form (11 fields)
+│   ├── docker-compose.yml
+│   └── data/          # persistence
+└── v1.19.18/          # archived (gangz1o/glash, with arm64)
 ```

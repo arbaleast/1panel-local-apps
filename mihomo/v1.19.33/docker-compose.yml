@@ -1,0 +1,39 @@
+# 基于 daitcl/mihomo 镜像（Mihomo 内核 + metacubexd 仪表盘，Caddy 托管 8080）。
+# 注意：
+# - 镜像首次启动时才会根据环境变量生成 ./data/config.yaml；config.yaml 已存在时
+#   环境变量不再生效（改参数需删除该文件重启，或直接编辑该文件）。
+# - 镜像配置模板默认 tun.enable: true，因此这里固定带 NET_ADMIN + /dev/net/tun；
+#   宿主机需可提供 /dev/net/tun（不想用 TUN 可编辑 config.yaml 关闭）。
+# - 代理/控制/面板端口在镜像模板内固定，宿主机端口通过 PANEL_APP_PORT_* 映射。
+networks:
+  1panel-network:
+    external: true
+services:
+  mihomo:
+    container_name: ${CONTAINER_NAME}
+    image: ghcr.io/daitcl/mihomo:v1.19.33
+    labels:
+      createdBy: Apps
+    networks:
+      1panel-network:
+        aliases:
+        - ${CONTAINER_NAME}
+    ports:
+    - ${HOST_IP}:${PANEL_APP_PORT_MIXED}:7890
+    - ${HOST_IP}:${PANEL_APP_PORT_SOCKS}:7891
+    - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:7892
+    - ${HOST_IP}:${PANEL_APP_PORT_CONTROLLER}:9090
+    - ${HOST_IP}:${PANEL_APP_PORT_DASHBOARD}:8080
+    restart: always
+    cap_add:
+    - NET_ADMIN
+    devices:
+    - /dev/net/tun:/dev/net/tun
+    environment:
+    - TZ=${TZ}
+    - SUBSCRIBE_URL=${SUBSCRIBE_URL}
+    - SUBSCRIBE_NAME=${SUBSCRIBE_NAME}
+    - CLASH_SECRET=${CLASH_SECRET}
+    - LOG_LEVEL=${LOG_LEVEL}
+    volumes:
+    - ${DATA_PATH}:/root/.config/mihomo

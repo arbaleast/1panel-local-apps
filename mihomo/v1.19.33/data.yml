@@ -1,0 +1,228 @@
+name: Mihomo
+title: Mihomo (Clash Meta) 网络代理 — daitcl 镜像
+description:
+  zh: 基于 daitcl/mihomo 镜像（Mihomo 内核 + MetacubexD Dashboard + Caddy 静态托管）。支持 HTTP/SOCKS/混合代理、TUN 透明代理（默认开启）、通过订阅链接生成配置。
+  en: 'Wraps daitcl/mihomo: Mihomo kernel + MetacubexD Dashboard served by Caddy. HTTP/SOCKS/mixed proxy, TUN mode (on by default), config generated from a subscription URL.'
+  ja: 'daitcl/mihomo イメージベース: Mihomo カーネル + MetacubexD Dashboard（Caddy 配信）。HTTP/SOCKS 代理、TUN 透過プロキシ（デフォルト有効）、サブスク URL から設定を生成。'
+  ko: 'daitcl/mihomo 이미지 기반: Mihomo 커널 + MetacubexD Dashboard(Caddy 제공). HTTP/SOCKS 프록시, TUN 투명 프록시(기본 활성), 구독 URL로 설정 생성.'
+  ru: 'На базе daitcl/mihomo: ядро Mihomo + MetacubexD Dashboard (раздаётся через Caddy). HTTP/SOCKS прокси, TUN (включён по умолчанию), конфиг генерируется из ссылки подписки.'
+  ms: 'Berdasarkan imej daitcl/mihomo: kernel Mihomo + Papan Pemuka MetacubexD (dihoskan Caddy). Proksi HTTP/SOCKS, mod TUN (aktif secara lalai), konfigurasi dijana daripada URL langganan.'
+  pt-br: 'Baseado na imagem daitcl/mihomo: kernel Mihomo + Dashboard MetacubexD (servido pelo Caddy). Proxy HTTP/SOCKS/misto, modo TUN (ativo por padrão), config gerada a partir da URL de assinatura.'
+  zh-Hant: 基於 daitcl/mihomo 映像（Mihomo 核心 + MetacubexD Dashboard + Caddy 靜態託管）。支援 HTTP/SOCKS/混合代理、TUN 透明代理（預設開啟）、透過訂閱連結產生設定。
+additionalProperties:
+  key: mihomo
+  name: Mihomo
+  tags:
+  - Network
+  - Proxy
+  description:
+    zh: 基于 daitcl/mihomo 镜像（Mihomo 内核 + MetacubexD Dashboard + Caddy 静态托管）。支持 HTTP/SOCKS/混合代理、TUN 透明代理（默认开启）、通过订阅链接生成配置。
+    en: 'Wraps daitcl/mihomo: Mihomo kernel + MetacubexD Dashboard served by Caddy. HTTP/SOCKS/mixed proxy, TUN mode (on by default), config generated from a subscription URL.'
+    ja: 'daitcl/mihomo イメージベース: Mihomo カーネル + MetacubexD Dashboard（Caddy 配信）。HTTP/SOCKS 代理、TUN 透過プロキシ（デフォルト有効）、サブスク URL から設定を生成。'
+    ko: 'daitcl/mihomo 이미지 기반: Mihomo 커널 + MetacubexD Dashboard(Caddy 제공). HTTP/SOCKS 프록시, TUN 투명 프록시(기본 활성), 구독 URL로 설정 생성.'
+    ru: 'На базе daitcl/mihomo: ядро Mihomo + MetacubexD Dashboard (раздаётся через Caddy). HTTP/SOCKS прокси, TUN (включён по умолчанию), конфиг генерируется из ссылки подписки.'
+    ms: 'Berdasarkan imej daitcl/mihomo: kernel Mihomo + Papan Pemuka MetacubexD (dihoskan Caddy). Proksi HTTP/SOCKS, mod TUN (aktif secara lalai), konfigurasi dijana daripada URL langganan.'
+    pt-br: 'Baseado na imagem daitcl/mihomo: kernel Mihomo + Dashboard MetacubexD (servido pelo Caddy). Proxy HTTP/SOCKS/misto, modo TUN (ativo por padrão), config gerada a partir da URL de assinatura.'
+    zh-Hant: 基於 daitcl/mihomo 映像（Mihomo 核心 + MetacubexD Dashboard + Caddy 靜態託管）。支援 HTTP/SOCKS/混合代理、TUN 透明代理（預設開啟）、透過訂閱連結產生設定。
+  shortDescZh: Mihomo 代理 + Dashboard + 订阅生成配置
+  shortDescEn: Mihomo proxy + Dashboard + subscription-based config
+  type: tool
+  architectures:
+  - amd64
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://github.com/daitcl/mihomo
+  github: https://github.com/daitcl/mihomo
+  document: https://github.com/daitcl/mihomo#readme
+  formFields:
+  - default: 7890
+    edit: true
+    envKey: PANEL_APP_PORT_MIXED
+    labelEn: Mixed Proxy Port
+    labelZh: 混合代理端口
+    label:
+      en: Mixed Proxy Port
+      zh: 混合代理端口
+      ja: 混合プロキシポート
+      ko: 혼합 프록시 포트
+      ru: Смешанный прокси-порт
+      ms: Port Proksi Campuran
+      pt-br: Porta Proxy Mista
+      zh-Hant: 混合代理連接埠
+    required: true
+    rule: paramPort
+    type: number
+  - default: 7891
+    edit: true
+    envKey: PANEL_APP_PORT_SOCKS
+    labelEn: SOCKS5 Proxy Port
+    labelZh: SOCKS5 代理端口
+    label:
+      en: SOCKS5 Proxy Port
+      zh: SOCKS5 代理端口
+      ja: SOCKS5 プロキシポート
+      ko: SOCKS5 프록시 포트
+      ru: Порт SOCKS5-прокси
+      ms: Port Proksi SOCKS5
+      pt-br: Porta Proxy SOCKS5
+      zh-Hant: SOCKS5 代理連接埠
+    required: true
+    rule: paramPort
+    type: number
+  - default: 7892
+    edit: true
+    envKey: PANEL_APP_PORT_HTTP
+    labelEn: HTTP Proxy Port
+    labelZh: HTTP 代理端口
+    label:
+      en: HTTP Proxy Port
+      zh: HTTP 代理端口
+      ja: HTTP プロキシポート
+      ko: HTTP 프록시 포트
+      ru: Порт HTTP-прокси
+      ms: Port Proksi HTTP
+      pt-br: Porta Proxy HTTP
+      zh-Hant: HTTP 代理連接埠
+    required: true
+    rule: paramPort
+    type: number
+  - default: 9090
+    edit: true
+    envKey: PANEL_APP_PORT_CONTROLLER
+    labelEn: Controller Port
+    labelZh: Controller 端口
+    label:
+      en: Controller Port
+      zh: Controller 端口
+      ja: コントローラーポート
+      ko: 컨트롤러 포트
+      ru: Порт контроллера
+      ms: Port Pengawal
+      pt-br: Porta Controller
+      zh-Hant: Controller 連接埠
+    required: true
+    rule: paramPort
+    type: number
+  - default: 8080
+    edit: true
+    envKey: PANEL_APP_PORT_DASHBOARD
+    labelEn: Dashboard Port
+    labelZh: Dashboard 端口
+    label:
+      en: Dashboard Port
+      zh: Dashboard 端口
+      ja: ダッシュボードポート
+      ko: 대시보드 포트
+      ru: Порт Dashboard
+      ms: Port Papan Pemuka
+      pt-br: Porta do Dashboard
+      zh-Hant: Dashboard 連接埠
+    required: true
+    rule: paramPort
+    type: number
+  - default: ./data
+    edit: true
+    envKey: DATA_PATH
+    labelEn: Config folder path
+    labelZh: 配置文件夹路径
+    label:
+      en: Config folder path
+      zh: 配置文件夹路径
+      ja: 設定フォルダパス
+      ko: 설정 폴더 경로
+      ru: Путь к папке конфигурации
+      ms: Laluan folder konfigurasi
+      pt-br: Caminho da pasta de configuração
+      zh-Hant: 設定資料夾路徑
+    required: true
+    rule: paramPath
+    type: text
+  - default: Asia/Shanghai
+    edit: true
+    envKey: TZ
+    labelEn: Timezone
+    labelZh: 时区
+    label:
+      en: Timezone
+      zh: 时区
+      ja: タイムゾーン
+      ko: 시간대
+      ru: Часовой пояс
+      ms: Zon waktu
+      pt-br: Fuso horário
+      zh-Hant: 時區
+    required: true
+    type: text
+  - default: ''
+    edit: true
+    envKey: SUBSCRIBE_URL
+    labelEn: Subscription URL
+    labelZh: 订阅链接
+    label:
+      en: Subscription URL
+      zh: 订阅链接
+      ja: サブスク URL
+      ko: 구독 URL
+      ru: Ссылка подписки
+      ms: URL langganan
+      pt-br: URL da assinatura
+      zh-Hant: 訂閱連結
+    required: false
+    type: text
+  - default: default
+    edit: true
+    envKey: SUBSCRIBE_NAME
+    labelEn: Subscription Name
+    labelZh: 订阅名称
+    label:
+      en: Subscription Name
+      zh: 订阅名称
+      ja: サブスク名
+      ko: 구독 이름
+      ru: Имя подписки
+      ms: Nama langganan
+      pt-br: Nome da assinatura
+      zh-Hant: 訂閱名稱
+    required: true
+    rule: paramCommon
+    type: text
+  - default: ''
+    edit: true
+    envKey: CLASH_SECRET
+    labelEn: Dashboard Secret
+    labelZh: Dashboard 密钥
+    label:
+      en: Dashboard Secret
+      zh: Dashboard 密钥
+      ja: ダッシュボード キー
+      ko: 대시보드 비밀키
+      ru: Ключ Dashboard
+      ms: Kunci Dashboard
+      pt-br: Chave do Dashboard
+      zh-Hant: Dashboard 密鑰
+    required: false
+    rule: paramCommon
+    type: text
+  - default: info
+    edit: true
+    envKey: LOG_LEVEL
+    labelEn: Log Level
+    labelZh: 日志级别
+    label:
+      en: Log Level
+      zh: 日志级别
+      ja: ログレベル
+      ko: 로그 레벨
+      ru: Уровень логов
+      ms: Tahap log
+      pt-br: Nível de log
+      zh-Hant: 日誌級別
+    required: true
+    rule: paramSelect
+    type: select
+    values:
+    - label: info
+      value: info
+    - label: silent
+      value: silent
