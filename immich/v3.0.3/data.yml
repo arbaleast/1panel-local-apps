@@ -159,6 +159,61 @@ additionalProperties:
     - label: fp32（高精度）
       value: fp32
 
+  # 机器学习镜像仓库（一般无需修改；与官方 ghcr.io/immich-app/immich-machine-learning 一致）
+  - default: ghcr.io/immich-app/immich-machine-learning
+    edit: true
+    envKey: ML_IMAGE
+    labelEn: ML Image Repository
+    labelZh: 机器学习镜像仓库
+    label:
+      en: ML Image Repository
+      zh: 机器学习镜像仓库
+      zh-Hant: 機器學習映像倉庫
+      ja: ML イメージリポジトリ
+      ko: ML 이미지 저장소
+      ru: Репозиторий образа ML
+      ms: Repositori imej ML
+      pt-br: Repositório da imagem ML
+    required: true
+    rule: paramImageTag
+    type: text
+  # 机器学习镜像 Tag：CPU 版与 immich-server 同版本号；NVIDIA CUDA 加速版在同版本号后加 -cuda（仅 amd64 架构）
+  - default: v3.0.3
+    edit: true
+    envKey: ML_IMAGE_TAG
+    labelEn: "ML Image Tag (CPU: same version as server / NVIDIA CUDA: append -cuda)"
+    labelZh: "机器学习镜像 Tag（CPU：与服务器同版本号 / NVIDIA CUDA：同版本号后加 -cuda）"
+    label:
+      en: "ML Image Tag (CPU: same version as server / NVIDIA CUDA: append -cuda)"
+      zh: "机器学习镜像 Tag（CPU：与服务器同版本号 / NVIDIA CUDA：同版本号后加 -cuda）"
+      zh-Hant: "機器學習映像 Tag（CPU：與伺服器同版本號／NVIDIA CUDA：同版本號後加 -cuda）"
+      ja: "ML イメージ Tag（CPU: サーバーと同じバージョン／NVIDIA CUDA: 同じバージョンに -cuda を付与）"
+      ko: "ML 이미지 Tag(CPU: 서버와 동일한 버전 / NVIDIA CUDA: 동일 버전 뒤에 -cuda)"
+      ru: "Tag образа ML (CPU: та же версия, что и у сервера / NVIDIA CUDA: та же версия с суффиксом -cuda)"
+      ms: "Tag imej ML (CPU: versi sama seperti pelayan / NVIDIA CUDA: tambah -cuda pada versi yang sama)"
+      pt-br: "Tag da imagem ML (CPU: mesma versão do servidor / NVIDIA CUDA: acrescente -cuda à mesma versão)"
+    required: true
+    rule: paramImageTag
+    type: text
+  # 模型空闲卸载时间（秒）：上游默认 300；小显存卡（如 2GB）可调小以尽快释放显存
+  - default: 300
+    edit: true
+    envKey: ML_MODEL_TTL
+    labelEn: ML Model Idle TTL (seconds)
+    labelZh: 模型空闲卸载时间（秒）
+    label:
+      en: ML Model Idle TTL (seconds)
+      zh: 模型空闲卸载时间（秒）
+      zh-Hant: 模型閒置卸載時間（秒）
+      ja: モデルのアイドル TTL（秒）
+      ko: 모델 유휴 TTL(초)
+      ru: TTL простоя модели (секунды)
+      ms: TTL model terbiaru (saat)
+      pt-br: TTL de ociosidade do modelo (segundos)
+    required: false
+    rule: paramCommon
+    type: number
+
   - default: 99
     edit: true
     envKey: UID

@@ -20,15 +20,19 @@ import { join } from 'node:path';
 
 /**
  * 允许使用变量型镜像的版本目录（`<app>/<version>`）。
- * 与 AGENTS.md §6「仅 3 个变量型例外」一一对应：
+ * 与 AGENTS.md §6「仅 4 个变量型例外」一一对应：
  *   - silo/RELEASE.2026-08：tag 为 RELEASE 时间戳，检测器无法识别版本序
  *   - infinity/cu124：cu124 为功能型单段 tag，非版本号
  *   - xunlei/beta：上游仅提供浮动 beta tag
+ *   - immich/v3.0.3：机器学习镜像按安装表单在 CPU 版（v3.0.3）与 CUDA 版（v3.0.3-cuda）
+ *     之间切换（`${ML_IMAGE}:${ML_IMAGE_TAG}` 形态）；tag 段仍是常规版本号，
+ *     自动更新照常守护（与前三个「检测跳过」的例外性质不同）
  */
 export const VARIABLE_IMAGE_EXCEPTIONS = [
   'silo/RELEASE.2026-08',
   'infinity/cu124',
   'xunlei/beta',
+  'immich/v3.0.3',
 ];
 
 /** 仓库根级目录中需要跳过的（不是应用目录） */
