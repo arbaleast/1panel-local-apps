@@ -69,6 +69,10 @@ GPU 能力拆成两块，**各自独立开关**：
   若装上过新的驱动分支后 CUDA 调用报
   `no kernel image is available for execution on the device`，把驱动回退到仍支持 Pascal 的分支
   （具体分支以 NVIDIA 官方 driver release notes 为准）。
+- ⚠️ 驱动别装太老：`-cuda` 镜像里的 ONNX Runtime 是 **1.26.0**（按 CUDA 12.8 构建，镜像基底却是
+  CUDA 12.2.2 runtime）。宿主驱动过旧时 ML 侧常报
+  `CUDA driver version is insufficient for CUDA runtime version` 并静默退回 CPU ——
+  按上游要求装 **≥ 545** 的驱动最稳。
 - 验证：
 
   ```bash
@@ -197,7 +201,8 @@ watch -n 1 nvidia-smi
 | `could not select device driver "nvidia"` | 宿主机没装/没配 Container Toolkit，或 Docker 没重启；先跑 `docker run --rm --gpus all ubuntu:22.04 nvidia-smi` 自检 |
 | `nvidia-container-cli: requirement error` | 驱动与 Container Toolkit 版本不匹配，重装匹配的 toolkit 并 `systemctl restart docker` |
 | 转码日志仍走 CPU | 网页端「视频转码设置 → 硬件加速」没选 NVENC 或没保存 |
-| ML 日志只有 `CPUExecutionProvider` | 镜像 Tag 没改成 `-cuda` 变体，或 ML 容器没取消 GPU 注释，或驱动版本过新不支持 Pascal |
+| ML 日志只有 `CPUExecutionProvider` | 镜像 Tag 没改成 `-cuda` 变体，或 ML 容器没取消 GPU 注释，或驱动版本过新不支持 Pascal，或驱动过老（见上一行） |
+| `CUDA driver version is insufficient for CUDA runtime version` | 宿主驱动低于 ORT 1.26（CUDA 12.8 构建）所需下限，按上游要求升级到 ≥ 545 |
 | `no kernel image is available for execution on the device` | 驱动/CUDA 版本过新（CUDA 13 起移除 Pascal 支持），回退驱动 |
 | 容器内 `nvidia-smi` 正常但 Immich 报错 | 检查 `UID`/`GID` 对应的宿主机目录属主（见上文 UID / GID 章节） |
 
