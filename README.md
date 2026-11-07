@@ -6,7 +6,7 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.55 |
+| anirss | 动漫 RSS | v3.2.56 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
 | aria2 | 轻量级多协议下载工具 | a2b-stable-25-08-12 |
 | bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.6.0 |
@@ -39,7 +39,7 @@
 | mihomo | 代理工具 | v1.19.33 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
 | misaka | 御坂网络弹幕服务 | v2.9.1 |
-| moviepilot | 影视自动化 | 3.2.4 |
+| moviepilot | 影视自动化 | 3.2.5 |
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.8.1 |
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
@@ -55,9 +55,9 @@
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 20220121 |
 | qdrant | 向量搜索引擎 | v1.20.0 |
 | scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.37.0 |
-| searxng | 隐私搜索引擎 | 2026.11.5-adbf160ff |
+| searxng | 隐私搜索引擎 | 2026.11.6-583bf7b81 |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
-| super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v19.3.1 |
+| super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v20.0.0 |
 | syncthing | 文件同步 | 2.1.7 |
 | tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.06.00 |
 | traefik | 反向代理 | v3.7.17 |
