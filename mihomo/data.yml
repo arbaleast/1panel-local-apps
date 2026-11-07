@@ -4,24 +4,23 @@ additionalProperties:
   tags:
   - Network
   - Proxy
-  shortDescZh: Mihomo 代理 + Dashboard + 订阅管理
-  shortDescEn: Mihomo proxy + Dashboard + subscription manager
+  shortDescZh: Mihomo 代理 + Dashboard + 订阅生成配置
+  shortDescEn: Mihomo proxy + Dashboard + subscription-based config
   description:
-    zh: 基于 gangz1o/glash 镜像（Mihomo 内核 + MetacubexD Dashboard + 订阅管理）。支持 HTTP/SOCKS/混合代理、TUN 透明代理、定时自动更新订阅。
-    en: 'Wraps gangz1o/glash: Mihomo kernel + MetacubexD Dashboard + built-in subscription manager. HTTP/SOCKS/mixed proxy, optional TUN mode, scheduled subscription auto-update.'
-    ja: 'gangz1o/glash イメージベース: Mihomo カーネル + MetacubexD Dashboard + サブスク管理。HTTP/SOCKS 代理、TUN 透明代理、サブスク自動更新。'
-    ko: 'gangz1o/glash 이미지 기반: Mihomo 커널 + MetacubexD Dashboard + 구독 관리. HTTP/SOCKS 프록시, TUN 투명 프록시, 구독 자동 업데이트.'
-    ru: 'На базе gangz1o/glash: ядро Mihomo + MetacubexD Dashboard + менеджер подписок. HTTP/SOCKS прокси, опционально TUN, автообновление подписки.'
-    ms: 'Berdasarkan imej gangz1o/glash: kernel Mihomo + Dashboard MetacubexD + pengurus langganan.'
-    pt-br: 'Baseado na imagem gangz1o/glash: kernel Mihomo + Dashboard MetacubexD + gerenciador de assinaturas.'
-    zh-Hant: 基於 gangz1o/glash 映像：Mihomo 核心 + MetacubexD Dashboard + 訂閱管理。支援 HTTP/SOCKS 代理、TUN 透明代理、定時自動更新訂閱。
+    zh: 基于 daitcl/mihomo 镜像（Mihomo 内核 + MetacubexD Dashboard + Caddy 静态托管）。支持 HTTP/SOCKS/混合代理、TUN 透明代理（默认开启）、通过订阅链接生成配置。
+    en: 'Wraps daitcl/mihomo: Mihomo kernel + MetacubexD Dashboard served by Caddy. HTTP/SOCKS/mixed proxy, TUN mode (on by default), config generated from a subscription URL.'
+    ja: 'daitcl/mihomo イメージベース: Mihomo カーネル + MetacubexD Dashboard（Caddy 配信）。HTTP/SOCKS 代理、TUN 透過プロキシ（デフォルト有効）、サブスク URL から設定を生成。'
+    ko: 'daitcl/mihomo 이미지 기반: Mihomo 커널 + MetacubexD Dashboard(Caddy 제공). HTTP/SOCKS 프록시, TUN 투명 프록시(기본 활성), 구독 URL로 설정 생성.'
+    ru: 'На базе daitcl/mihomo: ядро Mihomo + MetacubexD Dashboard (раздаётся через Caddy). HTTP/SOCKS прокси, TUN (включён по умолчанию), конфиг генерируется из ссылки подписки.'
+    ms: 'Berdasarkan imej daitcl/mihomo: kernel Mihomo + Papan Pemuka MetacubexD (dihoskan Caddy). Proksi HTTP/SOCKS, mod TUN (aktif secara lalai), konfigurasi dijana daripada URL langganan.'
+    pt-br: 'Baseado na imagem daitcl/mihomo: kernel Mihomo + Dashboard MetacubexD (servido pelo Caddy). Proxy HTTP/SOCKS/misto, modo TUN (ativo por padrão), config gerada a partir da URL de assinatura.'
+    zh-Hant: 基於 daitcl/mihomo 映像（Mihomo 核心 + MetacubexD Dashboard + Caddy 靜態託管）。支援 HTTP/SOCKS/混合代理、TUN 透明代理（預設開啟）、透過訂閱連結產生設定。
   type: tool
   architectures:
   - amd64
-  - arm64
   crossVersionUpdate: true
   limit: 0
   recommend: 0
-  website: https://github.com/gangz1o/clash4docker
-  github: https://github.com/gangz1o/clash4docker
-  document: https://github.com/gangz1o/clash4docker#readme
+  website: https://github.com/daitcl/mihomo
+  github: https://github.com/daitcl/mihomo
+  document: https://github.com/daitcl/mihomo#readme
