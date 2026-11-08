@@ -29,6 +29,7 @@
 | jellystat | 免费的 Jellyfin 开源统计应用（Tautulli 替代品）。 | 1.1.12 |
 | kdenlive | 视频剪辑器 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速) | 423.08.5 |
 | kiwix-serve | 离线维基百科与 ZIM 内容服务器 | latest |
+| linguaflow | 自托管 AI 文档翻译与审校平台（术语表 + 流水线） | 0.17.0 |
 | linkwarden | Linkwarden 自托管书签管理器 | v2.16.3 |
 | llamacpp | 高性能本地 LLM 推理引擎 | server-vulkan-v0.4.9 |
 | llamaindex | LLM 数据框架 | v0.9.2 |
