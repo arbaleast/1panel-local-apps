@@ -1,0 +1,29 @@
+additionalProperties:
+  key: linguaflow
+  name: LinguaFlow
+  type: tool
+  tags:
+    - AI
+    - Translation
+    - Document
+    - Tool
+  shortDescZh: 自托管 AI 文档翻译与审校平台（术语表 + 流水线）
+  shortDescEn: Self-hosted AI document translation and review platform
+  description:
+    zh: "LinguaFlow 是 MeowSalty 开发的开源自托管 AI 文档翻译与审校平台，支持项目管理、术语表（glossary）管理、翻译审校流程与多格式文档处理，可在 Web 界面中配置 OpenAI / Anthropic / OpenAI 兼容网关等大模型后端。容器部署默认运行服务器模式（多用户、账号体系、嵌入式 Web UI），数据落在本地 SQLite。许可证：AGPL-3.0。"
+    en: "LinguaFlow is an open-source self-hosted AI document translation and review platform by MeowSalty. It provides project management, glossary management, a translation review workflow and multi-format document handling, with OpenAI / Anthropic / OpenAI-compatible backends configurable from the Web UI. The container image runs server mode (multi-user accounts plus the embedded Web UI) and stores data in a local SQLite database. License — AGPL-3.0."
+    zh-Hant: "LinguaFlow 是 MeowSalty 開發的開源自託管 AI 文件翻譯與審校平臺，支援專案管理、術語表（glossary）管理、翻譯審校流程與多格式文件處理，可在 Web 介面設定 OpenAI / Anthropic / OpenAI 相容閘道等大模型後端。容器部署預設執行伺服器模式（多使用者、帳號體系、內嵌 Web UI），資料落在本機 SQLite。授權條款：AGPL-3.0。"
+    ja: "LinguaFlow は MeowSalty 氏が開発したオープンソースのセルフホスト型 AI 文書翻訳・レビュー基盤です。プロジェクト管理、用語集（glossary）管理、翻訳レビュー workflow、多形式ドキュメント処理に対応し、OpenAI / Anthropic / OpenAI 互換ゲートウェイなどの LLM バックエンドは Web UI から設定できます。コンテナは既定でサーバーモード（マルチユーザー + 内蔵 Web UI）で動作し、データはローカルの SQLite に保存されます。ライセンス：AGPL-3.0。"
+    ko: "LinguaFlow는 MeowSalty가 개발한 오픈 소스 셀프 호스팅 AI 문서 번역·검수 플랫폼입니다. 프로젝트 관리, 용어집(glossary) 관리, 번역 검수 워크플로, 다양한 형식의 문서 처리를 지원하며 OpenAI / Anthropic / OpenAI 호환 게이트웨이 등 LLM 백엔드는 Web UI에서 설정할 수 있습니다. 컨테이너는 기본적으로 서버 모드(다중 사용자 + 내장 Web UI)로 동작하며 데이터는 로컬 SQLite에 저장됩니다. 라이선스: AGPL-3.0."
+    ru: "LinguaFlow — открытая self-hosted платформа для AI-перевода и вычитки документов, разработанная MeowSalty. Поддерживает управление проектами, глоссарий, процесс рецензирования перевода и обработку документов разных форматов; бэкенды OpenAI / Anthropic / OpenAI-совместимые шлюзы настраиваются в Web-интерфейсе. Контейнер по умолчанию работает в серверном режиме (многопользовательский режим + встроенный Web UI), данные хранятся в локальной SQLite. Лицензия: AGPL-3.0."
+    ms: "LinguaFlow ialah platform terjemahan dan semakan dokumen AI sumber terbuka yang dihos sendiri oleh MeowSalty. Ia menyokong pengurusan projek, pengurusan glosari, aliran kerja semakan terjemahan dan pemprosesan dokumen pelbagai format, dengan backend LLM OpenAI / Anthropic / gateway serasi OpenAI boleh dikonfigurasi dari antara muka web. Imej kontena berjalan dalam mod pelayan (pengguna berbilang + Web UI terbina dalam) dan menyimpan data dalam SQLite setempat. Lesen: AGPL-3.0."
+    pt-br: "O LinguaFlow é uma plataforma open-source auto-hospedada de tradução e revisão de documentos com IA, desenvolvida por MeowSalty. Oferece gestão de projetos, glossário, fluxo de revisão de tradução e processamento de documentos em vários formatos, com backends OpenAI / Anthropic / gateways compatíveis com OpenAI configuráveis pela Web UI. A imagem do contêiner roda por padrão no modo servidor (multiusuário + Web UI embutida) e guarda os dados em um SQLite local. Licença: AGPL-3.0."
+  architectures:
+    - amd64
+    - arm64
+    - arm/v7
+  crossVersionUpdate: true
+  limit: 0
+  recommend: 0
+  website: https://meowsalty.github.io/LinguaFlow/
+  github: https://github.com/MeowSalty/LinguaFlow
