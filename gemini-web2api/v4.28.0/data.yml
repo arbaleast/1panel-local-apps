@@ -1,0 +1,55 @@
+additionalProperties:
+  key: gemini-web2api
+  name: Gemini Web2API
+  type: tool
+  formFields:
+    - envKey: PANEL_APP_PORT_HTTP
+      labelEn: HTTP Port
+      labelZh: HTTP 端口
+      label:
+        en: HTTP Port
+        zh: HTTP 端口
+        zh-Hant: HTTP 埠
+        ja: HTTP ポート
+        ko: HTTP 포트
+        ru: HTTP-порт
+        ms: Port HTTP
+        pt-br: Porta HTTP
+      default: "8083"
+      type: number
+      rule: paramPort
+      required: true
+      edit: true
+    - envKey: ADMIN_TOKEN
+      labelEn: Admin Token
+      labelZh: 管理令牌
+      label:
+        en: Admin token
+        zh: 管理令牌
+        zh-Hant: 管理權杖
+        ja: 管理トークン
+        ko: 관리 토큰
+        ru: Токен админа
+        ms: Token admin
+        pt-br: Token admin
+      default: ""
+      type: password
+      rule: paramComplexity
+      required: true
+      edit: true
+    - envKey: TZ
+      labelEn: Timezone
+      labelZh: 时区
+      label:
+        en: Timezone
+        zh: 时区
+        zh-Hant: 時區
+        ja: タイムゾーン
+        ko: 시간대
+        ru: Часовой пояс
+        ms: Zon waktu
+        pt-br: Fuso horário
+      default: Asia/Shanghai
+      type: text
+      required: true
+      edit: true

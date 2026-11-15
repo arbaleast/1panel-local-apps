@@ -1,0 +1,52 @@
+networks:
+  1panel-network:
+    external: true
+
+# ============================================================
+# gemini-web2api (v4.28.0) — Gemini 网页端 → OpenAI 兼容 API
+#   镜像: ghcr.io/zexadev/gemini-web2api-go:v4.28.0
+#     - 多架构: linux/amd64, linux/arm64（上游 tag 自动构建）
+#     - 基础镜像: distroless static（**容器内没有 shell**，healthcheck 必须用 exec 形式）
+#     - 运行身份: 镜像 USER nonroot → uid/gid 65532，/data 在镜像内属 65532
+#   容器内监听 8083（镜像自带 CMD --db /data/gemini.db --port 8083），
+#   SQLite 落在 /data/gemini.db → 挂到宿主机 ./data。
+#
+# 为什么需要 scripts/init.sh:
+#   镜像以 uid 65532 运行，而 bind mount 的 ./data 由 1Panel 以 root 创建，
+#   属主不对时容器写不进 SQLite，报 `unable to open database file (14)`。
+#   init.sh 在 compose up 之前把 ./data chown 到 65532:65532。
+#
+# 运行时配置（默认模型、限流、重试、TLS 指纹、Cookie 池、代理池）全在
+# 管理面板「设置 / Cookie 池 / 代理池」里改，保存即生效，不需要重启容器；
+# 因此 compose 只声明"改了必须重启"的三个变量：端口、ADMIN_TOKEN、TZ。
+# ============================================================
+
+services:
+  gemini-web2api:
+    container_name: ${CONTAINER_NAME}
+    image: ghcr.io/zexadev/gemini-web2api-go:v4.28.0
+    restart: always
+    networks:
+      - 1panel-network
+    labels:
+      createdBy: "Apps"
+    ports:
+      - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:8083
+    environment:
+      - TZ=${TZ}
+      # 面板登录 token；留空 = 面板不鉴权（仅在绑 127.0.0.1 时可接受），故表单必填
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+    volumes:
+      # SQLite 数据库与历史记录；宿主机目录由 scripts/init.sh chown 到 65532:65532
+      - ./data:/data
+    healthcheck:
+      # distroless 镜像无 sh，必须用 exec 形式（镜像自带 --version 支持）
+      test: ["CMD", "/app/gemini-web2api", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

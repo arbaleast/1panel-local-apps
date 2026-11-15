@@ -18,6 +18,7 @@
 | fastnet | FastNet 网络诊断与测速工具 | 0.7.5 |
 | firecrawl | 网页爬虫 | 2.11.678 |
 | gecoos | 集客 AC 无线控制器，集中管理 AP | v2.2 |
+| gemini-web2api | Gemini 网页端反代为 OpenAI 兼容 API（无需 Google API Key） | v4.28.0 |
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 (linuxserver, 单 GUI, P620 NVENC 已验证) | 1.11.2-ls41 |
 | handbrake-web | 分布式 HandBrake 转码队列 (TheNickOfTime, ⚠️ heavy dev) | latest |
