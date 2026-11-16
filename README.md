@@ -6,12 +6,12 @@
 
 | 应用 | 说明 | 当前版本 |
 |------|------|----------|
-| anirss | 动漫 RSS | v3.2.57 |
+| anirss | 动漫 RSS | v3.2.61 |
 | anythingllm | 本地化 AI 文档问答与 RAG 一体化平台 | 1.16.0 |
 | aria2 | 轻量级多协议下载工具 | a2b-stable-25-08-12 |
-| bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.7.0 |
+| bookorbit | 自托管电子书 / 漫画 / 有声书 / PDF 库（KOReader / Kobo 双向同步 + 多用户 + OIDC/SSO） | 3.8.0 |
 | cfnb | Cloudflare CDN 节点优选工具 | v1.0.1 |
-| cfui | cloudflared WebUI 管理面板 | v0.10.17 |
+| cfui | cloudflared WebUI 管理面板 | 0.10.18 |
 | cinny | Matrix 聊天客户端 | v4.12.8 |
 | collabora | 自托管协作在线 Office 套件 (CODE, LibreOffice 内核) | 26.04.5.2.1 |
 | dendrite | Matrix 协议新一代 homeserver | v0.15.2 |
@@ -22,7 +22,7 @@
 | grimmory | 自托管电子书 / 漫画 / 有声书库（多用户 + KOReader 同步 + BookDrop 入库） | 3.5.0 |
 | handbrake | 视频转码 (linuxserver, 单 GUI, P620 NVENC 已验证) | 1.11.2-ls41 |
 | handbrake-web | 分布式 HandBrake 转码队列 (TheNickOfTime, ⚠️ heavy dev) | latest |
-| hindsight | AI 记忆系统 | 1.2.0 |
+| hindsight | AI 记忆系统 | 1.2.1 |
 | ignis | 在浏览器中运行 Obsidian（无需远程桌面） | 0.9.0 |
 | immich | 照片管理 | v3.0.3 |
 | infinity | 本地 GPU Embeddings 推理服务 | cu124 |
@@ -30,7 +30,7 @@
 | jellystat | 免费的 Jellyfin 开源统计应用（Tautulli 替代品）。 | 1.1.12 |
 | kdenlive | 视频剪辑器 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速) | 423.08.5 |
 | kiwix-serve | 离线维基百科与 ZIM 内容服务器 | latest |
-| linguaflow | 自托管 AI 文档翻译与审校平台（术语表 + 流水线） | 0.17.1 |
+| linguaflow | 自托管 AI 文档翻译与审校平台（术语表 + 流水线） | 0.17.4 |
 | linkwarden | Linkwarden 自托管书签管理器 | v2.16.3 |
 | llamacpp | 高性能本地 LLM 推理引擎 | server-vulkan-v0.4.9 |
 | llamaindex | LLM 数据框架 | v0.9.2 |
@@ -41,13 +41,13 @@
 | mihomo | 代理工具 | v1.19.33 |
 | mineru | OpenDataLab 开源的 PDF/文档智能解析工具 | 3.4.2 |
 | misaka | 御坂网络弹幕服务 | v2.9.2 |
-| moviepilot | 影视自动化 | 3.2.5 |
+| moviepilot | 影视自动化 | 3.2.6 |
 | music-tag-web | 音乐标签刮削与媒体库管理 Web 应用 | 2.8.1 |
 | navi-homepage | 轻量级个人导航站（前端可视化编辑 + 零依赖 Node 后端） | v1.2.0 |
 | newapi | AI/LLM API 聚合网关 | v1.0.0-rc.40 |
 | onenav | PHP + SQLite 3 开发的开源书签 / 导航管理器 | 1.3.2 |
-| open-design | Claude Design 开源替代，agent CLI 驱动 | 0.27.0 |
-| opencloud | 开源文件管理 / 分享 / 协作平台（无数据库，内置 LDAP + OIDC） | 9.0.0 |
+| open-design | Claude Design 开源替代，agent CLI 驱动 | 0.27.1 |
+| opencloud | 开源文件管理 / 分享 / 协作平台（无数据库，内置 LDAP + OIDC） | 9.1.0 |
 | openreel-video | 浏览器端开源视频剪辑工具 | v0.5.0 |
 | openshot | 开源视频剪辑与动画制作 (linuxserver Selkies GUI, 媒体目录挂载 + P620 NVENC 加速, 仅 amd64) | 4.1.1 |
 | optimisarr | 媒体库自动转码 (FFmpeg 验证 + 回滚, Plex/Jellyfin/Emby, 仅 amd64) | 0.2.25 |
@@ -55,14 +55,14 @@
 | pgvector | 向量数据库 | 0.8.7-pg18-trixie |
 | photopea | 在线图像编辑器 | 2.2 |
 | photoprism | 自托管 AI 照片管理（人脸/场景识别 + 地图 + WebDAV） | 20220121 |
-| qdrant | 向量搜索引擎 | v1.20.0 |
+| qdrant | 向量搜索引擎 | v1.20.1 |
 | scrob | 自托管媒体追踪（Jellyfin / Plex / Emby 同步） | 2.37.0 |
-| searxng | 隐私搜索引擎 | 2026.11.8-74418092d |
+| searxng | 隐私搜索引擎 | 2026.11.15-2d500cb6b |
 | silo | pgsty 维护的 S3 兼容对象存储（MinIO 活跃分支 Silo） | RELEASE.2026-08 |
 | super-productivity | 高级待办事项应用，支持时间盒与时间追踪 | v20.0.0 |
 | syncthing | 文件同步 | 2.1.7 |
-| tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.06.00 |
-| traefik | 反向代理 | v3.7.17 |
+| tdarr | Tdarr 媒体库自动转码 (Server + 内置 Node) | 3.08.00 |
+| traefik | 反向代理 | 3.7.19 |
 | unmanic | 媒体库自动转码 (josh5 镜像, NVIDIA Pascal/P620 NVENC 加速) | 0.4.1 |
 | vane | AI 问答引擎（原 Perplexica，已重命名为 vane） | v1.12.2 |
 | vaultwarden | Bitwarden 兼容的自托管密码管理器（Rust 版服务端） | 1.37.5 |
